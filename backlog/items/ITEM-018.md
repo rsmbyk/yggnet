@@ -1,6 +1,6 @@
 ---
 id: ITEM-018
-status: ready
+status: done
 title: "Diff two nodes"
 type: feat
 priority: P2

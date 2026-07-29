@@ -4,7 +4,7 @@ item: ITEM-018
 type: feat
 feature_area: manager
 bump: minor
-status: ready
+status: done
 title: "Diff two nodes"
 created: 2026-07-30
 updated: 2026-07-30
