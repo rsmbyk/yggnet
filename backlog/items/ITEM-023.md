@@ -1,6 +1,6 @@
 ---
 id: ITEM-023
-status: ready
+status: done
 title: "Import / export JSON"
 type: feat
 priority: P1

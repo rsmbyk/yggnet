@@ -45,7 +45,6 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
 | [ITEM-012](items/ITEM-012.md) | Algo compare | Compare different algorithms on the same A–B (or same action). | feat | P1 | M | [SPEC-012](../docs/specs/SPEC-012/spec.md) | minor | 2026-07-30 |
 | [ITEM-013](items/ITEM-013.md) | Compare runs | Side-by-side or dual overlays from stored algorithm runs. | feat | P1 | M | [SPEC-013](../docs/specs/SPEC-013/spec.md) | minor | 2026-07-30 |
-| [ITEM-023](items/ITEM-023.md) | Import / export JSON | Import and export portable GraphDocument JSON. | feat | P1 | M | [SPEC-023](../docs/specs/SPEC-023/spec.md) | minor | 2026-07-30 |
 | [ITEM-025](items/ITEM-025.md) | Command palette | Keyboard command palette for find, navigate, algos, directions, and more. | feat | P1 | M | [SPEC-025](../docs/specs/SPEC-025/spec.md) | minor | 2026-07-30 |
 | [ITEM-014](items/ITEM-014.md) | Annotate algorithm steps | Pin notes to individual steps of a cached algorithm trace. | feat | P2 | M | [SPEC-014](../docs/specs/SPEC-014/spec.md) | patch | 2026-07-30 |
 | [ITEM-018](items/ITEM-018.md) | Diff two nodes | Side-by-side metadata compare plus path highlight between two nodes. | feat | P2 | M | [SPEC-018](../docs/specs/SPEC-018/spec.md) | minor | 2026-07-30 |
@@ -86,3 +85,4 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | [ITEM-017](items/ITEM-017.md) | Filters by type/tag | Show or hide graph elements by type, tag, or status. | feat | P1 | M | [SPEC-017](../docs/specs/SPEC-017/spec.md) | minor | 2026-07-30 | 2026-07-30 |
 | [ITEM-021](items/ITEM-021.md) | Save / load graph | Explicit save and open for a graph document. | feat | P1 | M | [SPEC-021](../docs/specs/SPEC-021/spec.md) | minor | 2026-07-30 | 2026-07-30 |
 | [ITEM-022](items/ITEM-022.md) | Autosave | Quiet local persistence so refresh does not lose the graph. | feat | P1 | S | [SPEC-022](../docs/specs/SPEC-022/spec.md) | patch | 2026-07-30 | 2026-07-30 |
+| [ITEM-023](items/ITEM-023.md) | Import / export JSON | Import and export portable GraphDocument JSON. | feat | P1 | M | [SPEC-023](../docs/specs/SPEC-023/spec.md) | minor | 2026-07-30 | 2026-07-30 |
