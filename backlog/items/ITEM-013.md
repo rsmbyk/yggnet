@@ -1,6 +1,6 @@
 ---
 id: ITEM-013
-status: ready
+status: done
 title: "Compare runs"
 type: feat
 priority: P1

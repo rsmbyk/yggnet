@@ -43,7 +43,6 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 
 | ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
-| [ITEM-013](items/ITEM-013.md) | Compare runs | Side-by-side or dual overlays from stored algorithm runs. | feat | P1 | M | [SPEC-013](../docs/specs/SPEC-013/spec.md) | minor | 2026-07-30 |
 | [ITEM-014](items/ITEM-014.md) | Annotate algorithm steps | Pin notes to individual steps of a cached algorithm trace. | feat | P2 | M | [SPEC-014](../docs/specs/SPEC-014/spec.md) | patch | 2026-07-30 |
 | [ITEM-018](items/ITEM-018.md) | Diff two nodes | Side-by-side metadata compare plus path highlight between two nodes. | feat | P2 | M | [SPEC-018](../docs/specs/SPEC-018/spec.md) | minor | 2026-07-30 |
 | [ITEM-019](items/ITEM-019.md) | LOD labels | Node labels appear when zoomed in toward street level. | feat | P2 | S | [SPEC-019](../docs/specs/SPEC-019/spec.md) | patch | 2026-07-30 |
@@ -86,3 +85,4 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | [ITEM-023](items/ITEM-023.md) | Import / export JSON | Import and export portable GraphDocument JSON. | feat | P1 | M | [SPEC-023](../docs/specs/SPEC-023/spec.md) | minor | 2026-07-30 | 2026-07-30 |
 | [ITEM-025](items/ITEM-025.md) | Command palette | Keyboard command palette for find, navigate, algos, directions, and more. | feat | P1 | M | [SPEC-025](../docs/specs/SPEC-025/spec.md) | minor | 2026-07-30 | 2026-07-30 |
 | [ITEM-012](items/ITEM-012.md) | Algo compare | Compare different algorithms on the same A–B (or same action). | feat | P1 | M | [SPEC-012](../docs/specs/SPEC-012/spec.md) | minor | 2026-07-30 | 2026-07-30 |
+| [ITEM-013](items/ITEM-013.md) | Compare runs | Side-by-side or dual overlays from stored algorithm runs. | feat | P1 | M | [SPEC-013](../docs/specs/SPEC-013/spec.md) | minor | 2026-07-30 | 2026-07-30 |
