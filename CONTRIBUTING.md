@@ -47,6 +47,8 @@ npm run test:e2e
 - UI/world call the graph public API (`$lib/graph`).
 - Algorithms run via `AlgorithmRunner` on serializable snapshots (worker-ready).
 
-## Code style
+## Deploy (Vercel)
 
-`npm run format` · `npm run lint` · `npm run check`
+- On Vercel, `VERCEL=1` selects `@sveltejs/adapter-vercel`.
+- Local Windows builds use `@sveltejs/adapter-static` (avoids symlink EPERM from adapter-vercel).
+- Do not set a custom Output Directory in the Vercel project UI (leave default/blank).

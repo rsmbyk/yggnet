@@ -1,7 +1,13 @@
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
-import adapter from '@sveltejs/adapter-static';
+import adapterVercel from '@sveltejs/adapter-vercel';
+import adapterStatic from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
+
+/** Vercel sets VERCEL=1; use adapter-vercel there. Local Windows uses static (no symlink). */
+const adapter = process.env.VERCEL
+	? adapterVercel()
+	: adapterStatic({ fallback: 'index.html' });
 
 export default defineConfig({
 	plugins: [
@@ -11,9 +17,7 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter({
-				fallback: 'index.html'
-			})
+			adapter
 		})
 	],
 	test: {

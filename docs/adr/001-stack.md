@@ -14,7 +14,7 @@ Yggnet needs a dual UI (manager + 3D bird’s-eye world), heavy client interacti
 - **Threlte** + Three.js for the world
 - **Custom** TypeScript graph core under `src/lib/graph/**` (no graphology for now)
 - **Plain CSS + CSS variables** (no Tailwind / UI kit)
-- **Vercel** hosting (static SPA adapter; `develop` staging / `main` prod) · **MIT** license
+- **Vercel** hosting (`adapter-vercel` on Vercel; `adapter-static` locally on Windows) · **MIT** license
 
 ## Consequences
 
