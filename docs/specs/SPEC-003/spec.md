@@ -4,7 +4,7 @@ item: ITEM-003
 type: feat
 feature_area: explore
 bump: minor
-status: ready
+status: done
 title: "Explore bird's-eye camera"
 created: 2026-07-30
 updated: 2026-07-30

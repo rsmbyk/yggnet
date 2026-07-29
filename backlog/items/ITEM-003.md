@@ -1,6 +1,6 @@
 ---
 id: ITEM-003
-status: ready
+status: done
 title: "Explore bird's-eye camera"
 type: feat
 priority: P0
