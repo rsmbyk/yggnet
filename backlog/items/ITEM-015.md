@@ -1,6 +1,6 @@
 ---
 id: ITEM-015
-status: ready
+status: done
 title: "Pin / anchor nodes"
 type: feat
 priority: P1
