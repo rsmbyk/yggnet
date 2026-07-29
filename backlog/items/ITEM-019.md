@@ -1,6 +1,6 @@
 ---
 id: ITEM-019
-status: ready
+status: done
 title: "LOD labels"
 type: feat
 priority: P2
