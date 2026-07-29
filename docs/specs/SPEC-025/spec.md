@@ -4,7 +4,7 @@ item: ITEM-025
 type: feat
 feature_area: meta
 bump: minor
-status: ready
+status: done
 title: "Command palette"
 created: 2026-07-30
 updated: 2026-07-30

@@ -1,6 +1,6 @@
 ---
 id: ITEM-025
-status: ready
+status: done
 title: "Command palette"
 type: feat
 priority: P1
