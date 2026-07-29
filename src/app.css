@@ -1,0 +1,31 @@
+:root {
+	color-scheme: light;
+	--yg-bg: #e8ecf1;
+	--yg-panel: #f7f8fa;
+	--yg-fg: #1a222c;
+	--yg-muted: #5c6b7a;
+	--yg-border: #d0d7e0;
+	--yg-accent: #0b6e7a;
+	--yg-accent-soft: color-mix(in srgb, var(--yg-accent) 14%, white);
+	--yg-world-bg: #1c242e;
+	--yg-font: 'Segoe UI', system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	height: 100%;
+	font-family: var(--yg-font);
+	background: var(--yg-bg);
+	color: var(--yg-fg);
+}
+
+#yggnet-app {
+	height: 100%;
+}
