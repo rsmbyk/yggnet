@@ -1,6 +1,6 @@
 ---
 id: ITEM-027
-status: ready
+status: done
 title: "Templates + random graph"
 type: feat
 priority: P2
