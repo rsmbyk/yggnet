@@ -1,6 +1,6 @@
 ---
 id: ITEM-007
-status: ready
+status: done
 title: "Directions guided travel"
 type: feat
 priority: P0
