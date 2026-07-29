@@ -4,7 +4,7 @@ item: ITEM-026
 type: feat
 feature_area: manager
 bump: minor
-status: ready
+status: done
 title: "Notes and attachments"
 created: 2026-07-30
 updated: 2026-07-30

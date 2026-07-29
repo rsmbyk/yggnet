@@ -1,6 +1,6 @@
 ---
 id: ITEM-026
-status: ready
+status: done
 title: "Notes and attachments"
 type: feat
 priority: P2
