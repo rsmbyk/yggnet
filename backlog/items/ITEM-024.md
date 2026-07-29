@@ -1,6 +1,6 @@
 ---
 id: ITEM-024
-status: ready
+status: done
 title: "Undo / redo"
 type: feat
 priority: P0

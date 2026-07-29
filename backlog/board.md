@@ -48,7 +48,6 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | [ITEM-005](items/ITEM-005.md) | Selection sync | Manager and world share selection through the graph selection API. | feat | P0 | M | [SPEC-005](../docs/specs/SPEC-005/spec.md) | minor | 2026-07-30 |
 | [ITEM-006](items/ITEM-006.md) | Pathfinder A to B | All simple paths by default; shortest mode (all ties); pick a path; technical highlight. | feat | P0 | L | [SPEC-006](../docs/specs/SPEC-006/spec.md) | minor | 2026-07-30 |
 | [ITEM-007](items/ITEM-007.md) | Directions guided travel | Google-style camera travel along the selected path with clear exit to Explore. | feat | P0 | M | [SPEC-007](../docs/specs/SPEC-007/spec.md) | minor | 2026-07-30 |
-| [ITEM-024](items/ITEM-024.md) | Undo / redo | Command-stack undo and redo for graph edits. | feat | P0 | L | [SPEC-024](../docs/specs/SPEC-024/spec.md) | minor | 2026-07-30 |
 | [ITEM-008](items/ITEM-008.md) | Follow edge | One-hop mini-Directions: ride a chosen relationship to the neighbor. | feat | P1 | S | [SPEC-008](../docs/specs/SPEC-008/spec.md) | patch | 2026-07-30 |
 | [ITEM-009](items/ITEM-009.md) | Algorithm registry + picker | Pluggable algorithm registry and extensive shortest-path (then graph actions) picker. | feat | P1 | L | [SPEC-009](../docs/specs/SPEC-009/spec.md) | minor | 2026-07-30 |
 | [ITEM-010](items/ITEM-010.md) | Cached traces + step replay | Show algorithm result first; keep step trace; Show steps replays without re-run. | feat | P1 | L | [SPEC-010](../docs/specs/SPEC-010/spec.md) | minor | 2026-07-30 |
@@ -86,3 +85,4 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
 | [ITEM-001](items/ITEM-001.md) | Manager graph CRUD | Add/edit/remove nodes and edges in the manager; disconnected graphs are valid. | feat | P0 | L | [SPEC-001](../docs/specs/SPEC-001/spec.md) | minor | 2026-07-30 | 2026-07-30 |
 | [ITEM-002](items/ITEM-002.md) | Edge weight + directed | First-class directed flag and numeric weight on edges in the model and manager. | feat | P0 | M | [SPEC-002](../docs/specs/SPEC-002/spec.md) | minor | 2026-07-30 | 2026-07-30 |
+| [ITEM-024](items/ITEM-024.md) | Undo / redo | Command-stack undo and redo for graph edits. | feat | P0 | L | [SPEC-024](../docs/specs/SPEC-024/spec.md) | minor | 2026-07-30 | 2026-07-30 |

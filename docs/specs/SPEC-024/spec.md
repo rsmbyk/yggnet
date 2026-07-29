@@ -4,7 +4,7 @@ item: ITEM-024
 type: feat
 feature_area: manager
 bump: minor
-status: ready
+status: done
 title: "Undo / redo"
 created: 2026-07-30
 updated: 2026-07-30
