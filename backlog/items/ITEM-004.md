@@ -1,13 +1,13 @@
 ---
 id: ITEM-004
-status: backlog
+status: ready
 title: "World graph render"
 type: feat
 priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-004
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Technical path look; cartographic/sci-fi skins parked. Related: ITEM-001, ITEM-0
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-004](../../docs/specs/SPEC-004/spec.md)
 - Related items: ITEM-001, ITEM-003, ITEM-005, ITEM-006.

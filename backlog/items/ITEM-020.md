@@ -1,13 +1,13 @@
 ---
 id: ITEM-020
-status: backlog
+status: ready
 title: "Minimap"
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-020
 branch:
 pr:
 archived_at:
@@ -32,5 +32,5 @@ Related: ITEM-003, ITEM-004.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-020](../../docs/specs/SPEC-020/spec.md)
 - Related items: ITEM-003, ITEM-004.

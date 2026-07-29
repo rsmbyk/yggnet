@@ -1,13 +1,13 @@
 ---
 id: ITEM-019
-status: backlog
+status: ready
 title: "LOD labels"
 type: feat
 priority: P2
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-019
 branch:
 pr:
 archived_at:
@@ -32,5 +32,5 @@ Related: ITEM-003, ITEM-004.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-019](../../docs/specs/SPEC-019/spec.md)
 - Related items: ITEM-003, ITEM-004.

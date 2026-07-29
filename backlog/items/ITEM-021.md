@@ -1,13 +1,13 @@
 ---
 id: ITEM-021
-status: backlog
+status: ready
 title: "Save / load graph"
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-021
 branch:
 pr:
 archived_at:
@@ -32,5 +32,5 @@ Related: ITEM-022, ITEM-023.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-021](../../docs/specs/SPEC-021/spec.md)
 - Related items: ITEM-022, ITEM-023.

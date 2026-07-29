@@ -1,13 +1,13 @@
 ---
 id: ITEM-028
-status: backlog
+status: ready
 title: "Simple clean modern chrome"
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-028
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ UI/UX lock: simple, clean, modern. Related: ITEM-001, ITEM-007, ITEM-009.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-028](../../docs/specs/SPEC-028/spec.md)
 - Related items: ITEM-001, ITEM-007, ITEM-009.

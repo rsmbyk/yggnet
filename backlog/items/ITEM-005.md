@@ -1,13 +1,13 @@
 ---
 id: ITEM-005
-status: backlog
+status: ready
 title: "Selection sync"
 type: feat
 priority: P0
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-005
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Domain logic under src/lib/graph; UI only calls it. Related: ITEM-001, ITEM-004,
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-005](../../docs/specs/SPEC-005/spec.md)
 - Related items: ITEM-001, ITEM-004, ITEM-025.

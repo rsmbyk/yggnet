@@ -1,13 +1,13 @@
 ---
 id: ITEM-012
-status: backlog
+status: ready
 title: "Algo compare"
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-012
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Related: ITEM-009, ITEM-013.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-012](../../docs/specs/SPEC-012/spec.md)
 - Related items: ITEM-009, ITEM-013.

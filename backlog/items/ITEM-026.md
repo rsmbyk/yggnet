@@ -1,13 +1,13 @@
 ---
 id: ITEM-026
-status: backlog
+status: ready
 title: "Notes and attachments"
 type: feat
 priority: P2
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-026
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Related: ITEM-001, ITEM-018.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-026](../../docs/specs/SPEC-026/spec.md)
 - Related items: ITEM-001, ITEM-018.

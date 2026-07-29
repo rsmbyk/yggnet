@@ -1,13 +1,13 @@
 ---
 id: ITEM-027
-status: backlog
+status: ready
 title: "Templates + random graph"
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-027
 branch:
 pr:
 archived_at:
@@ -32,5 +32,5 @@ Related: ITEM-001, ITEM-021.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-027](../../docs/specs/SPEC-027/spec.md)
 - Related items: ITEM-001, ITEM-021.

@@ -1,13 +1,13 @@
 ---
 id: ITEM-010
-status: backlog
+status: ready
 title: "Cached traces + step replay"
 type: feat
 priority: P1
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-010
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Trace-first ADR. Related: ITEM-009, ITEM-011, ITEM-014.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-010](../../docs/specs/SPEC-010/spec.md)
 - Related items: ITEM-009, ITEM-011, ITEM-014.

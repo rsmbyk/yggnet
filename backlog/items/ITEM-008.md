@@ -1,13 +1,13 @@
 ---
 id: ITEM-008
-status: backlog
+status: ready
 title: "Follow edge"
 type: feat
 priority: P1
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-008
 branch:
 pr:
 archived_at:
@@ -32,5 +32,5 @@ Same visual language as Directions. Related: ITEM-005, ITEM-007.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-008](../../docs/specs/SPEC-008/spec.md)
 - Related items: ITEM-005, ITEM-007.

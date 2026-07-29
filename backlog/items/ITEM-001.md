@@ -1,13 +1,13 @@
 ---
 id: ITEM-001
-status: backlog
+status: ready
 title: "Manager graph CRUD"
 type: feat
 priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-001
 branch:
 pr:
 archived_at:
@@ -34,5 +34,5 @@ Dual UI outer controller. World stays present while structure is edited here. Re
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-001](../../docs/specs/SPEC-001/spec.md)
 - Related items: ITEM-002, ITEM-004, ITEM-005, ITEM-024.

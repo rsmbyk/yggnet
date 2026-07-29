@@ -1,13 +1,13 @@
 ---
 id: ITEM-024
-status: backlog
+status: ready
 title: "Undo / redo"
 type: feat
 priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-024
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Related: ITEM-001, ITEM-011.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-024](../../docs/specs/SPEC-024/spec.md)
 - Related items: ITEM-001, ITEM-011.

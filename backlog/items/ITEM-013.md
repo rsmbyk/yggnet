@@ -1,13 +1,13 @@
 ---
 id: ITEM-013
-status: backlog
+status: ready
 title: "Compare runs"
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-013
 branch:
 pr:
 archived_at:
@@ -32,5 +32,5 @@ Related: ITEM-010, ITEM-012.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-013](../../docs/specs/SPEC-013/spec.md)
 - Related items: ITEM-010, ITEM-012.

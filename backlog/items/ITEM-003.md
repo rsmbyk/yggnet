@@ -1,13 +1,13 @@
 ---
 id: ITEM-003
-status: backlog
+status: ready
 title: "Explore bird's-eye camera"
 type: feat
 priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-003
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Not FPS/cockpit. Overview vs street is the same camera at different height. Rela
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-003](../../docs/specs/SPEC-003/spec.md)
 - Related items: ITEM-004, ITEM-007, ITEM-019, ITEM-020.

@@ -1,13 +1,13 @@
 ---
 id: ITEM-014
-status: backlog
+status: ready
 title: "Annotate algorithm steps"
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-014
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Related: ITEM-010.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-014](../../docs/specs/SPEC-014/spec.md)
 - Related items: ITEM-010.

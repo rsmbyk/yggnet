@@ -1,13 +1,13 @@
 ---
 id: ITEM-006
-status: backlog
+status: ready
 title: "Pathfinder A to B"
 type: feat
 priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-006
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Candidates faint, selected bright; dim context. Related: ITEM-002, ITEM-007, ITE
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-006](../../docs/specs/SPEC-006/spec.md)
 - Related items: ITEM-002, ITEM-007, ITEM-009, ITEM-010.

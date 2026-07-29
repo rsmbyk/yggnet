@@ -1,13 +1,13 @@
 ---
 id: ITEM-007
-status: backlog
+status: ready
 title: "Directions guided travel"
 type: feat
 priority: P0
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-007
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Separate from step-replay of algorithms. Related: ITEM-003, ITEM-006, ITEM-008.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-007](../../docs/specs/SPEC-007/spec.md)
 - Related items: ITEM-003, ITEM-006, ITEM-008.

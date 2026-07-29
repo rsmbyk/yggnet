@@ -1,13 +1,13 @@
 ---
 id: ITEM-018
-status: backlog
+status: ready
 title: "Diff two nodes"
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-018
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Related: ITEM-006, ITEM-005.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-018](../../docs/specs/SPEC-018/spec.md)
 - Related items: ITEM-006, ITEM-005.

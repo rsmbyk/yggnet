@@ -1,13 +1,13 @@
 ---
 id: ITEM-017
-status: backlog
+status: ready
 title: "Filters by type/tag"
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-017
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Related: ITEM-004, ITEM-016, ITEM-025.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-017](../../docs/specs/SPEC-017/spec.md)
 - Related items: ITEM-004, ITEM-016, ITEM-025.

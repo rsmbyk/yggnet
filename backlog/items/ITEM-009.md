@@ -1,13 +1,13 @@
 ---
 id: ITEM-009
-status: backlog
+status: ready
 title: "Algorithm registry + picker"
 type: feat
 priority: P1
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-009
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Worker-ready via AlgorithmRunner. Related: ITEM-006, ITEM-010, ITEM-012.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-009](../../docs/specs/SPEC-009/spec.md)
 - Related items: ITEM-006, ITEM-010, ITEM-012.

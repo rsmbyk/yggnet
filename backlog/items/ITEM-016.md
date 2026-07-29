@@ -1,13 +1,13 @@
 ---
 id: ITEM-016
-status: backlog
+status: ready
 title: "Groups / containers"
 type: feat
 priority: P1
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-016
 branch:
 pr:
 archived_at:
@@ -33,5 +33,5 @@ Related: ITEM-004, ITEM-017.
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-016](../../docs/specs/SPEC-016/spec.md)
 - Related items: ITEM-004, ITEM-017.
