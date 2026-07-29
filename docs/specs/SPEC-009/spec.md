@@ -4,7 +4,7 @@ item: ITEM-009
 type: feat
 feature_area: analyze
 bump: minor
-status: ready
+status: done
 title: "Algorithm registry + picker"
 created: 2026-07-30
 updated: 2026-07-30

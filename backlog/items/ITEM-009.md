@@ -1,6 +1,6 @@
 ---
 id: ITEM-009
-status: ready
+status: done
 title: "Algorithm registry + picker"
 type: feat
 priority: P1
