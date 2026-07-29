@@ -4,7 +4,7 @@ item: ITEM-028
 type: feat
 feature_area: meta
 bump: patch
-status: ready
+status: done
 title: "Simple clean modern chrome"
 created: 2026-07-30
 updated: 2026-07-30

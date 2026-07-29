@@ -1,6 +1,6 @@
 ---
 id: ITEM-028
-status: ready
+status: done
 title: "Simple clean modern chrome"
 type: feat
 priority: P2
