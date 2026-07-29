@@ -43,7 +43,6 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 
 | ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
-| [ITEM-001](items/ITEM-001.md) | Manager graph CRUD | Add/edit/remove nodes and edges in the manager; disconnected graphs are valid. | feat | P0 | L | [SPEC-001](../docs/specs/SPEC-001/spec.md) | minor | 2026-07-30 |
 | [ITEM-002](items/ITEM-002.md) | Edge weight + directed | First-class directed flag and numeric weight on edges in the model and manager. | feat | P0 | M | [SPEC-002](../docs/specs/SPEC-002/spec.md) | minor | 2026-07-30 |
 | [ITEM-003](items/ITEM-003.md) | Explore bird's-eye camera | RTS/SimCity bird's-eye pan, zoom, light orbit; overview and street-level altitude. | feat | P0 | L | [SPEC-003](../docs/specs/SPEC-003/spec.md) | minor | 2026-07-30 |
 | [ITEM-004](items/ITEM-004.md) | World graph render | Draw nodes and edges in Threlte from GraphDocument with a technical visual language. | feat | P0 | L | [SPEC-004](../docs/specs/SPEC-004/spec.md) | minor | 2026-07-30 |
@@ -84,5 +83,6 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 
 ## Done
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Merged | Updated |
+| ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Merged | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
+| [ITEM-001](items/ITEM-001.md) | Manager graph CRUD | Add/edit/remove nodes and edges in the manager; disconnected graphs are valid. | feat | P0 | L | [SPEC-001](../docs/specs/SPEC-001/spec.md) | minor | 2026-07-30 | 2026-07-30 |

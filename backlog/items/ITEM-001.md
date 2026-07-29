@@ -1,6 +1,6 @@
 ---
 id: ITEM-001
-status: ready
+status: done
 title: "Manager graph CRUD"
 type: feat
 priority: P0
