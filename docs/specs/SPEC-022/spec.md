@@ -4,7 +4,7 @@ item: ITEM-022
 type: feat
 feature_area: persist
 bump: patch
-status: ready
+status: done
 title: "Autosave"
 created: 2026-07-30
 updated: 2026-07-30

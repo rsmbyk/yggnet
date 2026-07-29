@@ -1,6 +1,6 @@
 ---
 id: ITEM-022
-status: ready
+status: done
 title: "Autosave"
 type: feat
 priority: P1
