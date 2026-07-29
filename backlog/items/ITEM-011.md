@@ -1,6 +1,6 @@
 ---
 id: ITEM-011
-status: ready
+status: done
 title: "Stale-run invalidation"
 type: feat
 priority: P1
