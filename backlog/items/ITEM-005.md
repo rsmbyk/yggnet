@@ -1,6 +1,6 @@
 ---
 id: ITEM-005
-status: ready
+status: done
 title: "Selection sync"
 type: feat
 priority: P0
