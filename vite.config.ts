@@ -1,0 +1,65 @@
+import { defineConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
+import adapterVercel from '@sveltejs/adapter-vercel';
+import adapterStatic from '@sveltejs/adapter-static';
+import { sveltekit } from '@sveltejs/kit/vite';
+
+/** Vercel sets VERCEL=1; use adapter-vercel there. Local Windows uses static (no symlink). */
+const adapter = process.env.VERCEL
+	? adapterVercel()
+	: adapterStatic({ fallback: 'index.html' });
+
+export default defineConfig({
+	plugins: [
+		sveltekit({
+			compilerOptions: {
+				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
+				runes: ({ filename }) =>
+					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
+			},
+			adapter
+		})
+	],
+	test: {
+		expect: { requireAssertions: true },
+		coverage: {
+			provider: 'v8',
+			include: ['src/lib/graph/**'],
+			exclude: [
+				'src/lib/graph/**/*.test.ts',
+				'src/lib/graph/**/*.spec.ts',
+				'src/lib/graph/**/*.d.ts'
+			],
+			thresholds: {
+				lines: 90,
+				branches: 90,
+				functions: 90,
+				statements: 90
+			}
+		},
+		projects: [
+			{
+				extends: './vite.config.ts',
+				test: {
+					name: 'client',
+					browser: {
+						enabled: true,
+						provider: playwright(),
+						instances: [{ browser: 'chromium', headless: true }]
+					},
+					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+					exclude: ['src/lib/server/**']
+				}
+			},
+			{
+				extends: './vite.config.ts',
+				test: {
+					name: 'server',
+					environment: 'node',
+					include: ['src/**/*.{test,spec}.{js,ts}'],
+					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+				}
+			}
+		]
+	}
+});
