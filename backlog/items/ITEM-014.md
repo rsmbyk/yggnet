@@ -1,6 +1,6 @@
 ---
 id: ITEM-014
-status: ready
+status: done
 title: "Annotate algorithm steps"
 type: feat
 priority: P2

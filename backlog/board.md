@@ -43,7 +43,6 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 
 | ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
-| [ITEM-014](items/ITEM-014.md) | Annotate algorithm steps | Pin notes to individual steps of a cached algorithm trace. | feat | P2 | M | [SPEC-014](../docs/specs/SPEC-014/spec.md) | patch | 2026-07-30 |
 | [ITEM-026](items/ITEM-026.md) | Notes and attachments | Notes and attachments on both nodes and edges. | feat | P2 | L | [SPEC-026](../docs/specs/SPEC-026/spec.md) | minor | 2026-07-30 |
 | [ITEM-027](items/ITEM-027.md) | Templates + random graph | Starter templates (org, roadmap, learning, blank) and generate-random graph. | feat | P2 | M | [SPEC-027](../docs/specs/SPEC-027/spec.md) | minor | 2026-07-30 |
 | [ITEM-028](items/ITEM-028.md) | Simple clean modern chrome | Quiet manager, Directions, and Analyze panels with progressive disclosure. | feat | P2 | M | [SPEC-028](../docs/specs/SPEC-028/spec.md) | patch | 2026-07-30 |
@@ -86,3 +85,4 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | [ITEM-018](items/ITEM-018.md) | Diff two nodes | Side-by-side metadata compare plus path highlight between two nodes. | feat | P2 | M | [SPEC-018](../docs/specs/SPEC-018/spec.md) | minor | 2026-07-30 | 2026-07-30 |
 | [ITEM-019](items/ITEM-019.md) | LOD labels | Node labels appear when zoomed in toward street level. | feat | P2 | S | [SPEC-019](../docs/specs/SPEC-019/spec.md) | patch | 2026-07-30 | 2026-07-30 |
 | [ITEM-020](items/ITEM-020.md) | Minimap | Bird's-eye radar of the graph; click to pan the main view. | feat | P2 | M | [SPEC-020](../docs/specs/SPEC-020/spec.md) | minor | 2026-07-30 | 2026-07-30 |
+| [ITEM-014](items/ITEM-014.md) | Annotate algorithm steps | Pin notes to individual steps of a cached algorithm trace. | feat | P2 | M | [SPEC-014](../docs/specs/SPEC-014/spec.md) | patch | 2026-07-30 | 2026-07-30 |
