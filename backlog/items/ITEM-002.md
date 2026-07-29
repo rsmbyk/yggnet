@@ -1,0 +1,37 @@
+---
+id: ITEM-002
+status: backlog
+title: "Edge weight + directed"
+type: feat
+priority: P0
+effort: M
+created: 2026-07-30
+updated: 2026-07-30
+spec:
+branch:
+pr:
+archived_at:
+archive_reason:
+release_version:
+---
+
+# ITEM-002: Edge weight + directed
+
+## Summary
+
+First-class directed flag and numeric weight on edges in the model and manager.
+
+## Notes
+
+Required for Dijkstra/A* and directed trees/orgs. Related: ITEM-001, ITEM-006, ITEM-009.
+
+## Acceptance sketch
+
+- Edges store directed boolean and numeric weight
+- Manager can edit direction and weight
+- Undirected and directed graphs both supported
+
+## Links
+
+- Spec:
+- Related items: ITEM-001, ITEM-006, ITEM-009.

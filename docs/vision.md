@@ -19,4 +19,4 @@ SvelteKit + Threlte + TypeScript · custom `src/lib/graph` · plain CSS variable
 
 Spec-driven `SPEC-XXX` · TDD · Git Flow · Kanban in `backlog/` · SemVer on release (sequential bumps in merge-to-develop order; `none` allowed)
 
-Full feature list and process detail: conversation agreements reflected in CONTRIBUTING, ADRs, and backlog templates.
+Full feature inventory lives on the [backlog board](../backlog/board.md) (`ITEM-001`…). Process detail: CONTRIBUTING, ADRs, and backlog templates.

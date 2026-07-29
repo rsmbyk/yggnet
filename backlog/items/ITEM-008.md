@@ -1,0 +1,36 @@
+---
+id: ITEM-008
+status: backlog
+title: "Follow edge"
+type: feat
+priority: P1
+effort: S
+created: 2026-07-30
+updated: 2026-07-30
+spec:
+branch:
+pr:
+archived_at:
+archive_reason:
+release_version:
+---
+
+# ITEM-008: Follow edge
+
+## Summary
+
+One-hop mini-Directions: ride a chosen relationship to the neighbor.
+
+## Notes
+
+Same visual language as Directions. Related: ITEM-005, ITEM-007.
+
+## Acceptance sketch
+
+- From a selected node, choose an edge and travel to neighbor
+- Uses same travel/highlight language as Directions
+
+## Links
+
+- Spec:
+- Related items: ITEM-005, ITEM-007.
