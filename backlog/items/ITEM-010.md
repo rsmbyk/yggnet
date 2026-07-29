@@ -1,6 +1,6 @@
 ---
 id: ITEM-010
-status: ready
+status: done
 title: "Cached traces + step replay"
 type: feat
 priority: P1

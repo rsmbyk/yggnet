@@ -43,7 +43,6 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 
 | ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
-| [ITEM-010](items/ITEM-010.md) | Cached traces + step replay | Show algorithm result first; keep step trace; Show steps replays without re-run. | feat | P1 | L | [SPEC-010](../docs/specs/SPEC-010/spec.md) | minor | 2026-07-30 |
 | [ITEM-011](items/ITEM-011.md) | Stale-run invalidation | Graph edits mark runs and traces stale until the algorithm is re-run. | feat | P1 | M | [SPEC-011](../docs/specs/SPEC-011/spec.md) | patch | 2026-07-30 |
 | [ITEM-012](items/ITEM-012.md) | Algo compare | Compare different algorithms on the same A–B (or same action). | feat | P1 | M | [SPEC-012](../docs/specs/SPEC-012/spec.md) | minor | 2026-07-30 |
 | [ITEM-013](items/ITEM-013.md) | Compare runs | Side-by-side or dual overlays from stored algorithm runs. | feat | P1 | M | [SPEC-013](../docs/specs/SPEC-013/spec.md) | minor | 2026-07-30 |
@@ -86,3 +85,4 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | [ITEM-007](items/ITEM-007.md) | Directions guided travel | Google-style camera travel along the selected path with clear exit to Explore. | feat | P0 | M | [SPEC-007](../docs/specs/SPEC-007/spec.md) | minor | 2026-07-30 | 2026-07-30 |
 | [ITEM-008](items/ITEM-008.md) | Follow edge | One-hop mini-Directions: ride a chosen relationship to the neighbor. | feat | P1 | S | [SPEC-008](../docs/specs/SPEC-008/spec.md) | patch | 2026-07-30 | 2026-07-30 |
 | [ITEM-009](items/ITEM-009.md) | Algorithm registry + picker | Pluggable algorithm registry and extensive shortest-path (then graph actions) picker. | feat | P1 | L | [SPEC-009](../docs/specs/SPEC-009/spec.md) | minor | 2026-07-30 | 2026-07-30 |
+| [ITEM-010](items/ITEM-010.md) | Cached traces + step replay | Show algorithm result first; keep step trace; Show steps replays without re-run. | feat | P1 | L | [SPEC-010](../docs/specs/SPEC-010/spec.md) | minor | 2026-07-30 | 2026-07-30 |
