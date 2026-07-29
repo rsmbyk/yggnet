@@ -1,6 +1,6 @@
 ---
 id: ITEM-017
-status: ready
+status: done
 title: "Filters by type/tag"
 type: feat
 priority: P1
