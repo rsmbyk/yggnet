@@ -1,6 +1,6 @@
 ---
 id: ITEM-002
-status: ready
+status: done
 title: "Edge weight + directed"
 type: feat
 priority: P0
