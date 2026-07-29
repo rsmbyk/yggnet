@@ -1,6 +1,6 @@
 ---
 id: ITEM-012
-status: ready
+status: done
 title: "Algo compare"
 type: feat
 priority: P1
