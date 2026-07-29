@@ -44,7 +44,6 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
 | [ITEM-003](items/ITEM-003.md) | Explore bird's-eye camera | RTS/SimCity bird's-eye pan, zoom, light orbit; overview and street-level altitude. | feat | P0 | L | [SPEC-003](../docs/specs/SPEC-003/spec.md) | minor | 2026-07-30 |
-| [ITEM-004](items/ITEM-004.md) | World graph render | Draw nodes and edges in Threlte from GraphDocument with a technical visual language. | feat | P0 | L | [SPEC-004](../docs/specs/SPEC-004/spec.md) | minor | 2026-07-30 |
 | [ITEM-005](items/ITEM-005.md) | Selection sync | Manager and world share selection through the graph selection API. | feat | P0 | M | [SPEC-005](../docs/specs/SPEC-005/spec.md) | minor | 2026-07-30 |
 | [ITEM-006](items/ITEM-006.md) | Pathfinder A to B | All simple paths by default; shortest mode (all ties); pick a path; technical highlight. | feat | P0 | L | [SPEC-006](../docs/specs/SPEC-006/spec.md) | minor | 2026-07-30 |
 | [ITEM-007](items/ITEM-007.md) | Directions guided travel | Google-style camera travel along the selected path with clear exit to Explore. | feat | P0 | M | [SPEC-007](../docs/specs/SPEC-007/spec.md) | minor | 2026-07-30 |
@@ -86,3 +85,4 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | [ITEM-001](items/ITEM-001.md) | Manager graph CRUD | Add/edit/remove nodes and edges in the manager; disconnected graphs are valid. | feat | P0 | L | [SPEC-001](../docs/specs/SPEC-001/spec.md) | minor | 2026-07-30 | 2026-07-30 |
 | [ITEM-002](items/ITEM-002.md) | Edge weight + directed | First-class directed flag and numeric weight on edges in the model and manager. | feat | P0 | M | [SPEC-002](../docs/specs/SPEC-002/spec.md) | minor | 2026-07-30 | 2026-07-30 |
 | [ITEM-024](items/ITEM-024.md) | Undo / redo | Command-stack undo and redo for graph edits. | feat | P0 | L | [SPEC-024](../docs/specs/SPEC-024/spec.md) | minor | 2026-07-30 | 2026-07-30 |
+| [ITEM-004](items/ITEM-004.md) | World graph render | Draw nodes and edges in Threlte from GraphDocument with a technical visual language. | feat | P0 | L | [SPEC-004](../docs/specs/SPEC-004/spec.md) | minor | 2026-07-30 | 2026-07-30 |

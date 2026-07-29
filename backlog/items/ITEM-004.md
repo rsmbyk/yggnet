@@ -1,6 +1,6 @@
 ---
 id: ITEM-004
-status: ready
+status: done
 title: "World graph render"
 type: feat
 priority: P0
