@@ -4,7 +4,7 @@ item: ITEM-008
 type: feat
 feature_area: directions
 bump: patch
-status: ready
+status: done
 title: "Follow edge"
 created: 2026-07-30
 updated: 2026-07-30

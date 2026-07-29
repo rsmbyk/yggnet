@@ -1,6 +1,6 @@
 ---
 id: ITEM-008
-status: ready
+status: done
 title: "Follow edge"
 type: feat
 priority: P1
