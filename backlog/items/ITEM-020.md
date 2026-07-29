@@ -1,6 +1,6 @@
 ---
 id: ITEM-020
-status: ready
+status: done
 title: "Minimap"
 type: feat
 priority: P2
