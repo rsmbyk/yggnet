@@ -4,7 +4,7 @@ item: ITEM-006
 type: feat
 feature_area: directions
 bump: minor
-status: ready
+status: done
 title: "Pathfinder A to B"
 created: 2026-07-30
 updated: 2026-07-30

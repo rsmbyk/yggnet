@@ -1,6 +1,6 @@
 ---
 id: ITEM-006
-status: ready
+status: done
 title: "Pathfinder A to B"
 type: feat
 priority: P0
