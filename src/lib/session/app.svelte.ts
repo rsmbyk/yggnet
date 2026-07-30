@@ -580,7 +580,12 @@ class AppStore {
 	}
 
 	setShowSteps(show: boolean): void {
-		this.analyze = { ...this.analyze, showSteps: show, stepIndex: show ? this.analyze.stepIndex : 0 };
+		this.analyze = {
+			...this.analyze,
+			showSteps: show,
+			stepIndex: show ? this.analyze.stepIndex : 0,
+			playback: show ? this.analyze.playback : false
+		};
 		if (this.analyze.lastRunId) this.applyRunOverlay(this.analyze.lastRunId);
 	}
 
@@ -591,6 +596,10 @@ class AppStore {
 
 	setPlayback(playback: boolean): void {
 		this.analyze = { ...this.analyze, playback };
+	}
+
+	togglePlayback(): void {
+		this.setPlayback(!this.analyze.playback);
 	}
 
 	annotateCurrentStep(note: string): void {
