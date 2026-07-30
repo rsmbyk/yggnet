@@ -1,49 +1,22 @@
 <script lang="ts">
-	import { T, useThrelte } from '@threlte/core';
+	import { T } from '@threlte/core';
 	import { OrbitControls, Text, interactivity } from '@threlte/extras';
 	import { app } from '$lib/session/app.svelte';
 	import { onDestroy } from 'svelte';
-	import * as THREE from 'three';
 	import type { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-	import type { GraphNode } from '$lib/graph';
 
 	interactivity();
 
-	const { camera, renderer } = useThrelte();
-
 	const LABEL_DISTANCE = 18;
-	const NODE_RADIUS = 0.55;
-	const ARROW_HEIGHT = 0.28;
-	const ARROW_RADIUS = 0.09;
-	const ARROW_GAP = 0.05;
-	const DRAG_THRESHOLD_PX = 5;
-
-	const dragPlane = new THREE.Plane();
-	const raycaster = new THREE.Raycaster();
-	const pointerNdc = new THREE.Vector2();
-	const hitPoint = new THREE.Vector3();
 
 	let travelRaf = 0;
 	let controls: ThreeOrbitControls | undefined = $state();
-
-	type DragState = {
-		nodeId: string;
-		pointerId: number;
-		startX: number;
-		startY: number;
-		startPos: { x: number; y: number; z: number };
-		currentPos: { x: number; y: number; z: number };
-		dragging: boolean;
-		additive: boolean;
-	};
-
-	let drag = $state<DragState | null>(null);
 
 	const nodes = $derived(Object.values(app.document.nodes));
 	const edges = $derived(Object.values(app.document.edges));
 	const overlayNodeSet = $derived(new Set(app.overlay.nodeIds));
 	const overlayEdgeSet = $derived(new Set(app.overlay.edgeIds));
-	const selectedIds = $derived(new Set(app.selection.nodeIds));
+	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
 	const showLabels = $derived(app.camera.distance < LABEL_DISTANCE);
 	const dimOthers = $derived(app.overlay.dimOthers && app.overlay.kind !== 'none');
 	const collapsedGroups = $derived(app.groupsCollapsed);
@@ -89,7 +62,7 @@
 	}
 
 	function nodeColor(id: string): string {
-		if (selectedIds.has(id)) return '#c4a35a';
+		if (selectedId === id) return '#c4a35a';
 		if (overlayNodeSet.has(id)) return '#2f9e8a';
 		return '#7a8a9a';
 	}
@@ -129,24 +102,7 @@
 			qz /= n;
 			qw /= n;
 		}
-		return {
-			mid,
-			len,
-			axis,
-			quaternion: [qx, qy, qz, qw] as [number, number, number, number]
-		};
-	}
-
-	function edgeArrowHead(
-		to: { x: number; y: number; z: number },
-		geo: ReturnType<typeof edgeObject>
-	) {
-		const inset = NODE_RADIUS + ARROW_HEIGHT / 2 + ARROW_GAP;
-		return {
-			x: to.x - geo.axis.x * inset,
-			y: to.y - geo.axis.y * inset,
-			z: to.z - geo.axis.z * inset
-		};
+		return { mid, len, quaternion: [qx, qy, qz, qw] as [number, number, number, number] };
 	}
 
 	function syncCameraFromControls() {
@@ -156,127 +112,6 @@
 			target: { x: controls.target.x, y: controls.target.y, z: controls.target.z }
 		});
 	}
-
-	type PointerLike = {
-		nativeEvent?: PointerEvent;
-		ctrlKey?: boolean;
-		metaKey?: boolean;
-		shiftKey?: boolean;
-		pointerId?: number;
-		clientX?: number;
-		clientY?: number;
-		stopPropagation?: () => void;
-	};
-
-	function pointerModifiers(ev: PointerLike): boolean {
-		const native = ev.nativeEvent;
-		return Boolean(
-			native?.ctrlKey ||
-				native?.metaKey ||
-				native?.shiftKey ||
-				ev.ctrlKey ||
-				ev.metaKey ||
-				ev.shiftKey
-		);
-	}
-
-	function clientCoords(ev: PointerLike): { x: number; y: number; pointerId: number } {
-		const native = ev.nativeEvent;
-		return {
-			x: native?.clientX ?? ev.clientX ?? 0,
-			y: native?.clientY ?? ev.clientY ?? 0,
-			pointerId: native?.pointerId ?? ev.pointerId ?? 0
-		};
-	}
-
-	function displayPosition(node: GraphNode): { x: number; y: number; z: number } {
-		if (drag?.dragging && drag.nodeId === node.id) return drag.currentPos;
-		return node.position;
-	}
-
-	function nodePos(id: string): { x: number; y: number; z: number } {
-		const node = app.document.nodes[id];
-		if (!node) return { x: 0, y: 0, z: 0 };
-		return displayPosition(node);
-	}
-
-	function raycastToPlane(clientX: number, clientY: number, planeY: number): { x: number; y: number; z: number } | null {
-		const canvas = renderer.domElement;
-		const rect = canvas.getBoundingClientRect();
-		if (rect.width === 0 || rect.height === 0) return null;
-		pointerNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-		pointerNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-		raycaster.setFromCamera(pointerNdc, camera.current);
-		dragPlane.set(new THREE.Vector3(0, 1, 0), -planeY);
-		const hit = raycaster.ray.intersectPlane(dragPlane, hitPoint);
-		if (!hit) return null;
-		return { x: hit.x, y: planeY, z: hit.z };
-	}
-
-	function onNodePointerDown(node: GraphNode, ev: PointerLike) {
-		ev.stopPropagation?.();
-		const { x, y, pointerId } = clientCoords(ev);
-		drag = {
-			nodeId: node.id,
-			pointerId,
-			startX: x,
-			startY: y,
-			startPos: { ...node.position },
-			currentPos: { ...node.position },
-			dragging: false,
-			additive: pointerModifiers(ev)
-		};
-		renderer.domElement.setPointerCapture(pointerId);
-	}
-
-	function onCanvasPointerMove(ev: PointerEvent) {
-		if (!drag || ev.pointerId !== drag.pointerId) return;
-		const dx = ev.clientX - drag.startX;
-		const dy = ev.clientY - drag.startY;
-		if (!drag.dragging) {
-			if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
-			drag = { ...drag, dragging: true };
-			if (controls) controls.enabled = false;
-		}
-		const hit = raycastToPlane(ev.clientX, ev.clientY, drag.startPos.y);
-		if (!hit) return;
-		drag = { ...drag, currentPos: hit };
-	}
-
-	function onCanvasPointerUp(ev: PointerEvent) {
-		if (!drag || ev.pointerId !== drag.pointerId) return;
-		const state = drag;
-		drag = null;
-		try {
-			renderer.domElement.releasePointerCapture(ev.pointerId);
-		} catch {
-			/* already released */
-		}
-		if (controls) controls.enabled = true;
-		if (state.dragging) {
-			app.updateNode(state.nodeId, { position: state.currentPos });
-			return;
-		}
-		app.selectNodeWithModifiers(state.nodeId, state.additive);
-	}
-
-	function onCanvasPointerCancel(ev: PointerEvent) {
-		if (!drag || ev.pointerId !== drag.pointerId) return;
-		drag = null;
-		if (controls) controls.enabled = true;
-	}
-
-	$effect(() => {
-		const canvas = renderer.domElement;
-		canvas.addEventListener('pointermove', onCanvasPointerMove);
-		canvas.addEventListener('pointerup', onCanvasPointerUp);
-		canvas.addEventListener('pointercancel', onCanvasPointerCancel);
-		return () => {
-			canvas.removeEventListener('pointermove', onCanvasPointerMove);
-			canvas.removeEventListener('pointerup', onCanvasPointerUp);
-			canvas.removeEventListener('pointercancel', onCanvasPointerCancel);
-		};
-	});
 
 	$effect(() => {
 		const t = app.camera.target;
@@ -354,17 +189,19 @@
 {#each visibleNodes as node (node.id)}
 	{@const opacity = nodeOpacity(node.id)}
 	{@const color = nodeColor(node.id)}
-	{@const pos = displayPosition(node)}
 	<T.Mesh
-		position={[pos.x, pos.y, pos.z]}
-		onpointerdown={(ev: PointerLike) => onNodePointerDown(node, ev)}
+		position={[node.position.x, node.position.y, node.position.z]}
+		onclick={(ev: { stopPropagation: () => void }) => {
+			ev.stopPropagation();
+			app.setSelection(node.id);
+		}}
 	>
 		<T.SphereGeometry args={[0.55, 24, 24]} />
 		<T.MeshStandardMaterial {color} transparent {opacity} roughness={0.45} metalness={0.15} />
 	</T.Mesh>
 	{#if showLabels}
 		<Text
-			position={[pos.x, pos.y + 1.05, pos.z]}
+			position={[node.position.x, node.position.y + 1.05, node.position.z]}
 			text={node.label}
 			fontSize={0.45}
 			anchorX="center"
@@ -394,28 +231,23 @@
 {/each}
 
 {#each edges as edge (edge.id)}
-	{@const fromPos = nodePos(edge.from)}
-	{@const toPos = nodePos(edge.to)}
-	{#if app.document.nodes[edge.from] && app.document.nodes[edge.to]}
-		{@const geo = edgeObject(fromPos, toPos)}
+	{@const from = app.document.nodes[edge.from]}
+	{@const to = app.document.nodes[edge.to]}
+	{#if from && to}
+		{@const geo = edgeObject(from.position, to.position)}
 		{@const hidden =
 			app.filters.hideFiltered &&
 			app.filters.tags.length > 0 &&
 			(!app.nodePassesFilter(edge.from) || !app.nodePassesFilter(edge.to))}
 		{#if !hidden}
-			{@const color = edgeColor(edge.id)}
-			{@const opacity = edgeOpacity(edge.id)}
 			<T.Mesh position={[geo.mid.x, geo.mid.y, geo.mid.z]} quaternion={geo.quaternion}>
 				<T.CylinderGeometry args={[0.045, 0.045, geo.len, 8]} />
-				<T.MeshStandardMaterial {color} transparent {opacity} roughness={0.45} metalness={0.15} />
+				<T.MeshStandardMaterial
+					color={edgeColor(edge.id)}
+					transparent
+					opacity={edgeOpacity(edge.id)}
+				/>
 			</T.Mesh>
-			{#if edge.directed}
-				{@const arrow = edgeArrowHead(toPos, geo)}
-				<T.Mesh position={[arrow.x, arrow.y, arrow.z]} quaternion={geo.quaternion}>
-					<T.ConeGeometry args={[ARROW_RADIUS, ARROW_HEIGHT, 8]} />
-					<T.MeshStandardMaterial {color} transparent {opacity} roughness={0.45} metalness={0.15} />
-				</T.Mesh>
-			{/if}
 		{/if}
 	{/if}
 {/each}

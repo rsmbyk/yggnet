@@ -3,15 +3,8 @@ export { createEmptyDocument, nodeCount, edgeCount } from './model/document';
 export {
 	createSelection,
 	selectNode,
-	selectNodes,
-	addNodeToSelection,
-	removeNodeFromSelection,
-	toggleNodeInSelection,
-	selectEdge,
-	toggleEdgeInSelection,
 	clearSelection,
 	isSelected,
-	isEdgeSelected,
 	type SelectionState
 } from './selection/selection';
 export type {
