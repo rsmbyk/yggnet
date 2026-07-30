@@ -4,7 +4,7 @@ item: ITEM-035
 type: feat
 feature_area: analyze
 bump: minor
-status: ready
+status: done
 title: "Compare stored runs dual view"
 created: 2026-07-30
 updated: 2026-07-30
@@ -40,11 +40,11 @@ Implements ITEM-035. Progressive disclosure; manager for structure; world for pr
 
 ### Acceptance criteria
 
-- [ ] User can select two stored runs from Analyze history
-- [ ] World/manager show a dual overlay or side-by-side result for those runs
-- [ ] Each run remains visually distinguishable
-- [ ] Stale runs are clearly marked and do not silently look current
-- [ ] Clearing compare restores the previous single-run view
+- [x] User can select two stored runs from Analyze history
+- [x] World/manager show a dual overlay or side-by-side result for those runs
+- [x] Each run remains visually distinguishable
+- [x] Stale runs are clearly marked and do not silently look current
+- [x] Clearing compare restores the previous single-run view
 
 ## Data / domain
 

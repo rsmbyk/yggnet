@@ -15,8 +15,11 @@
 	let stepNote = $state('');
 	let randomN = $state(12);
 	let compareAlgo = $state('dijkstra');
+	let compareRunIdA = $state('');
+	let compareRunIdB = $state('');
 
 	const nodes = $derived(Object.values(app.document.nodes));
+	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const edges = $derived(Object.values(app.document.edges));
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
@@ -43,6 +46,22 @@
 		const { hops, cost } = pathSeriesMetrics(run.result.edgeIds, edgeWeights);
 		return { hops, cost, nodes: run.result.nodeIds.length };
 	}
+
+	function runLabel(run: (typeof storedRuns)[number]): string {
+		const stale = run.stale ? ' (stale)' : '';
+		return `${run.algorithmId} · ${run.id.slice(0, 8)}…${stale}`;
+	}
+
+	$effect(() => {
+		const ids = storedRuns.map((r) => r.id);
+		if (ids.length === 0) {
+			compareRunIdA = '';
+			compareRunIdB = '';
+			return;
+		}
+		if (!ids.includes(compareRunIdA)) compareRunIdA = ids[0];
+		if (!ids.includes(compareRunIdB)) compareRunIdB = ids.length > 1 ? ids[1] : ids[0];
+	});
 
 	const groupIds = $derived(
 		[
@@ -628,18 +647,60 @@
 					</div>
 				{/if}
 			{/if}
-			{#if Object.keys(app.runStore.runs).length}
+			{#if storedRuns.length >= 1}
+				<div class="compare-runs" data-testid="compare-runs-section">
+					<h3 class="subhead">Compare stored runs</h3>
+					<div class="row wrap">
+						<label>
+							Run A
+							<select data-testid="compare-run-a" bind:value={compareRunIdA} aria-label="Compare run A">
+								{#each storedRuns as run (run.id)}
+									<option value={run.id}>{runLabel(run)}</option>
+								{/each}
+							</select>
+						</label>
+						<label>
+							Run B
+							<select data-testid="compare-run-b" bind:value={compareRunIdB} aria-label="Compare run B">
+								{#each storedRuns as run (run.id)}
+									<option value={run.id}>{runLabel(run)}</option>
+								{/each}
+							</select>
+						</label>
+						<button
+							type="button"
+							data-testid="compare-runs"
+							disabled={storedRuns.length < 2 || compareRunIdA === compareRunIdB}
+							onclick={() => app.compareRuns(compareRunIdA, compareRunIdB)}>Compare runs</button
+						>
+					</div>
+				</div>
 				<details>
-					<summary>Runs</summary>
+					<summary>Run history ({storedRuns.length})</summary>
 					<ul class="list">
-						{#each Object.values(app.runStore.runs) as run (run.id)}
-							<li class="muted">
-								{run.algorithmId} {run.stale ? 'stale' : 'ok'}
-								<button type="button" onclick={() => app.setCompareRunIds([run.id, app.analyze.compareRunIds[1] ?? run.id])}
-									>A</button
+						{#each storedRuns as run (run.id)}
+							<li class="muted" class:stale-run={run.stale}>
+								{run.algorithmId}
+								{#if run.stale}<span class="tag stale-tag">stale</span>{:else}<span class="tag ok-tag">current</span>{/if}
+								<button
+									type="button"
+									data-testid="set-compare-run-a"
+									onclick={() => {
+										compareRunIdA = run.id;
+										if (compareRunIdB === run.id && storedRuns.length > 1) {
+											compareRunIdB = storedRuns.find((r) => r.id !== run.id)?.id ?? run.id;
+										}
+									}}>A</button
 								>
-								<button type="button" onclick={() => app.setCompareRunIds([app.analyze.compareRunIds[0] ?? run.id, run.id])}
-									>B</button
+								<button
+									type="button"
+									data-testid="set-compare-run-b"
+									onclick={() => {
+										compareRunIdB = run.id;
+										if (compareRunIdA === run.id && storedRuns.length > 1) {
+											compareRunIdA = storedRuns.find((r) => r.id !== run.id)?.id ?? run.id;
+										}
+									}}>B</button
 								>
 							</li>
 						{/each}
@@ -855,6 +916,32 @@
 	.tag {
 		font-size: 0.7rem;
 		color: var(--yg-accent);
+	}
+
+	.stale-tag {
+		color: #d4893a;
+		font-weight: 600;
+	}
+
+	.ok-tag {
+		color: #2f9e8a;
+	}
+
+	.stale-run {
+		opacity: 0.85;
+	}
+
+	.subhead {
+		margin: 0.75rem 0 0.35rem;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--yg-muted);
+		font-weight: 600;
+	}
+
+	.compare-runs label {
+		margin-bottom: 0;
 	}
 
 	.muted {

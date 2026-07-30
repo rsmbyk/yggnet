@@ -604,6 +604,28 @@ class AppStore {
 		this.rebuildModeOverlay();
 	}
 
+	/** Compare two stored runs in a dual overlay (series A / B). */
+	compareRuns(runIdA: string, runIdB: string): void {
+		const a = getRun(this.runStore, runIdA);
+		const b = getRun(this.runStore, runIdB);
+		if (!a || !b) {
+			this.statusMessage = 'Select two valid stored runs';
+			return;
+		}
+		if (runIdA === runIdB) {
+			this.statusMessage = 'Pick two different runs to compare';
+			return;
+		}
+		this.analyze = {
+			...this.analyze,
+			compareRunIds: [runIdA, runIdB],
+			lastRunId: runIdA
+		};
+		this.mode = 'analyze';
+		this.rebuildModeOverlay();
+		this.statusMessage = `Comparing ${a.algorithmId} vs ${b.algorithmId}`;
+	}
+
 	clearCompare(): void {
 		const fallback = this.analyze.compareRunIds[0] ?? this.analyze.lastRunId;
 		this.analyze = { ...this.analyze, compareRunIds: [] };
