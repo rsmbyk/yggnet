@@ -19,6 +19,7 @@ import {
 	execute,
 	layoutUnpinned,
 	findAllSimplePaths,
+	findNodesByQuery as searchNodesByQuery,
 	findShortestPaths,
 	getAlgorithm,
 	getRun,
@@ -738,6 +739,15 @@ class AppStore {
 		this.statusMessage = 'Saved';
 	}
 
+	saveNamedSlot(name: string): void {
+		const slot = name.trim();
+		if (!slot) {
+			this.statusMessage = 'Enter a slot name';
+			return;
+		}
+		this.saveToSlot(slot);
+	}
+
 	loadFromSlot(slot = 'default'): void {
 		if (typeof localStorage === 'undefined') return;
 		const raw = localStorage.getItem(`yggnet.save.${slot}`);
@@ -751,6 +761,39 @@ class AppStore {
 		} catch (e) {
 			this.statusMessage = e instanceof Error ? e.message : 'Load failed';
 		}
+	}
+
+	loadNamedSlot(name: string): void {
+		const slot = name.trim();
+		if (!slot) {
+			this.statusMessage = 'Enter a slot name';
+			return;
+		}
+		if (typeof localStorage === 'undefined') return;
+		const raw = localStorage.getItem(`yggnet.save.${slot}`);
+		if (!raw) {
+			this.statusMessage = 'No save found';
+			return;
+		}
+		if (!this.confirmReplaceDocument()) return;
+		this.loadFromSlot(slot);
+	}
+
+	private confirmReplaceDocument(): boolean {
+		if (typeof window === 'undefined') return true;
+		if (Object.keys(this.document.nodes).length === 0) return true;
+		return window.confirm('Replace the current document with the saved one?');
+	}
+
+	jumpToNode(nodeId: NodeId): void {
+		const node = this.document.nodes[nodeId];
+		if (!node) return;
+		this.setSelection(nodeId);
+		this.setCamera({
+			target: { ...node.position },
+			distance: Math.min(this.camera.distance, 14)
+		});
+		this.setMode('explore');
 	}
 
 	exportJson(): string {
@@ -789,12 +832,11 @@ class AppStore {
 	}
 
 	findNodeByQuery(query: string): NodeId | null {
-		const q = query.trim().toLowerCase();
-		if (!q) return null;
-		const hit = Object.values(this.document.nodes).find(
-			(n) => n.label.toLowerCase().includes(q) || n.id.toLowerCase().startsWith(q)
-		);
-		return hit?.id ?? null;
+		return searchNodesByQuery(this.document, query)[0] ?? null;
+	}
+
+	findNodesByQuery(query: string): NodeId[] {
+		return searchNodesByQuery(this.document, query);
 	}
 
 	pathKey(path: GraphPath, index: number): string {

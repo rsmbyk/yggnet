@@ -1,6 +1,6 @@
 ---
 id: ITEM-038
-status: ready
+status: done
 title: "Save/load named docs + palette find"
 type: feat
 priority: P2
