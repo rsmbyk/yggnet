@@ -4,7 +4,7 @@ item: ITEM-030
 type: feat
 feature_area: world
 bump: minor
-status: ready
+status: done
 title: "Multi-node groups from UI"
 created: 2026-07-30
 updated: 2026-07-30
