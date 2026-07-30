@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { app } from '$lib/session/app.svelte';
 	import { pathSeriesMetrics } from '$lib/graph';
-	import type { AppMode } from '$lib/graph';
+	import type { AppMode, GraphAttachment } from '$lib/graph';
 
 	const modes: { id: AppMode; label: string }[] = [
 		{ id: 'explore', label: 'Explore' },
@@ -17,6 +17,10 @@
 	let compareAlgo = $state('dijkstra');
 	let compareRunIdA = $state('');
 	let compareRunIdB = $state('');
+	let attachName = $state('');
+	let attachPayload = $state('');
+	let edgeAttachName = $state('');
+	let edgeAttachPayload = $state('');
 
 	const nodes = $derived(Object.values(app.document.nodes));
 	const storedRuns = $derived(Object.values(app.runStore.runs));
@@ -25,6 +29,8 @@
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
 	const selectedCount = $derived(app.selection.nodeIds.length);
 	const selectedNode = $derived(selectedId ? app.document.nodes[selectedId] : null);
+	const selectedEdgeId = $derived(app.selection.edgeIds[0] ?? null);
+	const selectedEdge = $derived(selectedEdgeId ? app.document.edges[selectedEdgeId] : null);
 	const lastRun = $derived(
 		app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null
 	);
@@ -148,6 +154,33 @@
 		if (cur.length >= 2) cur.shift();
 		cur.push(id);
 		app.setDiffIds(cur);
+	}
+
+	function addAttachment(
+		kind: 'node' | 'edge',
+		id: string,
+		current: GraphAttachment[],
+		name: string,
+		payload: string,
+		clear: () => void
+	) {
+		const trimmed = name.trim();
+		if (!trimmed) return;
+		const next = [...current, { name: trimmed, payload }];
+		if (kind === 'node') app.updateNode(id, { attachments: next });
+		else app.updateEdge(id, { attachments: next });
+		clear();
+	}
+
+	function removeAttachment(
+		kind: 'node' | 'edge',
+		id: string,
+		current: GraphAttachment[],
+		index: number
+	) {
+		const next = current.filter((_, i) => i !== index);
+		if (kind === 'node') app.updateNode(id, { attachments: next });
+		else app.updateEdge(id, { attachments: next });
 	}
 </script>
 
@@ -353,6 +386,54 @@
 				/>
 				Pinned
 			</label>
+			<div class="attachments" data-testid="attachments-section">
+				<h3 class="subhead">Attachments</h3>
+				<ul class="list attachment-list" data-testid="attachment-list">
+					{#each selectedNode.attachments as att, i (i)}
+						<li class="attachment-row">
+							<span class="attachment-name">{att.name}</span>
+							<span class="muted attachment-preview">{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span>
+							<button
+								type="button"
+								data-testid={`remove-attachment-${i}`}
+								aria-label={`Remove attachment ${att.name}`}
+								onclick={() =>
+									removeAttachment('node', selectedNode.id, selectedNode.attachments, i)}>×</button
+							>
+						</li>
+					{/each}
+				</ul>
+				<div class="row wrap">
+					<input
+						data-testid="attachment-name"
+						placeholder="Name"
+						aria-label="Attachment name"
+						bind:value={attachName}
+					/>
+					<input
+						data-testid="attachment-payload"
+						placeholder="Text or data URL"
+						aria-label="Attachment payload"
+						bind:value={attachPayload}
+					/>
+					<button
+						type="button"
+						data-testid="add-attachment"
+						onclick={() =>
+							addAttachment(
+								'node',
+								selectedNode.id,
+								selectedNode.attachments,
+								attachName,
+								attachPayload,
+								() => {
+									attachName = '';
+									attachPayload = '';
+								}
+							)}>Add</button
+					>
+				</div>
+			</div>
 			<div class="row wrap">
 				<button type="button" data-testid="delete-node" onclick={() => app.removeNode(selectedNode.id)}
 					>Delete</button
@@ -360,6 +441,65 @@
 				<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
 					>Add to diff</button
 				>
+			</div>
+		</section>
+	{/if}
+
+	{#if selectedEdge}
+		<section class="block" data-testid="edge-editor">
+			<h2>Edit edge</h2>
+			<p class="hint">
+				{app.document.nodes[selectedEdge.from]?.label ?? '?'}
+				{selectedEdge.directed ? '→' : '—'}
+				{app.document.nodes[selectedEdge.to]?.label ?? '?'}
+			</p>
+			<div class="attachments" data-testid="edge-attachments-section">
+				<h3 class="subhead">Attachments</h3>
+				<ul class="list attachment-list" data-testid="edge-attachment-list">
+					{#each selectedEdge.attachments as att, i (i)}
+						<li class="attachment-row">
+							<span class="attachment-name">{att.name}</span>
+							<span class="muted attachment-preview">{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span>
+							<button
+								type="button"
+								data-testid={`remove-edge-attachment-${i}`}
+								aria-label={`Remove attachment ${att.name}`}
+								onclick={() =>
+									removeAttachment('edge', selectedEdge.id, selectedEdge.attachments, i)}>×</button
+							>
+						</li>
+					{/each}
+				</ul>
+				<div class="row wrap">
+					<input
+						data-testid="edge-attachment-name"
+						placeholder="Name"
+						aria-label="Edge attachment name"
+						bind:value={edgeAttachName}
+					/>
+					<input
+						data-testid="edge-attachment-payload"
+						placeholder="Text or data URL"
+						aria-label="Edge attachment payload"
+						bind:value={edgeAttachPayload}
+					/>
+					<button
+						type="button"
+						data-testid="add-edge-attachment"
+						onclick={() =>
+							addAttachment(
+								'edge',
+								selectedEdge.id,
+								selectedEdge.attachments,
+								edgeAttachName,
+								edgeAttachPayload,
+								() => {
+									edgeAttachName = '';
+									edgeAttachPayload = '';
+								}
+							)}>Add</button
+					>
+				</div>
 			</div>
 		</section>
 	{/if}
@@ -1034,5 +1174,28 @@
 
 	.series-b {
 		color: #d4893a;
+	}
+
+	.attachments {
+		margin-bottom: 0.5rem;
+	}
+
+	.attachment-row {
+		display: flex;
+		gap: 0.35rem;
+		align-items: center;
+		font-size: 0.8rem;
+	}
+
+	.attachment-name {
+		font-weight: 500;
+		min-width: 3rem;
+	}
+
+	.attachment-preview {
+		flex: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 </style>

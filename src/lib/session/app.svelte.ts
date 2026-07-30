@@ -277,7 +277,7 @@ class AppStore {
 			tags: [...prev.tags],
 			weight: prev.weight,
 			notes: prev.notes,
-			attachments: [...prev.attachments],
+			attachments: prev.attachments.map((a) => ({ ...a })),
 			data: { ...prev.data }
 		};
 		this.mutate((d) => ({
@@ -315,7 +315,7 @@ class AppStore {
 			label: prev.label,
 			weight: prev.weight,
 			notes: prev.notes,
-			attachments: [...prev.attachments],
+			attachments: prev.attachments.map((a) => ({ ...a })),
 			data: { ...prev.data }
 		};
 		this.mutate((d) => ({

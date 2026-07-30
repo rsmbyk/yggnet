@@ -1,4 +1,12 @@
-export type { GraphDocument, GraphNode, GraphEdge, NodeId, EdgeId, AppMode } from './model/types';
+export type {
+	GraphDocument,
+	GraphNode,
+	GraphEdge,
+	GraphAttachment,
+	NodeId,
+	EdgeId,
+	AppMode
+} from './model/types';
 export { createEmptyDocument, nodeCount, edgeCount } from './model/document';
 export {
 	createSelection,

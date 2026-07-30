@@ -4,7 +4,7 @@ item: ITEM-037
 type: feat
 feature_area: manager
 bump: minor
-status: ready
+status: done
 title: "Attachments on nodes and edges"
 created: 2026-07-30
 updated: 2026-07-30
@@ -41,11 +41,11 @@ Implements ITEM-037. Progressive disclosure; manager for structure; world for pr
 
 ### Acceptance criteria
 
-- [ ] User can add an attachment to the selected node or edge (name + local payload)
-- [ ] Attachments list is visible and removable in the manager
-- [ ] Attachments persist in GraphDocument JSON (save/load/import/export)
-- [ ] Attachment changes are undoable where other field edits are
-- [ ] No remote hosting or file-sync backend
+- [x] User can add an attachment to the selected node or edge (name + local payload)
+- [x] Attachments list is visible and removable in the manager
+- [x] Attachments persist in GraphDocument JSON (save/load/import/export)
+- [x] Attachment changes are undoable where other field edits are
+- [x] No remote hosting or file-sync backend
 
 ## Data / domain
 

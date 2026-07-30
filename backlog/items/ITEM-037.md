@@ -1,6 +1,6 @@
 ---
 id: ITEM-037
-status: ready
+status: done
 title: "Attachments on nodes and edges"
 type: feat
 priority: P2
