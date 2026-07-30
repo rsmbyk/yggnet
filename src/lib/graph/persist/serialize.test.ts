@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyDocument } from '../model/document';
-import { addNode } from '../ops/ops';
+import { addNode, updateNode } from '../ops/ops';
 import { cloneDocument, parseDocument, serializeDocument } from './serialize';
 
 describe('serialize', () => {
@@ -10,6 +10,33 @@ describe('serialize', () => {
 		const json = serializeDocument(doc);
 		const parsed = parseDocument(json);
 		expect(parsed).toEqual(doc);
+	});
+
+	it('round-trips node group membership', () => {
+		let doc = createEmptyDocument('Groups');
+		const a = addNode(doc, { label: 'A' });
+		doc = a.doc;
+		const b = addNode(doc, { label: 'B' });
+		doc = b.doc;
+		const groupId = 'district-1';
+		doc = updateNode(doc, a.nodeId, { groupId });
+		doc = updateNode(doc, b.nodeId, { groupId });
+		const parsed = parseDocument(serializeDocument(doc));
+		expect(parsed.nodes[a.nodeId].groupId).toBe(groupId);
+		expect(parsed.nodes[b.nodeId].groupId).toBe(groupId);
+	});
+
+	it('round-trips node attachments', () => {
+		let doc = createEmptyDocument('Attachments');
+		const a = addNode(doc, { label: 'A' });
+		doc = a.doc;
+		const attachments = [
+			{ name: 'readme', payload: 'hello' },
+			{ name: 'data', payload: 'data:text/plain,world' }
+		];
+		doc = updateNode(doc, a.nodeId, { attachments });
+		const parsed = parseDocument(serializeDocument(doc));
+		expect(parsed.nodes[a.nodeId].attachments).toEqual(attachments);
 	});
 
 	it('cloneDocument returns a deep copy', () => {

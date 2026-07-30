@@ -1,10 +1,25 @@
-export type { GraphDocument, GraphNode, GraphEdge, NodeId, EdgeId, AppMode } from './model/types';
+export type {
+	GraphDocument,
+	GraphNode,
+	GraphEdge,
+	GraphAttachment,
+	NodeId,
+	EdgeId,
+	AppMode
+} from './model/types';
 export { createEmptyDocument, nodeCount, edgeCount } from './model/document';
 export {
 	createSelection,
 	selectNode,
+	selectNodes,
+	addNodeToSelection,
+	removeNodeFromSelection,
+	toggleNodeInSelection,
+	selectEdge,
+	toggleEdgeInSelection,
 	clearSelection,
 	isSelected,
+	isEdgeSelected,
 	type SelectionState
 } from './selection/selection';
 export type {
@@ -49,8 +64,11 @@ export { serializeDocument, parseDocument, cloneDocument } from './persist/seria
 export {
 	createEmptyOverlay,
 	pathOverlay,
+	compareOverlay,
+	pathSeriesMetrics,
 	type Overlay,
-	type OverlayKind
+	type OverlayKind,
+	type OverlaySeries
 } from './overlays/overlays';
 export {
 	createRunStore,
@@ -68,3 +86,5 @@ export {
 	formatSemVer,
 	type Bump
 } from './release/semver';
+export { layoutUnpinned, type LayoutOptions } from './layout/layout';
+export { findNodeByQuery, findNodesByQuery } from './search/findNodes';

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { app } from '$lib/session/app.svelte';
-	import type { AppMode } from '$lib/graph';
+	import { pathSeriesMetrics } from '$lib/graph';
+	import type { AppMode, GraphAttachment } from '$lib/graph';
 
 	const modes: { id: AppMode; label: string }[] = [
 		{ id: 'explore', label: 'Explore' },
@@ -14,15 +15,79 @@
 	let stepNote = $state('');
 	let randomN = $state(12);
 	let compareAlgo = $state('dijkstra');
+	let compareRunIdA = $state('');
+	let compareRunIdB = $state('');
+	let attachName = $state('');
+	let attachPayload = $state('');
+	let edgeAttachName = $state('');
+	let edgeAttachPayload = $state('');
+	let saveSlotName = $state('');
 
 	const nodes = $derived(Object.values(app.document.nodes));
+	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const edges = $derived(Object.values(app.document.edges));
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
+	const selectedIds = $derived(new Set(app.selection.nodeIds));
+	const selectedCount = $derived(app.selection.nodeIds.length);
 	const selectedNode = $derived(selectedId ? app.document.nodes[selectedId] : null);
+	const selectedEdgeId = $derived(app.selection.edgeIds[0] ?? null);
+	const selectedEdge = $derived(selectedEdgeId ? app.document.edges[selectedEdgeId] : null);
 	const lastRun = $derived(
 		app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null
 	);
 	const traceLen = $derived(lastRun?.trace.length ?? 0);
+	const currentStepAnnotation = $derived(lastRun?.annotations?.[app.analyze.stepIndex] ?? '');
+
+	$effect(() => {
+		if (!app.analyze.playback || !lastRun || traceLen < 2) return;
+		const maxStep = Math.max(0, traceLen - 1);
+		if (app.analyze.stepIndex >= maxStep) {
+			app.setPlayback(false);
+			return;
+		}
+		const handle = setInterval(() => {
+			const idx = app.analyze.stepIndex;
+			if (idx >= maxStep) {
+				app.setPlayback(false);
+				return;
+			}
+			app.setStepIndex(idx + 1);
+		}, 400);
+		return () => clearInterval(handle);
+	});
+
+	const compareRunA = $derived(
+		app.analyze.compareRunIds[0] ? app.runStore.runs[app.analyze.compareRunIds[0]] : null
+	);
+	const compareRunB = $derived(
+		app.analyze.compareRunIds[1] ? app.runStore.runs[app.analyze.compareRunIds[1]] : null
+	);
+
+	const edgeWeights = $derived(
+		Object.fromEntries(Object.values(app.document.edges).map((e) => [e.id, e.weight]))
+	);
+
+	function compareMetrics(run: typeof compareRunA) {
+		if (!run || run.result.kind !== 'path') return { hops: 0, cost: 0, nodes: 0 };
+		const { hops, cost } = pathSeriesMetrics(run.result.edgeIds, edgeWeights);
+		return { hops, cost, nodes: run.result.nodeIds.length };
+	}
+
+	function runLabel(run: (typeof storedRuns)[number]): string {
+		const stale = run.stale ? ' (stale)' : '';
+		return `${run.algorithmId} · ${run.id.slice(0, 8)}…${stale}`;
+	}
+
+	$effect(() => {
+		const ids = storedRuns.map((r) => r.id);
+		if (ids.length === 0) {
+			compareRunIdA = '';
+			compareRunIdB = '';
+			return;
+		}
+		if (!ids.includes(compareRunIdA)) compareRunIdA = ids[0];
+		if (!ids.includes(compareRunIdB)) compareRunIdB = ids.length > 1 ? ids[1] : ids[0];
+	});
 
 	const groupIds = $derived(
 		[
@@ -38,6 +103,14 @@
 	const diffB = $derived(
 		app.ui.diffIds[1] ? app.document.nodes[app.ui.diffIds[1]] : null
 	);
+
+	function onSelectNode(id: string, ev: MouseEvent) {
+		app.selectNodeWithModifiers(id, ev.ctrlKey || ev.metaKey || ev.shiftKey);
+	}
+
+	function onSelectEdge(id: string, ev: MouseEvent) {
+		app.toggleEdgeSelection(id, ev.ctrlKey || ev.metaKey || ev.shiftKey);
+	}
 
 	function setMode(mode: AppMode) {
 		app.setMode(mode);
@@ -83,6 +156,33 @@
 		cur.push(id);
 		app.setDiffIds(cur);
 	}
+
+	function addAttachment(
+		kind: 'node' | 'edge',
+		id: string,
+		current: GraphAttachment[],
+		name: string,
+		payload: string,
+		clear: () => void
+	) {
+		const trimmed = name.trim();
+		if (!trimmed) return;
+		const next = [...current, { name: trimmed, payload }];
+		if (kind === 'node') app.updateNode(id, { attachments: next });
+		else app.updateEdge(id, { attachments: next });
+		clear();
+	}
+
+	function removeAttachment(
+		kind: 'node' | 'edge',
+		id: string,
+		current: GraphAttachment[],
+		index: number
+	) {
+		const next = current.filter((_, i) => i !== index);
+		if (kind === 'node') app.updateNode(id, { attachments: next });
+		else app.updateEdge(id, { attachments: next });
+	}
 </script>
 
 <aside class="manager" data-testid="yggnet-manager">
@@ -124,6 +224,19 @@
 		>
 		<button type="button" data-testid="save" onclick={() => app.saveToSlot()}>Save</button>
 		<button type="button" data-testid="load" onclick={() => app.loadFromSlot()}>Load</button>
+		<input
+			type="text"
+			placeholder="Slot name"
+			data-testid="save-slot-name"
+			bind:value={saveSlotName}
+			aria-label="Named save slot"
+		/>
+		<button type="button" data-testid="save-named" onclick={() => app.saveNamedSlot(saveSlotName)}
+			>Save named</button
+		>
+		<button type="button" data-testid="load-named" onclick={() => app.loadNamedSlot(saveSlotName)}
+			>Load named</button
+		>
 		<button type="button" data-testid="export" onclick={() => app.downloadExport()}>Export</button>
 		<label class="file-btn">
 			Import
@@ -166,17 +279,23 @@
 	<section class="block" data-testid="nodes-section">
 		<div class="row between">
 			<h2>Nodes ({nodes.length})</h2>
-			<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
+			<div class="row wrap">
+				<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
+				<button type="button" data-testid="relayout" onclick={() => app.relayout()}>Re-layout</button>
+			</div>
 		</div>
+		{#if selectedCount > 0}
+			<p class="hint" data-testid="selection-count">{selectedCount} selected (Ctrl/Shift-click to multi)</p>
+		{/if}
 		<ul class="list" data-testid="node-list">
 			{#each nodes as node (node.id)}
 				<li>
 					<button
 						type="button"
 						class="list-item"
-						class:selected={selectedId === node.id}
+						class:selected={selectedIds.has(node.id)}
 						data-testid={`node-item-${node.id}`}
-						onclick={() => app.setSelection(node.id)}
+						onclick={(e) => onSelectNode(node.id, e)}
 					>
 						<span>{node.label}</span>
 						{#if node.pinned}<span class="tag">pin</span>{/if}
@@ -184,6 +303,16 @@
 				</li>
 			{/each}
 		</ul>
+		{#if selectedCount > 1}
+			<div class="row wrap">
+				<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
+					>Group {selectedCount}</button
+				>
+				<button type="button" data-testid="clear-selection" onclick={() => app.clearAllSelection()}
+					>Clear selection</button
+				>
+			</div>
+		{/if}
 	</section>
 
 	{#if selectedNode}
@@ -206,6 +335,47 @@
 					oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
 				></textarea>
 			</label>
+			<div class="pos-row" data-testid="node-position">
+				<label>
+					X
+					<input
+						type="number"
+						step="0.1"
+						data-testid="node-pos-x"
+						value={selectedNode.position.x}
+						oninput={(e) =>
+							app.updateNode(selectedNode.id, {
+								position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
+							})}
+					/>
+				</label>
+				<label>
+					Y
+					<input
+						type="number"
+						step="0.1"
+						data-testid="node-pos-y"
+						value={selectedNode.position.y}
+						oninput={(e) =>
+							app.updateNode(selectedNode.id, {
+								position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
+							})}
+					/>
+				</label>
+				<label>
+					Z
+					<input
+						type="number"
+						step="0.1"
+						data-testid="node-pos-z"
+						value={selectedNode.position.z}
+						oninput={(e) =>
+							app.updateNode(selectedNode.id, {
+								position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
+							})}
+					/>
+				</label>
+			</div>
 			<label>
 				Tags (comma)
 				<input
@@ -230,16 +400,120 @@
 				/>
 				Pinned
 			</label>
+			<div class="attachments" data-testid="attachments-section">
+				<h3 class="subhead">Attachments</h3>
+				<ul class="list attachment-list" data-testid="attachment-list">
+					{#each selectedNode.attachments as att, i (i)}
+						<li class="attachment-row">
+							<span class="attachment-name">{att.name}</span>
+							<span class="muted attachment-preview">{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span>
+							<button
+								type="button"
+								data-testid={`remove-attachment-${i}`}
+								aria-label={`Remove attachment ${att.name}`}
+								onclick={() =>
+									removeAttachment('node', selectedNode.id, selectedNode.attachments, i)}>×</button
+							>
+						</li>
+					{/each}
+				</ul>
+				<div class="row wrap">
+					<input
+						data-testid="attachment-name"
+						placeholder="Name"
+						aria-label="Attachment name"
+						bind:value={attachName}
+					/>
+					<input
+						data-testid="attachment-payload"
+						placeholder="Text or data URL"
+						aria-label="Attachment payload"
+						bind:value={attachPayload}
+					/>
+					<button
+						type="button"
+						data-testid="add-attachment"
+						onclick={() =>
+							addAttachment(
+								'node',
+								selectedNode.id,
+								selectedNode.attachments,
+								attachName,
+								attachPayload,
+								() => {
+									attachName = '';
+									attachPayload = '';
+								}
+							)}>Add</button
+					>
+				</div>
+			</div>
 			<div class="row wrap">
 				<button type="button" data-testid="delete-node" onclick={() => app.removeNode(selectedNode.id)}
 					>Delete</button
 				>
-				<button type="button" data-testid="group-selected" onclick={() => app.groupSelected()}
-					>Group</button
-				>
 				<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
 					>Add to diff</button
 				>
+			</div>
+		</section>
+	{/if}
+
+	{#if selectedEdge}
+		<section class="block" data-testid="edge-editor">
+			<h2>Edit edge</h2>
+			<p class="hint">
+				{app.document.nodes[selectedEdge.from]?.label ?? '?'}
+				{selectedEdge.directed ? '→' : '—'}
+				{app.document.nodes[selectedEdge.to]?.label ?? '?'}
+			</p>
+			<div class="attachments" data-testid="edge-attachments-section">
+				<h3 class="subhead">Attachments</h3>
+				<ul class="list attachment-list" data-testid="edge-attachment-list">
+					{#each selectedEdge.attachments as att, i (i)}
+						<li class="attachment-row">
+							<span class="attachment-name">{att.name}</span>
+							<span class="muted attachment-preview">{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span>
+							<button
+								type="button"
+								data-testid={`remove-edge-attachment-${i}`}
+								aria-label={`Remove attachment ${att.name}`}
+								onclick={() =>
+									removeAttachment('edge', selectedEdge.id, selectedEdge.attachments, i)}>×</button
+							>
+						</li>
+					{/each}
+				</ul>
+				<div class="row wrap">
+					<input
+						data-testid="edge-attachment-name"
+						placeholder="Name"
+						aria-label="Edge attachment name"
+						bind:value={edgeAttachName}
+					/>
+					<input
+						data-testid="edge-attachment-payload"
+						placeholder="Text or data URL"
+						aria-label="Edge attachment payload"
+						bind:value={edgeAttachPayload}
+					/>
+					<button
+						type="button"
+						data-testid="add-edge-attachment"
+						onclick={() =>
+							addAttachment(
+								'edge',
+								selectedEdge.id,
+								selectedEdge.attachments,
+								edgeAttachName,
+								edgeAttachPayload,
+								() => {
+									edgeAttachName = '';
+									edgeAttachPayload = '';
+								}
+							)}>Add</button
+					>
+				</div>
 			</div>
 		</section>
 	{/if}
@@ -266,12 +540,18 @@
 		<ul class="list" data-testid="edge-list">
 			{#each edges as edge (edge.id)}
 				<li class="edge-row">
-					<span class="edge-label">
+					<button
+						type="button"
+						class="list-item edge-select"
+						class:selected={app.selection.edgeIds.includes(edge.id)}
+						data-testid={`edge-item-${edge.id}`}
+						onclick={(e) => onSelectEdge(edge.id, e)}
+					>
 						{app.document.nodes[edge.from]?.label ?? '?'}
 						{edge.directed ? '→' : '—'}
 						{app.document.nodes[edge.to]?.label ?? '?'}
 						<span class="muted">w={edge.weight}</span>
-					</span>
+					</button>
 					<button
 						type="button"
 						data-testid={`edit-edge-${edge.id}`}
@@ -337,12 +617,24 @@
 		<section class="block" data-testid="groups-section">
 			<h2>Groups</h2>
 			{#each groupIds as gid (gid)}
-				<div class="row">
+				<div class="row" data-testid={`group-row-${gid}`}>
 					<span class="muted">{gid.slice(0, 8)}…</span>
-					<button type="button" onclick={() => app.toggleCollapseGroup(gid)}
-						>{app.groupsCollapsed.has(gid) ? 'Expand' : 'Collapse'}</button
+					{#if app.groupsCollapsed.has(gid)}
+						<button
+							type="button"
+							data-testid={`expand-group-${gid}`}
+							onclick={() => app.toggleCollapseGroup(gid)}>Expand</button
+						>
+					{:else}
+						<button
+							type="button"
+							data-testid={`collapse-group-${gid}`}
+							onclick={() => app.toggleCollapseGroup(gid)}>Collapse</button
+						>
+					{/if}
+					<button type="button" data-testid={`ungroup-${gid}`} onclick={() => app.ungroup(gid)}
+						>Ungroup</button
 					>
-					<button type="button" onclick={() => app.ungroup(gid)}>Ungroup</button>
 				</div>
 			{/each}
 		</section>
@@ -463,6 +755,32 @@
 					onclick={() => app.compareAlgorithms(compareAlgo)}>Compare</button
 				>
 			</div>
+			{#if compareRunA && compareRunB}
+				<section class="compare-panel" data-testid="compare-panel">
+					<h3>Compare</h3>
+					<div class="diff">
+						<div data-testid="compare-series-a">
+							<strong class="series-a">{compareRunA.algorithmId}</strong>
+							{#if compareRunA.stale}<span class="tag">stale</span>{/if}
+							<p class="muted">
+								{compareMetrics(compareRunA).nodes} nodes · {compareMetrics(compareRunA).hops} hops · cost
+								{compareMetrics(compareRunA).cost}
+							</p>
+						</div>
+						<div data-testid="compare-series-b">
+							<strong class="series-b">{compareRunB.algorithmId}</strong>
+							{#if compareRunB.stale}<span class="tag">stale</span>{/if}
+							<p class="muted">
+								{compareMetrics(compareRunB).nodes} nodes · {compareMetrics(compareRunB).hops} hops · cost
+								{compareMetrics(compareRunB).cost}
+							</p>
+						</div>
+					</div>
+					<button type="button" data-testid="clear-compare" onclick={() => app.clearCompare()}
+						>Dismiss compare</button
+					>
+				</section>
+			{/if}
 			{#if lastRun}
 				<p class="hint" data-testid="run-status">
 					Run {lastRun.id.slice(0, 8)}… {lastRun.stale ? '(stale)' : ''}
@@ -478,17 +796,37 @@
 					Show steps
 				</label>
 				{#if app.analyze.showSteps}
-					<label>
-						Step {app.analyze.stepIndex}/{Math.max(0, traceLen - 1)}
-						<input
-							type="range"
-							min="0"
-							max={Math.max(0, traceLen - 1)}
-							data-testid="step-scrubber"
-							value={app.analyze.stepIndex}
-							oninput={(e) => app.setStepIndex(Number(e.currentTarget.value))}
-						/>
-					</label>
+					<div class="row wrap">
+						<button
+							type="button"
+							data-testid="trace-play"
+							disabled={traceLen < 2}
+							onclick={() => app.togglePlayback()}
+						>
+							{app.analyze.playback ? 'Pause' : 'Play'}
+						</button>
+						<label>
+							Step {app.analyze.stepIndex}/{Math.max(0, traceLen - 1)}
+							<input
+								type="range"
+								min="0"
+								max={Math.max(0, traceLen - 1)}
+								data-testid="step-scrubber"
+								value={app.analyze.stepIndex}
+								oninput={(e) => {
+									app.setPlayback(false);
+									app.setStepIndex(Number(e.currentTarget.value));
+								}}
+							/>
+						</label>
+					</div>
+					<p class="hint" data-testid="step-annotation-display">
+						{#if currentStepAnnotation}
+							{currentStepAnnotation}
+						{:else}
+							<span class="muted">No note for this step</span>
+						{/if}
+					</p>
 					<div class="row">
 						<input data-testid="step-note" placeholder="Annotate step" bind:value={stepNote} />
 						<button
@@ -502,18 +840,60 @@
 					</div>
 				{/if}
 			{/if}
-			{#if Object.keys(app.runStore.runs).length}
+			{#if storedRuns.length >= 1}
+				<div class="compare-runs" data-testid="compare-runs-section">
+					<h3 class="subhead">Compare stored runs</h3>
+					<div class="row wrap">
+						<label>
+							Run A
+							<select data-testid="compare-run-a" bind:value={compareRunIdA} aria-label="Compare run A">
+								{#each storedRuns as run (run.id)}
+									<option value={run.id}>{runLabel(run)}</option>
+								{/each}
+							</select>
+						</label>
+						<label>
+							Run B
+							<select data-testid="compare-run-b" bind:value={compareRunIdB} aria-label="Compare run B">
+								{#each storedRuns as run (run.id)}
+									<option value={run.id}>{runLabel(run)}</option>
+								{/each}
+							</select>
+						</label>
+						<button
+							type="button"
+							data-testid="compare-runs"
+							disabled={storedRuns.length < 2 || compareRunIdA === compareRunIdB}
+							onclick={() => app.compareRuns(compareRunIdA, compareRunIdB)}>Compare runs</button
+						>
+					</div>
+				</div>
 				<details>
-					<summary>Runs</summary>
+					<summary>Run history ({storedRuns.length})</summary>
 					<ul class="list">
-						{#each Object.values(app.runStore.runs) as run (run.id)}
-							<li class="muted">
-								{run.algorithmId} {run.stale ? 'stale' : 'ok'}
-								<button type="button" onclick={() => app.setCompareRunIds([run.id, app.analyze.compareRunIds[1] ?? run.id])}
-									>A</button
+						{#each storedRuns as run (run.id)}
+							<li class="muted" class:stale-run={run.stale}>
+								{run.algorithmId}
+								{#if run.stale}<span class="tag stale-tag">stale</span>{:else}<span class="tag ok-tag">current</span>{/if}
+								<button
+									type="button"
+									data-testid="set-compare-run-a"
+									onclick={() => {
+										compareRunIdA = run.id;
+										if (compareRunIdB === run.id && storedRuns.length > 1) {
+											compareRunIdB = storedRuns.find((r) => r.id !== run.id)?.id ?? run.id;
+										}
+									}}>A</button
 								>
-								<button type="button" onclick={() => app.setCompareRunIds([app.analyze.compareRunIds[0] ?? run.id, run.id])}
-									>B</button
+								<button
+									type="button"
+									data-testid="set-compare-run-b"
+									onclick={() => {
+										compareRunIdB = run.id;
+										if (compareRunIdA === run.id && storedRuns.length > 1) {
+											compareRunIdA = storedRuns.find((r) => r.id !== run.id)?.id ?? run.id;
+										}
+									}}>B</button
 								>
 							</li>
 						{/each}
@@ -731,6 +1111,32 @@
 		color: var(--yg-accent);
 	}
 
+	.stale-tag {
+		color: #d4893a;
+		font-weight: 600;
+	}
+
+	.ok-tag {
+		color: #2f9e8a;
+	}
+
+	.stale-run {
+		opacity: 0.85;
+	}
+
+	.subhead {
+		margin: 0.75rem 0 0.35rem;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--yg-muted);
+		font-weight: 600;
+	}
+
+	.compare-runs label {
+		margin-bottom: 0;
+	}
+
 	.muted {
 		color: var(--yg-muted);
 		font-size: 0.8rem;
@@ -754,5 +1160,56 @@
 		grid-template-columns: 1fr 1fr;
 		gap: 0.5rem;
 		font-size: 0.85rem;
+	}
+
+	.pos-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: 0.35rem;
+		margin-bottom: 0.4rem;
+	}
+
+	.pos-row label {
+		margin-bottom: 0;
+	}
+
+	.compare-panel h3 {
+		margin: 0 0 0.4rem;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--yg-muted);
+		font-weight: 600;
+	}
+
+	.series-a {
+		color: #2f9e8a;
+	}
+
+	.series-b {
+		color: #d4893a;
+	}
+
+	.attachments {
+		margin-bottom: 0.5rem;
+	}
+
+	.attachment-row {
+		display: flex;
+		gap: 0.35rem;
+		align-items: center;
+		font-size: 0.8rem;
+	}
+
+	.attachment-name {
+		font-weight: 500;
+		min-width: 3rem;
+	}
+
+	.attachment-preview {
+		flex: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 </style>

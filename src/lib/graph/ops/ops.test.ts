@@ -35,7 +35,7 @@ describe('ops', () => {
 			notes: 'n',
 			groupId: 'g',
 			weight: 2,
-			attachments: ['a'],
+			attachments: [{ name: 'ref', payload: 'data:text/plain,hello' }],
 			data: { k: 1 }
 		});
 		expect(doc.nodes[nodeId]).toMatchObject({
@@ -46,9 +46,34 @@ describe('ops', () => {
 			notes: 'n',
 			groupId: 'g',
 			weight: 2,
-			attachments: ['a'],
+			attachments: [{ name: 'ref', payload: 'data:text/plain,hello' }],
 			data: { k: 1 }
 		});
+	});
+
+	it('updateNode replaces attachments array', () => {
+		let { doc, nodeId } = addNode(createEmptyDocument(), { label: 'A' });
+		const attachments = [
+			{ name: 'note', payload: 'hello' },
+			{ name: 'link', payload: 'data:text/plain,world' }
+		];
+		doc = updateNode(doc, nodeId, { attachments });
+		expect(doc.nodes[nodeId].attachments).toEqual(attachments);
+		doc = updateNode(doc, nodeId, { attachments: [{ name: 'only', payload: 'x' }] });
+		expect(doc.nodes[nodeId].attachments).toEqual([{ name: 'only', payload: 'x' }]);
+	});
+
+	it('updateEdge replaces attachments array', () => {
+		let doc = createEmptyDocument();
+		const a = addNode(doc);
+		doc = a.doc;
+		const b = addNode(doc);
+		doc = b.doc;
+		const e = addEdge(doc, { from: a.nodeId, to: b.nodeId });
+		doc = e.doc;
+		const attachments = [{ name: 'proof', payload: 'edge-data' }];
+		doc = updateEdge(doc, e.edgeId, { attachments });
+		expect(doc.edges[e.edgeId].attachments).toEqual(attachments);
 	});
 
 	it('updateNode merges patch and throws for missing id', () => {

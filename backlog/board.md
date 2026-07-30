@@ -31,19 +31,18 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 
 ## Backlog
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Updated |
+| ID | Title | Summary | Type | Priority | Effort | Spec | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ------- |
 
 ## Speccing
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
+| ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
 
 ## Ready
 
 | ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
-
 
 ## In progress
 

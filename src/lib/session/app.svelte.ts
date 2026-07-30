@@ -10,13 +10,16 @@ import {
 	clear as clearHistory,
 	clearSelection,
 	cloneDocument,
+	compareOverlay,
 	createEmptyDocument,
 	createEmptyOverlay,
 	createHistory,
 	createRunStore,
 	createSelection,
 	execute,
+	layoutUnpinned,
 	findAllSimplePaths,
+	findNodesByQuery as searchNodesByQuery,
 	findShortestPaths,
 	getAlgorithm,
 	getRun,
@@ -29,6 +32,8 @@ import {
 	removeEdge,
 	removeNode,
 	selectNode,
+	toggleEdgeInSelection,
+	toggleNodeInSelection,
 	serializeDocument,
 	undo as historyUndo,
 	updateEdge,
@@ -194,6 +199,30 @@ class AppStore {
 		this.selection = nodeId ? selectNode(this.selection, nodeId) : clearSelection(this.selection);
 	}
 
+	/**
+	 * Select a node. When `additive` is true (modifier click), toggle membership
+	 * without clearing other selected nodes.
+	 */
+	selectNodeWithModifiers(nodeId: NodeId, additive = false): void {
+		if (additive) {
+			this.selection = toggleNodeInSelection(this.selection, nodeId);
+			return;
+		}
+		this.setSelection(nodeId);
+	}
+
+	toggleEdgeSelection(edgeId: string, additive = false): void {
+		if (additive) {
+			this.selection = toggleEdgeInSelection(this.selection, edgeId);
+			return;
+		}
+		this.selection = toggleEdgeInSelection(clearSelection(this.selection), edgeId);
+	}
+
+	clearAllSelection(): void {
+		this.selection = clearSelection(this.selection);
+	}
+
 	canUndo = $derived(this.history.undoStack.length > 0);
 	canRedo = $derived(this.history.redoStack.length > 0);
 
@@ -249,7 +278,7 @@ class AppStore {
 			tags: [...prev.tags],
 			weight: prev.weight,
 			notes: prev.notes,
-			attachments: [...prev.attachments],
+			attachments: prev.attachments.map((a) => ({ ...a })),
 			data: { ...prev.data }
 		};
 		this.mutate((d) => ({
@@ -287,7 +316,7 @@ class AppStore {
 			label: prev.label,
 			weight: prev.weight,
 			notes: prev.notes,
-			attachments: [...prev.attachments],
+			attachments: prev.attachments.map((a) => ({ ...a })),
 			data: { ...prev.data }
 		};
 		this.mutate((d) => ({
@@ -308,13 +337,37 @@ class AppStore {
 		this.updateNode(id, { pinned });
 	}
 
+	/** Re-layout unpinned nodes; pinned nodes keep their positions. Undoable. */
+	relayout(): void {
+		const before = cloneDocument(this.document);
+		const after = layoutUnpinned(this.document);
+		const changed = Object.keys(after.nodes).some((id) => {
+			const a = after.nodes[id].position;
+			const b = before.nodes[id].position;
+			return a.x !== b.x || a.y !== b.y || a.z !== b.z;
+		});
+		if (!changed) {
+			this.statusMessage = 'Nothing to layout';
+			return;
+		}
+		this.mutate(() => ({
+			doc: after,
+			undo: () => cloneDocument(before)
+		}));
+		this.statusMessage = 'Re-layout applied';
+	}
+
 	setNodeTags(id: NodeId, tags: string[]): void {
 		this.updateNode(id, { tags });
 	}
 
 	groupSelected(groupId?: string): string | null {
 		const ids = [...this.selection.nodeIds];
-		if (ids.length === 0) return null;
+		if (ids.length < 2) {
+			this.statusMessage =
+				ids.length === 0 ? 'Select nodes to group' : 'Select at least 2 nodes to group';
+			return null;
+		}
 		const gid = groupId ?? crypto.randomUUID();
 		const before = cloneDocument(this.document);
 		this.mutate((d) => {
@@ -324,6 +377,7 @@ class AppStore {
 			}
 			return { doc: next, undo: () => cloneDocument(before) };
 		});
+		this.statusMessage = `Grouped ${ids.length} nodes`;
 		return gid;
 	}
 
@@ -527,7 +581,12 @@ class AppStore {
 	}
 
 	setShowSteps(show: boolean): void {
-		this.analyze = { ...this.analyze, showSteps: show, stepIndex: show ? this.analyze.stepIndex : 0 };
+		this.analyze = {
+			...this.analyze,
+			showSteps: show,
+			stepIndex: show ? this.analyze.stepIndex : 0,
+			playback: show ? this.analyze.playback : false
+		};
 		if (this.analyze.lastRunId) this.applyRunOverlay(this.analyze.lastRunId);
 	}
 
@@ -540,6 +599,10 @@ class AppStore {
 		this.analyze = { ...this.analyze, playback };
 	}
 
+	togglePlayback(): void {
+		this.setPlayback(!this.analyze.playback);
+	}
+
 	annotateCurrentStep(note: string): void {
 		const runId = this.analyze.lastRunId;
 		if (!runId) return;
@@ -549,6 +612,39 @@ class AppStore {
 	setCompareRunIds(ids: string[]): void {
 		this.analyze = { ...this.analyze, compareRunIds: ids.slice(0, 2) };
 		this.rebuildModeOverlay();
+	}
+
+	/** Compare two stored runs in a dual overlay (series A / B). */
+	compareRuns(runIdA: string, runIdB: string): void {
+		const a = getRun(this.runStore, runIdA);
+		const b = getRun(this.runStore, runIdB);
+		if (!a || !b) {
+			this.statusMessage = 'Select two valid stored runs';
+			return;
+		}
+		if (runIdA === runIdB) {
+			this.statusMessage = 'Pick two different runs to compare';
+			return;
+		}
+		this.analyze = {
+			...this.analyze,
+			compareRunIds: [runIdA, runIdB],
+			lastRunId: runIdA
+		};
+		this.mode = 'analyze';
+		this.rebuildModeOverlay();
+		this.statusMessage = `Comparing ${a.algorithmId} vs ${b.algorithmId}`;
+	}
+
+	clearCompare(): void {
+		const fallback = this.analyze.compareRunIds[0] ?? this.analyze.lastRunId;
+		this.analyze = { ...this.analyze, compareRunIds: [] };
+		if (fallback) {
+			this.analyze = { ...this.analyze, lastRunId: fallback };
+			this.applyRunOverlay(fallback);
+		} else {
+			this.rebuildModeOverlay();
+		}
 	}
 
 	async compareAlgorithms(otherId: string): Promise<void> {
@@ -585,25 +681,19 @@ class AppStore {
 		}
 	}
 
+	private pathSeriesFromRun(run: ReturnType<typeof getRun>): { nodeIds: string[]; edgeIds: string[] } {
+		if (run?.result.kind === 'path') {
+			return { nodeIds: run.result.nodeIds, edgeIds: run.result.edgeIds };
+		}
+		return { nodeIds: [], edgeIds: [] };
+	}
+
 	private rebuildModeOverlay(): void {
 		const { compareRunIds } = this.analyze;
 		if (compareRunIds.length === 2) {
 			const a = getRun(this.runStore, compareRunIds[0]);
 			const b = getRun(this.runStore, compareRunIds[1]);
-			const nodeIds = new Set<string>();
-			const edgeIds = new Set<string>();
-			for (const run of [a, b]) {
-				if (run?.result.kind === 'path') {
-					run.result.nodeIds.forEach((id) => nodeIds.add(id));
-					run.result.edgeIds.forEach((id) => edgeIds.add(id));
-				}
-			}
-			this.overlay = {
-				kind: 'compare',
-				nodeIds: [...nodeIds],
-				edgeIds: [...edgeIds],
-				dimOthers: true
-			};
+			this.overlay = compareOverlay(this.pathSeriesFromRun(a), this.pathSeriesFromRun(b));
 			return;
 		}
 		if (this.mode === 'analyze' && this.analyze.lastRunId) {
@@ -649,6 +739,15 @@ class AppStore {
 		this.statusMessage = 'Saved';
 	}
 
+	saveNamedSlot(name: string): void {
+		const slot = name.trim();
+		if (!slot) {
+			this.statusMessage = 'Enter a slot name';
+			return;
+		}
+		this.saveToSlot(slot);
+	}
+
 	loadFromSlot(slot = 'default'): void {
 		if (typeof localStorage === 'undefined') return;
 		const raw = localStorage.getItem(`yggnet.save.${slot}`);
@@ -662,6 +761,39 @@ class AppStore {
 		} catch (e) {
 			this.statusMessage = e instanceof Error ? e.message : 'Load failed';
 		}
+	}
+
+	loadNamedSlot(name: string): void {
+		const slot = name.trim();
+		if (!slot) {
+			this.statusMessage = 'Enter a slot name';
+			return;
+		}
+		if (typeof localStorage === 'undefined') return;
+		const raw = localStorage.getItem(`yggnet.save.${slot}`);
+		if (!raw) {
+			this.statusMessage = 'No save found';
+			return;
+		}
+		if (!this.confirmReplaceDocument()) return;
+		this.loadFromSlot(slot);
+	}
+
+	private confirmReplaceDocument(): boolean {
+		if (typeof window === 'undefined') return true;
+		if (Object.keys(this.document.nodes).length === 0) return true;
+		return window.confirm('Replace the current document with the saved one?');
+	}
+
+	jumpToNode(nodeId: NodeId): void {
+		const node = this.document.nodes[nodeId];
+		if (!node) return;
+		this.setSelection(nodeId);
+		this.setCamera({
+			target: { ...node.position },
+			distance: Math.min(this.camera.distance, 14)
+		});
+		this.setMode('explore');
 	}
 
 	exportJson(): string {
@@ -700,12 +832,11 @@ class AppStore {
 	}
 
 	findNodeByQuery(query: string): NodeId | null {
-		const q = query.trim().toLowerCase();
-		if (!q) return null;
-		const hit = Object.values(this.document.nodes).find(
-			(n) => n.label.toLowerCase().includes(q) || n.id.toLowerCase().startsWith(q)
-		);
-		return hit?.id ?? null;
+		return searchNodesByQuery(this.document, query)[0] ?? null;
+	}
+
+	findNodesByQuery(query: string): NodeId[] {
+		return searchNodesByQuery(this.document, query);
 	}
 
 	pathKey(path: GraphPath, index: number): string {
