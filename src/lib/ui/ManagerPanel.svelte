@@ -229,6 +229,47 @@
 					oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
 				></textarea>
 			</label>
+			<div class="pos-row" data-testid="node-position">
+				<label>
+					X
+					<input
+						type="number"
+						step="0.1"
+						data-testid="node-pos-x"
+						value={selectedNode.position.x}
+						oninput={(e) =>
+							app.updateNode(selectedNode.id, {
+								position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
+							})}
+					/>
+				</label>
+				<label>
+					Y
+					<input
+						type="number"
+						step="0.1"
+						data-testid="node-pos-y"
+						value={selectedNode.position.y}
+						oninput={(e) =>
+							app.updateNode(selectedNode.id, {
+								position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
+							})}
+					/>
+				</label>
+				<label>
+					Z
+					<input
+						type="number"
+						step="0.1"
+						data-testid="node-pos-z"
+						value={selectedNode.position.z}
+						oninput={(e) =>
+							app.updateNode(selectedNode.id, {
+								position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
+							})}
+					/>
+				</label>
+			</div>
 			<label>
 				Tags (comma)
 				<input
@@ -792,5 +833,16 @@
 		grid-template-columns: 1fr 1fr;
 		gap: 0.5rem;
 		font-size: 0.85rem;
+	}
+
+	.pos-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: 0.35rem;
+		margin-bottom: 0.4rem;
+	}
+
+	.pos-row label {
+		margin-bottom: 0;
 	}
 </style>

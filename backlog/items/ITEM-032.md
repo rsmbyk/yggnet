@@ -1,6 +1,6 @@
 ---
 id: ITEM-032
-status: ready
+status: done
 title: "Node drag / position edit"
 type: feat
 priority: P1
@@ -8,7 +8,7 @@ effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-032
-branch:
+branch: feat/SPEC-032-node-drag-position
 pr:
 archived_at:
 archive_reason:
