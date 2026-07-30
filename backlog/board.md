@@ -34,12 +34,10 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | ID | Title | Summary | Type | Priority | Effort | Spec | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ------- |
 
-
 ## Speccing
 
 | ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
-
 
 ## Ready
 
@@ -55,20 +53,18 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | [ITEM-037](items/ITEM-037.md) | Attachments on nodes and edges | Add, list, and remove local attachments on nodes and edges from the manager. Notes already work; attachment UI does not. | feat | P2 | M | [SPEC-037](../docs/specs/SPEC-037/spec.md) | minor | 2026-07-30 |
 | [ITEM-038](items/ITEM-038.md) | Save/load named docs + palette find | Improve persist UX with named save slots and/or download/open file, and wire the command palette find path to query nodes and jump to them. | feat | P2 | M | [SPEC-038](../docs/specs/SPEC-038/spec.md) | minor | 2026-07-30 |
 
-
 ## In progress
 
 | ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
-
 
 ## In review
 
 | ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
 
-
 ## Done
 
 | ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Merged | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
+| [ITEM-029](items/ITEM-029.md) | Multi-select nodes (and edges) | Support selecting multiple nodes (and edges) so manager and world stay in sync on a multi-id selection. Required foundation for real multi-node groups. | feat | P1 | M | [SPEC-029](../docs/specs/SPEC-029/spec.md) | minor | 2026-07-30 | 2026-07-30 |
