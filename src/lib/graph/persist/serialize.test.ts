@@ -26,6 +26,19 @@ describe('serialize', () => {
 		expect(parsed.nodes[b.nodeId].groupId).toBe(groupId);
 	});
 
+	it('round-trips node attachments', () => {
+		let doc = createEmptyDocument('Attachments');
+		const a = addNode(doc, { label: 'A' });
+		doc = a.doc;
+		const attachments = [
+			{ name: 'readme', payload: 'hello' },
+			{ name: 'data', payload: 'data:text/plain,world' }
+		];
+		doc = updateNode(doc, a.nodeId, { attachments });
+		const parsed = parseDocument(serializeDocument(doc));
+		expect(parsed.nodes[a.nodeId].attachments).toEqual(attachments);
+	});
+
 	it('cloneDocument returns a deep copy', () => {
 		let doc = createEmptyDocument();
 		const { doc: withNode, nodeId } = addNode(doc, { label: 'A', data: { n: 1 } });

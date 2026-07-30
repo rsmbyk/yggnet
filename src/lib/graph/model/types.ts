@@ -3,6 +3,12 @@
 export type NodeId = string;
 export type EdgeId = string;
 
+/** Local attachment stored in document JSON (name + text or data URL payload). */
+export interface GraphAttachment {
+	name: string;
+	payload: string;
+}
+
 export interface GraphNode {
 	id: NodeId;
 	label: string;
@@ -12,8 +18,7 @@ export interface GraphNode {
 	tags: string[];
 	weight?: number;
 	notes?: string;
-	/** Attachment refs (URLs / local keys) — payload shape evolves in later specs. */
-	attachments: string[];
+	attachments: GraphAttachment[];
 	data: Record<string, unknown>;
 }
 
@@ -25,7 +30,7 @@ export interface GraphEdge {
 	label?: string;
 	weight: number;
 	notes?: string;
-	attachments: string[];
+	attachments: GraphAttachment[];
 	data: Record<string, unknown>;
 }
 
