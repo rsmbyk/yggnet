@@ -1,6 +1,6 @@
 ---
 id: ITEM-030
-status: ready
+status: done
 title: "Multi-node groups from UI"
 type: feat
 priority: P1
@@ -8,7 +8,7 @@ effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-030
-branch:
+branch: feat/SPEC-030-multi-node-groups
 pr:
 archived_at:
 archive_reason:

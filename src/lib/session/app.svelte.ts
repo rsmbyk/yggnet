@@ -340,7 +340,11 @@ class AppStore {
 
 	groupSelected(groupId?: string): string | null {
 		const ids = [...this.selection.nodeIds];
-		if (ids.length === 0) return null;
+		if (ids.length < 2) {
+			this.statusMessage =
+				ids.length === 0 ? 'Select nodes to group' : 'Select at least 2 nodes to group';
+			return null;
+		}
 		const gid = groupId ?? crypto.randomUUID();
 		const before = cloneDocument(this.document);
 		this.mutate((d) => {
@@ -350,6 +354,7 @@ class AppStore {
 			}
 			return { doc: next, undo: () => cloneDocument(before) };
 		});
+		this.statusMessage = `Grouped ${ids.length} nodes`;
 		return gid;
 	}
 

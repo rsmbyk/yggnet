@@ -257,9 +257,6 @@
 				<button type="button" data-testid="delete-node" onclick={() => app.removeNode(selectedNode.id)}
 					>Delete</button
 				>
-				<button type="button" data-testid="group-selected" onclick={() => app.groupSelected()}
-					>Group</button
-				>
 				<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
 					>Add to diff</button
 				>
@@ -366,12 +363,24 @@
 		<section class="block" data-testid="groups-section">
 			<h2>Groups</h2>
 			{#each groupIds as gid (gid)}
-				<div class="row">
+				<div class="row" data-testid={`group-row-${gid}`}>
 					<span class="muted">{gid.slice(0, 8)}…</span>
-					<button type="button" onclick={() => app.toggleCollapseGroup(gid)}
-						>{app.groupsCollapsed.has(gid) ? 'Expand' : 'Collapse'}</button
+					{#if app.groupsCollapsed.has(gid)}
+						<button
+							type="button"
+							data-testid={`expand-group-${gid}`}
+							onclick={() => app.toggleCollapseGroup(gid)}>Expand</button
+						>
+					{:else}
+						<button
+							type="button"
+							data-testid={`collapse-group-${gid}`}
+							onclick={() => app.toggleCollapseGroup(gid)}>Collapse</button
+						>
+					{/if}
+					<button type="button" data-testid={`ungroup-${gid}`} onclick={() => app.ungroup(gid)}
+						>Ungroup</button
 					>
-					<button type="button" onclick={() => app.ungroup(gid)}>Ungroup</button>
 				</div>
 			{/each}
 		</section>
