@@ -18,6 +18,8 @@
 	const nodes = $derived(Object.values(app.document.nodes));
 	const edges = $derived(Object.values(app.document.edges));
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
+	const selectedIds = $derived(new Set(app.selection.nodeIds));
+	const selectedCount = $derived(app.selection.nodeIds.length);
 	const selectedNode = $derived(selectedId ? app.document.nodes[selectedId] : null);
 	const lastRun = $derived(
 		app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null
@@ -38,6 +40,14 @@
 	const diffB = $derived(
 		app.ui.diffIds[1] ? app.document.nodes[app.ui.diffIds[1]] : null
 	);
+
+	function onSelectNode(id: string, ev: MouseEvent) {
+		app.selectNodeWithModifiers(id, ev.ctrlKey || ev.metaKey || ev.shiftKey);
+	}
+
+	function onSelectEdge(id: string, ev: MouseEvent) {
+		app.toggleEdgeSelection(id, ev.ctrlKey || ev.metaKey || ev.shiftKey);
+	}
 
 	function setMode(mode: AppMode) {
 		app.setMode(mode);
@@ -168,15 +178,18 @@
 			<h2>Nodes ({nodes.length})</h2>
 			<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
 		</div>
+		{#if selectedCount > 0}
+			<p class="hint" data-testid="selection-count">{selectedCount} selected (Ctrl/Shift-click to multi)</p>
+		{/if}
 		<ul class="list" data-testid="node-list">
 			{#each nodes as node (node.id)}
 				<li>
 					<button
 						type="button"
 						class="list-item"
-						class:selected={selectedId === node.id}
+						class:selected={selectedIds.has(node.id)}
 						data-testid={`node-item-${node.id}`}
-						onclick={() => app.setSelection(node.id)}
+						onclick={(e) => onSelectNode(node.id, e)}
 					>
 						<span>{node.label}</span>
 						{#if node.pinned}<span class="tag">pin</span>{/if}
@@ -184,6 +197,16 @@
 				</li>
 			{/each}
 		</ul>
+		{#if selectedCount > 1}
+			<div class="row wrap">
+				<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
+					>Group {selectedCount}</button
+				>
+				<button type="button" data-testid="clear-selection" onclick={() => app.clearAllSelection()}
+					>Clear selection</button
+				>
+			</div>
+		{/if}
 	</section>
 
 	{#if selectedNode}
@@ -206,6 +229,47 @@
 					oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
 				></textarea>
 			</label>
+			<div class="pos-row" data-testid="node-position">
+				<label>
+					X
+					<input
+						type="number"
+						step="0.1"
+						data-testid="node-pos-x"
+						value={selectedNode.position.x}
+						oninput={(e) =>
+							app.updateNode(selectedNode.id, {
+								position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
+							})}
+					/>
+				</label>
+				<label>
+					Y
+					<input
+						type="number"
+						step="0.1"
+						data-testid="node-pos-y"
+						value={selectedNode.position.y}
+						oninput={(e) =>
+							app.updateNode(selectedNode.id, {
+								position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
+							})}
+					/>
+				</label>
+				<label>
+					Z
+					<input
+						type="number"
+						step="0.1"
+						data-testid="node-pos-z"
+						value={selectedNode.position.z}
+						oninput={(e) =>
+							app.updateNode(selectedNode.id, {
+								position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
+							})}
+					/>
+				</label>
+			</div>
 			<label>
 				Tags (comma)
 				<input
@@ -233,9 +297,6 @@
 			<div class="row wrap">
 				<button type="button" data-testid="delete-node" onclick={() => app.removeNode(selectedNode.id)}
 					>Delete</button
-				>
-				<button type="button" data-testid="group-selected" onclick={() => app.groupSelected()}
-					>Group</button
 				>
 				<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
 					>Add to diff</button
@@ -266,12 +327,18 @@
 		<ul class="list" data-testid="edge-list">
 			{#each edges as edge (edge.id)}
 				<li class="edge-row">
-					<span class="edge-label">
+					<button
+						type="button"
+						class="list-item edge-select"
+						class:selected={app.selection.edgeIds.includes(edge.id)}
+						data-testid={`edge-item-${edge.id}`}
+						onclick={(e) => onSelectEdge(edge.id, e)}
+					>
 						{app.document.nodes[edge.from]?.label ?? '?'}
 						{edge.directed ? '→' : '—'}
 						{app.document.nodes[edge.to]?.label ?? '?'}
 						<span class="muted">w={edge.weight}</span>
-					</span>
+					</button>
 					<button
 						type="button"
 						data-testid={`edit-edge-${edge.id}`}
@@ -337,12 +404,24 @@
 		<section class="block" data-testid="groups-section">
 			<h2>Groups</h2>
 			{#each groupIds as gid (gid)}
-				<div class="row">
+				<div class="row" data-testid={`group-row-${gid}`}>
 					<span class="muted">{gid.slice(0, 8)}…</span>
-					<button type="button" onclick={() => app.toggleCollapseGroup(gid)}
-						>{app.groupsCollapsed.has(gid) ? 'Expand' : 'Collapse'}</button
+					{#if app.groupsCollapsed.has(gid)}
+						<button
+							type="button"
+							data-testid={`expand-group-${gid}`}
+							onclick={() => app.toggleCollapseGroup(gid)}>Expand</button
+						>
+					{:else}
+						<button
+							type="button"
+							data-testid={`collapse-group-${gid}`}
+							onclick={() => app.toggleCollapseGroup(gid)}>Collapse</button
+						>
+					{/if}
+					<button type="button" data-testid={`ungroup-${gid}`} onclick={() => app.ungroup(gid)}
+						>Ungroup</button
 					>
-					<button type="button" onclick={() => app.ungroup(gid)}>Ungroup</button>
 				</div>
 			{/each}
 		</section>
@@ -754,5 +833,16 @@
 		grid-template-columns: 1fr 1fr;
 		gap: 0.5rem;
 		font-size: 0.85rem;
+	}
+
+	.pos-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: 0.35rem;
+		margin-bottom: 0.4rem;
+	}
+
+	.pos-row label {
+		margin-bottom: 0;
 	}
 </style>
