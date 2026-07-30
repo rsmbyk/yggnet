@@ -56,8 +56,11 @@ export { serializeDocument, parseDocument, cloneDocument } from './persist/seria
 export {
 	createEmptyOverlay,
 	pathOverlay,
+	compareOverlay,
+	pathSeriesMetrics,
 	type Overlay,
-	type OverlayKind
+	type OverlayKind,
+	type OverlaySeries
 } from './overlays/overlays';
 export {
 	createRunStore,

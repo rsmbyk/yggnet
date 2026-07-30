@@ -10,6 +10,7 @@ import {
 	clear as clearHistory,
 	clearSelection,
 	cloneDocument,
+	compareOverlay,
 	createEmptyDocument,
 	createEmptyOverlay,
 	createHistory,
@@ -603,6 +604,17 @@ class AppStore {
 		this.rebuildModeOverlay();
 	}
 
+	clearCompare(): void {
+		const fallback = this.analyze.compareRunIds[0] ?? this.analyze.lastRunId;
+		this.analyze = { ...this.analyze, compareRunIds: [] };
+		if (fallback) {
+			this.analyze = { ...this.analyze, lastRunId: fallback };
+			this.applyRunOverlay(fallback);
+		} else {
+			this.rebuildModeOverlay();
+		}
+	}
+
 	async compareAlgorithms(otherId: string): Promise<void> {
 		const primary = await this.runAlgorithm();
 		const prev = this.analyze.algorithmId;
@@ -637,25 +649,19 @@ class AppStore {
 		}
 	}
 
+	private pathSeriesFromRun(run: ReturnType<typeof getRun>): { nodeIds: string[]; edgeIds: string[] } {
+		if (run?.result.kind === 'path') {
+			return { nodeIds: run.result.nodeIds, edgeIds: run.result.edgeIds };
+		}
+		return { nodeIds: [], edgeIds: [] };
+	}
+
 	private rebuildModeOverlay(): void {
 		const { compareRunIds } = this.analyze;
 		if (compareRunIds.length === 2) {
 			const a = getRun(this.runStore, compareRunIds[0]);
 			const b = getRun(this.runStore, compareRunIds[1]);
-			const nodeIds = new Set<string>();
-			const edgeIds = new Set<string>();
-			for (const run of [a, b]) {
-				if (run?.result.kind === 'path') {
-					run.result.nodeIds.forEach((id) => nodeIds.add(id));
-					run.result.edgeIds.forEach((id) => edgeIds.add(id));
-				}
-			}
-			this.overlay = {
-				kind: 'compare',
-				nodeIds: [...nodeIds],
-				edgeIds: [...edgeIds],
-				dimOthers: true
-			};
+			this.overlay = compareOverlay(this.pathSeriesFromRun(a), this.pathSeriesFromRun(b));
 			return;
 		}
 		if (this.mode === 'analyze' && this.analyze.lastRunId) {
