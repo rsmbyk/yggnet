@@ -29,6 +29,25 @@
 		app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null
 	);
 	const traceLen = $derived(lastRun?.trace.length ?? 0);
+	const currentStepAnnotation = $derived(lastRun?.annotations?.[app.analyze.stepIndex] ?? '');
+
+	$effect(() => {
+		if (!app.analyze.playback || !lastRun || traceLen < 2) return;
+		const maxStep = Math.max(0, traceLen - 1);
+		if (app.analyze.stepIndex >= maxStep) {
+			app.setPlayback(false);
+			return;
+		}
+		const handle = setInterval(() => {
+			const idx = app.analyze.stepIndex;
+			if (idx >= maxStep) {
+				app.setPlayback(false);
+				return;
+			}
+			app.setStepIndex(idx + 1);
+		}, 400);
+		return () => clearInterval(handle);
+	});
 
 	const compareRunA = $derived(
 		app.analyze.compareRunIds[0] ? app.runStore.runs[app.analyze.compareRunIds[0]] : null
@@ -623,17 +642,37 @@
 					Show steps
 				</label>
 				{#if app.analyze.showSteps}
-					<label>
-						Step {app.analyze.stepIndex}/{Math.max(0, traceLen - 1)}
-						<input
-							type="range"
-							min="0"
-							max={Math.max(0, traceLen - 1)}
-							data-testid="step-scrubber"
-							value={app.analyze.stepIndex}
-							oninput={(e) => app.setStepIndex(Number(e.currentTarget.value))}
-						/>
-					</label>
+					<div class="row wrap">
+						<button
+							type="button"
+							data-testid="trace-play"
+							disabled={traceLen < 2}
+							onclick={() => app.togglePlayback()}
+						>
+							{app.analyze.playback ? 'Pause' : 'Play'}
+						</button>
+						<label>
+							Step {app.analyze.stepIndex}/{Math.max(0, traceLen - 1)}
+							<input
+								type="range"
+								min="0"
+								max={Math.max(0, traceLen - 1)}
+								data-testid="step-scrubber"
+								value={app.analyze.stepIndex}
+								oninput={(e) => {
+									app.setPlayback(false);
+									app.setStepIndex(Number(e.currentTarget.value));
+								}}
+							/>
+						</label>
+					</div>
+					<p class="hint" data-testid="step-annotation-display">
+						{#if currentStepAnnotation}
+							{currentStepAnnotation}
+						{:else}
+							<span class="muted">No note for this step</span>
+						{/if}
+					</p>
 					<div class="row">
 						<input data-testid="step-note" placeholder="Annotate step" bind:value={stepNote} />
 						<button

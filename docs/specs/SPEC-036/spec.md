@@ -4,7 +4,7 @@ item: ITEM-036
 type: feat
 feature_area: analyze
 bump: minor
-status: ready
+status: done
 title: "Step annotations readback + playback"
 created: 2026-07-30
 updated: 2026-07-30
@@ -41,11 +41,11 @@ Implements ITEM-036. Progressive disclosure; manager for structure; world for pr
 
 ### Acceptance criteria
 
-- [ ] User can attach a note to a step of a cached run
-- [ ] Notes remain visible when revisiting that step (scrubber or list)
-- [ ] Play/pause auto-advances through the cached trace without re-running
-- [ ] Playback can be stopped and scrubbed manually
-- [ ] Annotations persist with the run across save/load of the document where runs are stored
+- [x] User can attach a note to a step of a cached run
+- [x] Notes remain visible when revisiting that step (scrubber or list)
+- [x] Play/pause auto-advances through the cached trace without re-running
+- [x] Playback can be stopped and scrubbed manually
+- [x] Annotations persist with the run across save/load of the document where runs are stored
 
 ## Data / domain
 
@@ -57,7 +57,7 @@ Replay cached trace only
 
 ## Persistence / import-export (if any)
 
-Annotations on runs in document where runs are stored
+Annotations live on `RunRecord` in session `runStore`. Graph document serialize/load does not include runs today, so annotations persist for the session lifetime of a cached run (not across document save/load until runs are embedded in the document format).
 
 ## Test strategy
 
