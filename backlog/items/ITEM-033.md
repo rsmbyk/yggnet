@@ -1,6 +1,6 @@
 ---
 id: ITEM-033
-status: ready
+status: done
 title: "Pin respected by layout"
 type: feat
 priority: P2
@@ -8,7 +8,7 @@ effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-033
-branch:
+branch: feat/SPEC-033-pin-layout
 pr:
 archived_at:
 archive_reason:
