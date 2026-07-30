@@ -4,7 +4,7 @@ item: ITEM-038
 type: feat
 feature_area: manager
 bump: minor
-status: ready
+status: done
 title: "Save/load named docs + palette find"
 created: 2026-07-30
 updated: 2026-07-30
@@ -41,11 +41,11 @@ Implements ITEM-038. Progressive disclosure; manager for structure; world for pr
 
 ### Acceptance criteria
 
-- [ ] User can save under a name (slot) and/or download GraphDocument JSON as a file
-- [ ] User can open a named slot and/or pick a local JSON file to load
-- [ ] Overwrite / replace current document is explicit (confirm or clear affordance)
-- [ ] Command palette find accepts a query, lists matches, and jumps/selects the chosen node
-- [ ] Autosave behavior remains available and does not replace explicit named save
+- [x] User can save under a name (slot) and/or download GraphDocument JSON as a file
+- [x] User can open a named slot and/or pick a local JSON file to load
+- [x] Overwrite / replace current document is explicit (confirm or clear affordance)
+- [x] Command palette find accepts a query, lists matches, and jumps/selects the chosen node
+- [x] Autosave behavior remains available and does not replace explicit named save
 
 ## Data / domain
 

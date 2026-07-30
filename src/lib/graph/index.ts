@@ -87,3 +87,4 @@ export {
 	type Bump
 } from './release/semver';
 export { layoutUnpinned, type LayoutOptions } from './layout/layout';
+export { findNodeByQuery, findNodesByQuery } from './search/findNodes';

@@ -28,7 +28,7 @@
 		}
 	}
 
-	const paletteItems = $derived.by(() => {
+	const paletteCommands = $derived.by(() => {
 		const q = app.ui.commandQuery.trim().toLowerCase();
 		const items: { id: string; label: string; run: () => void }[] = [
 			{ id: 'mode-explore', label: 'Switch to Explore', run: () => app.setMode('explore') },
@@ -46,26 +46,29 @@
 			{ id: 'undo', label: 'Undo', run: () => app.undo() },
 			{ id: 'redo', label: 'Redo', run: () => app.redo() }
 		];
-		for (const node of Object.values(app.document.nodes)) {
-			items.push({
-				id: `node-${node.id}`,
-				label: `Go to node: ${node.label}`,
-				run: () => {
-					app.setSelection(node.id);
-					app.setCamera({
-						target: { ...node.position },
-						distance: Math.min(app.camera.distance, 14)
-					});
-					app.setMode('explore');
-				}
-			});
-		}
-		if (!q) return items.slice(0, 12);
-		return items.filter((i) => i.label.toLowerCase().includes(q)).slice(0, 20);
+		if (!q) return items;
+		return items.filter((i) => i.label.toLowerCase().includes(q));
+	});
+
+	const paletteFindResults = $derived.by(() => {
+		const q = app.ui.commandQuery.trim();
+		if (!q) return [];
+		return app.findNodesByQuery(q).map((id) => {
+			const node = app.document.nodes[id];
+			return {
+				id,
+				label: node?.label ?? id
+			};
+		});
 	});
 
 	function runItem(item: { run: () => void }) {
 		item.run();
+		app.openPalette(false);
+	}
+
+	function jumpToFindResult(nodeId: string) {
+		app.jumpToNode(nodeId);
 		app.openPalette(false);
 	}
 </script>
@@ -95,8 +98,23 @@
 						value={app.ui.commandQuery}
 						oninput={(e) => app.setCommandQuery(e.currentTarget.value)}
 					/>
+					{#if paletteFindResults.length > 0}
+						<ul data-testid="palette-find-results">
+							{#each paletteFindResults as hit (hit.id)}
+								<li>
+									<button
+										type="button"
+										data-testid={`palette-find-${hit.id}`}
+										onclick={() => jumpToFindResult(hit.id)}
+									>
+										{hit.label}
+									</button>
+								</li>
+							{/each}
+						</ul>
+					{/if}
 					<ul>
-						{#each paletteItems as item (item.id)}
+						{#each paletteCommands as item (item.id)}
 							<li>
 								<button type="button" data-testid={`palette-item-${item.id}`} onclick={() => runItem(item)}>
 									{item.label}

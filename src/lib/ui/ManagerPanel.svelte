@@ -21,6 +21,7 @@
 	let attachPayload = $state('');
 	let edgeAttachName = $state('');
 	let edgeAttachPayload = $state('');
+	let saveSlotName = $state('');
 
 	const nodes = $derived(Object.values(app.document.nodes));
 	const storedRuns = $derived(Object.values(app.runStore.runs));
@@ -223,6 +224,19 @@
 		>
 		<button type="button" data-testid="save" onclick={() => app.saveToSlot()}>Save</button>
 		<button type="button" data-testid="load" onclick={() => app.loadFromSlot()}>Load</button>
+		<input
+			type="text"
+			placeholder="Slot name"
+			data-testid="save-slot-name"
+			bind:value={saveSlotName}
+			aria-label="Named save slot"
+		/>
+		<button type="button" data-testid="save-named" onclick={() => app.saveNamedSlot(saveSlotName)}
+			>Save named</button
+		>
+		<button type="button" data-testid="load-named" onclick={() => app.loadNamedSlot(saveSlotName)}
+			>Load named</button
+		>
 		<button type="button" data-testid="export" onclick={() => app.downloadExport()}>Export</button>
 		<label class="file-btn">
 			Import
