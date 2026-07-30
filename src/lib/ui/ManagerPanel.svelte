@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { app } from '$lib/session/app.svelte';
+	import { pathSeriesMetrics } from '$lib/graph';
 	import type { AppMode } from '$lib/graph';
 
 	const modes: { id: AppMode; label: string }[] = [
@@ -25,6 +26,23 @@
 		app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null
 	);
 	const traceLen = $derived(lastRun?.trace.length ?? 0);
+
+	const compareRunA = $derived(
+		app.analyze.compareRunIds[0] ? app.runStore.runs[app.analyze.compareRunIds[0]] : null
+	);
+	const compareRunB = $derived(
+		app.analyze.compareRunIds[1] ? app.runStore.runs[app.analyze.compareRunIds[1]] : null
+	);
+
+	const edgeWeights = $derived(
+		Object.fromEntries(Object.values(app.document.edges).map((e) => [e.id, e.weight]))
+	);
+
+	function compareMetrics(run: typeof compareRunA) {
+		if (!run || run.result.kind !== 'path') return { hops: 0, cost: 0, nodes: 0 };
+		const { hops, cost } = pathSeriesMetrics(run.result.edgeIds, edgeWeights);
+		return { hops, cost, nodes: run.result.nodeIds.length };
+	}
 
 	const groupIds = $derived(
 		[
@@ -545,6 +563,32 @@
 					onclick={() => app.compareAlgorithms(compareAlgo)}>Compare</button
 				>
 			</div>
+			{#if compareRunA && compareRunB}
+				<section class="compare-panel" data-testid="compare-panel">
+					<h3>Compare</h3>
+					<div class="diff">
+						<div data-testid="compare-series-a">
+							<strong class="series-a">{compareRunA.algorithmId}</strong>
+							{#if compareRunA.stale}<span class="tag">stale</span>{/if}
+							<p class="muted">
+								{compareMetrics(compareRunA).nodes} nodes · {compareMetrics(compareRunA).hops} hops · cost
+								{compareMetrics(compareRunA).cost}
+							</p>
+						</div>
+						<div data-testid="compare-series-b">
+							<strong class="series-b">{compareRunB.algorithmId}</strong>
+							{#if compareRunB.stale}<span class="tag">stale</span>{/if}
+							<p class="muted">
+								{compareMetrics(compareRunB).nodes} nodes · {compareMetrics(compareRunB).hops} hops · cost
+								{compareMetrics(compareRunB).cost}
+							</p>
+						</div>
+					</div>
+					<button type="button" data-testid="clear-compare" onclick={() => app.clearCompare()}
+						>Dismiss compare</button
+					>
+				</section>
+			{/if}
 			{#if lastRun}
 				<p class="hint" data-testid="run-status">
 					Run {lastRun.id.slice(0, 8)}… {lastRun.stale ? '(stale)' : ''}
@@ -847,5 +891,22 @@
 
 	.pos-row label {
 		margin-bottom: 0;
+	}
+
+	.compare-panel h3 {
+		margin: 0 0 0.4rem;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--yg-muted);
+		font-weight: 600;
+	}
+
+	.series-a {
+		color: #2f9e8a;
+	}
+
+	.series-b {
+		color: #d4893a;
 	}
 </style>

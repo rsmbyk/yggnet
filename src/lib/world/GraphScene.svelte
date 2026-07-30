@@ -43,6 +43,26 @@
 	const edges = $derived(Object.values(app.document.edges));
 	const overlayNodeSet = $derived(new Set(app.overlay.nodeIds));
 	const overlayEdgeSet = $derived(new Set(app.overlay.edgeIds));
+	const compareSeriesANodes = $derived(
+		app.overlay.kind === 'compare' && app.overlay.seriesA
+			? new Set(app.overlay.seriesA.nodeIds)
+			: null
+	);
+	const compareSeriesBNodes = $derived(
+		app.overlay.kind === 'compare' && app.overlay.seriesB
+			? new Set(app.overlay.seriesB.nodeIds)
+			: null
+	);
+	const compareSeriesAEdges = $derived(
+		app.overlay.kind === 'compare' && app.overlay.seriesA
+			? new Set(app.overlay.seriesA.edgeIds)
+			: null
+	);
+	const compareSeriesBEdges = $derived(
+		app.overlay.kind === 'compare' && app.overlay.seriesB
+			? new Set(app.overlay.seriesB.edgeIds)
+			: null
+	);
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
 	const showLabels = $derived(app.camera.distance < LABEL_DISTANCE);
 	const dimOthers = $derived(app.overlay.dimOthers && app.overlay.kind !== 'none');
@@ -90,11 +110,25 @@
 
 	function nodeColor(id: string): string {
 		if (selectedIds.has(id)) return '#c4a35a';
+		if (app.overlay.kind === 'compare') {
+			const inA = compareSeriesANodes?.has(id);
+			const inB = compareSeriesBNodes?.has(id);
+			if (inA && inB) return '#9a8a6a';
+			if (inA) return '#2f9e8a';
+			if (inB) return '#d4893a';
+		}
 		if (overlayNodeSet.has(id)) return '#2f9e8a';
 		return '#7a8a9a';
 	}
 
 	function edgeColor(id: string): string {
+		if (app.overlay.kind === 'compare') {
+			const inA = compareSeriesAEdges?.has(id);
+			const inB = compareSeriesBEdges?.has(id);
+			if (inA && inB) return '#9a8a6a';
+			if (inA) return '#3cb89a';
+			if (inB) return '#e8a04a';
+		}
 		if (overlayEdgeSet.has(id)) return '#3cb89a';
 		return '#4a5562';
 	}
