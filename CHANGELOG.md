@@ -8,4 +8,18 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 ### Added
 
-- Project scaffold: SvelteKit, Threlte shell, graph domain stubs, backlog/docs process, Vitest coverage fence, Playwright smoke.
+-
+
+## [0.21.1] - 2026-07-30
+
+### Added
+
+- Initial MVP: manager CRUD, Explore world, Directions, Analyze (BFS/Dijkstra/A*), pathfinder, undo/redo, persist, palette, filters/groups, minimap, templates, Docker static image.
+- SPEC-001..028 executed and released.
+
+### Notes
+
+- SemVer from sequential SPEC bumps in merge-to-develop order (start `0.0.1` to `0.21.1`).
+- Docker: `docker compose up --build -d` then open http://localhost:8080
+
+
