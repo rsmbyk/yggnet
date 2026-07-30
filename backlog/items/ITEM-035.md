@@ -1,13 +1,13 @@
 ---
 id: ITEM-035
-status: backlog
+status: speccing
 title: "Compare stored runs dual view"
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-035
 branch:
 pr:
 archived_at:
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. `setComp
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-035](../../docs/specs/SPEC-035/spec.md)
 - Related items: ITEM-013, ITEM-034
 - Prior SPEC: [SPEC-013](../../docs/specs/SPEC-013/spec.md)

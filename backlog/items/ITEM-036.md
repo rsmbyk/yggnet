@@ -1,13 +1,13 @@
 ---
 id: ITEM-036
-status: backlog
+status: speccing
 title: "Step annotations readback + playback"
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-036
 branch:
 pr:
 archived_at:
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Annotate
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-036](../../docs/specs/SPEC-036/spec.md)
 - Related items: ITEM-010, ITEM-014
 - Prior SPECs: [SPEC-010](../../docs/specs/SPEC-010/spec.md), [SPEC-014](../../docs/specs/SPEC-014/spec.md)

@@ -1,13 +1,13 @@
 ---
 id: ITEM-033
-status: backlog
+status: speccing
 title: "Pin respected by layout"
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-033
 branch:
 pr:
 archived_at:
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Pin chec
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-033](../../docs/specs/SPEC-033/spec.md)
 - Related items: ITEM-015, ITEM-032
 - Prior SPEC: [SPEC-015](../../docs/specs/SPEC-015/spec.md)

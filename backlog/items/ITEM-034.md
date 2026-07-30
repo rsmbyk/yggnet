@@ -1,13 +1,13 @@
 ---
 id: ITEM-034
-status: backlog
+status: speccing
 title: "Compare algorithms dual view"
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-034
 branch:
 pr:
 archived_at:
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Compare 
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-034](../../docs/specs/SPEC-034/spec.md)
 - Related items: ITEM-012, ITEM-035
 - Prior SPEC: [SPEC-012](../../docs/specs/SPEC-012/spec.md)

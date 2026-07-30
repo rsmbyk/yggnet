@@ -1,13 +1,13 @@
 ---
 id: ITEM-029
-status: backlog
+status: speccing
 title: "Multi-select nodes (and edges)"
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-029
 branch:
 pr:
 archived_at:
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Selectio
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-029](../../docs/specs/SPEC-029/spec.md)
 - Related items: ITEM-005, ITEM-030
 - Prior SPEC: [SPEC-005](../../docs/specs/SPEC-005/spec.md)

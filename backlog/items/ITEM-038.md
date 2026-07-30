@@ -1,13 +1,13 @@
 ---
 id: ITEM-038
-status: backlog
+status: speccing
 title: "Save/load named docs + palette find"
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-038
 branch:
 pr:
 archived_at:
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Save/loa
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-038](../../docs/specs/SPEC-038/spec.md)
 - Related items: ITEM-021, ITEM-025
 - Prior SPECs: [SPEC-021](../../docs/specs/SPEC-021/spec.md), [SPEC-025](../../docs/specs/SPEC-025/spec.md)

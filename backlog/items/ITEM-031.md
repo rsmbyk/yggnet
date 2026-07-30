@@ -1,13 +1,13 @@
 ---
 id: ITEM-031
-status: backlog
+status: speccing
 title: "Directed edge visuals in world"
 type: feat
 priority: P1
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-031
 branch:
 pr:
 archived_at:
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Model an
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-031](../../docs/specs/SPEC-031/spec.md)
 - Related items: ITEM-002, ITEM-004
 - Prior SPECs: [SPEC-002](../../docs/specs/SPEC-002/spec.md), [SPEC-004](../../docs/specs/SPEC-004/spec.md)

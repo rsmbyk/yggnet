@@ -1,13 +1,13 @@
 ---
 id: ITEM-030
-status: backlog
+status: speccing
 title: "Multi-node groups from UI"
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec:
+spec: SPEC-030
 branch:
 pr:
 archived_at:
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Collapse
 
 ## Links
 
-- Spec:
+- Spec: [SPEC-030](../../docs/specs/SPEC-030/spec.md)
 - Related items: ITEM-016, ITEM-029
 - Prior SPEC: [SPEC-016](../../docs/specs/SPEC-016/spec.md)
