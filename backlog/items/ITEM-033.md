@@ -1,6 +1,6 @@
 ---
 id: ITEM-033
-status: speccing
+status: ready
 title: "Pin respected by layout"
 type: feat
 priority: P2

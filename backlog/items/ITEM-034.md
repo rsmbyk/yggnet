@@ -1,6 +1,6 @@
 ---
 id: ITEM-034
-status: speccing
+status: ready
 title: "Compare algorithms dual view"
 type: feat
 priority: P2

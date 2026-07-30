@@ -4,7 +4,7 @@ item: ITEM-038
 type: feat
 feature_area: manager
 bump: minor
-status: draft
+status: ready
 title: "Save/load named docs + palette find"
 created: 2026-07-30
 updated: 2026-07-30

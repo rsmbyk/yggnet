@@ -4,7 +4,7 @@ item: ITEM-036
 type: feat
 feature_area: analyze
 bump: minor
-status: draft
+status: ready
 title: "Step annotations readback + playback"
 created: 2026-07-30
 updated: 2026-07-30

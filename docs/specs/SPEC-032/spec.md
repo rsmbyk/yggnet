@@ -4,7 +4,7 @@ item: ITEM-032
 type: feat
 feature_area: world
 bump: minor
-status: draft
+status: ready
 title: "Node drag / position edit"
 created: 2026-07-30
 updated: 2026-07-30

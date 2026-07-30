@@ -1,6 +1,6 @@
 ---
 id: ITEM-032
-status: speccing
+status: ready
 title: "Node drag / position edit"
 type: feat
 priority: P1

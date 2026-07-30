@@ -4,7 +4,7 @@ item: ITEM-037
 type: feat
 feature_area: manager
 bump: minor
-status: draft
+status: ready
 title: "Attachments on nodes and edges"
 created: 2026-07-30
 updated: 2026-07-30

@@ -4,7 +4,7 @@ item: ITEM-029
 type: feat
 feature_area: world
 bump: minor
-status: draft
+status: ready
 title: "Multi-select nodes (and edges)"
 created: 2026-07-30
 updated: 2026-07-30

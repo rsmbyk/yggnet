@@ -1,6 +1,6 @@
 ---
 id: ITEM-035
-status: speccing
+status: ready
 title: "Compare stored runs dual view"
 type: feat
 priority: P2

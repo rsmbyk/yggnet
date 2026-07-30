@@ -1,6 +1,6 @@
 ---
 id: ITEM-029
-status: speccing
+status: ready
 title: "Multi-select nodes (and edges)"
 type: feat
 priority: P1

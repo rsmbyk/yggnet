@@ -1,6 +1,6 @@
 ---
 id: ITEM-031
-status: speccing
+status: ready
 title: "Directed edge visuals in world"
 type: feat
 priority: P1

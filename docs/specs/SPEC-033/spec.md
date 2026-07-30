@@ -4,7 +4,7 @@ item: ITEM-033
 type: feat
 feature_area: world
 bump: minor
-status: draft
+status: ready
 title: "Pin respected by layout"
 created: 2026-07-30
 updated: 2026-07-30

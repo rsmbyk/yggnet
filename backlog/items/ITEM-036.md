@@ -1,6 +1,6 @@
 ---
 id: ITEM-036
-status: speccing
+status: ready
 title: "Step annotations readback + playback"
 type: feat
 priority: P1

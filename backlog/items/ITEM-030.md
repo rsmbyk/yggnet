@@ -1,6 +1,6 @@
 ---
 id: ITEM-030
-status: speccing
+status: ready
 title: "Multi-node groups from UI"
 type: feat
 priority: P1
