@@ -41,8 +41,9 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 
 ## Ready
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
+| ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
+
 
 ## In progress
 
@@ -56,5 +57,5 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 
 ## Done
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Merged | Updated |
+| ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Merged | Updated |
 | --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |

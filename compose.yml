@@ -1,0 +1,9 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: yggnet:local
+    ports:
+      - "8080:80"
+    restart: unless-stopped
