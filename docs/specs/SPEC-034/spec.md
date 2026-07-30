@@ -4,7 +4,7 @@ item: ITEM-034
 type: feat
 feature_area: analyze
 bump: minor
-status: ready
+status: done
 title: "Compare algorithms dual view"
 created: 2026-07-30
 updated: 2026-07-30
