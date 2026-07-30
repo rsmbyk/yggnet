@@ -29,6 +29,8 @@ import {
 	removeEdge,
 	removeNode,
 	selectNode,
+	toggleEdgeInSelection,
+	toggleNodeInSelection,
 	serializeDocument,
 	undo as historyUndo,
 	updateEdge,
@@ -192,6 +194,30 @@ class AppStore {
 
 	setSelection(nodeId: NodeId | null): void {
 		this.selection = nodeId ? selectNode(this.selection, nodeId) : clearSelection(this.selection);
+	}
+
+	/**
+	 * Select a node. When `additive` is true (modifier click), toggle membership
+	 * without clearing other selected nodes.
+	 */
+	selectNodeWithModifiers(nodeId: NodeId, additive = false): void {
+		if (additive) {
+			this.selection = toggleNodeInSelection(this.selection, nodeId);
+			return;
+		}
+		this.setSelection(nodeId);
+	}
+
+	toggleEdgeSelection(edgeId: string, additive = false): void {
+		if (additive) {
+			this.selection = toggleEdgeInSelection(this.selection, edgeId);
+			return;
+		}
+		this.selection = toggleEdgeInSelection(clearSelection(this.selection), edgeId);
+	}
+
+	clearAllSelection(): void {
+		this.selection = clearSelection(this.selection);
 	}
 
 	canUndo = $derived(this.history.undoStack.length > 0);

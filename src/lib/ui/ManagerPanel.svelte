@@ -18,6 +18,8 @@
 	const nodes = $derived(Object.values(app.document.nodes));
 	const edges = $derived(Object.values(app.document.edges));
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
+	const selectedIds = $derived(new Set(app.selection.nodeIds));
+	const selectedCount = $derived(app.selection.nodeIds.length);
 	const selectedNode = $derived(selectedId ? app.document.nodes[selectedId] : null);
 	const lastRun = $derived(
 		app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null
@@ -38,6 +40,14 @@
 	const diffB = $derived(
 		app.ui.diffIds[1] ? app.document.nodes[app.ui.diffIds[1]] : null
 	);
+
+	function onSelectNode(id: string, ev: MouseEvent) {
+		app.selectNodeWithModifiers(id, ev.ctrlKey || ev.metaKey || ev.shiftKey);
+	}
+
+	function onSelectEdge(id: string, ev: MouseEvent) {
+		app.toggleEdgeSelection(id, ev.ctrlKey || ev.metaKey || ev.shiftKey);
+	}
 
 	function setMode(mode: AppMode) {
 		app.setMode(mode);
@@ -168,15 +178,18 @@
 			<h2>Nodes ({nodes.length})</h2>
 			<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
 		</div>
+		{#if selectedCount > 0}
+			<p class="hint" data-testid="selection-count">{selectedCount} selected (Ctrl/Shift-click to multi)</p>
+		{/if}
 		<ul class="list" data-testid="node-list">
 			{#each nodes as node (node.id)}
 				<li>
 					<button
 						type="button"
 						class="list-item"
-						class:selected={selectedId === node.id}
+						class:selected={selectedIds.has(node.id)}
 						data-testid={`node-item-${node.id}`}
-						onclick={() => app.setSelection(node.id)}
+						onclick={(e) => onSelectNode(node.id, e)}
 					>
 						<span>{node.label}</span>
 						{#if node.pinned}<span class="tag">pin</span>{/if}
@@ -184,6 +197,16 @@
 				</li>
 			{/each}
 		</ul>
+		{#if selectedCount > 1}
+			<div class="row wrap">
+				<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
+					>Group {selectedCount}</button
+				>
+				<button type="button" data-testid="clear-selection" onclick={() => app.clearAllSelection()}
+					>Clear selection</button
+				>
+			</div>
+		{/if}
 	</section>
 
 	{#if selectedNode}
@@ -266,12 +289,18 @@
 		<ul class="list" data-testid="edge-list">
 			{#each edges as edge (edge.id)}
 				<li class="edge-row">
-					<span class="edge-label">
+					<button
+						type="button"
+						class="list-item edge-select"
+						class:selected={app.selection.edgeIds.includes(edge.id)}
+						data-testid={`edge-item-${edge.id}`}
+						onclick={(e) => onSelectEdge(edge.id, e)}
+					>
 						{app.document.nodes[edge.from]?.label ?? '?'}
 						{edge.directed ? '→' : '—'}
 						{app.document.nodes[edge.to]?.label ?? '?'}
 						<span class="muted">w={edge.weight}</span>
-					</span>
+					</button>
 					<button
 						type="button"
 						data-testid={`edit-edge-${edge.id}`}
