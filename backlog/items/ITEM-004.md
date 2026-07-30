@@ -1,6 +1,6 @@
 ---
 id: ITEM-004
-status: done
+status: archived
 title: "World graph render"
 type: feat
 priority: P0
@@ -8,11 +8,11 @@ effort: L
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-004
-branch:
-pr:
-archived_at:
-archive_reason:
-release_version:
+branch: 
+pr: 
+archived_at: 2026-07-30
+archive_reason: released
+release_version: 0.21.1
 ---
 
 # ITEM-004: World graph render
