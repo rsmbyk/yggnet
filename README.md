@@ -28,6 +28,16 @@ npm run check
 npm run lint
 ```
 
+## Docker
+
+Serve a production static build with nginx:
+
+```bash
+docker compose up --build -d
+```
+
+Then open [http://localhost:8080](http://localhost:8080). See [docs/docker.md](./docs/docker.md) for details.
+
 ## Process
 
 Spec-driven (`SPEC-XXX`) · TDD · Git Flow (`develop` / `main`) · in-repo Kanban (`backlog/`)
