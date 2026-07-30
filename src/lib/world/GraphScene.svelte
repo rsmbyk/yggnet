@@ -16,7 +16,7 @@
 	const edges = $derived(Object.values(app.document.edges));
 	const overlayNodeSet = $derived(new Set(app.overlay.nodeIds));
 	const overlayEdgeSet = $derived(new Set(app.overlay.edgeIds));
-	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
+	const selectedIds = $derived(new Set(app.selection.nodeIds));
 	const showLabels = $derived(app.camera.distance < LABEL_DISTANCE);
 	const dimOthers = $derived(app.overlay.dimOthers && app.overlay.kind !== 'none');
 	const collapsedGroups = $derived(app.groupsCollapsed);
@@ -62,7 +62,7 @@
 	}
 
 	function nodeColor(id: string): string {
-		if (selectedId === id) return '#c4a35a';
+		if (selectedIds.has(id)) return '#c4a35a';
 		if (overlayNodeSet.has(id)) return '#2f9e8a';
 		return '#7a8a9a';
 	}
@@ -191,9 +191,13 @@
 	{@const color = nodeColor(node.id)}
 	<T.Mesh
 		position={[node.position.x, node.position.y, node.position.z]}
-		onclick={(ev: { stopPropagation: () => void }) => {
+		onclick={(ev: { stopPropagation: () => void; nativeEvent?: MouseEvent; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }) => {
 			ev.stopPropagation();
-			app.setSelection(node.id);
+			const native = ev.nativeEvent;
+			const additive = Boolean(
+				native?.ctrlKey || native?.metaKey || native?.shiftKey || ev.ctrlKey || ev.metaKey || ev.shiftKey
+			);
+			app.selectNodeWithModifiers(node.id, additive);
 		}}
 	>
 		<T.SphereGeometry args={[0.55, 24, 24]} />

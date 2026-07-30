@@ -8,7 +8,7 @@
 			id: n.id,
 			x: n.position.x,
 			z: n.position.z,
-			selected: app.selection.nodeIds[0] === n.id
+			selected: app.selection.nodeIds.includes(n.id)
 		}))
 	);
 
