@@ -75,3 +75,4 @@ export {
 	formatSemVer,
 	type Bump
 } from './release/semver';
+export { layoutUnpinned, type LayoutOptions } from './layout/layout';

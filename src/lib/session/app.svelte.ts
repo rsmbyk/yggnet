@@ -16,6 +16,7 @@ import {
 	createRunStore,
 	createSelection,
 	execute,
+	layoutUnpinned,
 	findAllSimplePaths,
 	findShortestPaths,
 	getAlgorithm,
@@ -332,6 +333,26 @@ class AppStore {
 
 	pinNode(id: NodeId, pinned = true): void {
 		this.updateNode(id, { pinned });
+	}
+
+	/** Re-layout unpinned nodes; pinned nodes keep their positions. Undoable. */
+	relayout(): void {
+		const before = cloneDocument(this.document);
+		const after = layoutUnpinned(this.document);
+		const changed = Object.keys(after.nodes).some((id) => {
+			const a = after.nodes[id].position;
+			const b = before.nodes[id].position;
+			return a.x !== b.x || a.y !== b.y || a.z !== b.z;
+		});
+		if (!changed) {
+			this.statusMessage = 'Nothing to layout';
+			return;
+		}
+		this.mutate(() => ({
+			doc: after,
+			undo: () => cloneDocument(before)
+		}));
+		this.statusMessage = 'Re-layout applied';
 	}
 
 	setNodeTags(id: NodeId, tags: string[]): void {

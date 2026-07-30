@@ -176,7 +176,10 @@
 	<section class="block" data-testid="nodes-section">
 		<div class="row between">
 			<h2>Nodes ({nodes.length})</h2>
-			<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
+			<div class="row wrap">
+				<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
+				<button type="button" data-testid="relayout" onclick={() => app.relayout()}>Re-layout</button>
+			</div>
 		</div>
 		{#if selectedCount > 0}
 			<p class="hint" data-testid="selection-count">{selectedCount} selected (Ctrl/Shift-click to multi)</p>
