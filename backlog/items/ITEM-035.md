@@ -1,6 +1,6 @@
 ---
 id: ITEM-035
-status: done
+status: archived
 title: "Compare stored runs dual view"
 type: feat
 priority: P2
@@ -9,10 +9,10 @@ created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-035
 branch: feat/SPEC-035-compare-runs-dual
-pr:
-archived_at:
-archive_reason:
-release_version:
+pr: 
+archived_at: 2026-07-30
+archive_reason: released
+release_version: 0.30.0
 ---
 
 # ITEM-035: Compare stored runs dual view

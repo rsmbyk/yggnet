@@ -10,6 +10,17 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.30.0] - 2026-07-30
+
+### Added
+
+- Hardening pass SPEC-029..038: multi-select, groups UI, directed edge visuals, node drag/position, pin-aware layout, dual algo/run compare, step annotation playback, attachments UI, named save slots and palette find.
+
+### Notes
+
+- SemVer from sequential SPEC bumps in merge-to-develop order (start `0.21.1` to `0.30.0`).
+
+
 ## [0.21.1] - 2026-07-30
 
 ### Added
