@@ -4,7 +4,7 @@ item: ITEM-031
 type: feat
 feature_area: world
 bump: patch
-status: ready
+status: done
 title: "Directed edge visuals in world"
 created: 2026-07-30
 updated: 2026-07-30

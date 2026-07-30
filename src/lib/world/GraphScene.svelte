@@ -8,6 +8,10 @@
 	interactivity();
 
 	const LABEL_DISTANCE = 18;
+	const NODE_RADIUS = 0.55;
+	const ARROW_HEIGHT = 0.28;
+	const ARROW_RADIUS = 0.09;
+	const ARROW_GAP = 0.05;
 
 	let travelRaf = 0;
 	let controls: ThreeOrbitControls | undefined = $state();
@@ -102,7 +106,24 @@
 			qz /= n;
 			qw /= n;
 		}
-		return { mid, len, quaternion: [qx, qy, qz, qw] as [number, number, number, number] };
+		return {
+			mid,
+			len,
+			axis,
+			quaternion: [qx, qy, qz, qw] as [number, number, number, number]
+		};
+	}
+
+	function edgeArrowHead(
+		to: { x: number; y: number; z: number },
+		geo: ReturnType<typeof edgeObject>
+	) {
+		const inset = NODE_RADIUS + ARROW_HEIGHT / 2 + ARROW_GAP;
+		return {
+			x: to.x - geo.axis.x * inset,
+			y: to.y - geo.axis.y * inset,
+			z: to.z - geo.axis.z * inset
+		};
 	}
 
 	function syncCameraFromControls() {
@@ -244,14 +265,19 @@
 			app.filters.tags.length > 0 &&
 			(!app.nodePassesFilter(edge.from) || !app.nodePassesFilter(edge.to))}
 		{#if !hidden}
+			{@const color = edgeColor(edge.id)}
+			{@const opacity = edgeOpacity(edge.id)}
 			<T.Mesh position={[geo.mid.x, geo.mid.y, geo.mid.z]} quaternion={geo.quaternion}>
 				<T.CylinderGeometry args={[0.045, 0.045, geo.len, 8]} />
-				<T.MeshStandardMaterial
-					color={edgeColor(edge.id)}
-					transparent
-					opacity={edgeOpacity(edge.id)}
-				/>
+				<T.MeshStandardMaterial {color} transparent {opacity} roughness={0.45} metalness={0.15} />
 			</T.Mesh>
+			{#if edge.directed}
+				{@const arrow = edgeArrowHead(to.position, geo)}
+				<T.Mesh position={[arrow.x, arrow.y, arrow.z]} quaternion={geo.quaternion}>
+					<T.ConeGeometry args={[ARROW_RADIUS, ARROW_HEIGHT, 8]} />
+					<T.MeshStandardMaterial {color} transparent {opacity} roughness={0.45} metalness={0.15} />
+				</T.Mesh>
+			{/if}
 		{/if}
 	{/if}
 {/each}
