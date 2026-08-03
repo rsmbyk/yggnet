@@ -11,7 +11,7 @@
 | **Run**           | Stored algorithm result + trace (+ stale flag)                    |
 | **Overlay**       | View model for highlights (world renders it)                      |
 | **Selection**     | Selected node/edge ids (domain API)                               |
-| **Session**       | Thin app state: mode, open doc identity, directions/analyze UI    |
+| **World unit** | Abstract Three.js length; fine grid is 1×1 — see `docs/world-scale.md` |
 | **ITEM-XXX**      | Backlog card                                                      |
 | **SPEC-XXX**      | Spec pack (spec + plan + tasks)                                   |
 | **Type**          | Shared enum: feat, fix, hotfix, chore, docs, refactor, test, idea |

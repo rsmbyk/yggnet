@@ -105,15 +105,18 @@
 	);
 
 	function onSelectNode(id: string, ev: MouseEvent) {
-		app.selectNodeWithModifiers(id, ev.ctrlKey || ev.metaKey || ev.shiftKey);
+		if (app.ui.connectFromId) {
+			app.tryConnectTo(id, { ctrlHeld: ev.ctrlKey || ev.metaKey });
+			return;
+		}
+		const multi = app.selection.nodeIds.length > 1;
+		if (ev.shiftKey) app.selectNodeWithModifiers(id, 'add');
+		else if (ev.ctrlKey || ev.metaKey) app.selectNodeWithModifiers(id, 'toggle');
+		else app.selectNodeWithModifiers(id, multi ? 'add' : 'replace');
 	}
 
 	function onSelectEdge(id: string, ev: MouseEvent) {
 		app.toggleEdgeSelection(id, ev.ctrlKey || ev.metaKey || ev.shiftKey);
-	}
-
-	function setMode(mode: AppMode) {
-		app.setMode(mode);
 	}
 
 	function onAddNode() {
@@ -187,7 +190,15 @@
 
 <aside class="manager" data-testid="yggnet-manager">
 	<header class="manager__header">
-		<p class="brand">Yggnet</p>
+		<div class="row between">
+			<div>
+				<p class="brand">Advanced</p>
+				<p class="lede">Large-scale edits & analysis — world stays primary</p>
+			</div>
+			<button type="button" data-testid="close-manager" onclick={() => app.setManagerOpen(false)}
+				>Close</button
+			>
+		</div>
 		<input
 			class="title-input"
 			data-testid="doc-title"
@@ -201,19 +212,19 @@
 		/>
 	</header>
 
-	<nav class="modes" aria-label="App mode" data-testid="mode-tabs">
+	<section class="modes" aria-label="Mode">
 		{#each modes as m (m.id)}
 			<button
 				type="button"
 				class="mode"
 				class:active={app.mode === m.id}
 				data-testid={`mode-${m.id}`}
-				onclick={() => setMode(m.id)}
+				onclick={() => app.setMode(m.id)}
 			>
 				{m.label}
 			</button>
 		{/each}
-	</nav>
+	</section>
 
 	<section class="toolbar" aria-label="History and file">
 		<button type="button" data-testid="undo" disabled={!app.canUndo} onclick={() => app.undo()}
@@ -931,27 +942,41 @@
 	{/if}
 
 	{#if app.statusMessage}
-		<p class="status" data-testid="status-message">{app.statusMessage}</p>
+		<p class="status" data-testid="manager-status">{app.statusMessage}</p>
 	{/if}
 </aside>
 
 <style>
 	.manager {
+		position: relative;
+		top: auto;
+		right: auto;
+		bottom: auto;
+		z-index: auto;
 		display: flex;
 		flex-direction: column;
 		gap: 0.85rem;
-		padding: 1rem 0.85rem;
-		background: var(--yg-panel);
-		border-right: 1px solid var(--yg-border);
-		width: min(22rem, 38vw);
-		min-width: 16rem;
+		padding: 1.15rem 1.2rem;
+		background: var(--yg-panel-glass-strong);
+		border: 1px solid var(--yg-border);
+		width: min(22rem, 92vw);
+		height: 100%;
+		max-height: 100%;
 		overflow: auto;
-		max-height: 100dvh;
+		box-shadow: 0 10px 32px rgba(28, 36, 46, 0.16);
+		border-radius: var(--yg-radius-modal);
+	}
+
+	.lede {
+		margin: 0.15rem 0 0;
+		font-size: 0.72rem;
+		color: var(--yg-muted);
+		max-width: 14rem;
 	}
 
 	.brand {
 		margin: 0;
-		font-size: 1.2rem;
+		font-size: 1.05rem;
 		font-weight: 600;
 		letter-spacing: 0.02em;
 		color: var(--yg-fg);
@@ -961,16 +986,17 @@
 		width: 100%;
 		margin-top: 0.35rem;
 		border: 1px solid var(--yg-border);
-		border-radius: 6px;
-		padding: 0.35rem 0.5rem;
-		background: #fff;
+		border-radius: var(--yg-radius-control);
+		padding: 0.4rem 0.55rem;
+		background: var(--yg-chip);
 		color: var(--yg-fg);
 		font: inherit;
 	}
 
 	.modes {
 		display: flex;
-		gap: 0.25rem;
+		flex-wrap: wrap;
+		gap: 0.3rem;
 	}
 
 	.mode,
@@ -979,10 +1005,10 @@
 		font: inherit;
 		font-size: 0.8rem;
 		border: 1px solid var(--yg-border);
-		background: #fff;
+		background: var(--yg-chip);
 		color: var(--yg-fg);
-		border-radius: 6px;
-		padding: 0.35rem 0.5rem;
+		border-radius: var(--yg-radius-control);
+		padding: 0.4rem 0.55rem;
 		cursor: pointer;
 	}
 
@@ -1087,9 +1113,9 @@
 		font: inherit;
 		font-size: 0.85rem;
 		border: 1px solid var(--yg-border);
-		border-radius: 6px;
-		padding: 0.3rem 0.45rem;
-		background: #fff;
+		border-radius: var(--yg-radius-control);
+		padding: 0.35rem 0.5rem;
+		background: var(--yg-chip);
 		color: var(--yg-fg);
 	}
 

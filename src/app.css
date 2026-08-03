@@ -2,19 +2,91 @@
 	color-scheme: light;
 	--yg-bg: #e8ecf1;
 	--yg-panel: #f7f8fa;
-	--yg-fg: #1a222c;
-	--yg-muted: #5c6b7a;
-	--yg-border: #d0d7e0;
+	/*
+	 * True alpha only — no backdrop-filter on HUD/panels.
+	 * Frosted blur usually samples the solid .world bg, not the WebGL canvas,
+	 * so panels looked opaque even when fill was semi-transparent.
+	 */
+	/* Hovered chrome / cam controls / connect banner share this fill. */
+	--yg-panel-glass: rgba(244, 246, 248, 0.62);
+	--yg-panel-glass-strong: rgba(244, 246, 248, 0.74);
+	--yg-panel-glass-dim: rgba(244, 246, 248, 0.14);
+	--yg-chip: rgba(255, 255, 255, 0.55);
+	--yg-chip-dim: rgba(255, 255, 255, 0.18);
+	--yg-hud-idle-opacity: 0.42;
+	--yg-hud-active-opacity: 1;
+	--yg-fg: #0f1620;
+	--yg-muted: #2a3644;
+	--yg-border: rgba(28, 36, 46, 0.22);
 	--yg-accent: #0b6e7a;
-	--yg-accent-soft: color-mix(in srgb, var(--yg-accent) 14%, white);
-	--yg-world-bg: #1c242e;
+	--yg-accent-soft: rgba(11, 110, 122, 0.28);
+	--yg-world-bg: #2a3340;
 	--yg-font: 'Segoe UI', system-ui, sans-serif;
+	--yg-font-display: Georgia, 'Times New Roman', serif;
+	--yg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+	--yg-motion-fast: 160ms;
+	--yg-motion: 220ms;
+	--yg-text-glow: 0 1px 2px rgba(255, 255, 255, 0.55);
+	/* Modest radii — use only where shape fits the control */
+	--yg-radius-control: 6px;
+	--yg-radius-panel: 12px;
+	--yg-radius-modal: 8px;
+	--yg-radius-pill: 999px;
+	--yg-pad-panel: 0.9rem 1rem;
+	--yg-pad-modal: 0.85rem 1rem;
+	--yg-toast-ms: 2400;
+	/* Custom scrollbar (native, themed — applies everywhere) */
+	--yg-scroll-size: 5px;
+	--yg-scroll-track: transparent;
+	--yg-scroll-thumb: rgba(28, 36, 46, 0.28);
+	--yg-scroll-thumb-hover: rgba(11, 110, 122, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--yg-motion-fast: 1ms;
+		--yg-motion: 1ms;
+	}
 }
 
 *,
 *::before,
 *::after {
 	box-sizing: border-box;
+}
+
+/* Firefox */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--yg-scroll-thumb) var(--yg-scroll-track);
+}
+
+/* Chromium / Safari / Edge */
+*::-webkit-scrollbar {
+	width: var(--yg-scroll-size);
+	height: var(--yg-scroll-size);
+}
+
+*::-webkit-scrollbar-track {
+	background: var(--yg-scroll-track);
+	border-radius: var(--yg-radius-pill);
+}
+
+*::-webkit-scrollbar-thumb {
+	background: var(--yg-scroll-thumb);
+	border-radius: var(--yg-radius-pill);
+	border: 1px solid transparent;
+	background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+	background: var(--yg-scroll-thumb-hover);
+	border: 1px solid transparent;
+	background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+	background: transparent;
 }
 
 html,
