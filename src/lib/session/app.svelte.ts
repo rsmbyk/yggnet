@@ -31,6 +31,8 @@ import {
 	redo as historyRedo,
 	removeEdge,
 	removeNode,
+	addNodeToSelection,
+	removeNodeFromSelection,
 	selectNode,
 	toggleEdgeInSelection,
 	toggleNodeInSelection,
@@ -48,6 +50,9 @@ import {
 	type RunStore,
 	type SelectionState
 } from '$lib/graph';
+import { WORLD } from '$lib/world/world-config';
+import { findFreePosition } from '$lib/world/node-physics';
+import { worldTune } from '$lib/world/world-tune.svelte';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
 
 const AUTOSAVE_KEY = 'yggnet.autosave';
@@ -82,12 +87,43 @@ export type FiltersState = {
 export type CameraState = {
 	distance: number;
 	target: { x: number; y: number; z: number };
+	/** Camera eye position in world space. */
+	eye: { x: number; y: number; z: number };
+	/** Azimuth around +Y in degrees (−180…180). */
+	panDeg: number;
+	/** Elevation above the horizon in degrees. */
+	tiltDeg: number;
 };
+
+export type ViewMode = '3d' | '2d';
 
 export type UiState = {
 	paletteOpen: boolean;
 	diffIds: string[];
 	commandQuery: string;
+	/** Advanced manager drawer — closed by default; world is primary. */
+	managerOpen: boolean;
+	/** When set, next node pick completes an edge from this id. */
+	connectFromId: string | null;
+	/**
+	 * Effective directed flag for the in-progress connect (UI + edge create).
+	 * Undirected start: follows Ctrl held. Directed start (Ctrl+Alt): stays locked on.
+	 */
+	connectDirected: boolean;
+	/** True when connect was entered as directed — Alt release cannot unlock. */
+	connectDirectedLocked: boolean;
+	/** Live Alt while connect is active (undirected start can promote to directed). */
+	connectAltHeld: boolean;
+	/**
+	 * Sticky multi-select after Shift+add. Plain LMB toggles; Alt+LMB deselects.
+	 * Cleared on replace-select / clear / connect start.
+	 */
+	multiSelectMode: boolean;
+	/**
+	 * `3d` — free orbit (current world). `2d` — top-down on the grid plane;
+	 * orbit off; pan/move locked to XZ; nodes sit on the floor.
+	 */
+	viewMode: ViewMode;
 };
 
 const runner = new MainThreadRunner();
@@ -130,9 +166,58 @@ class AppStore {
 	directions = $state.raw<DirectionsState>(emptyDirections());
 	analyze = $state.raw<AnalyzeState>(emptyAnalyze());
 	filters = $state.raw<FiltersState>({ tags: [], hideFiltered: false });
-	camera = $state.raw<CameraState>({ distance: 28, target: { x: 0, y: 0, z: 0 } });
+	camera = $state.raw<CameraState>({
+		distance: WORLD.camera.defaultDistance,
+		target: { ...WORLD.camera.defaultTarget },
+		eye: {
+			x: WORLD.camera.defaultPosition[0],
+			y: WORLD.camera.defaultPosition[1],
+			z: WORLD.camera.defaultPosition[2]
+		},
+		panDeg: (Math.atan2(WORLD.camera.defaultPosition[0], WORLD.camera.defaultPosition[2]) * 180) / Math.PI,
+		tiltDeg:
+			90 -
+			(Math.acos(
+				Math.min(
+					1,
+					Math.max(
+						-1,
+						WORLD.camera.defaultPosition[1] /
+							Math.hypot(...WORLD.camera.defaultPosition)
+					)
+				)
+			) *
+				180) /
+				Math.PI
+	});
+	/** Bumped to snap OrbitControls back to the default view angle. */
+	cameraOrbitEpoch = $state(0);
+	/** Bumped when viewMode toggles so GraphScene can apply the camera pose. */
+	viewModeEpoch = $state(0);
+	/**
+	 * Eye−target offset saved when entering 2D — restored on return to 3D
+	 * (scaled to current zoom; target stays where it is).
+	 */
+	last3dOrbit = $state.raw({
+		offset: {
+			x: WORLD.camera.defaultPosition[0] - WORLD.camera.defaultTarget.x,
+			y: WORLD.camera.defaultPosition[1] - WORLD.camera.defaultTarget.y,
+			z: WORLD.camera.defaultPosition[2] - WORLD.camera.defaultTarget.z
+		}
+	});
 	groupsCollapsed = $state.raw<Set<string>>(new Set());
-	ui = $state.raw<UiState>({ paletteOpen: false, diffIds: [], commandQuery: '' });
+	ui = $state.raw<UiState>({
+		paletteOpen: false,
+		diffIds: [],
+		commandQuery: '',
+		managerOpen: false,
+		connectFromId: null,
+		connectDirected: false,
+		connectDirectedLocked: false,
+		connectAltHeld: false,
+		multiSelectMode: false,
+		viewMode: '3d'
+	});
 	statusMessage = $state<string>('');
 
 	readonly algorithms = listAlgorithms();
@@ -200,15 +285,38 @@ class AppStore {
 	}
 
 	/**
-	 * Select a node. When `additive` is true (modifier click), toggle membership
-	 * without clearing other selected nodes.
+	 * Select a node with modifier semantics:
+	 * - `replace` — single selection (exits sticky multi)
+	 * - `toggle` — add or remove
+	 * - `add` — add only; enters sticky multi-select mode
+	 * - `deselect` — remove only (no add)
 	 */
-	selectNodeWithModifiers(nodeId: NodeId, additive = false): void {
-		if (additive) {
-			this.selection = toggleNodeInSelection(this.selection, nodeId);
+	selectNodeWithModifiers(
+		nodeId: NodeId,
+		mode: 'replace' | 'toggle' | 'add' | 'deselect' = 'replace'
+	): void {
+		if (mode === 'deselect') {
+			this.selection = removeNodeFromSelection(this.selection, nodeId);
+			if (this.selection.nodeIds.length === 0) this.setMultiSelectMode(false);
 			return;
 		}
+		if (mode === 'toggle') {
+			this.selection = toggleNodeInSelection(this.selection, nodeId);
+			if (this.selection.nodeIds.length === 0) this.setMultiSelectMode(false);
+			return;
+		}
+		if (mode === 'add') {
+			this.selection = addNodeToSelection(this.selection, nodeId);
+			this.setMultiSelectMode(true);
+			return;
+		}
+		this.setMultiSelectMode(false);
 		this.setSelection(nodeId);
+	}
+
+	setMultiSelectMode(on: boolean): void {
+		if (this.ui.multiSelectMode === on) return;
+		this.ui = { ...this.ui, multiSelectMode: on };
 	}
 
 	toggleEdgeSelection(edgeId: string, additive = false): void {
@@ -221,6 +329,7 @@ class AppStore {
 
 	clearAllSelection(): void {
 		this.selection = clearSelection(this.selection);
+		this.setMultiSelectMode(false);
 	}
 
 	canUndo = $derived(this.history.undoStack.length > 0);
@@ -251,13 +360,22 @@ class AppStore {
 		const count = Object.keys(this.document.nodes).length;
 		const angle = count * 0.9;
 		const radius = 3 + count * 0.35;
-		const position =
+		const tune = worldTune.values;
+		const preferred =
 			partial.position ??
 			({
 				x: Math.cos(angle) * radius,
-				y: 0.5,
+				y: tune.defaultNodeY,
 				z: Math.sin(angle) * radius
 			} as const);
+		const blockers = Object.values(this.document.nodes).map((n) => n.position);
+		const position = findFreePosition(
+			preferred,
+			blockers,
+			tune.nodeRadius,
+			tune.collisionFloorY,
+			tune.collisionPadding
+		);
 		this.mutate((d) => {
 			const { doc, nodeId } = addNode(d, { ...partial, position });
 			created = nodeId;
@@ -710,15 +828,64 @@ class AppStore {
 	setCamera(partial: Partial<CameraState>): void {
 		const distance = partial.distance ?? this.camera.distance;
 		const target = partial.target ?? this.camera.target;
+		const eye = partial.eye ?? this.camera.eye;
+		const panDeg = partial.panDeg ?? this.camera.panDeg;
+		const tiltDeg = partial.tiltDeg ?? this.camera.tiltDeg;
 		if (
 			distance === this.camera.distance &&
 			target.x === this.camera.target.x &&
 			target.y === this.camera.target.y &&
-			target.z === this.camera.target.z
+			target.z === this.camera.target.z &&
+			eye.x === this.camera.eye.x &&
+			eye.y === this.camera.eye.y &&
+			eye.z === this.camera.eye.z &&
+			panDeg === this.camera.panDeg &&
+			tiltDeg === this.camera.tiltDeg
 		) {
 			return;
 		}
-		this.camera = { distance, target: { x: target.x, y: target.y, z: target.z } };
+		this.camera = {
+			distance,
+			target: { x: target.x, y: target.y, z: target.z },
+			eye: { x: eye.x, y: eye.y, z: eye.z },
+			panDeg,
+			tiltDeg
+		};
+	}
+
+	/** Pan target back to world origin. */
+	resetCameraTarget(): void {
+		const v = worldTune.values;
+		this.setCamera({
+			target: { x: v.defaultTargetX, y: v.defaultTargetY, z: v.defaultTargetZ }
+		});
+	}
+
+	/** Restore the default isometric viewing angle (keeps target + zoom). */
+	resetCameraOrbit(): void {
+		this.cameraOrbitEpoch += 1;
+	}
+
+	/** Restore default zoom distance. */
+	resetCameraZoom(): void {
+		this.setCamera({ distance: worldTune.values.defaultDistance });
+	}
+
+	/** Toggle top-down 2D ↔ free 3D orbit. Keeps current target + zoom. */
+	toggleViewMode(): void {
+		// Orbit snapshot is captured in GraphScene when a 2D tween actually starts
+		// from a settled Y-up pose (so mid-animation mash doesn't overwrite it).
+		this.ui = { ...this.ui, viewMode: this.ui.viewMode === '3d' ? '2d' : '3d' };
+		this.viewModeEpoch += 1;
+	}
+
+	/** Saved by GraphScene when leaving settled 3D for 2D. */
+	saveLast3dOrbit(offset: { x: number; y: number; z: number }): void {
+		this.last3dOrbit = { offset: { x: offset.x, y: offset.y, z: offset.z } };
+	}
+
+	get isView2d(): boolean {
+		return this.ui.viewMode === '2d';
 	}
 
 	openPalette(open = true): void {
@@ -731,6 +898,91 @@ class AppStore {
 
 	setDiffIds(ids: string[]): void {
 		this.ui = { ...this.ui, diffIds: ids.slice(0, 2) };
+	}
+
+	setManagerOpen(open: boolean): void {
+		this.ui = { ...this.ui, managerOpen: open };
+	}
+
+	toggleManager(): void {
+		this.setManagerOpen(!this.ui.managerOpen);
+	}
+
+	setConnectFrom(nodeId: string | null, opts: { directed?: boolean } = {}): void {
+		if (!nodeId) {
+			this.ui = {
+				...this.ui,
+				connectFromId: null,
+				connectDirected: false,
+				connectDirectedLocked: false,
+				connectAltHeld: false
+			};
+			if (this.statusMessage.startsWith('Pick another node')) this.statusMessage = '';
+			return;
+		}
+		const locked = Boolean(opts.directed);
+		// Connect and node-info are exclusive — close any open sheet first.
+		this.selection = clearSelection(this.selection);
+		this.ui = {
+			...this.ui,
+			connectFromId: nodeId,
+			connectDirectedLocked: locked,
+			connectAltHeld: false,
+			connectDirected: locked,
+			multiSelectMode: false
+		};
+		this.statusMessage = locked
+			? 'Pick another node to connect (directed) · Esc / RMB to cancel'
+			: 'Pick another node to connect · hold Alt for directed · Esc / RMB to cancel';
+	}
+
+	/** Live Alt while connecting — promotes undirected→directed; never demotes a locked directed start. */
+	setConnectAltHeld(held: boolean): void {
+		if (!this.ui.connectFromId) return;
+		if (this.ui.connectAltHeld === held) return;
+		const directed = this.ui.connectDirectedLocked || held;
+		this.ui = { ...this.ui, connectAltHeld: held, connectDirected: directed };
+	}
+
+	/** Start connect from the primary selected node (or `fallbackId` if none). */
+	beginConnectFromSelection(opts: { directed?: boolean; fallbackId?: string } = {}): boolean {
+		const from = this.selection.nodeIds[0] ?? opts.fallbackId ?? null;
+		if (!from || !this.document.nodes[from]) {
+			this.statusMessage = 'Select a node first, then Ctrl+click to connect';
+			return false;
+		}
+		this.setConnectFrom(from, { directed: opts.directed });
+		return true;
+	}
+
+	/** Place a node at a world position (in-world create). */
+	addNodeAt(position: { x: number; y: number; z: number }, label?: string): string {
+		const count = Object.keys(this.document.nodes).length;
+		return this.addNode({
+			label: label ?? `Node ${count + 1}`,
+			position
+		});
+	}
+
+	/** Remove current selection (nodes and/or edges). */
+	deleteSelection(): void {
+		const nodeIds = [...this.selection.nodeIds];
+		const edgeIds = [...this.selection.edgeIds];
+		for (const id of edgeIds) this.removeEdge(id);
+		for (const id of nodeIds) this.removeNode(id);
+		this.clearAllSelection();
+	}
+
+	tryConnectTo(toId: string, opts: { altHeld?: boolean } = {}): boolean {
+		const from = this.ui.connectFromId;
+		if (!from || from === toId) return false;
+		if (opts.altHeld !== undefined) this.setConnectAltHeld(opts.altHeld);
+		const directed = this.ui.connectDirectedLocked || this.ui.connectAltHeld;
+		this.addEdge(from, toId, { directed });
+		this.setConnectFrom(null);
+		// Destination click completes the edge only — do not select / open node info.
+		this.statusMessage = directed ? 'Connected (directed)' : 'Connected';
+		return true;
 	}
 
 	saveToSlot(slot = 'default'): void {
@@ -941,16 +1193,27 @@ function buildRandomGraph(n: number): GraphDocument {
 	const count = Math.max(2, Math.min(40, Math.floor(n)));
 	let doc = createEmptyDocument(`Random ${count}`);
 	const ids: string[] = [];
+	const tune = worldTune.values;
+	const placed: { x: number; y: number; z: number }[] = [];
 	for (let i = 0; i < count; i++) {
 		const angle = (i / count) * Math.PI * 2;
-		const radius = 4 + (i % 5);
+		const ring = 4 + (i % 5);
+		const preferred = {
+			x: Math.cos(angle) * ring,
+			y: tune.defaultNodeY,
+			z: Math.sin(angle) * ring
+		};
+		const position = findFreePosition(
+			preferred,
+			placed,
+			tune.nodeRadius,
+			tune.collisionFloorY,
+			tune.collisionPadding
+		);
+		placed.push(position);
 		const r = addNode(doc, {
 			label: `N${i + 1}`,
-			position: {
-				x: Math.cos(angle) * radius,
-				y: (i % 3) * 0.4,
-				z: Math.sin(angle) * radius
-			},
+			position,
 			tags: i % 4 === 0 ? ['hub'] : []
 		});
 		doc = r.doc;

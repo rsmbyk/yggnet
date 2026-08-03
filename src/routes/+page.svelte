@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { fade, fly } from 'svelte/transition';
 	import ManagerPanel from '$lib/ui/ManagerPanel.svelte';
 	import { app } from '$lib/session/app.svelte';
 
+	const slide = { duration: 220, x: 28, opacity: 0 };
 	let WorldCanvas: typeof import('$lib/world/WorldCanvas.svelte').default | null = $state(null);
 
 	onMount(() => {
@@ -17,38 +19,45 @@
 	});
 
 	function onKeydown(e: KeyboardEvent) {
+		const target = e.target as HTMLElement | null;
+		const typing =
+			target &&
+			(target.tagName === 'INPUT' ||
+				target.tagName === 'TEXTAREA' ||
+				target.isContentEditable);
 		const meta = e.ctrlKey || e.metaKey;
 		if (meta && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
 			app.openPalette(!app.ui.paletteOpen);
 			return;
 		}
-		if (e.key === 'Escape' && app.ui.paletteOpen) {
-			app.openPalette(false);
+		if (e.key === 'Escape') {
+			if (app.ui.paletteOpen) {
+				app.openPalette(false);
+				return;
+			}
+			if (app.ui.connectFromId) {
+				app.setConnectFrom(null);
+				return;
+			}
+			if (app.ui.managerOpen) {
+				app.setManagerOpen(false);
+				return;
+			}
+			app.clearAllSelection();
+			return;
+		}
+		if (typing) return;
+		if (e.key === 'm' || e.key === 'M') {
+			e.preventDefault();
+			app.toggleManager();
+			return;
+		}
+		if (e.key === 'Delete' || e.key === 'Backspace') {
+			e.preventDefault();
+			app.deleteSelection();
 		}
 	}
-
-	const paletteCommands = $derived.by(() => {
-		const q = app.ui.commandQuery.trim().toLowerCase();
-		const items: { id: string; label: string; run: () => void }[] = [
-			{ id: 'mode-explore', label: 'Switch to Explore', run: () => app.setMode('explore') },
-			{ id: 'mode-directions', label: 'Switch to Directions', run: () => app.setMode('directions') },
-			{ id: 'mode-analyze', label: 'Switch to Analyze', run: () => app.setMode('analyze') },
-			{
-				id: 'run-bfs',
-				label: 'Run BFS',
-				run: () => {
-					app.setAlgorithm('bfs');
-					void app.runAlgorithm();
-				}
-			},
-			{ id: 'add-node', label: 'Add node', run: () => app.addNode() },
-			{ id: 'undo', label: 'Undo', run: () => app.undo() },
-			{ id: 'redo', label: 'Redo', run: () => app.redo() }
-		];
-		if (!q) return items;
-		return items.filter((i) => i.label.toLowerCase().includes(q));
-	});
 
 	const paletteFindResults = $derived.by(() => {
 		const q = app.ui.commandQuery.trim();
@@ -62,21 +71,23 @@
 		});
 	});
 
-	function runItem(item: { run: () => void }) {
-		item.run();
-		app.openPalette(false);
-	}
-
 	function jumpToFindResult(nodeId: string) {
 		app.jumpToNode(nodeId);
 		app.openPalette(false);
+	}
+
+	function closePalette() {
+		app.openPalette(false);
+	}
+
+	function onPaletteBackdropClick(e: MouseEvent) {
+		if (e.target === e.currentTarget) closePalette();
 	}
 </script>
 
 <svelte:window onkeydown={onKeydown} />
 
 <div id="yggnet-app" class="shell" data-testid="yggnet-shell">
-	<ManagerPanel />
 	<main class="viewport">
 		{#if WorldCanvas}
 			<WorldCanvas />
@@ -85,16 +96,24 @@
 		{/if}
 
 		{#if app.ui.paletteOpen}
-			<div class="palette-backdrop" data-testid="command-palette" role="presentation">
+			<div
+				class="palette-backdrop"
+				data-testid="command-palette"
+				role="presentation"
+				transition:fade={{ duration: 160 }}
+				onclick={onPaletteBackdropClick}
+			>
 				<div
 					class="palette"
 					role="dialog"
 					aria-modal="true"
 					aria-label="Command palette"
+					transition:fly={{ y: -10, duration: 200, opacity: 0 }}
+					onclick={(e) => e.stopPropagation()}
 				>
 					<input
 						data-testid="palette-input"
-						placeholder="Find node, switch mode, run bfs…"
+						placeholder="Find a node…"
 						value={app.ui.commandQuery}
 						oninput={(e) => app.setCommandQuery(e.currentTarget.value)}
 					/>
@@ -112,36 +131,72 @@
 								</li>
 							{/each}
 						</ul>
+					{:else if app.ui.commandQuery.trim()}
+						<p class="hint">No nodes match</p>
 					{/if}
-					<ul>
-						{#each paletteCommands as item (item.id)}
-							<li>
-								<button type="button" data-testid={`palette-item-${item.id}`} onclick={() => runItem(item)}>
-									{item.label}
-								</button>
-							</li>
-						{/each}
-					</ul>
 					<p class="hint">Ctrl+K · Esc to close</p>
 				</div>
 			</div>
 		{/if}
 	</main>
+
+	{#if app.ui.managerOpen}
+		<button
+			type="button"
+			class="drawer-scrim"
+			aria-label="Close advanced panel"
+			data-testid="manager-scrim"
+			transition:fade={{ duration: 180 }}
+			onclick={() => app.setManagerOpen(false)}
+		></button>
+		<div class="drawer-slot" transition:fly={slide}>
+			<ManagerPanel />
+		</div>
+	{/if}
 </div>
 
 <style>
 	.shell {
-		display: grid;
-		grid-template-columns: auto 1fr;
+		position: relative;
 		height: 100dvh;
 		min-height: 100vh;
 		background: var(--yg-bg);
+		overflow: hidden;
 	}
 
 	.viewport {
+		width: 100%;
+		height: 100%;
 		min-width: 0;
 		min-height: 0;
 		position: relative;
+	}
+
+	.drawer-scrim {
+		position: absolute;
+		inset: 0;
+		z-index: 15;
+		border: none;
+		padding: 0;
+		margin: 0;
+		background: rgba(28, 36, 46, 0.12);
+		cursor: pointer;
+	}
+
+	.drawer-slot {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		bottom: 0.75rem;
+		z-index: 16;
+		display: flex;
+		max-width: calc(100% - 1.5rem);
+		pointer-events: none;
+	}
+
+	.drawer-slot :global(.manager) {
+		pointer-events: auto;
+		cursor: default;
 	}
 
 	.world-placeholder {
@@ -155,36 +210,38 @@
 	.palette-backdrop {
 		position: absolute;
 		inset: 0;
-		background: color-mix(in srgb, #1c242e 45%, transparent);
+		background: rgba(28, 36, 46, 0.32);
 		display: grid;
 		place-items: start center;
 		padding-top: 12vh;
 		z-index: 20;
+		cursor: pointer;
 	}
 
 	.palette {
 		width: min(28rem, 92vw);
-		background: var(--yg-panel);
+		background: var(--yg-panel-glass-strong);
 		border: 1px solid var(--yg-border);
-		border-radius: 10px;
-		padding: 0.75rem;
-		box-shadow: 0 12px 40px color-mix(in srgb, #1c242e 25%, transparent);
+		border-radius: var(--yg-radius-modal);
+		padding: var(--yg-pad-modal);
+		box-shadow: 0 10px 28px rgba(28, 36, 46, 0.16);
+		cursor: default;
 	}
 
 	.palette input {
 		width: 100%;
 		font: inherit;
-		font-size: 1rem;
-		padding: 0.55rem 0.65rem;
+		font-size: 0.9rem;
+		padding: 0.5rem 0.6rem;
 		border: 1px solid var(--yg-border);
-		border-radius: 8px;
-		background: #fff;
+		border-radius: var(--yg-radius-control);
+		background: var(--yg-chip);
 		color: var(--yg-fg);
 	}
 
 	.palette ul {
 		list-style: none;
-		margin: 0.5rem 0 0;
+		margin: 0.55rem 0 0;
 		padding: 0;
 		max-height: 16rem;
 		overflow: auto;
@@ -195,12 +252,13 @@
 		text-align: left;
 		font: inherit;
 		font-size: 0.9rem;
-		padding: 0.45rem 0.55rem;
+		padding: 0.5rem 0.6rem;
 		border: none;
 		background: transparent;
-		border-radius: 6px;
+		border-radius: var(--yg-radius-control);
 		cursor: pointer;
 		color: var(--yg-fg);
+		transition: background var(--yg-motion-fast) var(--yg-ease);
 	}
 
 	.palette li button:hover {
@@ -209,7 +267,7 @@
 
 	.hint {
 		margin: 0.5rem 0 0;
-		font-size: 0.75rem;
+		font-size: 0.9rem;
 		color: var(--yg-muted);
 	}
 </style>
