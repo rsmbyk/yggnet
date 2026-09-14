@@ -24,4 +24,5 @@ Pronunciation: **IG-net**.
 - Domain: `src/lib/graph/**` (framework-agnostic).
 - Thin `src/lib/session/**` for mode / open-doc / directions-analyze UI state.
 - `src/lib/world/**` Threlte; `src/lib/ui/**` manager chrome.
+- World/camera numeric defaults: `src/lib/world/world-config.ts` — see `docs/world-scale.md`.
 - Monolith route: `/` is the app shell.

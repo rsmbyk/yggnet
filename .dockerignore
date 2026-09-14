@@ -17,7 +17,8 @@ playwright-report
 !.env.test
 backlog
 docs
-scripts
+scripts/*
+!scripts/vite-world-config-writer.ts
 e2e
 *.log
 .DS_Store
