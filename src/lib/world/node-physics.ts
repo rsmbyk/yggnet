@@ -41,7 +41,14 @@ export function resolveMoveAgainstNodes(
 	return next;
 }
 
-/** Find a floor-resting position near `preferred` that does not overlap blockers. */
+/**
+ * Extra gap used only when placing a new node.
+ * Centers must stay at least four radii apart (`2×radius` spheres + this padding).
+ */
+export function createNodePadding(nodeRadius: number): number {
+	return nodeRadius * 2;
+}
+
 /** Snap free axes of `pos` to a world grid when `enabled` (Alt while moving). */
 export function snapToGrid(
 	pos: Vec3,
@@ -56,6 +63,7 @@ export function snapToGrid(
 	return { x: s(pos.x), y: pos.y, z: s(pos.z) };
 }
 
+/** Find a floor-resting position near `preferred` that does not overlap blockers. */
 export function findFreePosition(
 	preferred: Vec3,
 	blockers: Iterable<Vec3>,

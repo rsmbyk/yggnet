@@ -51,7 +51,7 @@ import {
 	type SelectionState
 } from '$lib/graph';
 import { WORLD } from '$lib/world/world-config';
-import { findFreePosition } from '$lib/world/node-physics';
+import { createNodePadding, findFreePosition } from '$lib/world/node-physics';
 import { worldTune } from '$lib/world/world-tune.svelte';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
 
@@ -374,7 +374,7 @@ class AppStore {
 			blockers,
 			tune.nodeRadius,
 			tune.collisionFloorY,
-			tune.collisionPadding
+			createNodePadding(tune.nodeRadius)
 		);
 		this.mutate((d) => {
 			const { doc, nodeId } = addNode(d, { ...partial, position });
@@ -1208,7 +1208,7 @@ function buildRandomGraph(n: number): GraphDocument {
 			placed,
 			tune.nodeRadius,
 			tune.collisionFloorY,
-			tune.collisionPadding
+			createNodePadding(tune.nodeRadius)
 		);
 		placed.push(position);
 		const r = addNode(doc, {
