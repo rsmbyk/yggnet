@@ -122,7 +122,7 @@ export const WORLD = {
 		/** OrbitControls damping factor. */
 		dampingFactor: 0.12,
 		/** 2D ↔ 3D and camera-reset tween duration (ms). */
-		viewModeTransitionMs: 320
+		viewModeTransitionMs: 400
 	},
 
 	/** Show a node’s floating label when the camera eye (zoom position) is within this world range of it. */
