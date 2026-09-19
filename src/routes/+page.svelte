@@ -179,7 +179,7 @@
 		border: none;
 		padding: 0;
 		margin: 0;
-		background: rgba(28, 36, 46, 0.12);
+		background: rgba(28, 36, 46, 0.28);
 		cursor: pointer;
 	}
 

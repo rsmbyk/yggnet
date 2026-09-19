@@ -10,9 +10,13 @@
 	const selectedEdgeId = $derived(app.selection.edgeIds[0] ?? null);
 	const selectedEdge = $derived(selectedEdgeId ? app.document.edges[selectedEdgeId] : null);
 	const connecting = $derived(app.ui.connectFromId !== null);
-	/** One sheet shell for node / multi / edge — avoids outro jumps when switching modes. */
+	/**
+	 * One sheet shell for node / multi / edge — avoids outro jumps when switching modes.
+	 * Hidden while Advanced is open so the drawer is the only inspect surface.
+	 */
 	const sheetOpen = $derived(
-		(selectedCount === 1 && selectedNode != null) || selectedCount > 1 || selectedEdge != null
+		!app.ui.managerOpen &&
+			((selectedCount === 1 && selectedNode != null) || selectedCount > 1 || selectedEdge != null)
 	);
 	const sheetTestId = $derived(
 		selectedCount > 1

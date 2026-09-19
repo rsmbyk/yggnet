@@ -322,12 +322,33 @@
 				<button type="button" data-testid="clear-selection" onclick={() => app.clearAllSelection()}
 					>Clear selection</button
 				>
+				<button
+					type="button"
+					data-testid="delete-selection"
+					onclick={() => app.deleteSelection()}>Delete</button
+				>
 			</div>
 		{/if}
 
 		{#if selectedNode && selectedCount === 1}
 			<div class="inspect" data-testid="node-editor">
 				<h3 class="subhead">Inspect</h3>
+				<div class="row wrap inspect-actions">
+					<button
+						type="button"
+						data-testid="node-connect"
+						class:active={app.ui.connectFromId === selectedNode.id}
+						onclick={() => app.setConnectFrom(selectedNode.id)}>Connect</button
+					>
+					<button
+						type="button"
+						data-testid="delete-node"
+						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
+					>
+					<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
+						>Add to diff</button
+					>
+				</div>
 				<label>
 					Label
 					<input
@@ -462,16 +483,6 @@
 						>
 					</div>
 				</div>
-				<div class="row wrap inspect-actions">
-					<button
-						type="button"
-						data-testid="delete-node"
-						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
-					>
-					<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
-						>Add to diff</button
-					>
-				</div>
 			</div>
 		{/if}
 	</section>
@@ -484,6 +495,19 @@
 				{selectedEdge.directed ? '→' : '—'}
 				{app.document.nodes[selectedEdge.to]?.label ?? '?'}
 			</p>
+			<div class="row wrap inspect-actions">
+				<button
+					type="button"
+					data-testid="edge-toggle-directed"
+					onclick={() => app.updateEdge(selectedEdge.id, { directed: !selectedEdge.directed })}
+					>{selectedEdge.directed ? 'Make undirected' : 'Make directed'}</button
+				>
+				<button
+					type="button"
+					data-testid="delete-edge"
+					onclick={() => app.removeEdge(selectedEdge.id)}>Delete</button
+				>
+			</div>
 			<div class="attachments" data-testid="edge-attachments-section">
 				<h3 class="subhead">Attachments</h3>
 				<ul class="list attachment-list" data-testid="edge-attachment-list">
@@ -1095,7 +1119,7 @@
 	}
 
 	.inspect-actions {
-		margin-top: 0.2rem;
+		margin: 0 0 0.45rem;
 	}
 
 	.row {
