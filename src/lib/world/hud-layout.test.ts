@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { centeredBannerOverlapsChrome, viewportTooSmallForChrome } from './hud-layout';
+import { centeredBannerOverlapsChrome, chromeContentWidth, viewportTooSmallForChrome } from './hud-layout';
 
 describe('centeredBannerOverlapsChrome', () => {
 	it('stays on the toolbar row when the centered banner clears the chrome', () => {
@@ -61,5 +61,19 @@ describe('viewportTooSmallForChrome', () => {
 
 	it('treats an exact fit as still usable', () => {
 		expect(viewportTooSmallForChrome(279, 279)).toBe(false);
+	});
+});
+
+describe('chromeContentWidth', () => {
+	it('adds padding, border, logo, gap, and tools', () => {
+		expect(
+			chromeContentWidth({
+				paddingX: 12.8,
+				borderX: 2,
+				logo: 32,
+				gap: 12,
+				tools: 220
+			})
+		).toBeCloseTo(278.8);
 	});
 });

@@ -16,7 +16,6 @@ export function centeredBannerOverlapsChrome(opts: {
 
 /**
  * True when the toolbar's full icon row is wider than the space it has.
- * Required width must be measured while the tools are still visible.
  */
 export function viewportTooSmallForChrome(
 	requiredChromeWidth: number,
@@ -24,4 +23,15 @@ export function viewportTooSmallForChrome(
 	epsilon = 1
 ): boolean {
 	return requiredChromeWidth > availableWidth + epsilon;
+}
+
+/** Full toolbar width: chrome padding/border + logo + gap + tools row. */
+export function chromeContentWidth(parts: {
+	paddingX: number;
+	borderX: number;
+	logo: number;
+	gap: number;
+	tools: number;
+}): number {
+	return parts.paddingX + parts.borderX + parts.logo + parts.gap + parts.tools;
 }

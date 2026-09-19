@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import { untrack } from 'svelte';
 	import { app } from '$lib/session/app.svelte';
 	import { worldTune } from '$lib/world/world-tune.svelte';
-	import { centeredBannerOverlapsChrome, viewportTooSmallForChrome } from './hud-layout';
+	import { centeredBannerOverlapsChrome, chromeContentWidth, viewportTooSmallForChrome } from './hud-layout';
 	import WorldTunePanel from './WorldTunePanel.svelte';
 
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
@@ -61,7 +62,6 @@
 	let bannerSlotEl: HTMLDivElement | undefined = $state();
 	let bannerUnderChrome = $state(false);
 	let viewportBlocked = $state(false);
-	let requiredChromeWidth = 0;
 
 	function updateBannerPlacement() {
 		if (!connecting || !topRowEl || !chromeEl || !bannerSlotEl) {
@@ -100,13 +100,24 @@
 		};
 	});
 
+	function readRequiredChromeWidth(chrome: HTMLElement): number {
+		const style = getComputedStyle(chrome);
+		const logo = chrome.querySelector('.logo') as HTMLElement | null;
+		const tools = chrome.querySelector('.tools') as HTMLElement | null;
+		return chromeContentWidth({
+			paddingX: parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
+			borderX: parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth),
+			logo: logo?.getBoundingClientRect().width ?? 0,
+			gap: parseFloat(style.columnGap) || parseFloat(style.gap) || 0,
+			tools: tools?.scrollWidth ?? 0
+		});
+	}
+
 	function updateChromeFit() {
 		if (!chromeEl || !topRowEl) return;
 		const available = topRowEl.clientWidth;
-		if (!viewportBlocked) {
-			requiredChromeWidth = chromeEl.scrollWidth;
-		}
-		viewportBlocked = viewportTooSmallForChrome(requiredChromeWidth, available);
+		const required = readRequiredChromeWidth(chromeEl);
+		viewportBlocked = viewportTooSmallForChrome(required, available);
 	}
 
 	$effect(() => {
@@ -121,21 +132,24 @@
 		const row = topRowEl;
 		if (!chrome || !row) return;
 
-		updateChromeFit();
-		const ro = new ResizeObserver(updateChromeFit);
+		untrack(() => updateChromeFit());
+		const ro = new ResizeObserver(() => updateChromeFit());
 		ro.observe(chrome);
 		ro.observe(row);
-		window.addEventListener('resize', updateChromeFit);
+		const onResize = () => updateChromeFit();
+		window.addEventListener('resize', onResize);
+		visualViewport?.addEventListener('resize', onResize);
 		return () => {
 			ro.disconnect();
-			window.removeEventListener('resize', updateChromeFit);
+			window.removeEventListener('resize', onResize);
+			visualViewport?.removeEventListener('resize', onResize);
 		};
 	});
 </script>
 
 <div class="hud" class:viewport-blocked={viewportBlocked} data-testid="world-hud">
 	<div class="top-row" bind:this={topRowEl}>
-		<header class="chrome" class:dimmed={app.ui.managerOpen} class:collapsed={viewportBlocked} bind:this={chromeEl}>
+		<header class="chrome" class:dimmed={app.ui.managerOpen} bind:this={chromeEl}>
 			<!-- Brand: swap static/brand/logo.svg (see static/brand/README.md) -->
 			<img
 				class="logo"
@@ -429,7 +443,7 @@
 		align-items: center;
 		gap: 0.55rem 0.75rem;
 		padding: 0 0.4rem;
-		overflow: hidden;
+		overflow: visible;
 		border-radius: var(--yg-radius-pill);
 		background: var(--yg-panel-glass-dim);
 		border: 1px solid rgba(28, 36, 46, 0.1);
@@ -490,6 +504,7 @@
 	.tools {
 		display: flex;
 		flex-wrap: nowrap;
+		flex-shrink: 0;
 		gap: 0.3rem;
 		align-items: center;
 	}
@@ -651,26 +666,18 @@
 		border-radius: var(--yg-radius-pill);
 	}
 
-	.hud.viewport-blocked .top-row {
-		z-index: 21;
-	}
-
-	.chrome.collapsed .tools {
-		display: none;
-	}
-
-	.hud.viewport-blocked .logo {
-		opacity: var(--yg-hud-active-opacity);
+	.chrome .icon-btn {
+		flex-shrink: 0;
 	}
 
 	.too-small-overlay {
-		position: absolute;
+		position: fixed;
 		inset: 0;
-		z-index: 20;
+		z-index: 50;
 		display: grid;
 		place-items: center;
 		padding: 1.5rem;
-		background: rgba(28, 36, 46, 0.78);
+		background: rgba(28, 36, 46, 0.82);
 		pointer-events: auto;
 		text-align: center;
 	}
