@@ -287,7 +287,7 @@
 		</div>
 	</section>
 
-	<section class="block" data-testid="nodes-section">
+	<section class="block node-panel" data-testid="nodes-section">
 		<div class="row between">
 			<h2>Nodes ({nodes.length})</h2>
 			<div class="row wrap">
@@ -296,9 +296,9 @@
 			</div>
 		</div>
 		{#if selectedCount > 0}
-			<p class="hint" data-testid="selection-count">{selectedCount} selected (Ctrl/Shift-click to multi)</p>
+			<p class="hint" data-testid="selection-count">{selectedCount} selected</p>
 		{/if}
-		<ul class="list" data-testid="node-list">
+		<ul class="list node-list" data-testid="node-list">
 			{#each nodes as node (node.id)}
 				<li>
 					<button
@@ -308,7 +308,7 @@
 						data-testid={`node-item-${node.id}`}
 						onclick={(e) => onSelectNode(node.id, e)}
 					>
-						<span>{node.label}</span>
+						<span class="node-list-label">{node.label}</span>
 						{#if node.pinned}<span class="tag">pin</span>{/if}
 					</button>
 				</li>
@@ -324,151 +324,157 @@
 				>
 			</div>
 		{/if}
-	</section>
 
-	{#if selectedNode}
-		<section class="block" data-testid="node-editor">
-			<h2>Edit node</h2>
-			<label>
-				Label
-				<input
-					data-testid="node-label"
-					value={selectedNode.label}
-					oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
-				/>
-			</label>
-			<label>
-				Notes
-				<textarea
-					data-testid="node-notes"
-					rows="2"
-					value={selectedNode.notes ?? ''}
-					oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
-				></textarea>
-			</label>
-			<div class="pos-row" data-testid="node-position">
+		{#if selectedNode && selectedCount === 1}
+			<div class="inspect" data-testid="node-editor">
+				<h3 class="subhead">Inspect</h3>
 				<label>
-					X
+					Label
 					<input
-						type="number"
-						step="0.1"
-						data-testid="node-pos-x"
-						value={selectedNode.position.x}
-						oninput={(e) =>
-							app.updateNode(selectedNode.id, {
-								position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
-							})}
+						data-testid="node-label"
+						value={selectedNode.label}
+						oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
 					/>
 				</label>
 				<label>
-					Y
-					<input
-						type="number"
-						step="0.1"
-						data-testid="node-pos-y"
-						value={selectedNode.position.y}
-						oninput={(e) =>
-							app.updateNode(selectedNode.id, {
-								position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
-							})}
-					/>
+					Notes
+					<textarea
+						data-testid="node-notes"
+						rows="2"
+						value={selectedNode.notes ?? ''}
+						oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
+					></textarea>
 				</label>
+				<div class="pos-row" data-testid="node-position">
+					<label>
+						X
+						<input
+							type="number"
+							step="0.1"
+							data-testid="node-pos-x"
+							value={selectedNode.position.x}
+							oninput={(e) =>
+								app.updateNode(selectedNode.id, {
+									position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
+								})}
+						/>
+					</label>
+					<label>
+						Y
+						<input
+							type="number"
+							step="0.1"
+							data-testid="node-pos-y"
+							value={selectedNode.position.y}
+							oninput={(e) =>
+								app.updateNode(selectedNode.id, {
+									position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
+								})}
+						/>
+					</label>
+					<label>
+						Z
+						<input
+							type="number"
+							step="0.1"
+							data-testid="node-pos-z"
+							value={selectedNode.position.z}
+							oninput={(e) =>
+								app.updateNode(selectedNode.id, {
+									position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
+								})}
+						/>
+					</label>
+				</div>
 				<label>
-					Z
+					Tags
 					<input
-						type="number"
-						step="0.1"
-						data-testid="node-pos-z"
-						value={selectedNode.position.z}
+						data-testid="node-tags"
+						placeholder="comma-separated"
+						value={selectedNode.tags.join(', ')}
 						oninput={(e) =>
-							app.updateNode(selectedNode.id, {
-								position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
-							})}
+							app.setNodeTags(
+								selectedNode.id,
+								e.currentTarget.value
+									.split(',')
+									.map((t) => t.trim())
+									.filter(Boolean)
+							)}
 					/>
 				</label>
-			</div>
-			<label>
-				Tags (comma)
-				<input
-					data-testid="node-tags"
-					value={selectedNode.tags.join(', ')}
-					oninput={(e) =>
-						app.setNodeTags(
-							selectedNode.id,
-							e.currentTarget.value
-								.split(',')
-								.map((t) => t.trim())
-								.filter(Boolean)
-						)}
-				/>
-			</label>
-			<label class="check">
-				<input
-					type="checkbox"
-					data-testid="node-pin"
-					checked={selectedNode.pinned}
-					onchange={(e) => app.pinNode(selectedNode.id, e.currentTarget.checked)}
-				/>
-				Pinned
-			</label>
-			<div class="attachments" data-testid="attachments-section">
-				<h3 class="subhead">Attachments</h3>
-				<ul class="list attachment-list" data-testid="attachment-list">
-					{#each selectedNode.attachments as att, i (i)}
-						<li class="attachment-row">
-							<span class="attachment-name">{att.name}</span>
-							<span class="muted attachment-preview">{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span>
-							<button
-								type="button"
-								data-testid={`remove-attachment-${i}`}
-								aria-label={`Remove attachment ${att.name}`}
-								onclick={() =>
-									removeAttachment('node', selectedNode.id, selectedNode.attachments, i)}>×</button
-							>
-						</li>
-					{/each}
-				</ul>
-				<div class="row wrap">
+				<label class="check">
 					<input
-						data-testid="attachment-name"
-						placeholder="Name"
-						aria-label="Attachment name"
-						bind:value={attachName}
+						type="checkbox"
+						data-testid="node-pin"
+						checked={selectedNode.pinned}
+						onchange={(e) => app.pinNode(selectedNode.id, e.currentTarget.checked)}
 					/>
-					<input
-						data-testid="attachment-payload"
-						placeholder="Text or data URL"
-						aria-label="Attachment payload"
-						bind:value={attachPayload}
-					/>
+					Pinned
+				</label>
+				<div class="attachments" data-testid="attachments-section">
+					<h3 class="subhead">Attachments</h3>
+					<ul class="list attachment-list" data-testid="attachment-list">
+						{#each selectedNode.attachments as att, i (i)}
+							<li class="attachment-row">
+								<span class="attachment-name">{att.name}</span>
+								<span class="muted attachment-preview"
+									>{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span
+								>
+								<button
+									type="button"
+									data-testid={`remove-attachment-${i}`}
+									aria-label={`Remove attachment ${att.name}`}
+									onclick={() =>
+										removeAttachment('node', selectedNode.id, selectedNode.attachments, i)}
+									>×</button
+								>
+							</li>
+						{/each}
+					</ul>
+					<div class="row wrap">
+						<input
+							data-testid="attachment-name"
+							placeholder="Name"
+							aria-label="Attachment name"
+							bind:value={attachName}
+						/>
+						<input
+							data-testid="attachment-payload"
+							placeholder="Text or data URL"
+							aria-label="Attachment payload"
+							bind:value={attachPayload}
+						/>
+						<button
+							type="button"
+							data-testid="add-attachment"
+							onclick={() =>
+								addAttachment(
+									'node',
+									selectedNode.id,
+									selectedNode.attachments,
+									attachName,
+									attachPayload,
+									() => {
+										attachName = '';
+										attachPayload = '';
+									}
+								)}>Add</button
+						>
+					</div>
+				</div>
+				<div class="row wrap inspect-actions">
 					<button
 						type="button"
-						data-testid="add-attachment"
-						onclick={() =>
-							addAttachment(
-								'node',
-								selectedNode.id,
-								selectedNode.attachments,
-								attachName,
-								attachPayload,
-								() => {
-									attachName = '';
-									attachPayload = '';
-								}
-							)}>Add</button
+						data-testid="delete-node"
+						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
+					>
+					<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
+						>Add to diff</button
 					>
 				</div>
 			</div>
-			<div class="row wrap">
-				<button type="button" data-testid="delete-node" onclick={() => app.removeNode(selectedNode.id)}
-					>Delete</button
-				>
-				<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
-					>Add to diff</button
-				>
-			</div>
-		</section>
-	{/if}
+		{/if}
+	</section>
 
 	{#if selectedEdge}
 		<section class="block" data-testid="edge-editor">
@@ -1051,6 +1057,45 @@
 		letter-spacing: 0.04em;
 		color: var(--yg-muted);
 		font-weight: 600;
+	}
+
+	.node-panel {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+
+	.node-panel > .row.between h2 {
+		margin: 0;
+	}
+
+	.node-list {
+		max-height: 12rem;
+	}
+
+	.node-list-label {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.inspect {
+		margin-top: 0.1rem;
+		padding: 0.65rem 0.7rem 0.55rem;
+		border: 1px solid var(--yg-border);
+		border-radius: var(--yg-radius-panel);
+		background: var(--yg-chip-dim);
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+	}
+
+	.inspect .subhead {
+		margin: 0 0 0.4rem;
+	}
+
+	.inspect-actions {
+		margin-top: 0.2rem;
 	}
 
 	.row {
