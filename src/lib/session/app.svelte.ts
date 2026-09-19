@@ -928,7 +928,6 @@ class AppStore {
 				connectDirectedLocked: false,
 				connectAltHeld: false
 			};
-			if (this.statusMessage.startsWith('Pick another node')) this.statusMessage = '';
 			return;
 		}
 		const locked = Boolean(opts.directed);
@@ -942,9 +941,6 @@ class AppStore {
 			connectDirected: locked,
 			multiSelectMode: false
 		};
-		this.statusMessage = locked
-			? 'Pick another node to connect (directed) · Esc / RMB to cancel'
-			: 'Pick another node to connect · hold Alt for directed · Esc / RMB to cancel';
 	}
 
 	/** Live Alt while connecting — promotes undirected→directed; never demotes a locked directed start. */
