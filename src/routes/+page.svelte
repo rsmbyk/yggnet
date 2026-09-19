@@ -189,15 +189,15 @@
 
 	.tool-dock {
 		position: absolute;
-		top: calc(var(--yg-top-bar-h) + (2 * var(--yg-hud-pad-y)));
-		left: 0.75rem;
-		bottom: 0.75rem;
+		top: calc(var(--yg-top-bar-h) + (2 * var(--yg-hud-edge)));
+		left: var(--yg-hud-edge);
+		bottom: var(--yg-hud-edge);
 		z-index: 16;
 		display: flex;
 		flex-direction: row;
 		align-items: flex-start;
 		justify-content: flex-start;
-		gap: var(--yg-hud-pad-y);
+		gap: var(--yg-hud-edge);
 		max-width: calc(100% - 1.5rem);
 		pointer-events: none;
 	}

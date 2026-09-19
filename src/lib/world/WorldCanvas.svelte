@@ -288,20 +288,17 @@
 	}
 
 	.map-stack {
-		--cam-btn: 2.05rem;
-		--cam-gap: 0.3rem;
-		--panel-pad: 0.4rem;
-		--inner-w: calc(4 * var(--cam-btn) + 3 * var(--cam-gap));
+		--row: calc(4 * var(--yg-hud-btn) + 3 * var(--yg-hud-btn-gap));
 		position: absolute;
-		left: 0.75rem;
-		bottom: 0.75rem;
+		left: var(--yg-hud-edge);
+		bottom: var(--yg-hud-edge);
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
-		gap: 0.3rem;
+		gap: var(--yg-hud-btn-gap);
 		box-sizing: border-box;
-		width: calc(var(--inner-w) + 2 * var(--panel-pad) + 2px);
-		padding: var(--panel-pad);
+		width: calc(var(--row) + 2 * var(--yg-hud-inset) + 2px);
+		padding: var(--yg-hud-inset);
 		border-radius: var(--yg-radius-panel);
 		background: var(--yg-panel-glass-dim);
 		border: 1px solid rgba(28, 36, 46, 0.1);
@@ -369,8 +366,9 @@
 		left: auto;
 		bottom: auto;
 		display: block;
-		width: var(--inner-w);
-		height: var(--inner-w);
+		width: 100%;
+		aspect-ratio: 1 / 1;
+		height: auto;
 		border: 1px solid rgba(158, 197, 184, 0.22);
 		border-radius: var(--yg-radius-control);
 		background: rgba(28, 36, 46, 0.28);
@@ -457,8 +455,8 @@
 	.cam-chrome {
 		display: flex;
 		align-items: center;
-		gap: var(--cam-gap);
-		width: var(--inner-w);
+		gap: var(--yg-hud-btn-gap);
+		width: 100%;
 		padding: 0;
 		pointer-events: auto;
 	}
@@ -466,9 +464,9 @@
 	.cam-chrome .icon-btn {
 		display: inline-grid;
 		place-items: center;
-		flex: 0 0 var(--cam-btn);
-		width: var(--cam-btn);
-		height: var(--cam-btn);
+		flex: 0 0 var(--yg-hud-btn);
+		width: var(--yg-hud-btn);
+		height: var(--yg-hud-btn);
 		padding: 0;
 		border: 1px solid rgba(28, 36, 46, 0.1);
 		background: var(--yg-chip-dim);

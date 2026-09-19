@@ -70,7 +70,7 @@
 	let tooSmallMaxWidth = $state(0);
 
 	function readHudPaddingX(): number {
-		if (!hudEl) return 32;
+		if (!hudEl) return 24;
 		const style = getComputedStyle(hudEl);
 		return parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
 	}
@@ -436,7 +436,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
-		padding: var(--yg-hud-pad-y) var(--yg-hud-pad-x);
+		padding: var(--yg-hud-edge);
 		gap: 0.5rem;
 		min-width: 0;
 		min-height: 0;
@@ -477,8 +477,8 @@
 		display: flex;
 		flex-wrap: nowrap;
 		align-items: center;
-		gap: 0.55rem 0.75rem;
-		padding: 0 0.4rem;
+		gap: var(--yg-hud-btn-gap);
+		padding: var(--yg-hud-inset);
 		overflow: visible;
 		border-radius: var(--yg-radius-pill);
 		background: var(--yg-panel-glass-dim);
@@ -523,8 +523,8 @@
 
 	.logo {
 		display: block;
-		width: 2rem;
-		height: 2rem;
+		width: var(--yg-hud-btn);
+		height: var(--yg-hud-btn);
 		border-radius: var(--yg-radius-pill);
 		flex-shrink: 0;
 		object-fit: contain;
@@ -541,22 +541,22 @@
 		display: flex;
 		flex-wrap: nowrap;
 		flex-shrink: 0;
-		gap: 0.3rem;
+		gap: var(--yg-hud-btn-gap);
 		align-items: center;
 	}
 
 	.sheet-actions {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.3rem;
+		gap: var(--yg-hud-btn-gap);
 		align-items: center;
 	}
 
 	.icon-btn {
 		display: inline-grid;
 		place-items: center;
-		width: 2.05rem;
-		height: 2.05rem;
+		width: var(--yg-hud-btn);
+		height: var(--yg-hud-btn);
 		padding: 0;
 		border: 1px solid rgba(28, 36, 46, 0.1);
 		background: var(--yg-chip-dim);
@@ -647,13 +647,13 @@
 		height: auto;
 		min-height: var(--yg-top-bar-h);
 		width: max-content;
-		max-width: min(100%, calc(100vw - 2rem));
+		max-width: min(100%, calc(100vw - 2 * var(--yg-hud-edge)));
 		pointer-events: none;
 		transition: top var(--yg-motion) var(--yg-ease);
 	}
 
 	.banner-slot.under-chrome {
-		top: calc(var(--yg-top-bar-h) + var(--yg-hud-pad-y));
+		top: calc(var(--yg-top-bar-h) + var(--yg-hud-edge));
 	}
 
 	.banner {
@@ -741,11 +741,11 @@
 	.sheet {
 		position: absolute;
 		left: 50%;
-		bottom: 0.75rem;
+		bottom: var(--yg-hud-edge);
 		transform: translateX(-50%);
 		width: min(18rem, 90vw);
 		margin: 0;
-		padding: var(--yg-pad-panel);
+		padding: var(--yg-hud-inset);
 		border-radius: var(--yg-radius-panel);
 		background: var(--yg-panel-glass);
 		border: 1px solid var(--yg-border);

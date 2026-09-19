@@ -221,10 +221,10 @@
 	.tune {
 		pointer-events: auto;
 		position: absolute;
-		top: calc(0.75rem + 2.75rem + 0.5rem);
-		right: 0.75rem;
+		top: calc(100% + var(--yg-hud-edge));
+		right: 0;
 		z-index: 7;
-		width: min(18rem, calc(100vw - 1.5rem));
+		width: min(18rem, calc(100vw - 2 * var(--yg-hud-edge)));
 		padding: 0.75rem 0.85rem;
 		border-radius: var(--yg-radius-panel);
 		background: var(--yg-panel-glass);

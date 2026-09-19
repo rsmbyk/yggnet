@@ -32,13 +32,20 @@
 	--yg-radius-panel: 12px;
 	--yg-radius-modal: 8px;
 	--yg-radius-pill: 999px;
-	--yg-pad-panel: 0.9rem 1rem;
 	--yg-pad-modal: 0.85rem 1rem;
 	--yg-toast-ms: 2400;
-	--yg-hud-pad-y: 0.75rem;
-	--yg-hud-pad-x: 1rem;
-	/* icon-btn 2.05rem + chrome vertical padding 0.35rem×2 */
-	--yg-top-bar-h: calc(2.05rem + 0.7rem);
+	/* Circle HUD buttons (menubar, toolbar, camera). */
+	--yg-hud-btn: 2.05rem;
+	--yg-hud-btn-gap: 0.3rem;
+	/* Inner padding of menubar, toolbar, camera, node sheet, tools panel. */
+	--yg-hud-inset: 0.4rem;
+	/* Viewport edge and the gap between HUD panels — same on every side. */
+	--yg-hud-edge: 0.75rem;
+	--yg-hud-pad-y: var(--yg-hud-edge);
+	--yg-hud-pad-x: var(--yg-hud-edge);
+	--yg-pad-panel: var(--yg-hud-inset);
+	/* icon-btn + inset ×2 + 1px border ×2 */
+	--yg-top-bar-h: calc(var(--yg-hud-btn) + 2 * var(--yg-hud-inset) + 2px);
 	/* Custom scrollbar (native, themed — applies everywhere) */
 	--yg-scroll-size: 5px;
 	--yg-scroll-track: transparent;

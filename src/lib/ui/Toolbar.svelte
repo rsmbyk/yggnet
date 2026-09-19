@@ -61,8 +61,8 @@
 		flex-direction: column;
 		flex-wrap: nowrap;
 		align-items: center;
-		gap: 0.3rem;
-		padding: 0.4rem;
+		gap: var(--yg-hud-btn-gap);
+		padding: var(--yg-hud-inset);
 		overflow: auto;
 		border-radius: var(--yg-radius-pill);
 		background: var(--yg-panel-glass-dim);
@@ -86,8 +86,8 @@
 	.icon-btn {
 		display: inline-grid;
 		place-items: center;
-		width: 2.05rem;
-		height: 2.05rem;
+		width: var(--yg-hud-btn);
+		height: var(--yg-hud-btn);
 		padding: 0;
 		flex-shrink: 0;
 		border: 1px solid rgba(28, 36, 46, 0.1);
