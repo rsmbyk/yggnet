@@ -5,7 +5,7 @@
 	import Toolbar from '$lib/ui/Toolbar.svelte';
 	import { app } from '$lib/session/app.svelte';
 
-	const slide = { duration: 220, x: 28, opacity: 0 };
+	const slide = { duration: 220, x: -28, opacity: 0 };
 	let WorldCanvas: typeof import('$lib/world/WorldCanvas.svelte').default | null = $state(null);
 
 	onMount(() => {
@@ -150,12 +150,12 @@
 		></button>
 	{/if}
 	<div class="tool-dock">
+		<Toolbar />
 		{#if app.ui.openTool}
 			<div class="tool-panel-slot" transition:fly={slide}>
 				<ManagerPanel section={app.ui.openTool} />
 			</div>
 		{/if}
-		<Toolbar />
 	</div>
 </div>
 
@@ -190,13 +190,13 @@
 	.tool-dock {
 		position: absolute;
 		top: calc(var(--yg-top-bar-h) + (2 * var(--yg-hud-pad-y)));
-		right: 0.75rem;
+		left: 0.75rem;
 		bottom: 0.75rem;
 		z-index: 16;
 		display: flex;
 		flex-direction: row;
 		align-items: flex-start;
-		justify-content: flex-end;
+		justify-content: flex-start;
 		gap: var(--yg-hud-pad-y);
 		max-width: calc(100% - 1.5rem);
 		pointer-events: none;

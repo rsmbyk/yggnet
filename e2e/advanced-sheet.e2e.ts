@@ -22,7 +22,7 @@ test('world selection sheet hides while a tool panel is open', async ({ page }) 
 	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
 });
 
-test('tool panel sits left of the toolbar under the menubar', async ({ page }) => {
+test('tool panel sits right of the toolbar under the menubar', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
 	await openTool(page, 'nodes');
@@ -39,7 +39,8 @@ test('tool panel sits left of the toolbar under the menubar', async ({ page }) =
 	const gapUnderMenubar = card!.y - (bar!.y + bar!.height);
 	expect(gapUnderMenubar).toBeGreaterThanOrEqual(8);
 	expect(gapUnderMenubar).toBeLessThanOrEqual(20);
-	expect(card!.x + card!.width).toBeLessThanOrEqual(rail!.x + 2);
+	expect(rail!.x).toBeLessThan(bar!.x + 8);
+	expect(rail!.x + rail!.width).toBeLessThanOrEqual(card!.x + 2);
 	expect(card!.height).toBeLessThan(page.viewportSize()!.height * 0.85);
 	const icon = await page.getByTestId('tool-nodes').boundingBox();
 	expect(icon).toBeTruthy();
