@@ -18,7 +18,7 @@
 	const connecting = $derived(app.ui.connectFromId !== null);
 	/**
 	 * One sheet shell for node / multi / edge — avoids outro jumps when switching modes.
-	 * Hidden while Advanced is open so the drawer is the only inspect surface.
+	 * Hidden while Tools is open so the drawer is the only inspect surface.
 	 */
 	const sheetOpen = $derived(
 		!app.ui.managerOpen &&
@@ -287,10 +287,10 @@
 				</button>
 				<button
 					type="button"
-					class="icon-btn advanced"
+					class="icon-btn tools-toggle"
 					data-testid="open-manager"
-					aria-label="Advanced panel"
-					title="Advanced (M)"
+					aria-label="Tools panel"
+					title="Tools (M)"
 					class:active={app.ui.managerOpen}
 					onclick={() => app.toggleManager()}
 				>
@@ -513,7 +513,7 @@
 		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.12);
 	}
 
-	/* Advanced focuses the toggle — keep the unhovered idle look. */
+	/* Tools focuses the toggle — keep the unhovered idle look. */
 	.chrome.dimmed:hover,
 	.chrome.dimmed:focus-within {
 		background: var(--yg-panel-glass-dim);
@@ -642,7 +642,7 @@
 		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));
 	}
 
-	.icon-btn.advanced {
+	.icon-btn.tools-toggle {
 		border-style: dashed;
 	}
 

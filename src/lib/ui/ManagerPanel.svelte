@@ -192,7 +192,7 @@
 	<header class="manager__header">
 		<div class="row between">
 			<div>
-				<p class="brand">Advanced</p>
+				<p class="brand">Tools</p>
 				<p class="lede">Large-scale edits & analysis — world stays primary</p>
 			</div>
 			<button type="button" data-testid="close-manager" onclick={() => app.setManagerOpen(false)}

@@ -101,7 +101,7 @@ export type UiState = {
 	paletteOpen: boolean;
 	diffIds: string[];
 	commandQuery: string;
-	/** Advanced manager drawer — closed by default; world is primary. */
+	/** Tools drawer — closed by default; world is primary. */
 	managerOpen: boolean;
 	/** When set, next node pick completes an edge from this id. */
 	connectFromId: string | null;

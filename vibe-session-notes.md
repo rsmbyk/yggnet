@@ -25,10 +25,10 @@ When vibe session truly ends: split into Backlog ITEMs on clean `develop`, keep 
 ## Distinct features to split into ITEMs later
 
 1. **World-first shell** — Full-bleed 3D world as primary UI; remove permanent admin sidebar.
-2. **World HUD chrome** — Floating top bar: brand, undo/redo, add node, palette, World tune, Advanced.
+2. **World HUD chrome** — Floating top bar: brand, undo/redo, add node, palette, World tune, Tools.
 3. **In-world selection sheet** — Bottom-left inspector for selected node/edge (label, connect, pin, delete).
 4. **In-world create/connect/delete** — Add node; Connect mode; Del/Backspace; Esc cancels.
-5. **Advanced manager as drawer** — Closed by default; right overlay for large-scale work (`ManagerPanel.svelte`).
+5. **Tools as drawer** — Closed by default; right overlay for large-scale work (`ManagerPanel.svelte`).
 6. **Glass panels + calm motion** — Translucent panels; fade/fly ~160–220ms; `prefers-reduced-motion`.
 7. **World Tune → config file** — All `WORLD` knobs live; Save writes `src/lib/world/world-config.ts`.
 8. **Solid nodes** — Kinematic collision (`node-physics.ts`); no gravity; floor clamp; `findFreePosition` on add.

@@ -144,7 +144,7 @@
 		<button
 			type="button"
 			class="drawer-scrim"
-			aria-label="Close advanced panel"
+			aria-label="Close tools panel"
 			data-testid="manager-scrim"
 			transition:fade={{ duration: 180 }}
 			onclick={() => app.setManagerOpen(false)}
