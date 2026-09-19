@@ -54,6 +54,7 @@ import { WORLD } from '$lib/world/world-config';
 import { createNodePadding, findFreePosition } from '$lib/world/node-physics';
 import { worldTune } from '$lib/world/world-tune.svelte';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
+import { nextOpenTool, type ToolId } from '$lib/ui/tool-ids';
 
 const AUTOSAVE_KEY = 'yggnet.autosave';
 const AUTOSAVE_MS = 600;
@@ -101,8 +102,8 @@ export type UiState = {
 	paletteOpen: boolean;
 	diffIds: string[];
 	commandQuery: string;
-	/** Tools drawer — closed by default; world is primary. */
-	managerOpen: boolean;
+	/** Open tool section, or null when the dock shows only the toolbar. */
+	openTool: ToolId | null;
 	/** When set, next node pick completes an edge from this id. */
 	connectFromId: string | null;
 	/**
@@ -174,7 +175,9 @@ class AppStore {
 			y: WORLD.camera.defaultPosition[1],
 			z: WORLD.camera.defaultPosition[2]
 		},
-		panDeg: (Math.atan2(WORLD.camera.defaultPosition[0], WORLD.camera.defaultPosition[2]) * 180) / Math.PI,
+		panDeg:
+			(Math.atan2(WORLD.camera.defaultPosition[0], WORLD.camera.defaultPosition[2]) * 180) /
+			Math.PI,
 		tiltDeg:
 			90 -
 			(Math.acos(
@@ -182,8 +185,7 @@ class AppStore {
 					1,
 					Math.max(
 						-1,
-						WORLD.camera.defaultPosition[1] /
-							Math.hypot(...WORLD.camera.defaultPosition)
+						WORLD.camera.defaultPosition[1] / Math.hypot(...WORLD.camera.defaultPosition)
 					)
 				)
 			) *
@@ -217,7 +219,7 @@ class AppStore {
 		paletteOpen: false,
 		diffIds: [],
 		commandQuery: '',
-		managerOpen: false,
+		openTool: null,
 		connectFromId: null,
 		connectDirected: false,
 		connectDirectedLocked: false,
@@ -231,7 +233,10 @@ class AppStore {
 
 	/** Apply a graph mutation with undo support; marks runs stale. */
 	private mutate(
-		mutateFn: (doc: GraphDocument) => { doc: GraphDocument; undo: (d: GraphDocument) => GraphDocument }
+		mutateFn: (doc: GraphDocument) => {
+			doc: GraphDocument;
+			undo: (d: GraphDocument) => GraphDocument;
+		}
 	): void {
 		const result = execute(this.history, this.document, mutateFn);
 		this.document = result.doc;
@@ -422,7 +427,11 @@ class AppStore {
 		if (this.selection.nodeIds.includes(id)) this.setSelection(null);
 	}
 
-	addEdge(from: NodeId, to: NodeId, opts: { directed?: boolean; weight?: number; label?: string } = {}): string {
+	addEdge(
+		from: NodeId,
+		to: NodeId,
+		opts: { directed?: boolean; weight?: number; label?: string } = {}
+	): string {
 		let created = '';
 		this.mutate((d) => {
 			const { doc, edgeId } = addEdge(d, { from, to, ...opts });
@@ -807,7 +816,10 @@ class AppStore {
 		}
 	}
 
-	private pathSeriesFromRun(run: ReturnType<typeof getRun>): { nodeIds: string[]; edgeIds: string[] } {
+	private pathSeriesFromRun(run: ReturnType<typeof getRun>): {
+		nodeIds: string[];
+		edgeIds: string[];
+	} {
 		if (run?.result.kind === 'path') {
 			return { nodeIds: run.result.nodeIds, edgeIds: run.result.edgeIds };
 		}
@@ -911,12 +923,21 @@ class AppStore {
 		this.ui = { ...this.ui, diffIds: ids.slice(0, 2) };
 	}
 
-	setManagerOpen(open: boolean): void {
-		this.ui = { ...this.ui, managerOpen: open };
+	setOpenTool(id: ToolId | null): void {
+		this.ui = { ...this.ui, openTool: id };
 	}
 
+	toggleTool(id: ToolId): void {
+		this.setOpenTool(nextOpenTool(this.ui.openTool, id));
+	}
+
+	/** Close the open section panel, or open Nodes. */
 	toggleManager(): void {
-		this.setManagerOpen(!this.ui.managerOpen);
+		this.setOpenTool(this.ui.openTool ? null : 'nodes');
+	}
+
+	setManagerOpen(open: boolean): void {
+		this.setOpenTool(open ? (this.ui.openTool ?? 'nodes') : null);
 	}
 
 	setConnectFrom(nodeId: string | null, opts: { directed?: boolean } = {}): void {
@@ -1112,9 +1133,11 @@ class AppStore {
 		const path = this.selectedPath();
 		if (!path || path.nodeIds.length === 0) return null;
 		const t = this.directions.travelProgress;
-		const pts = path.nodeIds
-			.map((id) => this.document.nodes[id]?.position)
-			.filter(Boolean) as { x: number; y: number; z: number }[];
+		const pts = path.nodeIds.map((id) => this.document.nodes[id]?.position).filter(Boolean) as {
+			x: number;
+			y: number;
+			z: number;
+		}[];
 		if (pts.length === 0) return null;
 		if (pts.length === 1) return { ...pts[0] };
 		const segCount = pts.length - 1;
@@ -1138,7 +1161,9 @@ function place(x: number, y: number, z: number) {
 function buildTemplate(kind: 'blank' | 'org' | 'roadmap' | 'learning'): GraphDocument {
 	if (kind === 'blank') return createEmptyDocument('Blank');
 
-	let doc = createEmptyDocument(kind === 'org' ? 'Org chart' : kind === 'roadmap' ? 'Roadmap' : 'Learning path');
+	let doc = createEmptyDocument(
+		kind === 'org' ? 'Org chart' : kind === 'roadmap' ? 'Roadmap' : 'Learning path'
+	);
 	const ids: string[] = [];
 
 	const add = (label: string, pos: { x: number; y: number; z: number }, tags: string[] = []) => {

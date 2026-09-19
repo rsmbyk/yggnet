@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { openTool } from './open-tool';
 
 test('ctrl-click multi-selects nodes in manager', async ({ page }) => {
 	await page.goto('/');
+	await openTool(page, 'nodes');
 	await page.getByTestId('add-node').click();
 	await page.getByTestId('add-node').click();
 	await page.getByTestId('add-node').click();

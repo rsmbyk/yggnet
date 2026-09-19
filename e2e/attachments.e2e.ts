@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { openTool } from './open-tool';
 
 test('add and remove node attachment via manager', async ({ page }) => {
 	await page.goto('/');
-	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
+	await openTool(page, 'nodes');
 
 	await page.getByTestId('add-node').click();
 	await expect(page.getByTestId('node-editor')).toBeVisible();

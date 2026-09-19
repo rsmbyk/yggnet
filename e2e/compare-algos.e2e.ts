@@ -1,11 +1,13 @@
 import { expect, test } from '@playwright/test';
+import { openTool } from './open-tool';
 
 test('compare two algorithms shows dual summary and dismisses', async ({ page }) => {
 	await page.goto('/');
-	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
-
+	await openTool(page, 'templates');
 	await page.getByTestId('tpl-learning').click();
+	await openTool(page, 'mode');
 	await page.getByTestId('mode-directions').click();
+	await openTool(page, 'pathfinder');
 
 	const fromSelect = page.getByTestId('path-from');
 	const toSelect = page.getByTestId('path-to');
@@ -15,7 +17,7 @@ test('compare two algorithms shows dual summary and dismisses', async ({ page })
 	await fromSelect.selectOption(fromValue);
 	await toSelect.selectOption(toValue);
 
-	await page.getByTestId('mode-analyze').click();
+	await openTool(page, 'analyze');
 	await expect(page.getByTestId('analyze-panel')).toBeVisible();
 
 	await page.getByTestId('algo-picker').selectOption('bfs');

@@ -2,6 +2,9 @@
 	import { app } from '$lib/session/app.svelte';
 	import { pathSeriesMetrics } from '$lib/graph';
 	import type { AppMode, GraphAttachment } from '$lib/graph';
+	import { toolLabel, type ToolId } from './tool-ids';
+
+	let { section }: { section: ToolId } = $props();
 
 	const modes: { id: AppMode; label: string }[] = [
 		{ id: 'explore', label: 'Explore' },
@@ -32,9 +35,7 @@
 	const selectedNode = $derived(selectedId ? app.document.nodes[selectedId] : null);
 	const selectedEdgeId = $derived(app.selection.edgeIds[0] ?? null);
 	const selectedEdge = $derived(selectedEdgeId ? app.document.edges[selectedEdgeId] : null);
-	const lastRun = $derived(
-		app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null
-	);
+	const lastRun = $derived(app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null);
 	const traceLen = $derived(lastRun?.trace.length ?? 0);
 	const currentStepAnnotation = $derived(lastRun?.annotations?.[app.analyze.stepIndex] ?? '');
 
@@ -89,20 +90,14 @@
 		if (!ids.includes(compareRunIdB)) compareRunIdB = ids.length > 1 ? ids[1] : ids[0];
 	});
 
-	const groupIds = $derived(
-		[
-			...new Set(
-				nodes.map((n) => n.groupId).filter((g): g is string => typeof g === 'string' && g.length > 0)
-			)
-		]
-	);
+	const groupIds = $derived([
+		...new Set(
+			nodes.map((n) => n.groupId).filter((g): g is string => typeof g === 'string' && g.length > 0)
+		)
+	]);
 
-	const diffA = $derived(
-		app.ui.diffIds[0] ? app.document.nodes[app.ui.diffIds[0]] : null
-	);
-	const diffB = $derived(
-		app.ui.diffIds[1] ? app.document.nodes[app.ui.diffIds[1]] : null
-	);
+	const diffA = $derived(app.ui.diffIds[0] ? app.document.nodes[app.ui.diffIds[0]] : null);
+	const diffB = $derived(app.ui.diffIds[1] ? app.document.nodes[app.ui.diffIds[1]] : null);
 
 	function onSelectNode(id: string, ev: MouseEvent) {
 		if (app.ui.connectFromId) {
@@ -191,251 +186,347 @@
 <aside class="manager" data-testid="yggnet-manager">
 	<header class="manager__header">
 		<div class="row between">
-			<div>
-				<p class="brand">Tools</p>
-				<p class="lede">Large-scale edits & analysis — world stays primary</p>
-			</div>
-			<button type="button" data-testid="close-manager" onclick={() => app.setManagerOpen(false)}
+			<p class="brand">{toolLabel(section)}</p>
+			<button type="button" data-testid="close-manager" onclick={() => app.setOpenTool(null)}
 				>Close</button
 			>
 		</div>
-		<input
-			class="title-input"
-			data-testid="doc-title"
-			aria-label="Document title"
-			value={app.document.title}
-			oninput={(e) => {
-				const title = (e.currentTarget as HTMLInputElement).value;
-				const next = { ...app.document, title, updatedAt: new Date().toISOString() };
-				app.document = next;
-			}}
-		/>
+		{#if section === 'file'}
+			<input
+				class="title-input"
+				data-testid="doc-title"
+				aria-label="Document title"
+				value={app.document.title}
+				oninput={(e) => {
+					const title = (e.currentTarget as HTMLInputElement).value;
+					const next = { ...app.document, title, updatedAt: new Date().toISOString() };
+					app.document = next;
+				}}
+			/>
+		{/if}
 	</header>
 
-	<section class="modes" aria-label="Mode">
-		{#each modes as m (m.id)}
-			<button
-				type="button"
-				class="mode"
-				class:active={app.mode === m.id}
-				data-testid={`mode-${m.id}`}
-				onclick={() => app.setMode(m.id)}
-			>
-				{m.label}
-			</button>
-		{/each}
-	</section>
-
-	<section class="toolbar" aria-label="History and file">
-		<button type="button" data-testid="undo" disabled={!app.canUndo} onclick={() => app.undo()}
-			>Undo</button
-		>
-		<button type="button" data-testid="redo" disabled={!app.canRedo} onclick={() => app.redo()}
-			>Redo</button
-		>
-		<button type="button" data-testid="save" onclick={() => app.saveToSlot()}>Save</button>
-		<button type="button" data-testid="load" onclick={() => app.loadFromSlot()}>Load</button>
-		<input
-			type="text"
-			placeholder="Slot name"
-			data-testid="save-slot-name"
-			bind:value={saveSlotName}
-			aria-label="Named save slot"
-		/>
-		<button type="button" data-testid="save-named" onclick={() => app.saveNamedSlot(saveSlotName)}
-			>Save named</button
-		>
-		<button type="button" data-testid="load-named" onclick={() => app.loadNamedSlot(saveSlotName)}
-			>Load named</button
-		>
-		<button type="button" data-testid="export" onclick={() => app.downloadExport()}>Export</button>
-		<label class="file-btn">
-			Import
-			<input type="file" accept="application/json,.json" data-testid="import" onchange={onImportFile} />
-		</label>
-		<button type="button" data-testid="palette-trigger" onclick={() => app.openPalette(true)}
-			>Palette</button
-		>
-	</section>
-
-	<section class="block" data-testid="templates">
-		<h2>Templates</h2>
-		<div class="row wrap">
-			<button type="button" data-testid="tpl-blank" onclick={() => app.loadTemplate('blank')}
-				>Blank</button
-			>
-			<button type="button" data-testid="tpl-org" onclick={() => app.loadTemplate('org')}>Org</button>
-			<button type="button" data-testid="tpl-roadmap" onclick={() => app.loadTemplate('roadmap')}
-				>Roadmap</button
-			>
-			<button type="button" data-testid="tpl-learning" onclick={() => app.loadTemplate('learning')}
-				>Learning</button
-			>
-		</div>
-		<div class="row">
-			<input
-				type="number"
-				min="2"
-				max="40"
-				bind:value={randomN}
-				aria-label="Random node count"
-				data-testid="random-n"
-			/>
-			<button type="button" data-testid="random-graph" onclick={() => app.randomGraph(randomN)}
-				>Random</button
-			>
-		</div>
-	</section>
-
-	<section class="block node-panel" data-testid="nodes-section">
-		<div class="row between">
-			<h2>Nodes ({nodes.length})</h2>
-			<div class="row wrap">
-				<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
-				<button type="button" data-testid="relayout" onclick={() => app.relayout()}>Re-layout</button>
-			</div>
-		</div>
-		{#if selectedCount > 0}
-			<p class="hint" data-testid="selection-count">{selectedCount} selected</p>
-		{/if}
-		<ul class="list node-list" data-testid="node-list">
-			{#each nodes as node (node.id)}
-				<li>
-					<button
-						type="button"
-						class="list-item"
-						class:selected={selectedIds.has(node.id)}
-						data-testid={`node-item-${node.id}`}
-						onclick={(e) => onSelectNode(node.id, e)}
-					>
-						<span class="node-list-label">{node.label}</span>
-						{#if node.pinned}<span class="tag">pin</span>{/if}
-					</button>
-				</li>
-			{/each}
-		</ul>
-		{#if selectedCount > 1}
-			<div class="row wrap">
-				<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
-					>Group {selectedCount}</button
+	{#if section === 'mode'}
+		<section class="modes" aria-label="Mode">
+			{#each modes as m (m.id)}
+				<button
+					type="button"
+					class="mode"
+					class:active={app.mode === m.id}
+					data-testid={`mode-${m.id}`}
+					onclick={() => app.setMode(m.id)}
 				>
-				<button type="button" data-testid="clear-selection" onclick={() => app.clearAllSelection()}
-					>Clear selection</button
+					{m.label}
+				</button>
+			{/each}
+		</section>
+	{/if}
+
+	{#if section === 'file'}
+		<section class="toolbar" aria-label="History and file">
+			<button type="button" data-testid="undo" disabled={!app.canUndo} onclick={() => app.undo()}
+				>Undo</button
+			>
+			<button type="button" data-testid="redo" disabled={!app.canRedo} onclick={() => app.redo()}
+				>Redo</button
+			>
+			<button type="button" data-testid="save" onclick={() => app.saveToSlot()}>Save</button>
+			<button type="button" data-testid="load" onclick={() => app.loadFromSlot()}>Load</button>
+			<input
+				type="text"
+				placeholder="Slot name"
+				data-testid="save-slot-name"
+				bind:value={saveSlotName}
+				aria-label="Named save slot"
+			/>
+			<button type="button" data-testid="save-named" onclick={() => app.saveNamedSlot(saveSlotName)}
+				>Save named</button
+			>
+			<button type="button" data-testid="load-named" onclick={() => app.loadNamedSlot(saveSlotName)}
+				>Load named</button
+			>
+			<button type="button" data-testid="export" onclick={() => app.downloadExport()}>Export</button
+			>
+			<label class="file-btn">
+				Import
+				<input
+					type="file"
+					accept="application/json,.json"
+					data-testid="import"
+					onchange={onImportFile}
+				/>
+			</label>
+			<button type="button" data-testid="palette-trigger" onclick={() => app.openPalette(true)}
+				>Palette</button
+			>
+		</section>
+	{/if}
+
+	{#if section === 'templates'}
+		<section class="block" data-testid="templates">
+			<h2>Templates</h2>
+			<div class="row wrap">
+				<button type="button" data-testid="tpl-blank" onclick={() => app.loadTemplate('blank')}
+					>Blank</button
+				>
+				<button type="button" data-testid="tpl-org" onclick={() => app.loadTemplate('org')}
+					>Org</button
+				>
+				<button type="button" data-testid="tpl-roadmap" onclick={() => app.loadTemplate('roadmap')}
+					>Roadmap</button
 				>
 				<button
 					type="button"
-					data-testid="delete-selection"
-					onclick={() => app.deleteSelection()}>Delete</button
+					data-testid="tpl-learning"
+					onclick={() => app.loadTemplate('learning')}>Learning</button
 				>
 			</div>
-		{/if}
+			<div class="row">
+				<input
+					type="number"
+					min="2"
+					max="40"
+					bind:value={randomN}
+					aria-label="Random node count"
+					data-testid="random-n"
+				/>
+				<button type="button" data-testid="random-graph" onclick={() => app.randomGraph(randomN)}
+					>Random</button
+				>
+			</div>
+		</section>
+	{/if}
 
-		{#if selectedNode && selectedCount === 1}
-			<div class="inspect" data-testid="node-editor">
-				<h3 class="subhead">Inspect</h3>
+	{#if section === 'nodes'}
+		<section class="block node-panel" data-testid="nodes-section">
+			<div class="row between">
+				<h2>Nodes ({nodes.length})</h2>
+				<div class="row wrap">
+					<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
+					<button type="button" data-testid="relayout" onclick={() => app.relayout()}
+						>Re-layout</button
+					>
+				</div>
+			</div>
+			{#if selectedCount > 0}
+				<p class="hint" data-testid="selection-count">{selectedCount} selected</p>
+			{/if}
+			<ul class="list node-list" data-testid="node-list">
+				{#each nodes as node (node.id)}
+					<li>
+						<button
+							type="button"
+							class="list-item"
+							class:selected={selectedIds.has(node.id)}
+							data-testid={`node-item-${node.id}`}
+							onclick={(e) => onSelectNode(node.id, e)}
+						>
+							<span class="node-list-label">{node.label}</span>
+							{#if node.pinned}<span class="tag">pin</span>{/if}
+						</button>
+					</li>
+				{/each}
+			</ul>
+			{#if selectedCount > 1}
+				<div class="row wrap">
+					<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
+						>Group {selectedCount}</button
+					>
+					<button
+						type="button"
+						data-testid="clear-selection"
+						onclick={() => app.clearAllSelection()}>Clear selection</button
+					>
+					<button type="button" data-testid="delete-selection" onclick={() => app.deleteSelection()}
+						>Delete</button
+					>
+				</div>
+			{/if}
+
+			{#if selectedNode && selectedCount === 1}
+				<div class="inspect" data-testid="node-editor">
+					<h3 class="subhead">Inspect</h3>
+					<div class="row wrap inspect-actions">
+						<button
+							type="button"
+							data-testid="node-connect"
+							class:active={app.ui.connectFromId === selectedNode.id}
+							onclick={() => app.setConnectFrom(selectedNode.id)}>Connect</button
+						>
+						<button
+							type="button"
+							data-testid="delete-node"
+							onclick={() => app.removeNode(selectedNode.id)}>Delete</button
+						>
+						<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
+							>Add to diff</button
+						>
+					</div>
+					<label>
+						Label
+						<input
+							data-testid="node-label"
+							value={selectedNode.label}
+							oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
+						/>
+					</label>
+					<label>
+						Notes
+						<textarea
+							data-testid="node-notes"
+							rows="2"
+							value={selectedNode.notes ?? ''}
+							oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
+						></textarea>
+					</label>
+					<div class="pos-row" data-testid="node-position">
+						<label>
+							X
+							<input
+								type="number"
+								step="0.1"
+								data-testid="node-pos-x"
+								value={selectedNode.position.x}
+								oninput={(e) =>
+									app.updateNode(selectedNode.id, {
+										position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
+									})}
+							/>
+						</label>
+						<label>
+							Y
+							<input
+								type="number"
+								step="0.1"
+								data-testid="node-pos-y"
+								value={selectedNode.position.y}
+								oninput={(e) =>
+									app.updateNode(selectedNode.id, {
+										position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
+									})}
+							/>
+						</label>
+						<label>
+							Z
+							<input
+								type="number"
+								step="0.1"
+								data-testid="node-pos-z"
+								value={selectedNode.position.z}
+								oninput={(e) =>
+									app.updateNode(selectedNode.id, {
+										position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
+									})}
+							/>
+						</label>
+					</div>
+					<label>
+						Tags
+						<input
+							data-testid="node-tags"
+							placeholder="comma-separated"
+							value={selectedNode.tags.join(', ')}
+							oninput={(e) =>
+								app.setNodeTags(
+									selectedNode.id,
+									e.currentTarget.value
+										.split(',')
+										.map((t) => t.trim())
+										.filter(Boolean)
+								)}
+						/>
+					</label>
+					<label class="check">
+						<input
+							type="checkbox"
+							data-testid="node-pin"
+							checked={selectedNode.pinned}
+							onchange={(e) => app.pinNode(selectedNode.id, e.currentTarget.checked)}
+						/>
+						Pinned
+					</label>
+					<div class="attachments" data-testid="attachments-section">
+						<h3 class="subhead">Attachments</h3>
+						<ul class="list attachment-list" data-testid="attachment-list">
+							{#each selectedNode.attachments as att, i (i)}
+								<li class="attachment-row">
+									<span class="attachment-name">{att.name}</span>
+									<span class="muted attachment-preview"
+										>{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span
+									>
+									<button
+										type="button"
+										data-testid={`remove-attachment-${i}`}
+										aria-label={`Remove attachment ${att.name}`}
+										onclick={() =>
+											removeAttachment('node', selectedNode.id, selectedNode.attachments, i)}
+										>×</button
+									>
+								</li>
+							{/each}
+						</ul>
+						<div class="row wrap">
+							<input
+								data-testid="attachment-name"
+								placeholder="Name"
+								aria-label="Attachment name"
+								bind:value={attachName}
+							/>
+							<input
+								data-testid="attachment-payload"
+								placeholder="Text or data URL"
+								aria-label="Attachment payload"
+								bind:value={attachPayload}
+							/>
+							<button
+								type="button"
+								data-testid="add-attachment"
+								onclick={() =>
+									addAttachment(
+										'node',
+										selectedNode.id,
+										selectedNode.attachments,
+										attachName,
+										attachPayload,
+										() => {
+											attachName = '';
+											attachPayload = '';
+										}
+									)}>Add</button
+							>
+						</div>
+					</div>
+				</div>
+			{/if}
+		</section>
+	{/if}
+
+	{#if section === 'edges'}
+		{#if selectedEdge}
+			<section class="block" data-testid="edge-editor">
+				<h2>Edit edge</h2>
+				<p class="hint">
+					{app.document.nodes[selectedEdge.from]?.label ?? '?'}
+					{selectedEdge.directed ? '→' : '—'}
+					{app.document.nodes[selectedEdge.to]?.label ?? '?'}
+				</p>
 				<div class="row wrap inspect-actions">
 					<button
 						type="button"
-						data-testid="node-connect"
-						class:active={app.ui.connectFromId === selectedNode.id}
-						onclick={() => app.setConnectFrom(selectedNode.id)}>Connect</button
+						data-testid="edge-toggle-directed"
+						onclick={() => app.updateEdge(selectedEdge.id, { directed: !selectedEdge.directed })}
+						>{selectedEdge.directed ? 'Make undirected' : 'Make directed'}</button
 					>
 					<button
 						type="button"
-						data-testid="delete-node"
-						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
-					>
-					<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
-						>Add to diff</button
+						data-testid="delete-edge"
+						onclick={() => app.removeEdge(selectedEdge.id)}>Delete</button
 					>
 				</div>
-				<label>
-					Label
-					<input
-						data-testid="node-label"
-						value={selectedNode.label}
-						oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
-					/>
-				</label>
-				<label>
-					Notes
-					<textarea
-						data-testid="node-notes"
-						rows="2"
-						value={selectedNode.notes ?? ''}
-						oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
-					></textarea>
-				</label>
-				<div class="pos-row" data-testid="node-position">
-					<label>
-						X
-						<input
-							type="number"
-							step="0.1"
-							data-testid="node-pos-x"
-							value={selectedNode.position.x}
-							oninput={(e) =>
-								app.updateNode(selectedNode.id, {
-									position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
-								})}
-						/>
-					</label>
-					<label>
-						Y
-						<input
-							type="number"
-							step="0.1"
-							data-testid="node-pos-y"
-							value={selectedNode.position.y}
-							oninput={(e) =>
-								app.updateNode(selectedNode.id, {
-									position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
-								})}
-						/>
-					</label>
-					<label>
-						Z
-						<input
-							type="number"
-							step="0.1"
-							data-testid="node-pos-z"
-							value={selectedNode.position.z}
-							oninput={(e) =>
-								app.updateNode(selectedNode.id, {
-									position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
-								})}
-						/>
-					</label>
-				</div>
-				<label>
-					Tags
-					<input
-						data-testid="node-tags"
-						placeholder="comma-separated"
-						value={selectedNode.tags.join(', ')}
-						oninput={(e) =>
-							app.setNodeTags(
-								selectedNode.id,
-								e.currentTarget.value
-									.split(',')
-									.map((t) => t.trim())
-									.filter(Boolean)
-							)}
-					/>
-				</label>
-				<label class="check">
-					<input
-						type="checkbox"
-						data-testid="node-pin"
-						checked={selectedNode.pinned}
-						onchange={(e) => app.pinNode(selectedNode.id, e.currentTarget.checked)}
-					/>
-					Pinned
-				</label>
-				<div class="attachments" data-testid="attachments-section">
+				<div class="attachments" data-testid="edge-attachments-section">
 					<h3 class="subhead">Attachments</h3>
-					<ul class="list attachment-list" data-testid="attachment-list">
-						{#each selectedNode.attachments as att, i (i)}
+					<ul class="list attachment-list" data-testid="edge-attachment-list">
+						{#each selectedEdge.attachments as att, i (i)}
 							<li class="attachment-row">
 								<span class="attachment-name">{att.name}</span>
 								<span class="muted attachment-preview"
@@ -443,10 +534,10 @@
 								>
 								<button
 									type="button"
-									data-testid={`remove-attachment-${i}`}
+									data-testid={`remove-edge-attachment-${i}`}
 									aria-label={`Remove attachment ${att.name}`}
 									onclick={() =>
-										removeAttachment('node', selectedNode.id, selectedNode.attachments, i)}
+										removeAttachment('edge', selectedEdge.id, selectedEdge.attachments, i)}
 									>×</button
 								>
 							</li>
@@ -454,234 +545,168 @@
 					</ul>
 					<div class="row wrap">
 						<input
-							data-testid="attachment-name"
+							data-testid="edge-attachment-name"
 							placeholder="Name"
-							aria-label="Attachment name"
-							bind:value={attachName}
+							aria-label="Edge attachment name"
+							bind:value={edgeAttachName}
 						/>
 						<input
-							data-testid="attachment-payload"
+							data-testid="edge-attachment-payload"
 							placeholder="Text or data URL"
-							aria-label="Attachment payload"
-							bind:value={attachPayload}
+							aria-label="Edge attachment payload"
+							bind:value={edgeAttachPayload}
 						/>
 						<button
 							type="button"
-							data-testid="add-attachment"
+							data-testid="add-edge-attachment"
 							onclick={() =>
 								addAttachment(
-									'node',
-									selectedNode.id,
-									selectedNode.attachments,
-									attachName,
-									attachPayload,
+									'edge',
+									selectedEdge.id,
+									selectedEdge.attachments,
+									edgeAttachName,
+									edgeAttachPayload,
 									() => {
-										attachName = '';
-										attachPayload = '';
+										edgeAttachName = '';
+										edgeAttachPayload = '';
 									}
 								)}>Add</button
 						>
 					</div>
 				</div>
-			</div>
+			</section>
 		{/if}
-	</section>
 
-	{#if selectedEdge}
-		<section class="block" data-testid="edge-editor">
-			<h2>Edit edge</h2>
-			<p class="hint">
-				{app.document.nodes[selectedEdge.from]?.label ?? '?'}
-				{selectedEdge.directed ? '→' : '—'}
-				{app.document.nodes[selectedEdge.to]?.label ?? '?'}
-			</p>
-			<div class="row wrap inspect-actions">
-				<button
-					type="button"
-					data-testid="edge-toggle-directed"
-					onclick={() => app.updateEdge(selectedEdge.id, { directed: !selectedEdge.directed })}
-					>{selectedEdge.directed ? 'Make undirected' : 'Make directed'}</button
-				>
-				<button
-					type="button"
-					data-testid="delete-edge"
-					onclick={() => app.removeEdge(selectedEdge.id)}>Delete</button
-				>
+		<section class="block" data-testid="edges-section">
+			<div class="row between">
+				<h2>Edges ({edges.length})</h2>
 			</div>
-			<div class="attachments" data-testid="edge-attachments-section">
-				<h3 class="subhead">Attachments</h3>
-				<ul class="list attachment-list" data-testid="edge-attachment-list">
-					{#each selectedEdge.attachments as att, i (i)}
-						<li class="attachment-row">
-							<span class="attachment-name">{att.name}</span>
-							<span class="muted attachment-preview">{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span>
+			<div class="row">
+				<select data-testid="edge-from" bind:value={edgeFrom} aria-label="Edge from">
+					<option value="">From</option>
+					{#each nodes as n (n.id)}
+						<option value={n.id}>{n.label}</option>
+					{/each}
+				</select>
+				<select data-testid="edge-to" bind:value={edgeTo} aria-label="Edge to">
+					<option value="">To</option>
+					{#each nodes as n (n.id)}
+						<option value={n.id}>{n.label}</option>
+					{/each}
+				</select>
+				<button type="button" data-testid="add-edge" onclick={onAddEdge}>Add</button>
+			</div>
+			<ul class="list" data-testid="edge-list">
+				{#each edges as edge (edge.id)}
+					<li class="edge-row">
+						<button
+							type="button"
+							class="list-item edge-select"
+							class:selected={app.selection.edgeIds.includes(edge.id)}
+							data-testid={`edge-item-${edge.id}`}
+							onclick={(e) => onSelectEdge(edge.id, e)}
+						>
+							{app.document.nodes[edge.from]?.label ?? '?'}
+							{edge.directed ? '→' : '—'}
+							{app.document.nodes[edge.to]?.label ?? '?'}
+							<span class="muted">w={edge.weight}</span>
+						</button>
+						<button
+							type="button"
+							data-testid={`edit-edge-${edge.id}`}
+							onclick={() => {
+								const w = Number(prompt('Weight', String(edge.weight)));
+								if (!Number.isFinite(w)) return;
+								app.updateEdge(edge.id, { weight: w });
+							}}>W</button
+						>
+						<button
+							type="button"
+							data-testid={`toggle-directed-${edge.id}`}
+							onclick={() => app.updateEdge(edge.id, { directed: !edge.directed })}>Dir</button
+						>
+						<button
+							type="button"
+							data-testid={`edge-notes-${edge.id}`}
+							onclick={() => {
+								const notes = prompt('Notes', edge.notes ?? '') ?? edge.notes;
+								app.updateEdge(edge.id, { notes: notes ?? '' });
+							}}>Notes</button
+						>
+						{#if selectedId && (edge.from === selectedId || edge.to === selectedId)}
 							<button
 								type="button"
-								data-testid={`remove-edge-attachment-${i}`}
-								aria-label={`Remove attachment ${att.name}`}
-								onclick={() =>
-									removeAttachment('edge', selectedEdge.id, selectedEdge.attachments, i)}>×</button
+								data-testid={`follow-edge-${edge.id}`}
+								onclick={() => app.followEdge(edge.id)}>Follow</button
 							>
-						</li>
-					{/each}
-				</ul>
-				<div class="row wrap">
-					<input
-						data-testid="edge-attachment-name"
-						placeholder="Name"
-						aria-label="Edge attachment name"
-						bind:value={edgeAttachName}
-					/>
-					<input
-						data-testid="edge-attachment-payload"
-						placeholder="Text or data URL"
-						aria-label="Edge attachment payload"
-						bind:value={edgeAttachPayload}
-					/>
-					<button
-						type="button"
-						data-testid="add-edge-attachment"
-						onclick={() =>
-							addAttachment(
-								'edge',
-								selectedEdge.id,
-								selectedEdge.attachments,
-								edgeAttachName,
-								edgeAttachPayload,
-								() => {
-									edgeAttachName = '';
-									edgeAttachPayload = '';
-								}
-							)}>Add</button
-					>
-				</div>
-			</div>
+						{/if}
+						<button
+							type="button"
+							data-testid={`delete-edge-${edge.id}`}
+							onclick={() => app.removeEdge(edge.id)}>×</button
+						>
+					</li>
+				{/each}
+			</ul>
 		</section>
 	{/if}
 
-	<section class="block" data-testid="edges-section">
-		<div class="row between">
-			<h2>Edges ({edges.length})</h2>
-		</div>
-		<div class="row">
-			<select data-testid="edge-from" bind:value={edgeFrom} aria-label="Edge from">
-				<option value="">From</option>
-				{#each nodes as n (n.id)}
-					<option value={n.id}>{n.label}</option>
-				{/each}
-			</select>
-			<select data-testid="edge-to" bind:value={edgeTo} aria-label="Edge to">
-				<option value="">To</option>
-				{#each nodes as n (n.id)}
-					<option value={n.id}>{n.label}</option>
-				{/each}
-			</select>
-			<button type="button" data-testid="add-edge" onclick={onAddEdge}>Add</button>
-		</div>
-		<ul class="list" data-testid="edge-list">
-			{#each edges as edge (edge.id)}
-				<li class="edge-row">
-					<button
-						type="button"
-						class="list-item edge-select"
-						class:selected={app.selection.edgeIds.includes(edge.id)}
-						data-testid={`edge-item-${edge.id}`}
-						onclick={(e) => onSelectEdge(edge.id, e)}
-					>
-						{app.document.nodes[edge.from]?.label ?? '?'}
-						{edge.directed ? '→' : '—'}
-						{app.document.nodes[edge.to]?.label ?? '?'}
-						<span class="muted">w={edge.weight}</span>
-					</button>
-					<button
-						type="button"
-						data-testid={`edit-edge-${edge.id}`}
-						onclick={() => {
-							const w = Number(prompt('Weight', String(edge.weight)));
-							if (!Number.isFinite(w)) return;
-							app.updateEdge(edge.id, { weight: w });
-						}}>W</button
-					>
-					<button
-						type="button"
-						data-testid={`toggle-directed-${edge.id}`}
-						onclick={() => app.updateEdge(edge.id, { directed: !edge.directed })}>Dir</button
-					>
-					<button
-						type="button"
-						data-testid={`edge-notes-${edge.id}`}
-						onclick={() => {
-							const notes = prompt('Notes', edge.notes ?? '') ?? edge.notes;
-							app.updateEdge(edge.id, { notes: notes ?? '' });
-						}}>Notes</button
-					>
-					{#if selectedId && (edge.from === selectedId || edge.to === selectedId)}
-						<button
-							type="button"
-							data-testid={`follow-edge-${edge.id}`}
-							onclick={() => app.followEdge(edge.id)}>Follow</button
-						>
-					{/if}
-					<button
-						type="button"
-						data-testid={`delete-edge-${edge.id}`}
-						onclick={() => app.removeEdge(edge.id)}>×</button
-					>
-				</li>
-			{/each}
-		</ul>
-	</section>
+	{#if section === 'filters'}
+		<section class="block" data-testid="filters-section">
+			<h2>Filters</h2>
+			<div class="row">
+				<input
+					data-testid="filter-tags"
+					placeholder="tag1, tag2"
+					bind:value={filterInput}
+					aria-label="Filter tags"
+				/>
+				<button type="button" data-testid="apply-filter" onclick={applyFilter}>Apply</button>
+			</div>
+			<label class="check">
+				<input
+					type="checkbox"
+					data-testid="hide-filtered"
+					checked={app.filters.hideFiltered}
+					onchange={(e) => app.setHideFiltered(e.currentTarget.checked)}
+				/>
+				Hide / dim non-matches
+			</label>
+		</section>
+	{/if}
 
-	<section class="block" data-testid="filters-section">
-		<h2>Filters</h2>
-		<div class="row">
-			<input
-				data-testid="filter-tags"
-				placeholder="tag1, tag2"
-				bind:value={filterInput}
-				aria-label="Filter tags"
-			/>
-			<button type="button" data-testid="apply-filter" onclick={applyFilter}>Apply</button>
-		</div>
-		<label class="check">
-			<input
-				type="checkbox"
-				data-testid="hide-filtered"
-				checked={app.filters.hideFiltered}
-				onchange={(e) => app.setHideFiltered(e.currentTarget.checked)}
-			/>
-			Hide / dim non-matches
-		</label>
-	</section>
-
-	{#if groupIds.length}
+	{#if section === 'groups'}
 		<section class="block" data-testid="groups-section">
 			<h2>Groups</h2>
-			{#each groupIds as gid (gid)}
-				<div class="row" data-testid={`group-row-${gid}`}>
-					<span class="muted">{gid.slice(0, 8)}…</span>
-					{#if app.groupsCollapsed.has(gid)}
-						<button
-							type="button"
-							data-testid={`expand-group-${gid}`}
-							onclick={() => app.toggleCollapseGroup(gid)}>Expand</button
+			{#if groupIds.length}
+				{#each groupIds as gid (gid)}
+					<div class="row" data-testid={`group-row-${gid}`}>
+						<span class="muted">{gid.slice(0, 8)}…</span>
+						{#if app.groupsCollapsed.has(gid)}
+							<button
+								type="button"
+								data-testid={`expand-group-${gid}`}
+								onclick={() => app.toggleCollapseGroup(gid)}>Expand</button
+							>
+						{:else}
+							<button
+								type="button"
+								data-testid={`collapse-group-${gid}`}
+								onclick={() => app.toggleCollapseGroup(gid)}>Collapse</button
+							>
+						{/if}
+						<button type="button" data-testid={`ungroup-${gid}`} onclick={() => app.ungroup(gid)}
+							>Ungroup</button
 						>
-					{:else}
-						<button
-							type="button"
-							data-testid={`collapse-group-${gid}`}
-							onclick={() => app.toggleCollapseGroup(gid)}>Collapse</button
-						>
-					{/if}
-					<button type="button" data-testid={`ungroup-${gid}`} onclick={() => app.ungroup(gid)}
-						>Ungroup</button
-					>
-				</div>
-			{/each}
+					</div>
+				{/each}
+			{:else}
+				<p class="hint">No groups yet.</p>
+			{/if}
 		</section>
 	{/if}
 
-	{#if app.mode === 'directions' || app.mode === 'explore'}
+	{#if section === 'pathfinder'}
 		<section class="block" data-testid="directions-panel">
 			<h2>Pathfinder</h2>
 			<div class="row">
@@ -767,7 +792,7 @@
 		</section>
 	{/if}
 
-	{#if app.mode === 'analyze'}
+	{#if section === 'analyze'}
 		<section class="block" data-testid="analyze-panel">
 			<h2>Analyze</h2>
 			<label>
@@ -782,7 +807,9 @@
 					{/each}
 				</select>
 			</label>
-			<p class="hint">{app.algorithms.find((a) => a.id === app.analyze.algorithmId)?.description}</p>
+			<p class="hint">
+				{app.algorithms.find((a) => a.id === app.analyze.algorithmId)?.description}
+			</p>
 			<div class="row wrap">
 				<button type="button" data-testid="run-algo" onclick={() => app.runAlgorithm()}>Run</button>
 				<select data-testid="compare-algo" bind:value={compareAlgo} aria-label="Compare algorithm">
@@ -804,7 +831,8 @@
 							<strong class="series-a">{compareRunA.algorithmId}</strong>
 							{#if compareRunA.stale}<span class="tag">stale</span>{/if}
 							<p class="muted">
-								{compareMetrics(compareRunA).nodes} nodes · {compareMetrics(compareRunA).hops} hops · cost
+								{compareMetrics(compareRunA).nodes} nodes · {compareMetrics(compareRunA).hops} hops ·
+								cost
 								{compareMetrics(compareRunA).cost}
 							</p>
 						</div>
@@ -812,7 +840,8 @@
 							<strong class="series-b">{compareRunB.algorithmId}</strong>
 							{#if compareRunB.stale}<span class="tag">stale</span>{/if}
 							<p class="muted">
-								{compareMetrics(compareRunB).nodes} nodes · {compareMetrics(compareRunB).hops} hops · cost
+								{compareMetrics(compareRunB).nodes} nodes · {compareMetrics(compareRunB).hops} hops ·
+								cost
 								{compareMetrics(compareRunB).cost}
 							</p>
 						</div>
@@ -887,7 +916,11 @@
 					<div class="row wrap">
 						<label>
 							Run A
-							<select data-testid="compare-run-a" bind:value={compareRunIdA} aria-label="Compare run A">
+							<select
+								data-testid="compare-run-a"
+								bind:value={compareRunIdA}
+								aria-label="Compare run A"
+							>
 								{#each storedRuns as run (run.id)}
 									<option value={run.id}>{runLabel(run)}</option>
 								{/each}
@@ -895,7 +928,11 @@
 						</label>
 						<label>
 							Run B
-							<select data-testid="compare-run-b" bind:value={compareRunIdB} aria-label="Compare run B">
+							<select
+								data-testid="compare-run-b"
+								bind:value={compareRunIdB}
+								aria-label="Compare run B"
+							>
 								{#each storedRuns as run (run.id)}
 									<option value={run.id}>{runLabel(run)}</option>
 								{/each}
@@ -915,7 +952,9 @@
 						{#each storedRuns as run (run.id)}
 							<li class="muted" class:stale-run={run.stale}>
 								{run.algorithmId}
-								{#if run.stale}<span class="tag stale-tag">stale</span>{:else}<span class="tag ok-tag">current</span>{/if}
+								{#if run.stale}<span class="tag stale-tag">stale</span>{:else}<span
+										class="tag ok-tag">current</span
+									>{/if}
 								<button
 									type="button"
 									data-testid="set-compare-run-a"
@@ -944,30 +983,34 @@
 		</section>
 	{/if}
 
-	{#if diffA && diffB}
+	{#if section === 'diff'}
 		<section class="block" data-testid="diff-panel">
 			<h2>Diff</h2>
-			<div class="diff">
-				<div>
-					<strong>{diffA.label}</strong>
-					<p class="muted">{diffA.notes ?? '—'}</p>
-					<p class="muted">{diffA.tags.join(', ') || 'no tags'}</p>
+			{#if diffA && diffB}
+				<div class="diff">
+					<div>
+						<strong>{diffA.label}</strong>
+						<p class="muted">{diffA.notes ?? '—'}</p>
+						<p class="muted">{diffA.tags.join(', ') || 'no tags'}</p>
+					</div>
+					<div>
+						<strong>{diffB.label}</strong>
+						<p class="muted">{diffB.notes ?? '—'}</p>
+						<p class="muted">{diffB.tags.join(', ') || 'no tags'}</p>
+					</div>
 				</div>
-				<div>
-					<strong>{diffB.label}</strong>
-					<p class="muted">{diffB.notes ?? '—'}</p>
-					<p class="muted">{diffB.tags.join(', ') || 'no tags'}</p>
-				</div>
-			</div>
-			<button
-				type="button"
-				data-testid="diff-path"
-				onclick={() => {
-					app.setDirectionsEndpoints(diffA.id, diffB.id);
-					app.setMode('directions');
-				}}>Path between</button
-			>
-			<button type="button" onclick={() => app.setDiffIds([])}>Clear</button>
+				<button
+					type="button"
+					data-testid="diff-path"
+					onclick={() => {
+						app.setDirectionsEndpoints(diffA.id, diffB.id);
+						app.setMode('directions');
+					}}>Path between</button
+				>
+				<button type="button" onclick={() => app.setDiffIds([])}>Clear</button>
+			{:else}
+				<p class="hint">Add two nodes to the diff from Inspect.</p>
+			{/if}
 		</section>
 	{/if}
 
@@ -995,13 +1038,6 @@
 		overflow: auto;
 		box-shadow: 0 10px 32px rgba(28, 36, 46, 0.16);
 		border-radius: var(--yg-radius-modal);
-	}
-
-	.lede {
-		margin: 0.15rem 0 0;
-		font-size: 0.72rem;
-		color: var(--yg-muted);
-		max-width: 14rem;
 	}
 
 	.brand {

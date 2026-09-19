@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { openTool } from './open-tool';
 
 test('relayout moves unpinned nodes but keeps pinned fixed', async ({ page }) => {
 	await page.goto('/');
-	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
+	await openTool(page, 'nodes');
 
 	await page.getByTestId('add-node').click();
 	await page.getByTestId('node-pos-x').fill('10');

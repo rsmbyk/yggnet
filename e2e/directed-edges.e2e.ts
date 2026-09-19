@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { openTool } from './open-tool';
 
 test('toggle directed on edge keeps world visible', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'nodes');
 
 	const nodeList = page.getByTestId('node-list');
 	const edgeList = page.getByTestId('edge-list');
@@ -17,11 +19,15 @@ test('toggle directed on edge keeps world visible', async ({ page }) => {
 	const fromLabel = (await nodes.nth(0).innerText()).trim();
 	const toLabel = (await nodes.nth(1).innerText()).trim();
 
+	await openTool(page, 'edges');
 	await page.getByTestId('edge-from').selectOption({ label: fromLabel });
 	await page.getByTestId('edge-to').selectOption({ label: toLabel });
 	await page.getByTestId('add-edge').click();
 
-	const edgeTestId = await edgeList.locator('[data-testid^="edge-item-"]').first().getAttribute('data-testid');
+	const edgeTestId = await edgeList
+		.locator('[data-testid^="edge-item-"]')
+		.first()
+		.getAttribute('data-testid');
 	expect(edgeTestId).toMatch(/^edge-item-/);
 	const id = edgeTestId!.slice('edge-item-'.length);
 

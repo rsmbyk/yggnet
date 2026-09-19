@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { openTool } from './open-tool';
 
 test('multi-select group collapse and expand', async ({ page }) => {
 	await page.goto('/');
+	await openTool(page, 'nodes');
 	await page.getByTestId('add-node').click();
 	await page.getByTestId('add-node').click();
 
@@ -15,6 +17,7 @@ test('multi-select group collapse and expand', async ({ page }) => {
 
 	await page.getByTestId('group-multi').click();
 	await expect(page.getByTestId('status-message')).toHaveText(/Grouped 2 nodes/);
+	await openTool(page, 'groups');
 	await expect(page.getByTestId('groups-section')).toBeVisible();
 
 	const collapseBtn = page.locator('[data-testid^="collapse-group-"]');
@@ -30,11 +33,12 @@ test('multi-select group collapse and expand', async ({ page }) => {
 	await expect(page.getByTestId(`collapse-group-${groupId}`)).toBeVisible();
 
 	await page.getByTestId('ungroup-' + groupId).click();
-	await expect(page.getByTestId('groups-section')).not.toBeVisible();
+	await expect(page.getByTestId('groups-section')).toContainText('No groups yet');
 });
 
 test('group requires at least two selected nodes', async ({ page }) => {
 	await page.goto('/');
+	await openTool(page, 'nodes');
 	await page.getByTestId('add-node').click();
 
 	const first = page.getByTestId('node-list').locator('li button').first();

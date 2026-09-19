@@ -1,17 +1,20 @@
 import { expect, test } from '@playwright/test';
+import { openTool } from './open-tool';
 
 test('named save and load with overwrite confirm', async ({ page }) => {
 	await page.goto('/');
-	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
+	await openTool(page, 'nodes');
 
 	await page.getByTestId('add-node').click();
 	await expect(page.getByTestId('node-editor')).toBeVisible();
 	await page.getByTestId('node-label').fill('Falcon');
 
 	const slot = 'e2e-named-slot';
+	await openTool(page, 'file');
 	await page.getByTestId('save-slot-name').fill(slot);
 	await page.getByTestId('save-named').click();
 
+	await openTool(page, 'nodes');
 	await page.getByTestId('add-node').click();
 	await expect(page.getByTestId('node-list').locator('li')).toHaveCount(2);
 
@@ -19,8 +22,10 @@ test('named save and load with overwrite confirm', async ({ page }) => {
 		expect(dialog.type()).toBe('confirm');
 		void dialog.accept();
 	});
+	await openTool(page, 'file');
 	await page.getByTestId('load-named').click();
 
+	await openTool(page, 'nodes');
 	await expect(page.getByTestId('node-list').locator('li')).toHaveCount(1);
 	await expect(page.getByTestId('node-list')).toContainText('Falcon');
 	await page.getByTestId('node-list').locator('button').first().click();
@@ -29,6 +34,7 @@ test('named save and load with overwrite confirm', async ({ page }) => {
 
 test('palette find jumps to matching node', async ({ page }) => {
 	await page.goto('/');
+	await openTool(page, 'nodes');
 	await page.getByTestId('add-node').click();
 	await page.getByTestId('node-label').fill('ZebraNode');
 

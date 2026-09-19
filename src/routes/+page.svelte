@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import ManagerPanel from '$lib/ui/ManagerPanel.svelte';
+	import Toolbar from '$lib/ui/Toolbar.svelte';
 	import { app } from '$lib/session/app.svelte';
 
 	const slide = { duration: 220, x: 28, opacity: 0 };
@@ -22,9 +23,7 @@
 		const target = e.target as HTMLElement | null;
 		const typing =
 			target &&
-			(target.tagName === 'INPUT' ||
-				target.tagName === 'TEXTAREA' ||
-				target.isContentEditable);
+			(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 		const meta = e.ctrlKey || e.metaKey;
 		if (meta && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
@@ -40,8 +39,8 @@
 				app.setConnectFrom(null);
 				return;
 			}
-			if (app.ui.managerOpen) {
-				app.setManagerOpen(false);
+			if (app.ui.openTool) {
+				app.setOpenTool(null);
 				return;
 			}
 			app.clearAllSelection();
@@ -140,19 +139,24 @@
 		{/if}
 	</main>
 
-	{#if app.ui.managerOpen}
+	{#if app.ui.openTool}
 		<button
 			type="button"
 			class="drawer-scrim"
 			aria-label="Close tools panel"
 			data-testid="manager-scrim"
 			transition:fade={{ duration: 180 }}
-			onclick={() => app.setManagerOpen(false)}
+			onclick={() => app.setOpenTool(null)}
 		></button>
-		<div class="drawer-slot" transition:fly={slide}>
-			<ManagerPanel />
-		</div>
 	{/if}
+	<div class="tool-dock">
+		{#if app.ui.openTool}
+			<div class="tool-panel-slot" transition:fly={slide}>
+				<ManagerPanel section={app.ui.openTool} />
+			</div>
+		{/if}
+		<Toolbar />
+	</div>
 </div>
 
 <style>
@@ -183,19 +187,34 @@
 		cursor: pointer;
 	}
 
-	.drawer-slot {
+	.tool-dock {
 		position: absolute;
-		/* Same Y as the connect banner when it sits under the toolbar. */
 		top: calc(var(--yg-top-bar-h) + (2 * var(--yg-hud-pad-y)));
 		right: 0.75rem;
 		bottom: 0.75rem;
 		z-index: 16;
 		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		justify-content: flex-end;
+		gap: var(--yg-hud-pad-y);
 		max-width: calc(100% - 1.5rem);
 		pointer-events: none;
 	}
 
-	.drawer-slot :global(.manager) {
+	.tool-panel-slot {
+		display: flex;
+		min-width: 0;
+		height: 100%;
+		pointer-events: auto;
+	}
+
+	.tool-dock :global(.toolbar) {
+		align-self: flex-start;
+		pointer-events: auto;
+	}
+
+	.tool-dock :global(.manager) {
 		pointer-events: auto;
 		cursor: default;
 	}

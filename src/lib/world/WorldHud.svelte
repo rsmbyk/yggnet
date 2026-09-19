@@ -18,10 +18,10 @@
 	const connecting = $derived(app.ui.connectFromId !== null);
 	/**
 	 * One sheet shell for node / multi / edge — avoids outro jumps when switching modes.
-	 * Hidden while Tools is open so the drawer is the only inspect surface.
+	 * Hidden while a tool panel is open so that panel is the only inspect surface.
 	 */
 	const sheetOpen = $derived(
-		!app.ui.managerOpen &&
+		!app.ui.openTool &&
 			((selectedCount === 1 && selectedNode != null) || selectedCount > 1 || selectedEdge != null)
 	);
 	const sheetTestId = $derived(
@@ -143,7 +143,7 @@
 	$effect(() => {
 		if (!viewportBlocked) return;
 		app.openPalette(false);
-		app.setManagerOpen(false);
+		app.setOpenTool(null);
 		worldTune.open = false;
 	});
 
@@ -198,7 +198,12 @@
 
 <div class="hud" class:viewport-blocked={viewportBlocked} bind:this={hudEl} data-testid="world-hud">
 	<div class="top-row" bind:this={topRowEl}>
-		<header class="chrome" class:dimmed={app.ui.managerOpen} bind:this={chromeEl}>
+		<header
+			class="chrome"
+			class:dimmed={app.ui.openTool !== null}
+			bind:this={chromeEl}
+			aria-label="Menubar"
+		>
 			<!-- Brand: swap static/brand/logo.svg (see static/brand/README.md) -->
 			<img
 				class="logo"
@@ -282,22 +287,6 @@
 						><path
 							fill="currentColor"
 							d="M7 3v6H5v2h2v10h2V11h2V9H9V3H7zm8 0v10h-2v2h2v6h2v-6h2v-2h-2V3h-2z"
-						/></svg
-					>
-				</button>
-				<button
-					type="button"
-					class="icon-btn tools-toggle"
-					data-testid="open-manager"
-					aria-label="Tools panel"
-					title="Tools (M)"
-					class:active={app.ui.managerOpen}
-					onclick={() => app.toggleManager()}
-				>
-					<svg viewBox="0 0 24 24" aria-hidden="true"
-						><path
-							fill="currentColor"
-							d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
 						/></svg
 					>
 				</button>
@@ -509,7 +498,7 @@
 		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.12);
 	}
 
-	/* Tools focuses the toggle — keep the unhovered idle look. */
+	/* A tool panel is open — keep the unhovered idle look. */
 	.chrome.dimmed:hover,
 	.chrome.dimmed:focus-within {
 		background: var(--yg-panel-glass-dim);
@@ -636,10 +625,6 @@
 		background: var(--yg-accent-soft);
 		color: var(--yg-accent);
 		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));
-	}
-
-	.icon-btn.tools-toggle {
-		border-style: dashed;
 	}
 
 	button:disabled {
