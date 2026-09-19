@@ -58,7 +58,7 @@
 
 <div class="hud" data-testid="world-hud">
 	<div class="top-row">
-		<header class="chrome">
+		<header class="chrome" class:dimmed={app.ui.managerOpen}>
 			<!-- Brand: swap static/brand/logo.svg (see static/brand/README.md) -->
 			<img
 				class="logo"
@@ -333,7 +333,8 @@
 		transition:
 			background var(--yg-motion) var(--yg-ease),
 			border-color var(--yg-motion) var(--yg-ease),
-			box-shadow var(--yg-motion) var(--yg-ease);
+			box-shadow var(--yg-motion) var(--yg-ease),
+			opacity var(--yg-motion) var(--yg-ease);
 	}
 
 	.chrome:hover,
@@ -341,6 +342,27 @@
 		background: var(--yg-panel-glass);
 		border-color: var(--yg-border);
 		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.12);
+	}
+
+	/* Opening Advanced focuses the toolbar button; don't let that light the bar back up. */
+	.chrome.dimmed,
+	.chrome.dimmed:hover,
+	.chrome.dimmed:focus-within {
+		opacity: 0.38;
+		background: var(--yg-panel-glass-dim);
+		border-color: rgba(28, 36, 46, 0.1);
+		box-shadow: 0 4px 16px rgba(28, 36, 46, 0.04);
+	}
+
+	.chrome.dimmed .logo,
+	.chrome.dimmed .icon-btn,
+	.chrome.dimmed:hover .logo,
+	.chrome.dimmed:focus-within .logo,
+	.chrome.dimmed:hover .icon-btn,
+	.chrome.dimmed:focus-within .icon-btn {
+		opacity: 1;
+		background: var(--yg-chip-dim);
+		border-color: rgba(28, 36, 46, 0.1);
 	}
 
 	.logo {
@@ -431,6 +453,15 @@
 		background: var(--yg-accent-soft);
 		color: var(--yg-accent);
 		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));
+	}
+
+	.chrome.dimmed .icon-btn.active,
+	.chrome.dimmed:hover .icon-btn,
+	.chrome.dimmed:hover .icon-btn:hover,
+	.chrome.dimmed:focus-within .icon-btn:hover {
+		background: var(--yg-chip-dim);
+		color: var(--yg-fg);
+		border-color: rgba(28, 36, 46, 0.1);
 	}
 
 	.icon-btn.advanced {
