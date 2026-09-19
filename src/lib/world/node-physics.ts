@@ -11,9 +11,14 @@ export function clampToFloor(pos: Vec3, floorY: number, radius: number): Vec3 {
 	return pos.y < yMin ? { x: pos.x, y: yMin, z: pos.z } : pos;
 }
 
+/** Center-to-center keep-out: spheres may not sit closer than this. */
+export function minCenterDistance(radius: number, padding = 0): number {
+	return radius * 2 + padding;
+}
+
 /** True if two spheres of equal radius overlap (strict penetration). */
 export function spheresOverlap(a: Vec3, b: Vec3, radius: number, padding = 0): boolean {
-	const r = radius * 2 + padding;
+	const r = minCenterDistance(radius, padding);
 	const dx = a.x - b.x;
 	const dy = a.y - b.y;
 	const dz = a.z - b.z;
@@ -63,7 +68,10 @@ export function snapToGrid(
 	return { x: s(pos.x), y: pos.y, z: s(pos.z) };
 }
 
-/** Find a floor-resting position near `preferred` that does not overlap blockers. */
+/**
+ * Find a floor-resting position near `preferred` that does not overlap blockers.
+ * Search rings are spaced by `minCenterDistance` so each ring is one keep-out out.
+ */
 export function findFreePosition(
 	preferred: Vec3,
 	blockers: Iterable<Vec3>,
@@ -76,9 +84,10 @@ export function findFreePosition(
 	if (![...blockers].some((b) => spheresOverlap(base, b, radius, padding))) {
 		return base;
 	}
+	const ringStep = minCenterDistance(radius, padding);
 	for (let i = 1; i <= maxAttempts; i++) {
 		const ang = i * 2.399963; // golden-angle spiral
-		const rad = radius * 2.2 * Math.ceil(i / 6);
+		const rad = ringStep * Math.ceil(i / 6);
 		const candidate = clampToFloor(
 			{
 				x: preferred.x + Math.cos(ang) * rad,
