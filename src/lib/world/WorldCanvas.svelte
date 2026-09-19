@@ -118,18 +118,6 @@
 	<WorldHud />
 
 	<div class="map-stack">
-		<div class="cam-readout" data-testid="camera-readout" aria-live="polite">
-			<div class="cam-angles">
-				<span>pan {camReadout.pan}°</span>
-				<span>tilt {camReadout.tilt}°</span>
-			</div>
-			<div class="cam-coords">
-				<span>x {camReadout.x}</span>
-				<span>y {camReadout.y}</span>
-				<span>z {camReadout.z}</span>
-			</div>
-		</div>
-
 		<nav class="cam-chrome" data-testid="camera-controls" aria-label="Camera controls">
 			<button
 				type="button"
@@ -246,6 +234,18 @@
 			{/each}
 			<rect x={mmFocus.cx - 8} y={mmFocus.cy - 8} width="16" height="16" class="mm-view" />
 		</svg>
+
+		<div class="cam-readout" data-testid="camera-readout" aria-live="polite">
+			<div class="cam-angles">
+				<span>pan {camReadout.pan}°</span>
+				<span>tilt {camReadout.tilt}°</span>
+			</div>
+			<div class="cam-coords">
+				<span>x {camReadout.x}</span>
+				<span>y {camReadout.y}</span>
+				<span>z {camReadout.z}</span>
+			</div>
+		</div>
 	</div>
 </div>
 
