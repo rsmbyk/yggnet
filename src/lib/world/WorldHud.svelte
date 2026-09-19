@@ -2,6 +2,7 @@
 	import { fade } from 'svelte/transition';
 	import { app } from '$lib/session/app.svelte';
 	import { worldTune } from '$lib/world/world-tune.svelte';
+	import { centeredBannerOverlapsChrome } from './hud-layout';
 	import WorldTunePanel from './WorldTunePanel.svelte';
 
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
@@ -54,11 +55,53 @@
 
 	const sheetFade = { duration: 160 };
 	const toastFade = { duration: 220 };
+
+	let topRowEl: HTMLDivElement | undefined = $state();
+	let chromeEl: HTMLElement | undefined = $state();
+	let bannerSlotEl: HTMLDivElement | undefined = $state();
+	let bannerUnderChrome = $state(false);
+
+	function updateBannerPlacement() {
+		if (!connecting || !topRowEl || !chromeEl || !bannerSlotEl) {
+			bannerUnderChrome = false;
+			return;
+		}
+		const chrome = chromeEl.getBoundingClientRect();
+		const row = topRowEl.getBoundingClientRect();
+		bannerUnderChrome = centeredBannerOverlapsChrome({
+			chromeRight: chrome.right,
+			rowLeft: row.left,
+			rowWidth: row.width,
+			bannerWidth: bannerSlotEl.offsetWidth
+		});
+	}
+
+	$effect(() => {
+		if (!connecting) {
+			bannerUnderChrome = false;
+			return;
+		}
+		const chrome = chromeEl;
+		const row = topRowEl;
+		const slot = bannerSlotEl;
+		if (!chrome || !row || !slot) return;
+
+		updateBannerPlacement();
+		const ro = new ResizeObserver(updateBannerPlacement);
+		ro.observe(chrome);
+		ro.observe(row);
+		ro.observe(slot);
+		window.addEventListener('resize', updateBannerPlacement);
+		return () => {
+			ro.disconnect();
+			window.removeEventListener('resize', updateBannerPlacement);
+		};
+	});
 </script>
 
 <div class="hud" data-testid="world-hud">
-	<div class="top-row">
-		<header class="chrome" class:dimmed={app.ui.managerOpen}>
+	<div class="top-row" bind:this={topRowEl}>
+		<header class="chrome" class:dimmed={app.ui.managerOpen} bind:this={chromeEl}>
 			<!-- Brand: swap static/brand/logo.svg (see static/brand/README.md) -->
 			<img
 				class="logo"
@@ -167,7 +210,12 @@
 		<WorldTunePanel />
 
 		{#if connecting}
-			<div class="banner-slot" transition:fade={{ duration: 160 }}>
+			<div
+				class="banner-slot"
+				class:under-chrome={bannerUnderChrome}
+				bind:this={bannerSlotEl}
+				transition:fade={{ duration: 160 }}
+			>
 				<p class="banner" data-testid="connect-banner">
 					<span class="banner-text">
 						{#if app.ui.connectDirectedLocked}
@@ -280,6 +328,8 @@
 
 <style>
 	.hud {
+		--yg-hud-pad-y: 0.75rem;
+		--yg-hud-pad-x: 1rem;
 		pointer-events: none;
 		position: absolute;
 		inset: 0;
@@ -287,7 +337,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
-		padding: 0.75rem 1rem;
+		padding: var(--yg-hud-pad-y) var(--yg-hud-pad-x);
 		gap: 0.5rem;
 	}
 
@@ -486,17 +536,26 @@
 		top: 0;
 		transform: translateX(-50%);
 		z-index: 1;
-		height: var(--yg-top-bar-h);
+		height: auto;
+		min-height: var(--yg-top-bar-h);
 		width: max-content;
 		max-width: min(100%, calc(100vw - 2rem));
 		pointer-events: none;
+		transition: top var(--yg-motion) var(--yg-ease);
+	}
+
+	.banner-slot.under-chrome {
+		top: calc(var(--yg-top-bar-h) + var(--yg-hud-pad-y));
+		width: 100%;
+		max-width: 100%;
 	}
 
 	.banner {
 		pointer-events: auto;
 		box-sizing: border-box;
-		height: 100%;
-		width: max-content;
+		height: auto;
+		min-height: var(--yg-top-bar-h);
+		width: 100%;
 		max-width: 100%;
 		margin: 0;
 		/* Match chrome edge inset; a bit more on the text side so copy isn’t tight to the curve */
@@ -509,48 +568,28 @@
 		font-size: 0.82rem;
 		font-weight: 600;
 		letter-spacing: 0.01em;
-		line-height: 1.2;
-		display: inline-flex;
-		flex-wrap: nowrap;
-		gap: 0.5rem;
-		align-items: center;
-		white-space: nowrap;
+		line-height: 1.35;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		column-gap: 0.5rem;
+		align-items: start;
 		text-shadow: var(--yg-text-glow);
 	}
 
 	.banner-text {
+		min-width: 0;
 		color: var(--yg-fg);
-		padding-block: 0.1rem;
+		padding-block: 0.45rem 0.35rem;
+		overflow-wrap: anywhere;
 	}
 
 	.banner button {
 		font-weight: 600;
 		flex-shrink: 0;
-		height: 100%;
+		align-self: start;
+		height: calc(var(--yg-top-bar-h) - 0.5rem);
 		padding: 0 0.75rem;
 		border-radius: var(--yg-radius-pill);
-	}
-
-	/* Only when the viewport is too narrow for chrome + centered banner on one line */
-	@media (max-width: 640px) {
-		.top-row {
-			height: auto;
-			flex-wrap: wrap;
-			justify-content: center;
-			gap: 0.45rem;
-		}
-
-		.chrome {
-			width: 100%;
-			justify-content: flex-start;
-		}
-
-		.banner-slot {
-			position: static;
-			transform: none;
-			margin-inline: auto;
-			height: var(--yg-top-bar-h);
-		}
 	}
 
 	/* Centering lives on the sheet itself so Svelte outro (position:absolute) stays put. */
