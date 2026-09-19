@@ -194,6 +194,9 @@ class AppStore {
 	cameraOrbitEpoch = $state(0);
 	/** Bumped when viewMode toggles so GraphScene can apply the camera pose. */
 	viewModeEpoch = $state(0);
+	/** Bumped when a newly created node should be framed if it sits off-screen. */
+	revealEpoch = $state(0);
+	revealPosition = $state.raw<{ x: number; y: number; z: number } | null>(null);
 	/**
 	 * Eye−target offset saved when entering 2D — restored on return to 3D
 	 * (scaled to current zoom; target stays where it is).
@@ -382,6 +385,7 @@ class AppStore {
 			return { doc, undo: (cur) => removeNode(cur, nodeId) };
 		});
 		this.setSelection(created);
+		this.requestRevealPosition(position);
 		return created;
 	}
 
@@ -869,6 +873,12 @@ class AppStore {
 	/** Restore default zoom distance. */
 	resetCameraZoom(): void {
 		this.setCamera({ distance: worldTune.values.defaultDistance });
+	}
+
+	/** Ask the scene to zoom out if `position` is outside the current view. */
+	requestRevealPosition(position: { x: number; y: number; z: number }): void {
+		this.revealPosition = { x: position.x, y: position.y, z: position.z };
+		this.revealEpoch += 1;
 	}
 
 	/** Toggle top-down 2D ↔ free 3D orbit. Keeps current target + zoom. */

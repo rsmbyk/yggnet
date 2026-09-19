@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	createNodePadding,
 	findFreePosition,
+	hexRingPosition,
+	hexRingSlotCount,
 	minCenterDistance,
 	spheresOverlap
 } from './node-physics';
@@ -33,30 +35,35 @@ describe('findFreePosition with create padding', () => {
 		expect(findFreePosition(preferred, [blocker], radius, floorY, padding)).toEqual(preferred);
 	});
 
-	it('puts the first search ring at the min center distance from preferred', () => {
+	it('puts the first search ring at the min center distance on the +X spoke', () => {
 		const preferred = { x: 0, y: 1, z: 0 };
 		const step = minCenterDistance(radius, padding);
 		expect(step).toBe(4);
+		expect(hexRingSlotCount(1)).toBe(6);
 		const placed = findFreePosition(preferred, [preferred], radius, floorY, padding);
-		const dist = Math.hypot(placed.x - preferred.x, placed.z - preferred.z);
-		expect(dist).toBeCloseTo(step);
+		expect(placed.x).toBeCloseTo(step);
+		expect(placed.z).toBeCloseTo(0);
 		expect(spheresOverlap(placed, preferred, radius, padding)).toBe(false);
 	});
 
 	it('steps the next ring by another min center distance when the first ring is full', () => {
 		const preferred = { x: 0, y: 1, z: 0 };
 		const step = minCenterDistance(radius, padding);
-		const firstRing: { x: number; y: number; z: number }[] = [];
-		for (let i = 1; i <= 6; i++) {
-			const ang = i * 2.399963;
-			firstRing.push({
-				x: preferred.x + Math.cos(ang) * step,
-				y: preferred.y,
-				z: preferred.z + Math.sin(ang) * step
-			});
-		}
+		const firstRing = Array.from({ length: hexRingSlotCount(1) }, (_, slot) =>
+			hexRingPosition(preferred, 1, slot, step)
+		);
+		expect(hexRingSlotCount(2)).toBe(12);
 		const placed = findFreePosition(preferred, [preferred, ...firstRing], radius, floorY, padding);
+		expect(placed).toEqual(hexRingPosition(preferred, 2, 0, step));
 		const dist = Math.hypot(placed.x - preferred.x, placed.z - preferred.z);
 		expect(dist).toBeCloseTo(step * 2);
+	});
+
+	it('keeps same-ring neighbors at least the min center distance apart', () => {
+		const step = minCenterDistance(radius, padding);
+		const a = hexRingPosition({ x: 0, y: 1, z: 0 }, 1, 0, step);
+		const b = hexRingPosition({ x: 0, y: 1, z: 0 }, 1, 1, step);
+		const chord = Math.hypot(a.x - b.x, a.z - b.z);
+		expect(chord).toBeCloseTo(step);
 	});
 });

@@ -9,6 +9,7 @@
 	import type { GraphNode } from '$lib/graph';
 	import { defaultPositionFromTune, worldTune } from './world-tune.svelte';
 	import { clampToFloor, resolveMoveAgainstNodes, snapToGrid } from './node-physics';
+	import { orbitDistanceToFitPoint } from './camera-fit';
 	import {
 		interactionModeFromState,
 		resolveNodeClick,
@@ -1367,8 +1368,43 @@
 		controls.update();
 	});
 
+	$effect(() => {
+		const epoch = app.revealEpoch;
+		const pos = app.revealPosition;
+		if (!controls || !pos || epoch === 0 || epoch === appliedRevealEpoch) return;
+		if (app.directions.traveling || viewModeAnimating) return;
+		const cam = camera.current;
+		if (!(cam instanceof THREE.PerspectiveCamera)) return;
+		const el = renderer.domElement;
+		const aspect = el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 16 / 9;
+		appliedRevealEpoch = epoch;
+		const fitted = orbitDistanceToFitPoint({
+			target: {
+				x: controls.target.x,
+				y: controls.target.y,
+				z: controls.target.z
+			},
+			eye: {
+				x: cam.position.x,
+				y: cam.position.y,
+				z: cam.position.z
+			},
+			point: pos,
+			up: { x: cam.up.x, y: cam.up.y, z: cam.up.z },
+			fovDeg: cam.fov,
+			aspect,
+			radius: NODE_RADIUS,
+			minDistance: Math.max(0.05, MIN_DISTANCE_FLOOR),
+			maxDistance: CAM_MAX_DISTANCE
+		});
+		if (fitted > app.camera.distance + 0.05) {
+			app.setCamera({ distance: fitted });
+		}
+	});
+
 	let appliedOrbitEpoch = 0;
 	let appliedViewModeEpoch = 0;
+	let appliedRevealEpoch = 0;
 	/** Which mode the in-flight tween is heading toward (for mash retarget). */
 	let viewModeAnimTarget: '2d' | '3d' | null = null;
 	let viewModeDampingRestore: boolean | null = null;

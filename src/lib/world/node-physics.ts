@@ -69,37 +69,61 @@ export function snapToGrid(
 }
 
 /**
+ * Slot count on search ring `ring` (1-based): six more plots each ring.
+ */
+export function hexRingSlotCount(ring: number): number {
+	return 6 * ring;
+}
+
+/**
+ * Candidate on ring `ring` (1-based), slot `slot` (0 … 6k−1).
+ * Equal angles, aligned to +X so spokes stay shared across rings.
+ */
+export function hexRingPosition(
+	preferred: Vec3,
+	ring: number,
+	slot: number,
+	ringStep: number
+): Vec3 {
+	const n = hexRingSlotCount(ring);
+	const ang = (slot * 2 * Math.PI) / n;
+	const rad = ringStep * ring;
+	return {
+		x: preferred.x + Math.cos(ang) * rad,
+		y: preferred.y,
+		z: preferred.z + Math.sin(ang) * rad
+	};
+}
+
+/**
  * Find a floor-resting position near `preferred` that does not overlap blockers.
- * Search rings are spaced by `minCenterDistance` so each ring is one keep-out out.
+ * Search rings are spaced by `minCenterDistance`; ring k has 6k equally spaced slots.
  */
 export function findFreePosition(
 	preferred: Vec3,
 	blockers: Iterable<Vec3>,
 	radius: number,
 	floorY: number,
-	padding = 0,
-	maxAttempts = 48
+	padding = 0
 ): Vec3 {
+	const others = [...blockers];
 	const base = clampToFloor(preferred, floorY, radius);
-	if (![...blockers].some((b) => spheresOverlap(base, b, radius, padding))) {
+	if (!others.some((b) => spheresOverlap(base, b, radius, padding))) {
 		return base;
 	}
 	const ringStep = minCenterDistance(radius, padding);
-	for (let i = 1; i <= maxAttempts; i++) {
-		const ang = i * 2.399963; // golden-angle spiral
-		const rad = ringStep * Math.ceil(i / 6);
-		const candidate = clampToFloor(
-			{
-				x: preferred.x + Math.cos(ang) * rad,
-				y: preferred.y,
-				z: preferred.z + Math.sin(ang) * rad
-			},
-			floorY,
-			radius
-		);
-		if (![...blockers].some((b) => spheresOverlap(candidate, b, radius, padding))) {
-			return candidate;
+	if (!(ringStep > 0)) return base;
+	for (let ring = 1; ; ring++) {
+		const n = hexRingSlotCount(ring);
+		for (let slot = 0; slot < n; slot++) {
+			const candidate = clampToFloor(
+				hexRingPosition(preferred, ring, slot, ringStep),
+				floorY,
+				radius
+			);
+			if (!others.some((b) => spheresOverlap(candidate, b, radius, padding))) {
+				return candidate;
+			}
 		}
 	}
-	return base;
 }
