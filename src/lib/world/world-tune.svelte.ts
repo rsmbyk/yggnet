@@ -52,7 +52,7 @@ export type WorldTuneValues = {
 	rotateSensitivity: number;
 	/** OrbitControls damping factor. */
 	dampingFactor: number;
-	/** 2D ↔ 3D camera transition duration (ms). */
+	/** 2D ↔ 3D and camera-reset tween duration (ms). */
 	viewModeTransitionMs: number;
 	/** Ground plane Y for node floor clamp. */
 	collisionFloorY: number;
@@ -248,7 +248,7 @@ export const WORLD = {
 		rotateSensitivity: ${v.rotateSensitivity},
 		/** OrbitControls damping factor. */
 		dampingFactor: ${v.dampingFactor},
-		/** 2D ↔ 3D camera transition duration (ms). */
+		/** 2D ↔ 3D and camera-reset tween duration (ms). */
 		viewModeTransitionMs: ${v.viewModeTransitionMs}
 	},
 

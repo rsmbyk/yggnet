@@ -121,7 +121,7 @@ export const WORLD = {
 		rotateSensitivity: 0.55,
 		/** OrbitControls damping factor. */
 		dampingFactor: 0.12,
-		/** 2D ↔ 3D camera transition duration (ms). */
+		/** 2D ↔ 3D and camera-reset tween duration (ms). */
 		viewModeTransitionMs: 320
 	},
 

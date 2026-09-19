@@ -190,8 +190,12 @@ class AppStore {
 				180) /
 				Math.PI
 	});
-	/** Bumped to snap OrbitControls back to the default view angle. */
+	/** Bumped to tween OrbitControls back to the default view angle. */
 	cameraOrbitEpoch = $state(0);
+	/** Bumped to restore default zoom distance. */
+	cameraZoomEpoch = $state(0);
+	/** Bumped to pan the look-at back to the default target. */
+	cameraTargetEpoch = $state(0);
 	/** Bumped when viewMode toggles so GraphScene can apply the camera pose. */
 	viewModeEpoch = $state(0);
 	/** Bumped when a newly created node should be framed if it sits off-screen. */
@@ -859,10 +863,7 @@ class AppStore {
 
 	/** Pan target back to world origin. */
 	resetCameraTarget(): void {
-		const v = worldTune.values;
-		this.setCamera({
-			target: { x: v.defaultTargetX, y: v.defaultTargetY, z: v.defaultTargetZ }
-		});
+		this.cameraTargetEpoch += 1;
 	}
 
 	/** Restore the default isometric viewing angle (keeps target + zoom). */
@@ -872,7 +873,7 @@ class AppStore {
 
 	/** Restore default zoom distance. */
 	resetCameraZoom(): void {
-		this.setCamera({ distance: worldTune.values.defaultDistance });
+		this.cameraZoomEpoch += 1;
 	}
 
 	/** Ask the scene to zoom out if `position` is outside the current view. */

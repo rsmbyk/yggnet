@@ -125,7 +125,7 @@
 				{
 					kind: 'number',
 					key: 'viewModeTransitionMs',
-					label: '2D/3D transition (ms)',
+					label: 'Camera tween (ms)',
 					step: 10,
 					min: 0,
 					max: 2000

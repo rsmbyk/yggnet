@@ -1405,6 +1405,8 @@
 	let appliedOrbitEpoch = 0;
 	let appliedViewModeEpoch = 0;
 	let appliedRevealEpoch = 0;
+	let appliedZoomEpoch = 0;
+	let appliedTargetEpoch = 0;
 	/** Which mode the in-flight tween is heading toward (for mash retarget). */
 	let viewModeAnimTarget: '2d' | '3d' | null = null;
 	let viewModeDampingRestore: boolean | null = null;
@@ -1529,8 +1531,40 @@
 		syncCameraFromControls();
 	}
 
-	let viewAnimFromTargetX = 0;
-	let viewAnimFromTargetZ = 0;
+	function captureFromPose() {
+		if (!controls) return;
+		_fromEye.copy(controls.object.position);
+		_fromTarget.copy(controls.target);
+		_fromUp.copy(controls.object.up);
+		if (_fromUp.lengthSq() < 1e-8) _fromUp.set(0, 1, 0);
+		quatLookAt(_fromEye, _fromTarget, _fromUp, _fromQuat);
+	}
+
+	function prepareToQuat() {
+		quatLookAt(_toEye, _toTarget, _toUp, _toQuat);
+		if (_fromQuat.dot(_toQuat) < 0) {
+			_toQuat.x *= -1;
+			_toQuat.y *= -1;
+			_toQuat.z *= -1;
+			_toQuat.w *= -1;
+		}
+	}
+
+	function startCamPoseTween(completeMode: '2d' | '3d') {
+		if (!controls) return;
+		const reduceMotion =
+			typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const duration = reduceMotion ? 0 : Math.max(0, VIEW_MODE_MS);
+		viewModeAnimTarget = completeMode;
+		beginViewModeAnimGate();
+		markCamInteractive(duration + 80);
+		viewModeAnimating = true;
+		if (duration < 1) {
+			completeViewModeAnim(completeMode);
+			return;
+		}
+		viewAnim = { mode: completeMode, t0: performance.now(), duration };
+	}
 
 	function tickViewModeAnim(now: number) {
 		if (!viewAnim || !controls) return;
@@ -1538,14 +1572,11 @@
 		const u = Math.min(1, (now - t0) / duration);
 		const e = smootherstep(u);
 		controls.object.position.lerpVectors(_fromEye, _toEye, e);
-		controls.target.set(
-			viewAnimFromTargetX + (_toTarget.x - viewAnimFromTargetX) * e,
-			0,
-			viewAnimFromTargetZ + (_toTarget.z - viewAnimFromTargetZ) * e
-		);
+		controls.target.lerpVectors(_fromTarget, _toTarget, e);
 		_animQuat.slerpQuaternions(_fromQuat, _toQuat, e);
 		controls.object.quaternion.copy(_animQuat);
 		controls.object.up.set(0, 1, 0).applyQuaternion(_animQuat).normalize();
+		syncCameraFromControls();
 		if (u < 1) return;
 		completeViewModeAnim(mode);
 	}
@@ -1559,39 +1590,71 @@
 
 		const tx = controls.target.x;
 		const tz = controls.target.z;
-		viewAnimFromTargetX = tx;
-		viewAnimFromTargetZ = tz;
-
-		_fromEye.copy(controls.object.position);
-		_fromTarget.copy(controls.target);
-		_fromUp.copy(controls.object.up);
-		if (_fromUp.lengthSq() < 1e-8) _fromUp.set(0, 1, 0);
-		quatLookAt(_fromEye, _fromTarget, _fromUp, _fromQuat);
-
+		captureFromPose();
 		computeViewModeEndPose(mode, tx, tz);
-		if (_fromQuat.dot(_toQuat) < 0) {
-			_toQuat.x *= -1;
-			_toQuat.y *= -1;
-			_toQuat.z *= -1;
-			_toQuat.w *= -1;
+		prepareToQuat();
+		startCamPoseTween(mode);
+	}
+
+	function animateResetZoom() {
+		if (!controls) return;
+		captureFromPose();
+		const d = clampViewDistance(worldTune.values.defaultDistance);
+		const t = controls.target;
+		if (app.ui.viewMode === '2d') {
+			_toTarget.set(t.x, 0, t.z);
+			_toEye.set(t.x, d, t.z);
+			_toUp.copy(VIEW2D_UP);
+		} else {
+			_toTarget.copy(t);
+			_offset.copy(_fromEye).sub(t);
+			if (_offset.lengthSq() < 1e-12) {
+				_offset.copy(DEFAULT_VIEW_DIR).multiplyScalar(d);
+			} else {
+				_offset.multiplyScalar(d / _offset.length());
+			}
+			_toEye.copy(_toTarget).add(_offset);
+			_toUp.set(0, 1, 0);
 		}
+		prepareToQuat();
+		startCamPoseTween(app.ui.viewMode);
+	}
 
-		const reduceMotion =
-			typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-		const duration = reduceMotion ? 0 : Math.max(0, VIEW_MODE_MS);
+	function animateResetTarget() {
+		if (!controls) return;
+		captureFromPose();
+		const v = worldTune.values;
+		_toTarget.set(v.defaultTargetX, v.defaultTargetY, v.defaultTargetZ);
+		if (app.ui.viewMode === '2d') {
+			const d = clampViewDistance();
+			_toTarget.y = 0;
+			_toEye.set(_toTarget.x, d, _toTarget.z);
+			_toUp.copy(VIEW2D_UP);
+		} else {
+			_offset.copy(_fromEye).sub(_fromTarget);
+			_toEye.copy(_toTarget).add(_offset);
+			_toUp.copy(_fromUp);
+			if (_toUp.lengthSq() < 1e-8) _toUp.set(0, 1, 0);
+		}
+		prepareToQuat();
+		startCamPoseTween(app.ui.viewMode);
+	}
 
-		viewModeAnimTarget = mode;
-		beginViewModeAnimGate();
-		markCamInteractive(duration + 80);
-
-		if (duration < 1) {
-			viewModeAnimating = true;
-			completeViewModeAnim(mode);
+	function animateResetOrbit() {
+		if (!controls) return;
+		if (app.ui.viewMode === '2d') {
+			animateViewModeTransition('2d');
 			return;
 		}
-
-		viewModeAnimating = true;
-		viewAnim = { mode, t0: performance.now(), duration };
+		captureFromPose();
+		const d = clampViewDistance();
+		const t = controls.target;
+		const dir = DEFAULT_VIEW_DIR;
+		_toTarget.copy(t);
+		_toEye.set(t.x + dir.x * d, t.y + dir.y * d, t.z + dir.z * d);
+		_toUp.set(0, 1, 0);
+		prepareToQuat();
+		startCamPoseTween('3d');
 	}
 
 	$effect(() => {
@@ -1605,18 +1668,21 @@
 		const epoch = app.cameraOrbitEpoch;
 		if (!controls || epoch === 0 || epoch === appliedOrbitEpoch) return;
 		appliedOrbitEpoch = epoch;
-		const d = app.camera.distance;
-		const t = controls.target;
-		if (app.ui.viewMode === '2d') {
-			animateViewModeTransition('2d');
-			return;
-		}
-		const dir = DEFAULT_VIEW_DIR;
-		controls.object.up.set(0, 1, 0);
-		controls.object.position.set(t.x + dir.x * d, t.y + dir.y * d, t.z + dir.z * d);
-		clampCameraAboveGround();
-		controls.update();
-		syncCameraFromControls();
+		animateResetOrbit();
+	});
+
+	$effect(() => {
+		const epoch = app.cameraZoomEpoch;
+		if (!controls || epoch === 0 || epoch === appliedZoomEpoch) return;
+		appliedZoomEpoch = epoch;
+		animateResetZoom();
+	});
+
+	$effect(() => {
+		const epoch = app.cameraTargetEpoch;
+		if (!controls || epoch === 0 || epoch === appliedTargetEpoch) return;
+		appliedTargetEpoch = epoch;
+		animateResetTarget();
 	});
 
 	$effect(() => {
