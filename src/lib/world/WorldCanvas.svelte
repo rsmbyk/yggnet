@@ -130,6 +130,95 @@
 			</div>
 		</div>
 
+		<nav class="cam-chrome" data-testid="camera-controls" aria-label="Camera controls">
+			<button
+				type="button"
+				class="icon-btn"
+				data-testid="camera-view-mode"
+				aria-pressed={app.ui.viewMode === '2d'}
+				aria-label={app.ui.viewMode === '2d' ? 'Switch to 3D view' : 'Switch to 2D view'}
+				title={app.ui.viewMode === '2d' ? '2D view (click for 3D)' : '3D view (click for 2D)'}
+				onclick={(e) => {
+					app.toggleViewMode();
+					// Don't leave focus styles looking like a special “2D active” color.
+					(e.currentTarget as HTMLButtonElement).blur();
+				}}
+			>
+				{#if app.ui.viewMode === '2d'}
+					<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<!-- top-down flat map -->
+						<rect x="4" y="4" width="16" height="16" rx="1.5" />
+						<path d="M4 12h16M12 4v16" opacity="0.55" />
+					</svg>
+				{:else}
+					<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<!-- isometric cube -->
+						<path d="M12 3 20 7.5v9L12 21 4 16.5v-9L12 3Z" />
+						<path d="M12 21v-9M20 7.5 12 12 4 7.5" />
+					</svg>
+				{/if}
+			</button>
+			<button
+				type="button"
+				class="icon-btn"
+				data-testid="camera-reset-target"
+				aria-label="Reset position to origin"
+				title="Reset position (0, 0, 0)"
+				onclick={() => app.resetCameraTarget()}
+			>
+				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<!-- crosshair / origin -->
+					<circle cx="11" cy="13" r="3.25" />
+					<path d="M11 7.5v2.25M11 16.25V18.5M5.5 13h2.25M14.25 13H16.5" />
+					<!-- reset badge (top-right) -->
+					<g transform="translate(13.2 1.2) scale(0.42)" stroke-width="2.6">
+						<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+						<path d="M3 3v5h5" />
+					</g>
+				</svg>
+			</button>
+			<button
+				type="button"
+				class="icon-btn"
+				data-testid="camera-reset-orbit"
+				aria-label="Reset camera angle"
+				title="Reset camera angle"
+				onclick={() => app.resetCameraOrbit()}
+			>
+				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<!-- gimbal / orbit tilt -->
+					<ellipse cx="11" cy="13" rx="7" ry="3.2" />
+					<path d="M11 6.5v13" />
+					<path d="M7.2 9.2c1.1 1.4 2.4 2.1 3.8 2.1s2.7-.7 3.8-2.1" />
+					<path d="M7.2 16.8c1.1-1.4 2.4-2.1 3.8-2.1s2.7.7 3.8 2.1" />
+					<!-- reset badge (top-right) -->
+					<g transform="translate(13.2 1.2) scale(0.42)" stroke-width="2.6">
+						<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+						<path d="M3 3v5h5" />
+					</g>
+				</svg>
+			</button>
+			<button
+				type="button"
+				class="icon-btn"
+				data-testid="camera-reset-zoom"
+				aria-label="Reset zoom"
+				title="Reset zoom"
+				onclick={() => app.resetCameraZoom()}
+			>
+				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<!-- magnifier -->
+					<circle cx="10.5" cy="12.5" r="5.25" />
+					<path d="M14.8 16.8 19 21" />
+					<!-- reset badge (top-right) -->
+					<g transform="translate(13.2 1.2) scale(0.42)" stroke-width="2.6">
+						<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+						<path d="M3 3v5h5" />
+					</g>
+				</svg>
+			</button>
+		</nav>
+
 		<svg
 			class="minimap"
 			class:dragging={minimapDragging}
@@ -158,95 +247,6 @@
 			<rect x={mmFocus.cx - 8} y={mmFocus.cy - 8} width="16" height="16" class="mm-view" />
 		</svg>
 	</div>
-
-	<nav class="cam-chrome" data-testid="camera-controls" aria-label="Camera controls">
-		<button
-			type="button"
-			class="icon-btn"
-			data-testid="camera-view-mode"
-			aria-pressed={app.ui.viewMode === '2d'}
-			aria-label={app.ui.viewMode === '2d' ? 'Switch to 3D view' : 'Switch to 2D view'}
-			title={app.ui.viewMode === '2d' ? '2D view (click for 3D)' : '3D view (click for 2D)'}
-			onclick={(e) => {
-				app.toggleViewMode();
-				// Don't leave focus styles looking like a special “2D active” color.
-				(e.currentTarget as HTMLButtonElement).blur();
-			}}
-		>
-			{#if app.ui.viewMode === '2d'}
-				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<!-- top-down flat map -->
-					<rect x="4" y="4" width="16" height="16" rx="1.5" />
-					<path d="M4 12h16M12 4v16" opacity="0.55" />
-				</svg>
-			{:else}
-				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<!-- isometric cube -->
-					<path d="M12 3 20 7.5v9L12 21 4 16.5v-9L12 3Z" />
-					<path d="M12 21v-9M20 7.5 12 12 4 7.5" />
-				</svg>
-			{/if}
-		</button>
-		<button
-			type="button"
-			class="icon-btn"
-			data-testid="camera-reset-target"
-			aria-label="Reset position to origin"
-			title="Reset position (0, 0, 0)"
-			onclick={() => app.resetCameraTarget()}
-		>
-			<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<!-- crosshair / origin -->
-				<circle cx="11" cy="13" r="3.25" />
-				<path d="M11 7.5v2.25M11 16.25V18.5M5.5 13h2.25M14.25 13H16.5" />
-				<!-- reset badge (top-right) -->
-				<g transform="translate(13.2 1.2) scale(0.42)" stroke-width="2.6">
-					<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-					<path d="M3 3v5h5" />
-				</g>
-			</svg>
-		</button>
-		<button
-			type="button"
-			class="icon-btn"
-			data-testid="camera-reset-orbit"
-			aria-label="Reset camera angle"
-			title="Reset camera angle"
-			onclick={() => app.resetCameraOrbit()}
-		>
-			<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<!-- gimbal / orbit tilt -->
-				<ellipse cx="11" cy="13" rx="7" ry="3.2" />
-				<path d="M11 6.5v13" />
-				<path d="M7.2 9.2c1.1 1.4 2.4 2.1 3.8 2.1s2.7-.7 3.8-2.1" />
-				<path d="M7.2 16.8c1.1-1.4 2.4-2.1 3.8-2.1s2.7.7 3.8 2.1" />
-				<!-- reset badge (top-right) -->
-				<g transform="translate(13.2 1.2) scale(0.42)" stroke-width="2.6">
-					<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-					<path d="M3 3v5h5" />
-				</g>
-			</svg>
-		</button>
-		<button
-			type="button"
-			class="icon-btn"
-			data-testid="camera-reset-zoom"
-			aria-label="Reset zoom"
-			title="Reset zoom"
-			onclick={() => app.resetCameraZoom()}
-		>
-			<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<!-- magnifier -->
-				<circle cx="10.5" cy="12.5" r="5.25" />
-				<path d="M14.8 16.8 19 21" />
-				<!-- reset badge (top-right) -->
-				<g transform="translate(13.2 1.2) scale(0.42)" stroke-width="2.6">
-					<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-					<path d="M3 3v5h5" />
-				</g>
-			</svg>
-		</button>
-	</nav>
 </div>
 
 <style>
@@ -265,6 +265,10 @@
 	}
 
 	.map-stack {
+		--cam-btn: 2.05rem;
+		--cam-gap: 0.3rem;
+		--cam-pad-x: 0.4rem;
+		--map-w: calc(4 * var(--cam-btn) + 3 * var(--cam-gap) + 2 * var(--cam-pad-x) + 2px);
 		position: absolute;
 		left: 0.75rem;
 		bottom: 0.75rem;
@@ -272,7 +276,7 @@
 		flex-direction: column;
 		align-items: stretch;
 		gap: 0.35rem;
-		width: 7.5rem;
+		width: var(--map-w);
 		pointer-events: none;
 	}
 
@@ -308,8 +312,8 @@
 		position: relative;
 		left: auto;
 		bottom: auto;
-		width: 7.5rem;
-		height: 7.5rem;
+		width: 100%;
+		height: var(--map-w);
 		border: 2px solid rgba(158, 197, 184, 0.18);
 		outline: 1px solid rgba(28, 36, 46, 0.22);
 		outline-offset: 2px;
@@ -395,18 +399,20 @@
 	}
 
 	.cam-chrome {
-		position: absolute;
-		left: calc(0.75rem + 7.5rem + 0.5rem);
-		bottom: 0.75rem;
+		position: relative;
+		left: auto;
+		bottom: auto;
 		display: flex;
 		align-items: center;
-		gap: 0.3rem;
-		width: fit-content;
-		padding: 0.35rem 0.4rem;
+		gap: var(--cam-gap);
+		width: 100%;
+		box-sizing: border-box;
+		padding: 0.35rem var(--cam-pad-x);
 		border-radius: var(--yg-radius-pill);
 		background: var(--yg-panel-glass-dim);
 		border: 1px solid rgba(28, 36, 46, 0.1);
 		box-shadow: 0 4px 16px rgba(28, 36, 46, 0.04);
+		pointer-events: auto;
 		transition:
 			background var(--yg-motion) var(--yg-ease),
 			border-color var(--yg-motion) var(--yg-ease),
@@ -423,8 +429,9 @@
 	.cam-chrome .icon-btn {
 		display: inline-grid;
 		place-items: center;
-		width: 2.05rem;
-		height: 2.05rem;
+		flex: 0 0 var(--cam-btn);
+		width: var(--cam-btn);
+		height: var(--cam-btn);
 		padding: 0;
 		border: 1px solid rgba(28, 36, 46, 0.1);
 		background: var(--yg-chip-dim);
