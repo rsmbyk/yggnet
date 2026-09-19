@@ -40,4 +40,9 @@ test('tool panel sits left of the toolbar under the menubar', async ({ page }) =
 	expect(gapUnderMenubar).toBeGreaterThanOrEqual(8);
 	expect(gapUnderMenubar).toBeLessThanOrEqual(20);
 	expect(card!.x + card!.width).toBeLessThanOrEqual(rail!.x + 2);
+	expect(card!.height).toBeLessThan(page.viewportSize()!.height * 0.85);
+	const icon = await page.getByTestId('tool-nodes').boundingBox();
+	expect(icon).toBeTruthy();
+	const innerPadX = (rail!.width - icon!.width) / 2;
+	expect(innerPadX).toBeGreaterThanOrEqual(6);
 });

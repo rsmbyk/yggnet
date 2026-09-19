@@ -59,7 +59,7 @@
 		flex-wrap: nowrap;
 		align-items: center;
 		gap: 0.3rem;
-		padding: 0.4rem 0;
+		padding: 0.4rem;
 		overflow: auto;
 		border-radius: var(--yg-radius-pill);
 		background: var(--yg-panel-glass-dim);

@@ -1033,7 +1033,7 @@
 		background: var(--yg-panel-glass-strong);
 		border: 1px solid var(--yg-border);
 		width: min(22rem, 92vw);
-		height: 100%;
+		height: auto;
 		max-height: 100%;
 		overflow: auto;
 		box-shadow: 0 10px 32px rgba(28, 36, 46, 0.16);

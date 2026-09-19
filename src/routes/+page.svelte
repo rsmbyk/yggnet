@@ -195,7 +195,7 @@
 		z-index: 16;
 		display: flex;
 		flex-direction: row;
-		align-items: stretch;
+		align-items: flex-start;
 		justify-content: flex-end;
 		gap: var(--yg-hud-pad-y);
 		max-width: calc(100% - 1.5rem);
@@ -205,7 +205,8 @@
 	.tool-panel-slot {
 		display: flex;
 		min-width: 0;
-		height: 100%;
+		max-height: 100%;
+		height: auto;
 		pointer-events: auto;
 	}
 
