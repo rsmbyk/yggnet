@@ -117,7 +117,7 @@
 
 	<WorldHud />
 
-	<div class="map-stack">
+	<div class="map-stack" data-testid="camera-panel">
 		<nav class="cam-chrome" data-testid="camera-controls" aria-label="Camera controls">
 			<button
 				type="button"
@@ -267,34 +267,55 @@
 	.map-stack {
 		--cam-btn: 2.05rem;
 		--cam-gap: 0.3rem;
-		--cam-pad-x: 0.4rem;
-		--map-w: calc(4 * var(--cam-btn) + 3 * var(--cam-gap) + 2 * var(--cam-pad-x) + 2px);
+		--panel-pad: 0.4rem;
+		--inner-w: calc(4 * var(--cam-btn) + 3 * var(--cam-gap));
 		position: absolute;
 		left: 0.75rem;
 		bottom: 0.75rem;
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
-		gap: 0.35rem;
-		width: var(--map-w);
-		pointer-events: none;
+		gap: 0.3rem;
+		box-sizing: border-box;
+		width: max-content;
+		padding: var(--panel-pad);
+		border-radius: var(--yg-radius-panel);
+		background: var(--yg-panel-glass-dim);
+		border: 1px solid rgba(28, 36, 46, 0.1);
+		box-shadow: 0 4px 16px rgba(28, 36, 46, 0.04);
+		pointer-events: auto;
+		transition:
+			background var(--yg-motion) var(--yg-ease),
+			border-color var(--yg-motion) var(--yg-ease),
+			box-shadow var(--yg-motion) var(--yg-ease);
+	}
+
+	.map-stack:hover,
+	.map-stack:focus-within {
+		background: var(--yg-panel-glass);
+		border-color: var(--yg-border);
+		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.12);
 	}
 
 	.cam-readout {
 		display: flex;
 		flex-direction: column;
-		gap: 0.15rem;
-		padding: 0.3rem 0.4rem;
-		border-radius: var(--yg-radius-sm, 4px);
-		background: rgba(28, 36, 46, 0.55);
-		border: 1px solid rgba(158, 197, 184, 0.18);
-		color: #d7dde5;
+		gap: 0.12rem;
+		padding: 0.05rem 0.1rem 0;
+		color: var(--yg-fg);
+		text-shadow: var(--yg-text-glow);
 		font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
 		font-size: 0.62rem;
 		line-height: 1.25;
 		letter-spacing: 0.02em;
 		opacity: var(--yg-hud-idle-opacity);
 		pointer-events: none;
+		transition: opacity var(--yg-motion) var(--yg-ease);
+	}
+
+	.map-stack:hover .cam-readout,
+	.map-stack:focus-within .cam-readout {
+		opacity: var(--yg-hud-active-opacity);
 	}
 
 	.cam-angles,
@@ -305,23 +326,20 @@
 	}
 
 	.cam-angles {
-		color: #9ec5b8;
+		color: var(--yg-accent);
 	}
 
 	.minimap {
 		position: relative;
 		left: auto;
 		bottom: auto;
-		width: 100%;
-		height: var(--map-w);
-		border: 2px solid rgba(158, 197, 184, 0.18);
-		outline: 1px solid rgba(28, 36, 46, 0.22);
-		outline-offset: 2px;
-		border-radius: 0;
-		background: rgba(28, 36, 46, 0.22);
-		box-shadow:
-			0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-			0 6px 18px rgba(0, 0, 0, 0.12);
+		display: block;
+		width: var(--inner-w);
+		height: var(--inner-w);
+		border: 1px solid rgba(158, 197, 184, 0.22);
+		border-radius: var(--yg-radius-control);
+		background: rgba(28, 36, 46, 0.28);
+		box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
 		cursor: crosshair;
 		touch-action: none;
 		pointer-events: auto;
@@ -330,7 +348,6 @@
 			opacity var(--yg-motion) var(--yg-ease),
 			background var(--yg-motion) var(--yg-ease),
 			border-color var(--yg-motion) var(--yg-ease),
-			outline-color var(--yg-motion) var(--yg-ease),
 			box-shadow var(--yg-motion) var(--yg-ease);
 	}
 
@@ -340,10 +357,14 @@
 		opacity: var(--yg-hud-active-opacity);
 		background: rgba(28, 36, 46, 0.62);
 		border-color: rgba(158, 197, 184, 0.45);
-		outline-color: rgba(28, 36, 46, 0.55);
 		box-shadow:
 			0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-			0 6px 18px rgba(0, 0, 0, 0.28);
+			0 4px 12px rgba(0, 0, 0, 0.18);
+	}
+
+	.map-stack:hover .minimap,
+	.map-stack:focus-within .minimap {
+		opacity: var(--yg-hud-active-opacity);
 	}
 
 	.minimap.dragging {
@@ -399,31 +420,12 @@
 	}
 
 	.cam-chrome {
-		position: relative;
-		left: auto;
-		bottom: auto;
 		display: flex;
 		align-items: center;
 		gap: var(--cam-gap);
-		width: 100%;
-		box-sizing: border-box;
-		padding: 0.35rem var(--cam-pad-x);
-		border-radius: var(--yg-radius-pill);
-		background: var(--yg-panel-glass-dim);
-		border: 1px solid rgba(28, 36, 46, 0.1);
-		box-shadow: 0 4px 16px rgba(28, 36, 46, 0.04);
+		width: var(--inner-w);
+		padding: 0;
 		pointer-events: auto;
-		transition:
-			background var(--yg-motion) var(--yg-ease),
-			border-color var(--yg-motion) var(--yg-ease),
-			box-shadow var(--yg-motion) var(--yg-ease);
-	}
-
-	.cam-chrome:hover,
-	.cam-chrome:focus-within {
-		background: var(--yg-panel-glass);
-		border-color: var(--yg-border);
-		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.12);
 	}
 
 	.cam-chrome .icon-btn {
@@ -445,8 +447,8 @@
 			opacity var(--yg-motion) var(--yg-ease);
 	}
 
-	.cam-chrome:hover .icon-btn,
-	.cam-chrome:focus-within .icon-btn {
+	.map-stack:hover .cam-chrome .icon-btn,
+	.map-stack:focus-within .cam-chrome .icon-btn {
 		opacity: var(--yg-hud-active-opacity);
 		background: var(--yg-chip);
 		border-color: var(--yg-border);
@@ -458,8 +460,8 @@
 		display: block;
 	}
 
-	.cam-chrome:hover .icon-btn:hover,
-	.cam-chrome:focus-within .icon-btn:hover {
+	.map-stack:hover .cam-chrome .icon-btn:hover,
+	.map-stack:focus-within .cam-chrome .icon-btn:hover {
 		background: rgba(255, 255, 255, 0.72);
 	}
 </style>
