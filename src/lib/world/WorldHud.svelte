@@ -546,8 +546,6 @@
 
 	.banner-slot.under-chrome {
 		top: calc(var(--yg-top-bar-h) + var(--yg-hud-pad-y));
-		width: 100%;
-		max-width: 100%;
 	}
 
 	.banner {
@@ -555,7 +553,7 @@
 		box-sizing: border-box;
 		height: auto;
 		min-height: var(--yg-top-bar-h);
-		width: 100%;
+		width: max-content;
 		max-width: 100%;
 		margin: 0;
 		/* Match chrome edge inset; a bit more on the text side so copy isn’t tight to the curve */
@@ -569,26 +567,26 @@
 		font-weight: 600;
 		letter-spacing: 0.01em;
 		line-height: 1.35;
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		column-gap: 0.5rem;
-		align-items: start;
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: center;
+		gap: 0.5rem;
 		text-shadow: var(--yg-text-glow);
 	}
 
 	.banner-text {
+		flex: 1 1 auto;
 		min-width: 0;
 		color: var(--yg-fg);
-		padding-block: 0.45rem 0.35rem;
-		overflow-wrap: anywhere;
+		padding-block: 0.2rem;
+		overflow-wrap: break-word;
 	}
 
 	.banner button {
 		font-weight: 600;
-		flex-shrink: 0;
-		align-self: start;
-		height: calc(var(--yg-top-bar-h) - 0.5rem);
-		padding: 0 0.75rem;
+		flex: 0 0 auto;
+		height: auto;
+		padding: 0.32rem 0.75rem;
 		border-radius: var(--yg-radius-pill);
 	}
 
