@@ -2,7 +2,7 @@
 	import { fade } from 'svelte/transition';
 	import { app } from '$lib/session/app.svelte';
 	import { worldTune } from '$lib/world/world-tune.svelte';
-	import { centeredBannerOverlapsChrome } from './hud-layout';
+	import { centeredBannerOverlapsChrome, viewportTooSmallForChrome } from './hud-layout';
 	import WorldTunePanel from './WorldTunePanel.svelte';
 
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
@@ -60,6 +60,8 @@
 	let chromeEl: HTMLElement | undefined = $state();
 	let bannerSlotEl: HTMLDivElement | undefined = $state();
 	let bannerUnderChrome = $state(false);
+	let viewportBlocked = $state(false);
+	let requiredChromeWidth = 0;
 
 	function updateBannerPlacement() {
 		if (!connecting || !topRowEl || !chromeEl || !bannerSlotEl) {
@@ -97,11 +99,43 @@
 			window.removeEventListener('resize', updateBannerPlacement);
 		};
 	});
+
+	function updateChromeFit() {
+		if (!chromeEl || !topRowEl) return;
+		const available = topRowEl.clientWidth;
+		if (!viewportBlocked) {
+			requiredChromeWidth = chromeEl.scrollWidth;
+		}
+		viewportBlocked = viewportTooSmallForChrome(requiredChromeWidth, available);
+	}
+
+	$effect(() => {
+		if (!viewportBlocked) return;
+		app.openPalette(false);
+		app.setManagerOpen(false);
+		worldTune.open = false;
+	});
+
+	$effect(() => {
+		const chrome = chromeEl;
+		const row = topRowEl;
+		if (!chrome || !row) return;
+
+		updateChromeFit();
+		const ro = new ResizeObserver(updateChromeFit);
+		ro.observe(chrome);
+		ro.observe(row);
+		window.addEventListener('resize', updateChromeFit);
+		return () => {
+			ro.disconnect();
+			window.removeEventListener('resize', updateChromeFit);
+		};
+	});
 </script>
 
-<div class="hud" data-testid="world-hud">
+<div class="hud" class:viewport-blocked={viewportBlocked} data-testid="world-hud">
 	<div class="top-row" bind:this={topRowEl}>
-		<header class="chrome" class:dimmed={app.ui.managerOpen} bind:this={chromeEl}>
+		<header class="chrome" class:dimmed={app.ui.managerOpen} class:collapsed={viewportBlocked} bind:this={chromeEl}>
 			<!-- Brand: swap static/brand/logo.svg (see static/brand/README.md) -->
 			<img
 				class="logo"
@@ -209,7 +243,7 @@
 
 		<WorldTunePanel />
 
-		{#if connecting}
+		{#if connecting && !viewportBlocked}
 			<div
 				class="banner-slot"
 				class:under-chrome={bannerUnderChrome}
@@ -231,6 +265,22 @@
 			</div>
 		{/if}
 	</div>
+
+	{#if viewportBlocked}
+		<div
+			class="too-small-overlay"
+			data-testid="viewport-too-small"
+			role="alertdialog"
+			aria-modal="true"
+			aria-labelledby="viewport-too-small-title"
+			aria-describedby="viewport-too-small-copy"
+		>
+			<div class="too-small-copy">
+				<h2 id="viewport-too-small-title" class="too-small-title">This screen is too small</h2>
+				<p id="viewport-too-small-copy">The app can't continue until the window is large enough for the toolbar.</p>
+			</div>
+		</div>
+	{/if}
 
 	{#if sheetOpen}
 		<div class="sheet-slot">
@@ -341,6 +391,10 @@
 		gap: 0.5rem;
 	}
 
+	.hud.viewport-blocked {
+		z-index: 100;
+	}
+
 	.chrome,
 	.sheet,
 	.banner,
@@ -375,6 +429,7 @@
 		align-items: center;
 		gap: 0.55rem 0.75rem;
 		padding: 0 0.4rem;
+		overflow: hidden;
 		border-radius: var(--yg-radius-pill);
 		background: var(--yg-panel-glass-dim);
 		border: 1px solid rgba(28, 36, 46, 0.1);
@@ -432,7 +487,13 @@
 		opacity: var(--yg-hud-active-opacity);
 	}
 
-	.tools,
+	.tools {
+		display: flex;
+		flex-wrap: nowrap;
+		gap: 0.3rem;
+		align-items: center;
+	}
+
 	.sheet-actions {
 		display: flex;
 		flex-wrap: wrap;
@@ -588,6 +649,48 @@
 		height: auto;
 		padding: 0.32rem 0.75rem;
 		border-radius: var(--yg-radius-pill);
+	}
+
+	.hud.viewport-blocked .top-row {
+		z-index: 21;
+	}
+
+	.chrome.collapsed .tools {
+		display: none;
+	}
+
+	.hud.viewport-blocked .logo {
+		opacity: var(--yg-hud-active-opacity);
+	}
+
+	.too-small-overlay {
+		position: absolute;
+		inset: 0;
+		z-index: 20;
+		display: grid;
+		place-items: center;
+		padding: 1.5rem;
+		background: rgba(28, 36, 46, 0.78);
+		pointer-events: auto;
+		text-align: center;
+	}
+
+	.too-small-copy {
+		max-width: 18rem;
+	}
+
+	.too-small-title {
+		margin: 0 0 0.4rem;
+		font-size: 1.05rem;
+		font-weight: 650;
+		color: #e8edf2;
+	}
+
+	.too-small-copy p {
+		margin: 0;
+		font-size: 0.88rem;
+		line-height: 1.45;
+		color: #c5ced8;
 	}
 
 	/* Centering lives on the sheet itself so Svelte outro (position:absolute) stays put. */
