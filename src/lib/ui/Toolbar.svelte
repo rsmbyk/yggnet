@@ -2,8 +2,6 @@
 	import { app } from '$lib/session/app.svelte';
 	import { TOOLS, type ToolId } from './tool-ids';
 
-	const dimmed = $derived(app.ui.openTool !== null);
-
 	function iconPath(id: ToolId): string {
 		switch (id) {
 			case 'mode':
@@ -30,7 +28,12 @@
 	}
 </script>
 
-<nav class="toolbar" class:dimmed data-testid="yggnet-toolbar" aria-label="Toolbar">
+<nav
+	class="toolbar"
+	class:engaged={app.ui.openTool !== null}
+	data-testid="yggnet-toolbar"
+	aria-label="Toolbar"
+>
 	{#each TOOLS as tool (tool.id)}
 		<button
 			type="button"
@@ -73,17 +76,11 @@
 	}
 
 	.toolbar:hover,
-	.toolbar:focus-within {
+	.toolbar:focus-within,
+	.toolbar.engaged {
 		background: var(--yg-panel-glass);
 		border-color: var(--yg-border);
 		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.12);
-	}
-
-	.toolbar.dimmed:hover,
-	.toolbar.dimmed:focus-within {
-		background: var(--yg-panel-glass-dim);
-		border-color: rgba(28, 36, 46, 0.1);
-		box-shadow: 0 4px 16px rgba(28, 36, 46, 0.04);
 	}
 
 	.icon-btn {
@@ -107,20 +104,17 @@
 	}
 
 	.toolbar:hover .icon-btn,
-	.toolbar:focus-within .icon-btn {
+	.toolbar:focus-within .icon-btn,
+	.toolbar.engaged .icon-btn {
 		opacity: var(--yg-hud-active-opacity);
 		background: var(--yg-chip);
 		border-color: var(--yg-border);
 	}
 
-	.toolbar.dimmed:hover .icon-btn,
-	.toolbar.dimmed:focus-within .icon-btn,
-	.toolbar.dimmed:hover .icon-btn:hover,
-	.toolbar.dimmed:focus-within .icon-btn:hover {
-		opacity: var(--yg-hud-idle-opacity);
-		background: var(--yg-chip-dim);
-		border-color: rgba(28, 36, 46, 0.1);
-		color: var(--yg-fg);
+	.toolbar:hover .icon-btn:hover,
+	.toolbar:focus-within .icon-btn:hover,
+	.toolbar.engaged .icon-btn:hover {
+		background: rgba(255, 255, 255, 0.72);
 	}
 
 	.icon-btn svg {
@@ -130,10 +124,11 @@
 	}
 
 	.icon-btn.active,
-	.toolbar.dimmed .icon-btn.active,
-	.toolbar.dimmed:hover .icon-btn.active,
-	.toolbar.dimmed:focus-within .icon-btn.active {
-		opacity: var(--yg-hud-idle-opacity);
+	.toolbar:hover .icon-btn.active,
+	.toolbar:focus-within .icon-btn.active,
+	.toolbar.engaged .icon-btn.active,
+	.toolbar.engaged .icon-btn.active:hover {
+		opacity: var(--yg-hud-active-opacity);
 		background: var(--yg-accent-soft);
 		color: var(--yg-accent);
 		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));

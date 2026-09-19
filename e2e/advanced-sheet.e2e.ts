@@ -45,4 +45,9 @@ test('tool panel sits left of the toolbar under the menubar', async ({ page }) =
 	expect(icon).toBeTruthy();
 	const innerPadX = (rail!.width - icon!.width) / 2;
 	expect(innerPadX).toBeGreaterThanOrEqual(6);
+	await expect(toolbar).toHaveClass(/engaged/);
+	await page.getByTestId('tool-edges').click();
+	await expect(
+		page.getByTestId('yggnet-manager').getByText('Edges', { exact: true })
+	).toBeVisible();
 });
