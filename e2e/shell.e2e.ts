@@ -8,6 +8,16 @@ test('shell loads manager and world', async ({ page }) => {
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
 });
 
+test('too-small overlay covers the app and clears when the window grows', async ({ page }) => {
+	await page.setViewportSize({ width: 220, height: 600 });
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await expect(page.getByTestId('viewport-too-small')).toBeVisible();
+	await page.setViewportSize({ width: 1280, height: 800 });
+	await expect(page.getByTestId('viewport-too-small')).toBeHidden();
+	await expect(page.getByTestId('world-add-node')).toBeVisible();
+});
+
 test('mode tabs and command palette open', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('mode-explore')).toBeVisible();

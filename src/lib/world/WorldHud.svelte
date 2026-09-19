@@ -3,7 +3,11 @@
 	import { untrack } from 'svelte';
 	import { app } from '$lib/session/app.svelte';
 	import { worldTune } from '$lib/world/world-tune.svelte';
-	import { centeredBannerOverlapsChrome, chromeContentWidth, viewportTooSmallForChrome } from './hud-layout';
+	import {
+		centeredBannerOverlapsChrome,
+		chromeContentWidth,
+		tooSmallMediaMaxWidth
+	} from './hud-layout';
 	import WorldTunePanel from './WorldTunePanel.svelte';
 
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
@@ -57,11 +61,47 @@
 	const sheetFade = { duration: 160 };
 	const toastFade = { duration: 220 };
 
+	let hudEl: HTMLDivElement | undefined = $state();
 	let topRowEl: HTMLDivElement | undefined = $state();
 	let chromeEl: HTMLElement | undefined = $state();
 	let bannerSlotEl: HTMLDivElement | undefined = $state();
 	let bannerUnderChrome = $state(false);
 	let viewportBlocked = $state(false);
+	let tooSmallMaxWidth = $state(0);
+
+	function readHudPaddingX(): number {
+		if (!hudEl) return 32;
+		const style = getComputedStyle(hudEl);
+		return parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+	}
+
+	/** Intrinsic toolbar width from logo + buttons — not the constrained chrome box. */
+	function measureRequiredChromeWidth(chrome: HTMLElement): number {
+		const style = getComputedStyle(chrome);
+		const logo = chrome.querySelector<HTMLElement>('.logo');
+		const tools = chrome.querySelector<HTMLElement>('.tools');
+		const toolsGap = tools ? parseFloat(getComputedStyle(tools).columnGap) || 0 : 0;
+		const toolWidths = tools
+			? Array.from(tools.children, (child) => (child as HTMLElement).getBoundingClientRect().width)
+			: [];
+		const toolsWidth = toolWidths.reduce(
+			(sum, width, i) => sum + width + (i > 0 ? toolsGap : 0),
+			0
+		);
+		return chromeContentWidth({
+			paddingX: parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
+			borderX: parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth),
+			logo: logo?.getBoundingClientRect().width ?? 0,
+			gap: parseFloat(style.columnGap) || 0,
+			tools: toolsWidth
+		});
+	}
+
+	function updateChromeRequirement() {
+		if (!chromeEl) return;
+		const required = measureRequiredChromeWidth(chromeEl);
+		tooSmallMaxWidth = tooSmallMediaMaxWidth(required, readHudPaddingX());
+	}
 
 	function updateBannerPlacement() {
 		if (!connecting || !topRowEl || !chromeEl || !bannerSlotEl) {
@@ -100,26 +140,6 @@
 		};
 	});
 
-	function readRequiredChromeWidth(chrome: HTMLElement): number {
-		const style = getComputedStyle(chrome);
-		const logo = chrome.querySelector('.logo') as HTMLElement | null;
-		const tools = chrome.querySelector('.tools') as HTMLElement | null;
-		return chromeContentWidth({
-			paddingX: parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
-			borderX: parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth),
-			logo: logo?.getBoundingClientRect().width ?? 0,
-			gap: parseFloat(style.columnGap) || parseFloat(style.gap) || 0,
-			tools: tools?.scrollWidth ?? 0
-		});
-	}
-
-	function updateChromeFit() {
-		if (!chromeEl || !topRowEl) return;
-		const available = topRowEl.clientWidth;
-		const required = readRequiredChromeWidth(chromeEl);
-		viewportBlocked = viewportTooSmallForChrome(required, available);
-	}
-
 	$effect(() => {
 		if (!viewportBlocked) return;
 		app.openPalette(false);
@@ -129,25 +149,54 @@
 
 	$effect(() => {
 		const chrome = chromeEl;
-		const row = topRowEl;
-		if (!chrome || !row) return;
+		const hud = hudEl;
+		if (!chrome || !hud) return;
 
-		untrack(() => updateChromeFit());
-		const ro = new ResizeObserver(() => updateChromeFit());
+		untrack(() => updateChromeRequirement());
+		const ro = new ResizeObserver(() => updateChromeRequirement());
 		ro.observe(chrome);
-		ro.observe(row);
-		const onResize = () => updateChromeFit();
-		window.addEventListener('resize', onResize);
-		visualViewport?.addEventListener('resize', onResize);
+		return () => ro.disconnect();
+	});
+
+	$effect(() => {
+		const max = tooSmallMaxWidth;
+		const id = 'yg-too-small-mq';
+		let el = document.getElementById(id) as HTMLStyleElement | null;
+		if (!el) {
+			el = document.createElement('style');
+			el.id = id;
+			document.head.appendChild(el);
+		}
+		el.textContent =
+			max > 0
+				? `@media (max-width: ${max}px) { [data-testid="viewport-too-small"] { display: grid !important; } [data-testid="world-hud"] { z-index: 100; } }`
+				: '';
 		return () => {
-			ro.disconnect();
-			window.removeEventListener('resize', onResize);
-			visualViewport?.removeEventListener('resize', onResize);
+			el?.remove();
+		};
+	});
+
+	$effect(() => {
+		const max = tooSmallMaxWidth;
+		if (max <= 0) {
+			viewportBlocked = false;
+			return;
+		}
+		const mq = window.matchMedia(`(max-width: ${max}px)`);
+		const apply = () => {
+			viewportBlocked = mq.matches;
+		};
+		apply();
+		mq.addEventListener('change', apply);
+		window.addEventListener('resize', apply);
+		return () => {
+			mq.removeEventListener('change', apply);
+			window.removeEventListener('resize', apply);
 		};
 	});
 </script>
 
-<div class="hud" class:viewport-blocked={viewportBlocked} data-testid="world-hud">
+<div class="hud" class:viewport-blocked={viewportBlocked} bind:this={hudEl} data-testid="world-hud">
 	<div class="top-row" bind:this={topRowEl}>
 		<header class="chrome" class:dimmed={app.ui.managerOpen} bind:this={chromeEl}>
 			<!-- Brand: swap static/brand/logo.svg (see static/brand/README.md) -->
@@ -280,21 +329,21 @@
 		{/if}
 	</div>
 
-	{#if viewportBlocked}
-		<div
-			class="too-small-overlay"
-			data-testid="viewport-too-small"
-			role="alertdialog"
-			aria-modal="true"
-			aria-labelledby="viewport-too-small-title"
-			aria-describedby="viewport-too-small-copy"
-		>
-			<div class="too-small-copy">
-				<h2 id="viewport-too-small-title" class="too-small-title">This screen is too small</h2>
-				<p id="viewport-too-small-copy">The app can't continue until the window is large enough for the toolbar.</p>
-			</div>
+	<div
+		class="too-small-overlay"
+		data-testid="viewport-too-small"
+		role="alertdialog"
+		aria-modal="true"
+		aria-labelledby="viewport-too-small-title"
+		aria-describedby="viewport-too-small-copy"
+	>
+		<div class="too-small-copy">
+			<h2 id="viewport-too-small-title" class="too-small-title">This screen is too small</h2>
+			<p id="viewport-too-small-copy">
+				The app can't continue until the window is large enough for the toolbar.
+			</p>
 		</div>
-	{/if}
+	</div>
 
 	{#if sheetOpen}
 		<div class="sheet-slot">
@@ -360,8 +409,7 @@
 						<button
 							type="button"
 							data-testid="world-toggle-directed"
-							onclick={() =>
-								app.updateEdge(selectedEdge.id, { directed: !selectedEdge.directed })}
+							onclick={() => app.updateEdge(selectedEdge.id, { directed: !selectedEdge.directed })}
 							>{selectedEdge.directed ? 'Make undirected' : 'Make directed'}</button
 						>
 						<button
@@ -403,6 +451,8 @@
 		align-items: stretch;
 		padding: var(--yg-hud-pad-y) var(--yg-hud-pad-x);
 		gap: 0.5rem;
+		min-width: 0;
+		min-height: 0;
 	}
 
 	.hud.viewport-blocked {
@@ -428,6 +478,7 @@
 		align-items: center;
 		width: 100%;
 		height: var(--yg-top-bar-h);
+		min-width: 0;
 		pointer-events: none;
 	}
 
@@ -674,7 +725,7 @@
 		position: fixed;
 		inset: 0;
 		z-index: 50;
-		display: grid;
+		display: none;
 		place-items: center;
 		padding: 1.5rem;
 		background: rgba(28, 36, 46, 0.82);

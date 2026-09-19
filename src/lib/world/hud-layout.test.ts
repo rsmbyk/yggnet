@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { centeredBannerOverlapsChrome, chromeContentWidth, viewportTooSmallForChrome } from './hud-layout';
+import {
+	availableHudWidth,
+	centeredBannerOverlapsChrome,
+	chromeContentWidth,
+	tooSmallMediaMaxWidth,
+	viewportTooSmallForChrome
+} from './hud-layout';
 
 describe('centeredBannerOverlapsChrome', () => {
 	it('stays on the toolbar row when the centered banner clears the chrome', () => {
@@ -61,6 +67,33 @@ describe('viewportTooSmallForChrome', () => {
 
 	it('treats an exact fit as still usable', () => {
 		expect(viewportTooSmallForChrome(279, 279)).toBe(false);
+	});
+
+	it('clears once the viewport grows past the toolbar', () => {
+		const required = 279;
+		const padX = 32;
+		expect(viewportTooSmallForChrome(required, availableHudWidth(220, padX))).toBe(true);
+		expect(viewportTooSmallForChrome(required, availableHudWidth(1280, padX))).toBe(false);
+	});
+});
+
+describe('availableHudWidth', () => {
+	it('subtracts HUD padding from the layout viewport', () => {
+		expect(availableHudWidth(800, 32)).toBe(768);
+	});
+
+	it('does not go negative on a tiny viewport', () => {
+		expect(availableHudWidth(20, 32)).toBe(0);
+	});
+});
+
+describe('tooSmallMediaMaxWidth', () => {
+	it('blocks at the media max-width and clears one pixel wider', () => {
+		const required = 279;
+		const padX = 32;
+		const max = tooSmallMediaMaxWidth(required, padX);
+		expect(viewportTooSmallForChrome(required, availableHudWidth(max, padX))).toBe(true);
+		expect(viewportTooSmallForChrome(required, availableHudWidth(max + 1, padX))).toBe(false);
 	});
 });
 

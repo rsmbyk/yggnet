@@ -25,6 +25,23 @@ export function viewportTooSmallForChrome(
 	return requiredChromeWidth > availableWidth + epsilon;
 }
 
+/** Layout viewport minus HUD left/right padding — the toolbar's horizontal budget. */
+export function availableHudWidth(viewportWidth: number, paddingX: number): number {
+	return Math.max(0, viewportWidth - paddingX);
+}
+
+/**
+ * `@media (max-width)` breakpoint that matches {@link viewportTooSmallForChrome}
+ * for the same required toolbar width and HUD padding.
+ */
+export function tooSmallMediaMaxWidth(
+	requiredChromeWidth: number,
+	paddingX: number,
+	epsilon = 1
+): number {
+	return Math.max(0, Math.ceil(requiredChromeWidth + paddingX - epsilon) - 1);
+}
+
 /** Full toolbar width: chrome padding/border + logo + gap + tools row. */
 export function chromeContentWidth(parts: {
 	paddingX: number;
