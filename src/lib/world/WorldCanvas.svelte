@@ -235,15 +235,38 @@
 			<rect x={mmFocus.cx - 8} y={mmFocus.cy - 8} width="16" height="16" class="mm-view" />
 		</svg>
 
-		<div class="cam-readout" data-testid="camera-readout" aria-live="polite">
-			<div class="cam-angles">
-				<span>pan {camReadout.pan}°</span>
-				<span>tilt {camReadout.tilt}°</span>
+		<div
+			class="cam-readout"
+			data-testid="camera-readout"
+			aria-live="polite"
+			aria-label="Pan {camReadout.pan}°, tilt {camReadout.tilt}°, position {camReadout.x}, {camReadout.y}, {camReadout.z}"
+		>
+			<div class="cam-row" title="Pan">
+				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<!-- yaw: turntable around vertical -->
+					<path d="M12 3v8" />
+					<ellipse cx="12" cy="16" rx="8" ry="5" />
+					<path d="M19.6 14.2 21 16.8 17.4 16.6" />
+				</svg>
+				<span>{camReadout.pan}°</span>
 			</div>
-			<div class="cam-coords">
-				<span>x {camReadout.x}</span>
-				<span>y {camReadout.y}</span>
-				<span>z {camReadout.z}</span>
+			<div class="cam-row" title="Tilt">
+				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<!-- pitch: look up/down -->
+					<path d="M5 18a8.5 8.5 0 0 1 14 0" />
+					<path d="M12 18V7" />
+					<path d="M9.5 9.5 12 7l2.5 2.5" />
+				</svg>
+				<span>{camReadout.tilt}°</span>
+			</div>
+			<div class="cam-row" title="Position">
+				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<!-- xyz triad from origin -->
+					<path d="M12 12V4" />
+					<path d="M12 12l8 4.5" />
+					<path d="M12 12 4 16.5" />
+				</svg>
+				<span>{camReadout.x}, {camReadout.y}, {camReadout.z}</span>
 			</div>
 		</div>
 	</div>
@@ -300,8 +323,8 @@
 	.cam-readout {
 		display: flex;
 		flex-direction: column;
-		gap: 0.12rem;
-		padding: 0.05rem 0.1rem 0;
+		gap: 0.18rem;
+		padding: 0.1rem 0.05rem 0;
 		min-width: 0;
 		width: 100%;
 		color: var(--yg-fg);
@@ -309,7 +332,7 @@
 		font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
 		font-size: 0.62rem;
 		font-variant-numeric: tabular-nums;
-		line-height: 1.25;
+		line-height: 1;
 		letter-spacing: 0.02em;
 		opacity: var(--yg-hud-idle-opacity);
 		pointer-events: none;
@@ -321,12 +344,24 @@
 		opacity: var(--yg-hud-active-opacity);
 	}
 
-	.cam-angles,
-	.cam-coords {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.35rem 0.55rem;
+	.cam-row {
+		display: grid;
+		grid-template-columns: 0.9rem minmax(0, 1fr);
+		align-items: center;
+		gap: 0.35rem;
 		min-width: 0;
+	}
+
+	.cam-row svg {
+		width: 0.9rem;
+		height: 0.9rem;
+		display: block;
+	}
+
+	.cam-row span {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
 	}
 
 	.minimap {
