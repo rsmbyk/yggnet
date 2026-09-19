@@ -333,8 +333,7 @@
 		transition:
 			background var(--yg-motion) var(--yg-ease),
 			border-color var(--yg-motion) var(--yg-ease),
-			box-shadow var(--yg-motion) var(--yg-ease),
-			opacity var(--yg-motion) var(--yg-ease);
+			box-shadow var(--yg-motion) var(--yg-ease);
 	}
 
 	.chrome:hover,
@@ -344,25 +343,27 @@
 		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.12);
 	}
 
-	/* Opening Advanced focuses the toolbar button; don't let that light the bar back up. */
-	.chrome.dimmed,
+	/* Advanced focuses the toggle — keep the unhovered idle look. */
 	.chrome.dimmed:hover,
 	.chrome.dimmed:focus-within {
-		opacity: 0.38;
 		background: var(--yg-panel-glass-dim);
 		border-color: rgba(28, 36, 46, 0.1);
 		box-shadow: 0 4px 16px rgba(28, 36, 46, 0.04);
 	}
 
-	.chrome.dimmed .logo,
-	.chrome.dimmed .icon-btn,
 	.chrome.dimmed:hover .logo,
-	.chrome.dimmed:focus-within .logo,
+	.chrome.dimmed:focus-within .logo {
+		opacity: var(--yg-hud-idle-opacity);
+	}
+
 	.chrome.dimmed:hover .icon-btn,
-	.chrome.dimmed:focus-within .icon-btn {
-		opacity: 1;
+	.chrome.dimmed:focus-within .icon-btn,
+	.chrome.dimmed:hover .icon-btn:hover,
+	.chrome.dimmed:focus-within .icon-btn:hover {
+		opacity: var(--yg-hud-idle-opacity);
 		background: var(--yg-chip-dim);
 		border-color: rgba(28, 36, 46, 0.1);
+		color: var(--yg-fg);
 	}
 
 	.logo {
@@ -456,12 +457,12 @@
 	}
 
 	.chrome.dimmed .icon-btn.active,
-	.chrome.dimmed:hover .icon-btn,
-	.chrome.dimmed:hover .icon-btn:hover,
-	.chrome.dimmed:focus-within .icon-btn:hover {
-		background: var(--yg-chip-dim);
-		color: var(--yg-fg);
-		border-color: rgba(28, 36, 46, 0.1);
+	.chrome.dimmed:hover .icon-btn.active,
+	.chrome.dimmed:focus-within .icon-btn.active {
+		opacity: var(--yg-hud-idle-opacity);
+		background: var(--yg-accent-soft);
+		color: var(--yg-accent);
+		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));
 	}
 
 	.icon-btn.advanced {
