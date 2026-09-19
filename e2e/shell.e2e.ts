@@ -13,6 +13,9 @@ test('too-small overlay covers the app and clears when the window grows', async 
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
 	await expect(page.getByTestId('viewport-too-small')).toBeVisible();
+	await expect(page.getByTestId('viewport-too-small-copy')).toHaveText(
+		"The app can't be used optimally on a small screen. Open it on a larger screen."
+	);
 	await page.setViewportSize({ width: 1280, height: 800 });
 	await expect(page.getByTestId('viewport-too-small')).toBeHidden();
 	await expect(page.getByTestId('world-add-node')).toBeVisible();

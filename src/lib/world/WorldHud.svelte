@@ -339,8 +339,8 @@
 	>
 		<div class="too-small-copy">
 			<h2 id="viewport-too-small-title" class="too-small-title">This screen is too small</h2>
-			<p id="viewport-too-small-copy">
-				The app can't continue until the window is large enough for the toolbar.
+			<p id="viewport-too-small-copy" data-testid="viewport-too-small-copy">
+				The app can't be used optimally on a small screen. Open it on a larger screen.
 			</p>
 		</div>
 	</div>
