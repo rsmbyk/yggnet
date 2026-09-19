@@ -185,7 +185,8 @@
 
 	.drawer-slot {
 		position: absolute;
-		top: 0.75rem;
+		/* Same Y as the connect banner when it sits under the toolbar. */
+		top: calc(var(--yg-top-bar-h) + (2 * var(--yg-hud-pad-y)));
 		right: 0.75rem;
 		bottom: 0.75rem;
 		z-index: 16;

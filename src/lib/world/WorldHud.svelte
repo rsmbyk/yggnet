@@ -440,8 +440,6 @@
 
 <style>
 	.hud {
-		--yg-hud-pad-y: 0.75rem;
-		--yg-hud-pad-x: 1rem;
 		pointer-events: none;
 		position: absolute;
 		inset: 0;
@@ -471,8 +469,6 @@
 
 	/* Shared top band: chrome left, connect banner dead-center — same Y + same height. */
 	.top-row {
-		/* icon-btn 2.05rem + chrome vertical padding 0.35rem×2 */
-		--yg-top-bar-h: calc(2.05rem + 0.7rem);
 		position: relative;
 		display: flex;
 		align-items: center;
