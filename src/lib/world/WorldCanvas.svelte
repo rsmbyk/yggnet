@@ -277,7 +277,7 @@
 		align-items: stretch;
 		gap: 0.3rem;
 		box-sizing: border-box;
-		width: max-content;
+		width: calc(var(--inner-w) + 2 * var(--panel-pad) + 2px);
 		padding: var(--panel-pad);
 		border-radius: var(--yg-radius-panel);
 		background: var(--yg-panel-glass-dim);
@@ -302,10 +302,13 @@
 		flex-direction: column;
 		gap: 0.12rem;
 		padding: 0.05rem 0.1rem 0;
+		min-width: 0;
+		width: 100%;
 		color: var(--yg-fg);
 		text-shadow: var(--yg-text-glow);
 		font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
 		font-size: 0.62rem;
+		font-variant-numeric: tabular-nums;
 		line-height: 1.25;
 		letter-spacing: 0.02em;
 		opacity: var(--yg-hud-idle-opacity);
@@ -323,10 +326,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.35rem 0.55rem;
-	}
-
-	.cam-angles {
-		color: var(--yg-accent);
+		min-width: 0;
 	}
 
 	.minimap {
