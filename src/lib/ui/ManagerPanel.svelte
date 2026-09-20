@@ -286,8 +286,6 @@
 
 	{#if section === 'file'}
 		<section class="toolbar" aria-label="File">
-			<button type="button" data-testid="save" onclick={() => app.saveToSlot()}>Save</button>
-			<button type="button" data-testid="load" onclick={() => app.loadFromSlot()}>Load</button>
 			<input
 				type="text"
 				placeholder="Slot name"
@@ -295,11 +293,17 @@
 				bind:value={saveSlotName}
 				aria-label="Named save slot"
 			/>
-			<button type="button" data-testid="save-named" onclick={() => app.saveNamedSlot(saveSlotName)}
-				>Save named</button
+			<button
+				type="button"
+				data-testid="save-named"
+				disabled={!saveSlotName.trim()}
+				onclick={() => app.saveNamedSlot(saveSlotName)}>Save</button
 			>
-			<button type="button" data-testid="load-named" onclick={() => app.loadNamedSlot(saveSlotName)}
-				>Load named</button
+			<button
+				type="button"
+				data-testid="load-named"
+				disabled={!saveSlotName.trim()}
+				onclick={() => app.loadNamedSlot(saveSlotName)}>Load</button
 			>
 			<button type="button" data-testid="export" onclick={() => app.downloadExport()}>Export</button
 			>

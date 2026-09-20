@@ -1003,24 +1003,29 @@ class AppStore {
 		return true;
 	}
 
-	saveToSlot(slot = 'default'): void {
+	saveToSlot(slot: string): void {
+		const name = slot.trim();
+		if (!name) {
+			this.statusMessage = 'Enter a slot name';
+			return;
+		}
 		if (typeof localStorage === 'undefined') return;
-		localStorage.setItem(`yggnet.save.${slot}`, serializeDocument(this.document));
+		localStorage.setItem(`yggnet.save.${name}`, serializeDocument(this.document));
 		this.statusMessage = 'Saved';
 	}
 
 	saveNamedSlot(name: string): void {
-		const slot = name.trim();
-		if (!slot) {
+		this.saveToSlot(name);
+	}
+
+	loadFromSlot(slot: string): void {
+		const name = slot.trim();
+		if (!name) {
 			this.statusMessage = 'Enter a slot name';
 			return;
 		}
-		this.saveToSlot(slot);
-	}
-
-	loadFromSlot(slot = 'default'): void {
 		if (typeof localStorage === 'undefined') return;
-		const raw = localStorage.getItem(`yggnet.save.${slot}`);
+		const raw = localStorage.getItem(`yggnet.save.${name}`);
 		if (!raw) {
 			this.statusMessage = 'No save found';
 			return;
