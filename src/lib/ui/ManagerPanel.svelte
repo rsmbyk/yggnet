@@ -140,20 +140,6 @@
 		app.setFilterTags(tags);
 	}
 
-	function onImportFile(ev: Event) {
-		const input = ev.currentTarget as HTMLInputElement;
-		const file = input.files?.[0];
-		if (!file) return;
-		file.text().then((text) => {
-			try {
-				app.importJson(text);
-			} catch {
-				/* status set in store */
-			}
-			input.value = '';
-		});
-	}
-
 	function pushDiff(id: string) {
 		const cur = [...app.ui.diffIds];
 		if (cur.includes(id)) return;
@@ -305,17 +291,6 @@
 				disabled={!saveSlotName.trim()}
 				onclick={() => app.loadNamedSlot(saveSlotName)}>Load</button
 			>
-			<button type="button" data-testid="export" onclick={() => app.downloadExport()}>Export</button
-			>
-			<label class="file-btn">
-				Import
-				<input
-					type="file"
-					accept="application/json,.json"
-					data-testid="import"
-					onchange={onImportFile}
-				/>
-			</label>
 		</section>
 	{/if}
 
@@ -1115,8 +1090,7 @@
 		font: inherit;
 	}
 
-	button,
-	.file-btn {
+	button {
 		font: inherit;
 		font-size: 0.8rem;
 		border: 1px solid var(--yg-border);
@@ -1142,20 +1116,6 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.3rem;
-	}
-
-	.file-btn {
-		display: inline-flex;
-		align-items: center;
-		position: relative;
-		overflow: hidden;
-	}
-
-	.file-btn input {
-		position: absolute;
-		inset: 0;
-		opacity: 0;
-		cursor: pointer;
 	}
 
 	.block h2 {
