@@ -285,13 +285,7 @@
 	{/if}
 
 	{#if section === 'file'}
-		<section class="toolbar" aria-label="History and file">
-			<button type="button" data-testid="undo" disabled={!app.canUndo} onclick={() => app.undo()}
-				>Undo</button
-			>
-			<button type="button" data-testid="redo" disabled={!app.canRedo} onclick={() => app.redo()}
-				>Redo</button
-			>
+		<section class="toolbar" aria-label="File">
 			<button type="button" data-testid="save" onclick={() => app.saveToSlot()}>Save</button>
 			<button type="button" data-testid="load" onclick={() => app.loadFromSlot()}>Load</button>
 			<input
@@ -318,9 +312,6 @@
 					onchange={onImportFile}
 				/>
 			</label>
-			<button type="button" data-testid="palette-trigger" onclick={() => app.openPalette(true)}
-				>Palette</button
-			>
 		</section>
 	{/if}
 
