@@ -22,11 +22,8 @@ test('too-small overlay covers the app and clears when the window grows', async 
 	await expect(page.getByTestId('world-add-node')).toBeVisible();
 });
 
-test('mode tabs and command palette open', async ({ page }) => {
+test('command palette opens from the keyboard', async ({ page }) => {
 	await page.goto('/');
-	await openTool(page, 'mode');
-	await expect(page.getByTestId('mode-explore')).toBeVisible();
-	await page.getByTestId('mode-directions').click();
 	await openTool(page, 'pathfinder');
 	await expect(page.getByTestId('directions-panel')).toBeVisible();
 	await page.keyboard.press('Control+K');

@@ -4,9 +4,9 @@
 | ----------------- | ----------------------------------------------------------------- |
 | **Yggnet**        | Product name (IG-net); world-tree as a relation net               |
 | **GraphDocument** | Nodes, edges, metadata, schema version                            |
-| **Explore**       | Bird’s-eye navigation mode                                        |
-| **Directions**    | A→B path pick + guided travel                                     |
-| **Analyze**       | Run algorithms / graph actions                                    |
+| **Explore**       | Bird’s-eye navigation of the world                                |
+| **Directions**    | A→B path pick + guided travel (Pathfinder tool)                   |
+| **Analyze**       | Run algorithms / graph actions (Analyze tool)                     |
 | **Trace**         | Ordered algorithm events for step replay                          |
 | **Run**           | Stored algorithm result + trace (+ stale flag)                    |
 | **Overlay**       | View model for highlights (world renders it)                      |

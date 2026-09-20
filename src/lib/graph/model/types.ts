@@ -43,5 +43,3 @@ export interface GraphDocument {
 	createdAt: string;
 	updatedAt: string;
 }
-
-export type AppMode = 'explore' | 'directions' | 'analyze';

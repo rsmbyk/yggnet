@@ -40,7 +40,6 @@ import {
 	undo as historyUndo,
 	updateEdge,
 	updateNode,
-	type AppMode,
 	type EdgePatch,
 	type GraphDocument,
 	type History,
@@ -161,7 +160,6 @@ class AppStore {
 	document = $state.raw<GraphDocument>(createEmptyDocument('Untitled graph'));
 	history = $state.raw<History>(createHistory());
 	selection = $state.raw<SelectionState>(createSelection());
-	mode = $state<AppMode>('explore');
 	overlay = $state.raw<Overlay>(createEmptyOverlay());
 	runStore = $state.raw<RunStore>(createRunStore());
 	directions = $state.raw<DirectionsState>(emptyDirections());
@@ -281,15 +279,6 @@ class AppStore {
 		this.groupsCollapsed = new Set();
 		this.analyze = { ...emptyAnalyze(), algorithmId: this.analyze.algorithmId };
 		this.scheduleAutosave();
-	}
-
-	setMode(mode: AppMode): void {
-		this.mode = mode;
-		if (mode !== 'directions') {
-			this.directions = { ...this.directions, traveling: false };
-		}
-		if (mode === 'directions') this.refreshPaths();
-		this.rebuildModeOverlay();
 	}
 
 	setSelection(nodeId: NodeId | null): void {
@@ -559,7 +548,7 @@ class AppStore {
 
 	private syncFilterOverlay(): void {
 		const { tags, hideFiltered } = this.filters;
-		if (tags.length === 0 || this.mode === 'directions' || this.analyze.showSteps) {
+		if (tags.length === 0 || this.overlayLocked() || this.analyze.showSteps) {
 			if (this.overlay.kind === 'filter') this.overlay = createEmptyOverlay();
 			return;
 		}
@@ -596,7 +585,7 @@ class AppStore {
 		const { fromId, toId, pathMode, selectedPathId } = this.directions;
 		if (!fromId || !toId) {
 			this.directions = { ...this.directions, pathList: [], selectedPathId: null };
-			if (this.mode === 'directions') this.overlay = createEmptyOverlay();
+			if (this.overlay.kind === 'path') this.overlay = createEmptyOverlay();
 			return;
 		}
 		const pathList =
@@ -609,7 +598,7 @@ class AppStore {
 		}
 		this.directions = { ...this.directions, pathList, selectedPathId: nextSelected };
 		if (nextSelected) this.selectPath(nextSelected);
-		else if (this.mode === 'directions') this.overlay = createEmptyOverlay();
+		else if (this.overlay.kind === 'path') this.overlay = createEmptyOverlay();
 	}
 
 	selectPath(pathId: string | null): void {
@@ -620,20 +609,18 @@ class AppStore {
 			travelProgress: 0
 		};
 		if (!pathId) {
-			if (this.mode === 'directions') this.overlay = createEmptyOverlay();
+			if (this.overlay.kind === 'path') this.overlay = createEmptyOverlay();
 			return;
 		}
 		const path = this.directions.pathList.find((p, i) => pathIdOf(p, i) === pathId);
 		if (path) {
 			this.overlay = pathOverlay(path.nodeIds, path.edgeIds);
-			this.mode = 'directions';
 		}
 	}
 
 	startTravel(): void {
 		if (!this.directions.selectedPathId) return;
 		this.directions = { ...this.directions, traveling: true, travelProgress: 0 };
-		this.mode = 'directions';
 	}
 
 	setTravelProgress(t: number): void {
@@ -667,7 +654,6 @@ class AppStore {
 			travelProgress: 0
 		};
 		this.overlay = pathOverlay([sel, to], [edgeId]);
-		this.mode = 'directions';
 	}
 
 	setAlgorithm(algorithmId: string): void {
@@ -709,7 +695,6 @@ class AppStore {
 			stepIndex: 0,
 			showSteps: false
 		};
-		this.mode = 'analyze';
 		this.applyRunOverlay(run.id);
 		this.statusMessage = `Ran ${algo.name}`;
 		return run.id;
@@ -766,7 +751,6 @@ class AppStore {
 			compareRunIds: [runIdA, runIdB],
 			lastRunId: runIdA
 		};
-		this.mode = 'analyze';
 		this.rebuildModeOverlay();
 		this.statusMessage = `Comparing ${a.algorithmId} vs ${b.algorithmId}`;
 	}
@@ -826,6 +810,12 @@ class AppStore {
 		return { nodeIds: [], edgeIds: [] };
 	}
 
+	private overlayLocked(): boolean {
+		return (
+			this.overlay.kind === 'path' || this.overlay.kind === 'algo' || this.overlay.kind === 'compare'
+		);
+	}
+
 	private rebuildModeOverlay(): void {
 		const { compareRunIds } = this.analyze;
 		if (compareRunIds.length === 2) {
@@ -834,11 +824,11 @@ class AppStore {
 			this.overlay = compareOverlay(this.pathSeriesFromRun(a), this.pathSeriesFromRun(b));
 			return;
 		}
-		if (this.mode === 'analyze' && this.analyze.lastRunId) {
+		if (this.overlay.kind === 'algo' && this.analyze.lastRunId) {
 			this.applyRunOverlay(this.analyze.lastRunId);
 			return;
 		}
-		if (this.mode === 'directions' && this.directions.selectedPathId) {
+		if (this.overlay.kind === 'path' && this.directions.selectedPathId) {
 			this.selectPath(this.directions.selectedPathId);
 			return;
 		}
@@ -1073,7 +1063,6 @@ class AppStore {
 			target: { ...node.position },
 			distance: Math.min(this.camera.distance, 14)
 		});
-		this.setMode('explore');
 	}
 
 	exportJson(): string {

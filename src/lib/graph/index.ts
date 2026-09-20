@@ -4,8 +4,7 @@ export type {
 	GraphEdge,
 	GraphAttachment,
 	NodeId,
-	EdgeId,
-	AppMode
+	EdgeId
 } from './model/types';
 export { createEmptyDocument, nodeCount, edgeCount } from './model/document';
 export {

@@ -5,8 +5,6 @@ test('compare two algorithms shows dual summary and dismisses', async ({ page })
 	await page.goto('/');
 	await openTool(page, 'templates');
 	await page.getByTestId('tpl-learning').click();
-	await openTool(page, 'mode');
-	await page.getByTestId('mode-directions').click();
 	await openTool(page, 'pathfinder');
 
 	const fromSelect = page.getByTestId('path-from');

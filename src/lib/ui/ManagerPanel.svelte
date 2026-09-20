@@ -1,16 +1,10 @@
 <script lang="ts">
 	import { app } from '$lib/session/app.svelte';
 	import { pathSeriesMetrics } from '$lib/graph';
-	import type { AppMode, GraphAttachment } from '$lib/graph';
+	import type { GraphAttachment } from '$lib/graph';
 	import { toolLabel, type PanelSection } from './tool-ids';
 
 	let { section }: { section: PanelSection } = $props();
-
-	const modes: { id: AppMode; label: string }[] = [
-		{ id: 'explore', label: 'Explore' },
-		{ id: 'directions', label: 'Directions' },
-		{ id: 'analyze', label: 'Analyze' }
-	];
 
 	let edgeFrom = $state('');
 	let edgeTo = $state('');
@@ -295,22 +289,6 @@
 					>
 				</div>
 			{/if}
-		</section>
-	{/if}
-
-	{#if section === 'mode'}
-		<section class="modes" aria-label="Mode">
-			{#each modes as m (m.id)}
-				<button
-					type="button"
-					class="mode"
-					class:active={app.mode === m.id}
-					data-testid={`mode-${m.id}`}
-					onclick={() => app.setMode(m.id)}
-				>
-					{m.label}
-				</button>
-			{/each}
 		</section>
 	{/if}
 
@@ -1096,7 +1074,6 @@
 					data-testid="diff-path"
 					onclick={() => {
 						app.setDirectionsEndpoints(diffA.id, diffB.id);
-						app.setMode('directions');
 					}}>Path between</button
 				>
 				<button type="button" onclick={() => app.setDiffIds([])}>Clear</button>
@@ -1151,13 +1128,6 @@
 		font: inherit;
 	}
 
-	.modes {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.3rem;
-	}
-
-	.mode,
 	button,
 	.file-btn {
 		font: inherit;
@@ -1170,7 +1140,6 @@
 		cursor: pointer;
 	}
 
-	.mode.active,
 	button.active {
 		background: var(--yg-accent-soft);
 		color: var(--yg-accent);
