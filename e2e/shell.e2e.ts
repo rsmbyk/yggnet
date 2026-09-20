@@ -22,6 +22,22 @@ test('too-small overlay covers the app and clears when the window grows', async 
 	await expect(page.getByTestId('world-add-node')).toBeVisible();
 });
 
+test('graph title is the browser tab title and autosaves', async ({ page }) => {
+	await page.goto('/');
+	await openTool(page, 'file');
+	const field = page.getByTestId('doc-title');
+	await expect(field).toBeVisible();
+	await field.fill('Comet Trail');
+	await expect(page).toHaveTitle('Comet Trail');
+	await expect
+		.poll(async () => (await page.evaluate(() => localStorage.getItem('yggnet.autosave'))) ?? '')
+		.toContain('Comet Trail');
+	await page.reload();
+	await openTool(page, 'file');
+	await expect(page.getByTestId('doc-title')).toHaveValue('Comet Trail');
+	await expect(page).toHaveTitle('Comet Trail');
+});
+
 test('command palette opens from the keyboard', async ({ page }) => {
 	await page.goto('/');
 	await openTool(page, 'pathfinder');

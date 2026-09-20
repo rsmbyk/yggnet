@@ -185,11 +185,7 @@
 				data-testid="doc-title"
 				aria-label="Document title"
 				value={app.document.title}
-				oninput={(e) => {
-					const title = (e.currentTarget as HTMLInputElement).value;
-					const next = { ...app.document, title, updatedAt: new Date().toISOString() };
-					app.document = next;
-				}}
+				oninput={(e) => app.setDocumentTitle(e.currentTarget.value)}
 			/>
 		{/if}
 	</header>

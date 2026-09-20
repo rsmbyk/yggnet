@@ -4,6 +4,7 @@
 	import ManagerPanel from '$lib/ui/ManagerPanel.svelte';
 	import Toolbar from '$lib/ui/Toolbar.svelte';
 	import { app } from '$lib/session/app.svelte';
+	import { tabTitleFromGraph } from '$lib/session/tab-title';
 	import { selectionPanelOpen } from '$lib/ui/tool-ids';
 
 	const slide = { duration: 220, x: -28, opacity: 0 };
@@ -87,7 +88,13 @@
 	const showSelectionPanel = $derived(
 		selectionPanelOpen(app.ui.openTool, app.selection.nodeIds.length, app.selection.edgeIds.length)
 	);
+
+	const tabTitle = $derived(tabTitleFromGraph(app.document.title));
 </script>
+
+<svelte:head>
+	<title>{tabTitle}</title>
+</svelte:head>
 
 <svelte:window onkeydown={onKeydown} />
 

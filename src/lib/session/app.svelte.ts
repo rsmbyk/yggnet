@@ -281,6 +281,16 @@ class AppStore {
 		this.scheduleAutosave();
 	}
 
+	setDocumentTitle(title: string): void {
+		if (this.document.title === title) return;
+		this.document = {
+			...this.document,
+			title,
+			updatedAt: new Date().toISOString()
+		};
+		this.scheduleAutosave();
+	}
+
 	setSelection(nodeId: NodeId | null): void {
 		this.selection = nodeId ? selectNode(this.selection, nodeId) : clearSelection(this.selection);
 	}
