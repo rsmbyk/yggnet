@@ -155,6 +155,6 @@ test('HUD chrome shares button size, inset, and edge padding', async ({ page }) 
 			gap: pr.x - rr.right
 		};
 	});
-	expect(Math.abs(open.panelPad - open.railPad)).toBeLessThanOrEqual(1.5);
+	expect(Math.abs(open.panelPad - open.railPad * 1.5)).toBeLessThanOrEqual(1.5);
 	expect(Math.abs(open.gap - metrics.hudPad.t)).toBeLessThanOrEqual(1.5);
 });

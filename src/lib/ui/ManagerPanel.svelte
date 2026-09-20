@@ -1029,7 +1029,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.85rem;
-		padding: var(--yg-hud-inset);
+		padding: var(--yg-hud-panel-inset);
 		background: var(--yg-panel-glass-strong);
 		border: 1px solid var(--yg-border);
 		width: min(22rem, 92vw);
