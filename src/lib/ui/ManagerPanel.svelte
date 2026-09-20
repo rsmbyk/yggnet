@@ -97,11 +97,6 @@
 					: 'Selection'
 	);
 
-	function closePanel() {
-		if (section === 'selection') app.clearAllSelection();
-		else app.setOpenTool(null);
-	}
-
 	const groupIds = $derived([
 		...new Set(
 			nodes.map((n) => n.groupId).filter((g): g is string => typeof g === 'string' && g.length > 0)
@@ -197,10 +192,7 @@
 
 <aside class="manager" data-testid={section === 'selection' ? selectionTestId : 'yggnet-manager'}>
 	<header class="manager__header">
-		<div class="row between">
-			<p class="brand">{section === 'selection' ? selectionTitle : toolLabel(section)}</p>
-			<button type="button" data-testid="close-manager" onclick={closePanel}>Close</button>
-		</div>
+		<p class="brand">{section === 'selection' ? selectionTitle : toolLabel(section)}</p>
 		{#if section === 'file'}
 			<input
 				class="title-input"

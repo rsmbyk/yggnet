@@ -17,7 +17,7 @@ test('world selection panel sits in the tools dock and hides while a tool is ope
 	await expect(page.getByTestId('node-editor')).toBeVisible();
 	await expect(page.getByTestId('node-connect')).toBeVisible();
 
-	await page.getByTestId('close-manager').click();
+	await page.getByTestId('tool-nodes').click();
 	await expect(page.getByTestId('yggnet-manager')).toHaveCount(0);
 	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
 });
