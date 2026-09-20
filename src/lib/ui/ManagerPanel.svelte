@@ -180,13 +180,16 @@
 	<header class="manager__header">
 		<p class="brand">{section === 'selection' ? selectionTitle : toolLabel(section)}</p>
 		{#if section === 'file'}
-			<input
-				class="title-input"
-				data-testid="doc-title"
-				aria-label="Document title"
-				value={app.document.title}
-				oninput={(e) => app.setDocumentTitle(e.currentTarget.value)}
-			/>
+			<label class="title-field">
+				Name
+				<input
+					class="title-input"
+					name="title"
+					data-testid="doc-title"
+					value={app.document.title}
+					oninput={(e) => app.setDocumentTitle(e.currentTarget.value)}
+				/>
+			</label>
 		{/if}
 	</header>
 
@@ -1075,9 +1078,12 @@
 		color: var(--yg-fg);
 	}
 
+	.title-field {
+		margin: 0.35rem 0 0;
+	}
+
 	.title-input {
 		width: 100%;
-		margin-top: 0.35rem;
 		border: 1px solid var(--yg-border);
 		border-radius: var(--yg-radius-control);
 		padding: 0.4rem 0.55rem;

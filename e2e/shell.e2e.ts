@@ -25,8 +25,8 @@ test('too-small overlay covers the app and clears when the window grows', async 
 test('graph title is the browser tab title and autosaves', async ({ page }) => {
 	await page.goto('/');
 	await openTool(page, 'file');
+	await expect(page.getByRole('textbox', { name: 'Name' })).toBeVisible();
 	const field = page.getByTestId('doc-title');
-	await expect(field).toBeVisible();
 	await field.fill('Comet Trail');
 	await expect(page).toHaveTitle('Comet Trail');
 	await expect
