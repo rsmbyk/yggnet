@@ -2,9 +2,9 @@
 	import { app } from '$lib/session/app.svelte';
 	import { pathSeriesMetrics } from '$lib/graph';
 	import type { AppMode, GraphAttachment } from '$lib/graph';
-	import { toolLabel, type ToolId } from './tool-ids';
+	import { toolLabel, type PanelSection } from './tool-ids';
 
-	let { section }: { section: ToolId } = $props();
+	let { section }: { section: PanelSection } = $props();
 
 	const modes: { id: AppMode; label: string }[] = [
 		{ id: 'explore', label: 'Explore' },
@@ -89,6 +89,24 @@
 		if (!ids.includes(compareRunIdA)) compareRunIdA = ids[0];
 		if (!ids.includes(compareRunIdB)) compareRunIdB = ids.length > 1 ? ids[1] : ids[0];
 	});
+
+	const selectionTestId = $derived(
+		selectedCount > 1 ? 'world-multi-sheet' : selectedCount === 1 ? 'world-node-sheet' : 'world-edge-sheet'
+	);
+	const selectionTitle = $derived(
+		selectedCount > 1
+			? `${selectedCount} nodes`
+			: selectedNode
+				? selectedNode.label
+				: selectedEdge
+					? 'Edge'
+					: 'Selection'
+	);
+
+	function closePanel() {
+		if (section === 'selection') app.clearAllSelection();
+		else app.setOpenTool(null);
+	}
 
 	const groupIds = $derived([
 		...new Set(
@@ -183,13 +201,11 @@
 	}
 </script>
 
-<aside class="manager" data-testid="yggnet-manager">
+<aside class="manager" data-testid={section === 'selection' ? selectionTestId : 'yggnet-manager'}>
 	<header class="manager__header">
 		<div class="row between">
-			<p class="brand">{toolLabel(section)}</p>
-			<button type="button" data-testid="close-manager" onclick={() => app.setOpenTool(null)}
-				>Close</button
-			>
+			<p class="brand">{section === 'selection' ? selectionTitle : toolLabel(section)}</p>
+			<button type="button" data-testid="close-manager" onclick={closePanel}>Close</button>
 		</div>
 		{#if section === 'file'}
 			<input
@@ -205,6 +221,82 @@
 			/>
 		{/if}
 	</header>
+
+	{#if section === 'selection'}
+		<section class="block" aria-label="Selection">
+			{#if selectedNode && selectedCount === 1}
+				<label>
+					Label
+					<input
+						data-testid="world-node-label"
+						value={selectedNode.label}
+						oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
+					/>
+				</label>
+				<div class="row wrap">
+					<button
+						type="button"
+						data-testid="world-connect"
+						class:active={app.ui.connectFromId === selectedNode.id}
+						onclick={() => app.setConnectFrom(selectedNode.id)}>Connect</button
+					>
+					<button
+						type="button"
+						data-testid="world-pin"
+						class:active={selectedNode.pinned}
+						onclick={() => app.pinNode(selectedNode.id, !selectedNode.pinned)}
+						>{selectedNode.pinned ? 'Unpin' : 'Pin'}</button
+					>
+					<button
+						type="button"
+						class="danger"
+						data-testid="world-delete-node"
+						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
+					>
+				</div>
+				<p class="hint">
+					Drag to move · Alt-click connect · Ctrl+Alt directed · Shift add-select · Del to delete
+				</p>
+			{:else if selectedCount > 1}
+				<div class="row wrap">
+					<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
+						>Group</button
+					>
+					<button
+						type="button"
+						data-testid="clear-selection"
+						onclick={() => app.clearAllSelection()}>Clear</button
+					>
+					<button
+						type="button"
+						class="danger"
+						data-testid="world-delete-selection"
+						onclick={() => app.deleteSelection()}>Delete</button
+					>
+				</div>
+			{:else if selectedEdge}
+				<p class="hint">
+					{app.document.nodes[selectedEdge.from]?.label ?? '?'}
+					{selectedEdge.directed ? '→' : '—'}
+					{app.document.nodes[selectedEdge.to]?.label ?? '?'}
+				</p>
+				<div class="row wrap">
+					<button
+						type="button"
+						data-testid="world-toggle-directed"
+						onclick={() => app.updateEdge(selectedEdge.id, { directed: !selectedEdge.directed })}
+						>{selectedEdge.directed ? 'Make undirected' : 'Make directed'}</button
+					>
+					<button
+						type="button"
+						class="danger"
+						data-testid="world-delete-edge"
+						onclick={() => app.removeEdge(selectedEdge.id)}>Delete</button
+					>
+				</div>
+			{/if}
+		</section>
+	{/if}
 
 	{#if section === 'mode'}
 		<section class="modes" aria-label="Mode">
@@ -1278,6 +1370,11 @@
 		font-size: 0.75rem;
 		color: var(--yg-muted);
 		line-height: 1.35;
+	}
+
+	button.danger {
+		color: #8b3a3a;
+		border-color: color-mix(in srgb, #8b3a3a 35%, var(--yg-border));
 	}
 
 	.status {

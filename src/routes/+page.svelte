@@ -4,6 +4,7 @@
 	import ManagerPanel from '$lib/ui/ManagerPanel.svelte';
 	import Toolbar from '$lib/ui/Toolbar.svelte';
 	import { app } from '$lib/session/app.svelte';
+	import { selectionPanelOpen } from '$lib/ui/tool-ids';
 
 	const slide = { duration: 220, x: -28, opacity: 0 };
 	let WorldCanvas: typeof import('$lib/world/WorldCanvas.svelte').default | null = $state(null);
@@ -82,6 +83,10 @@
 	function onPaletteBackdropClick(e: MouseEvent) {
 		if (e.target === e.currentTarget) closePalette();
 	}
+
+	const showSelectionPanel = $derived(
+		selectionPanelOpen(app.ui.openTool, app.selection.nodeIds.length, app.selection.edgeIds.length)
+	);
 </script>
 
 <svelte:window onkeydown={onKeydown} />
@@ -154,6 +159,10 @@
 		{#if app.ui.openTool}
 			<div class="tool-panel-slot" transition:fly={slide}>
 				<ManagerPanel section={app.ui.openTool} />
+			</div>
+		{:else if showSelectionPanel}
+			<div class="tool-panel-slot" transition:fly={slide}>
+				<ManagerPanel section="selection" />
 			</div>
 		{/if}
 	</div>

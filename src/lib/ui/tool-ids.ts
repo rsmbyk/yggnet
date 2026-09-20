@@ -26,6 +26,8 @@ export const TOOLS: { id: ToolId; label: string }[] = [
 	{ id: 'diff', label: 'Diff' }
 ];
 
+export type PanelSection = ToolId | 'selection';
+
 export function toolLabel(id: ToolId): string {
 	return TOOLS.find((t) => t.id === id)?.label ?? id;
 }
@@ -33,4 +35,13 @@ export function toolLabel(id: ToolId): string {
 /** Clicking the open tool closes it; clicking another switches. */
 export function nextOpenTool(current: ToolId | null, clicked: ToolId): ToolId | null {
 	return current === clicked ? null : clicked;
+}
+
+/** Selection inspect card in the tools dock — no toolbar icon, hidden while a tool is open. */
+export function selectionPanelOpen(
+	openTool: ToolId | null,
+	nodeCount: number,
+	edgeCount: number
+): boolean {
+	return openTool === null && (nodeCount > 0 || edgeCount > 0);
 }

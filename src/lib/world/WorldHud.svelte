@@ -10,27 +10,7 @@
 	} from './hud-layout';
 	import WorldTunePanel from './WorldTunePanel.svelte';
 
-	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
-	const selectedCount = $derived(app.selection.nodeIds.length);
-	const selectedNode = $derived(selectedId ? app.document.nodes[selectedId] : null);
-	const selectedEdgeId = $derived(app.selection.edgeIds[0] ?? null);
-	const selectedEdge = $derived(selectedEdgeId ? app.document.edges[selectedEdgeId] : null);
 	const connecting = $derived(app.ui.connectFromId !== null);
-	/**
-	 * One sheet shell for node / multi / edge — avoids outro jumps when switching modes.
-	 * Hidden while a tool panel is open so that panel is the only inspect surface.
-	 */
-	const sheetOpen = $derived(
-		!app.ui.openTool &&
-			((selectedCount === 1 && selectedNode != null) || selectedCount > 1 || selectedEdge != null)
-	);
-	const sheetTestId = $derived(
-		selectedCount > 1
-			? 'world-multi-sheet'
-			: selectedCount === 1
-				? 'world-node-sheet'
-				: 'world-edge-sheet'
-	);
 
 	/** Brief toast: clear after a short dwell when the message is still the same. */
 	$effect(() => {
@@ -49,16 +29,10 @@
 		app.addNodeAt({ x: t.x + jitter, y: worldTune.values.defaultNodeY, z: t.z + jitter });
 	}
 
-	function startConnect() {
-		if (!selectedId) return;
-		app.setConnectFrom(selectedId);
-	}
-
 	function cancelConnect() {
 		app.setConnectFrom(null);
 	}
 
-	const sheetFade = { duration: 160 };
 	const toastFade = { duration: 220 };
 
 	let hudEl: HTMLDivElement | undefined = $state();
@@ -334,85 +308,6 @@
 		</div>
 	</div>
 
-	{#if sheetOpen}
-		<div class="sheet-slot">
-			<section class="sheet" data-testid={sheetTestId} transition:fade={sheetFade}>
-				{#if selectedNode && selectedCount === 1}
-					<label>
-						Label
-						<input
-							data-testid="world-node-label"
-							value={selectedNode.label}
-							oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
-						/>
-					</label>
-					<div class="sheet-actions">
-						<button
-							type="button"
-							data-testid="world-connect"
-							class:active={app.ui.connectFromId === selectedNode.id}
-							onclick={startConnect}>Connect</button
-						>
-						<button
-							type="button"
-							data-testid="world-pin"
-							class:active={selectedNode.pinned}
-							onclick={() => app.pinNode(selectedNode.id, !selectedNode.pinned)}
-							>{selectedNode.pinned ? 'Unpin' : 'Pin'}</button
-						>
-						<button
-							type="button"
-							class="danger"
-							data-testid="world-delete-node"
-							onclick={() => app.removeNode(selectedNode.id)}>Delete</button
-						>
-					</div>
-					<p class="hint">
-						Drag to move · Alt-click connect · Ctrl+Alt directed · Shift add-select · Del to delete
-					</p>
-				{:else if selectedCount > 1}
-					<p class="sheet-title">{selectedCount} nodes selected</p>
-					<div class="sheet-actions">
-						<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
-							>Group</button
-						>
-						<button
-							type="button"
-							data-testid="clear-selection"
-							onclick={() => app.clearAllSelection()}>Clear</button
-						>
-						<button
-							type="button"
-							class="danger"
-							data-testid="world-delete-selection"
-							onclick={() => app.deleteSelection()}>Delete</button
-						>
-					</div>
-				{:else if selectedEdge}
-					<p class="sheet-title">
-						{app.document.nodes[selectedEdge.from]?.label ?? '?'}
-						{selectedEdge.directed ? '→' : '—'}
-						{app.document.nodes[selectedEdge.to]?.label ?? '?'}
-					</p>
-					<div class="sheet-actions">
-						<button
-							type="button"
-							data-testid="world-toggle-directed"
-							onclick={() => app.updateEdge(selectedEdge.id, { directed: !selectedEdge.directed })}
-							>{selectedEdge.directed ? 'Make undirected' : 'Make directed'}</button
-						>
-						<button
-							type="button"
-							class="danger"
-							data-testid="world-delete-edge"
-							onclick={() => app.removeEdge(selectedEdge.id)}>Delete</button
-						>
-					</div>
-				{/if}
-			</section>
-		</div>
-	{/if}
-
 	<div class="toast-slot">
 		{#if app.statusMessage}
 			<p
@@ -447,11 +342,9 @@
 	}
 
 	.chrome,
-	.sheet,
 	.banner,
 	.toast,
 	.chrome button,
-	.sheet button,
 	.banner button {
 		pointer-events: auto;
 	}
@@ -545,13 +438,6 @@
 		align-items: center;
 	}
 
-	.sheet-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--yg-hud-btn-gap);
-		align-items: center;
-	}
-
 	.icon-btn {
 		display: inline-grid;
 		place-items: center;
@@ -589,7 +475,6 @@
 		background: rgba(255, 255, 255, 0.72);
 	}
 
-	.sheet button,
 	.banner button {
 		font: inherit;
 		font-size: 0.78rem;
@@ -606,7 +491,6 @@
 			color var(--yg-motion-fast) var(--yg-ease);
 	}
 
-	.sheet button:hover,
 	.banner button:hover {
 		background: rgba(255, 255, 255, 0.72);
 	}
@@ -630,11 +514,6 @@
 	button:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
-	}
-
-	button.danger {
-		color: #8b3a3a;
-		border-color: color-mix(in srgb, #8b3a3a 35%, var(--yg-border));
 	}
 
 	/* Same top + same height as .chrome; horizontally page-centered; width = content. */
@@ -730,66 +609,6 @@
 		font-size: 0.88rem;
 		line-height: 1.45;
 		color: #c5ced8;
-	}
-
-	/* Centering lives on the sheet itself so Svelte outro (position:absolute) stays put. */
-	.sheet-slot {
-		pointer-events: none;
-		z-index: 5;
-	}
-
-	.sheet {
-		position: absolute;
-		left: 50%;
-		bottom: var(--yg-hud-edge);
-		transform: translateX(-50%);
-		width: min(18rem, 90vw);
-		margin: 0;
-		padding: var(--yg-hud-inset);
-		border-radius: var(--yg-radius-panel);
-		background: var(--yg-panel-glass);
-		border: 1px solid var(--yg-border);
-		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.1);
-		display: flex;
-		flex-direction: column;
-		gap: 0.65rem;
-		pointer-events: auto;
-	}
-
-	.sheet,
-	.sheet-title,
-	.hint {
-		text-shadow: var(--yg-text-glow);
-	}
-
-	.sheet-title {
-		margin: 0;
-		font-size: 0.9rem;
-		font-weight: 600;
-	}
-
-	.sheet label {
-		display: flex;
-		flex-direction: column;
-		gap: 0.3rem;
-		font-size: 0.72rem;
-		color: var(--yg-muted);
-	}
-
-	.sheet input {
-		font: inherit;
-		font-size: 0.9rem;
-		padding: 0.4rem 0.55rem;
-		border: 1px solid var(--yg-border);
-		border-radius: var(--yg-radius-control);
-		background: var(--yg-chip);
-		color: var(--yg-fg);
-	}
-
-	.hint {
-		margin: 0;
-		font-size: 0.68rem;
-		color: var(--yg-muted);
 	}
 
 	.toast-slot {

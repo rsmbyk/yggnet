@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { openTool } from './open-tool';
 
-test('world selection sheet hides while a tool panel is open', async ({ page }) => {
+test('world selection panel sits in the tools dock and hides while a tool is open', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
 
@@ -91,6 +91,8 @@ test('HUD chrome shares button size, inset, and edge padding', async ({ page }) 
 			parseFloat(camCs.paddingRight) -
 			parseFloat(camCs.borderLeftWidth) -
 			parseFloat(camCs.borderRightWidth);
+		const sheetBox = rect(sheet);
+		const railBox = rect(rail);
 		return {
 			menubarBtn: size(menubarBtn),
 			toolbarBtn: size(toolbarBtn),
@@ -101,13 +103,17 @@ test('HUD chrome shares button size, inset, and edge padding', async ({ page }) 
 			sheetPad: pad(sheet),
 			hudPad,
 			chromeTop: rect(chrome).top,
-			railLeft: rect(rail).x,
+			railLeft: railBox.x,
+			railTop: railBox.y,
+			railRight: railBox.right,
 			camLeft: rect(cam).x,
 			camBottom: innerHeight - rect(cam).bottom,
-			sheetBottom: innerHeight - rect(sheet).bottom,
-			gapMenubarToolbar: rect(rail).top - rect(chrome).bottom,
+			sheetTop: sheetBox.y,
+			sheetLeft: sheetBox.x,
+			gapMenubarToolbar: railBox.top - rect(chrome).bottom,
 			miniW: rect(mini).width,
-			camContentW
+			camContentW,
+			toolbarClass: rail.className
 		};
 	});
 
@@ -120,12 +126,13 @@ test('HUD chrome shares button size, inset, and edge padding', async ({ page }) 
 
 	const inset = metrics.railPad.l;
 	expect(inset).toBeGreaterThanOrEqual(6);
-	for (const p of [metrics.chromePad, metrics.railPad, metrics.camPad, metrics.sheetPad]) {
+	for (const p of [metrics.chromePad, metrics.railPad, metrics.camPad]) {
 		expect(near(p.t, inset)).toBe(true);
 		expect(near(p.r, inset)).toBe(true);
 		expect(near(p.b, inset)).toBe(true);
 		expect(near(p.l, inset)).toBe(true);
 	}
+	expect(near(metrics.sheetPad.t, inset * 2)).toBe(true);
 
 	const edge = metrics.hudPad.t;
 	expect(near(metrics.hudPad.r, edge)).toBe(true);
@@ -135,8 +142,10 @@ test('HUD chrome shares button size, inset, and edge padding', async ({ page }) 
 	expect(near(metrics.railLeft, edge)).toBe(true);
 	expect(near(metrics.camLeft, edge)).toBe(true);
 	expect(near(metrics.camBottom, edge)).toBe(true);
-	expect(near(metrics.sheetBottom, edge)).toBe(true);
 	expect(near(metrics.gapMenubarToolbar, edge)).toBe(true);
+	expect(near(metrics.sheetTop, metrics.railTop)).toBe(true);
+	expect(metrics.sheetLeft + 1).toBeGreaterThanOrEqual(metrics.railRight);
+	expect(metrics.toolbarClass.includes('engaged')).toBe(false);
 	expect(near(metrics.miniW, metrics.camContentW)).toBe(true);
 
 	await page.getByTestId('tool-nodes').click();
