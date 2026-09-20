@@ -39,8 +39,8 @@
 	--yg-hud-btn-gap: 0.3rem;
 	/* Inner padding of menubar, toolbar, camera, node sheet. */
 	--yg-hud-inset: 0.4rem;
-	/* Tools panel: 50% more than chrome inset. */
-	--yg-hud-panel-inset: calc(var(--yg-hud-inset) * 1.5);
+	/* Tools panel: chrome inset plus two 50% bumps. */
+	--yg-hud-panel-inset: calc(var(--yg-hud-inset) * 2);
 	/* Viewport edge and the gap between HUD panels — same on every side. */
 	--yg-hud-edge: 0.75rem;
 	--yg-hud-pad-y: var(--yg-hud-edge);
