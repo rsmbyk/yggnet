@@ -1,16 +1,16 @@
 import { expect, test } from '@playwright/test';
-import { applyTemplate, openTool } from './open-tool';
+import { applyGeneratedGraph, openTool } from './open-tool';
 
 test('compare two algorithms shows dual summary and dismisses', async ({ page }) => {
 	await page.goto('/');
-	await applyTemplate(page, 'learning');
+	await applyGeneratedGraph(page, 'grid', { rows: 3, columns: 3 });
 	await openTool(page, 'pathfinder');
 
 	const fromSelect = page.getByTestId('path-from');
 	const toSelect = page.getByTestId('path-to');
 	const fromValue = await fromSelect.locator('option').nth(1).getAttribute('value');
 	const toValue = await toSelect.locator('option').nth(2).getAttribute('value');
-	if (!fromValue || !toValue) throw new Error('Learning template missing nodes');
+	if (!fromValue || !toValue) throw new Error('Grid graph missing nodes');
 	await fromSelect.selectOption(fromValue);
 	await toSelect.selectOption(toValue);
 

@@ -24,7 +24,7 @@ async function seedNamedSaves(page: import('@playwright/test').Page, count: numb
 test('short tools panel hugs content and stays above the minimap', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
-	await openTool(page, 'templates');
+	await openTool(page, 'generate');
 	const panel = page.getByTestId('yggnet-manager');
 	const camera = page.getByTestId('camera-panel');
 	await expect(panel).toBeVisible();
@@ -67,8 +67,10 @@ test('switching tools hides the expand control when the new panel fits', async (
 	await openTool(page, 'file');
 	await page.getByTestId('tools-panel-expand').click();
 	await expect(page.getByTestId('tools-panel-collapse')).toBeVisible();
-	await openTool(page, 'templates');
-	await expect(page.getByTestId('yggnet-manager').getByText('Templates', { exact: true })).toBeVisible();
+	await openTool(page, 'generate');
+	await expect(
+		page.getByTestId('yggnet-manager').getByText('Generate', { exact: true })
+	).toBeVisible();
 	await expect(page.getByTestId('tools-panel-expand')).toHaveCount(0);
 	await expect(page.getByTestId('tools-panel-collapse')).toHaveCount(0);
 });

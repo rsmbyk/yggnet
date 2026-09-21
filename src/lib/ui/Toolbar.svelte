@@ -6,7 +6,7 @@
 		switch (id) {
 			case 'file':
 				return 'M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5';
-			case 'templates':
+			case 'generate':
 				return 'M3 3h8v8H3V3zm10 0h8v5h-8V3zM3 13h5v8H3v-8zm7 0h11v8H10v-8z';
 			case 'nodes':
 				return 'M12 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM5 14a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm14 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6z';

@@ -1,6 +1,6 @@
 export const TOOL_IDS = [
 	'file',
-	'templates',
+	'generate',
 	'nodes',
 	'edges',
 	'filters',
@@ -14,7 +14,7 @@ export type ToolId = (typeof TOOL_IDS)[number];
 
 export const TOOLS: { id: ToolId; label: string }[] = [
 	{ id: 'file', label: 'File' },
-	{ id: 'templates', label: 'Templates' },
+	{ id: 'generate', label: 'Generate' },
 	{ id: 'nodes', label: 'Nodes' },
 	{ id: 'edges', label: 'Edges' },
 	{ id: 'filters', label: 'Filters' },

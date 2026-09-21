@@ -87,3 +87,27 @@ export {
 } from './release/semver';
 export { layoutUnpinned, type LayoutOptions } from './layout/layout';
 export { findNodeByQuery, findNodesByQuery } from './search/findNodes';
+export {
+	generateGraph,
+	fingerprint,
+	randomSeed,
+	GRAPH_KINDS,
+	GRAPH_KIND_GROUPS,
+	NAMED_GRAPHS,
+	NAMED_GRAPH_LABELS,
+	PLATONIC_SOLIDS,
+	PLATONIC_LABELS,
+	ARCHIMEDEAN_SOLIDS,
+	ARCHIMEDEAN_LABELS,
+	PALEY_ORDERS,
+	MAX_GRAPH_NODES,
+	fieldsForKind,
+	kindAllowsDirected,
+	kindAllowsWeighted,
+	type GraphKind,
+	type GenerateOptions,
+	type NamedGraphId,
+	type PlatonicSolid,
+	type ArchimedeanSolid,
+	type KindField
+} from './generators/generate';

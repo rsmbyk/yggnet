@@ -21,6 +21,7 @@ import {
 	findAllSimplePaths,
 	findNodesByQuery as searchNodesByQuery,
 	findShortestPaths,
+	generateGraph,
 	getAlgorithm,
 	getRun,
 	listAlgorithms,
@@ -42,6 +43,8 @@ import {
 	updateNode,
 	type EdgePatch,
 	type GraphDocument,
+	type GenerateOptions,
+	type GraphKind,
 	type History,
 	type NodeId,
 	type NodePatch,
@@ -276,8 +279,7 @@ class AppStore {
 	}
 
 	refreshNamedSlots(): void {
-		this.namedSlots =
-			typeof localStorage === 'undefined' ? [] : listSaveSlotNames(localStorage);
+		this.namedSlots = typeof localStorage === 'undefined' ? [] : listSaveSlotNames(localStorage);
 	}
 
 	replaceDocument(doc: GraphDocument, clearRuns = true): void {
@@ -833,7 +835,9 @@ class AppStore {
 
 	private overlayLocked(): boolean {
 		return (
-			this.overlay.kind === 'path' || this.overlay.kind === 'algo' || this.overlay.kind === 'compare'
+			this.overlay.kind === 'path' ||
+			this.overlay.kind === 'algo' ||
+			this.overlay.kind === 'compare'
 		);
 	}
 
@@ -1151,14 +1155,9 @@ class AppStore {
 		}
 	}
 
-	loadTemplate(kind: 'blank' | 'org' | 'roadmap' | 'learning'): void {
-		this.replaceDocument(buildTemplate(kind));
-		this.statusMessage = `Template: ${kind}`;
-	}
-
-	randomGraph(n = 12): void {
-		this.replaceDocument(buildRandomGraph(n));
-		this.statusMessage = `Random graph (${n})`;
+	applyGeneratedGraph(kind: GraphKind, options: GenerateOptions = {}): void {
+		this.replaceDocument(generateGraph(kind, { ...options, nodeY: worldTune.values.defaultNodeY }));
+		this.statusMessage = `Generated ${kind}`;
 	}
 
 	findNodeByQuery(query: string): NodeId | null {
@@ -1204,120 +1203,7 @@ class AppStore {
 	}
 }
 
-function place(x: number, y: number, z: number) {
-	return { x, y, z };
-}
-
-function buildTemplate(kind: 'blank' | 'org' | 'roadmap' | 'learning'): GraphDocument {
-	if (kind === 'blank') return createEmptyDocument('Blank');
-
-	let doc = createEmptyDocument(
-		kind === 'org' ? 'Org chart' : kind === 'roadmap' ? 'Roadmap' : 'Learning path'
-	);
-	const ids: string[] = [];
-
-	const add = (label: string, pos: { x: number; y: number; z: number }, tags: string[] = []) => {
-		const r = addNode(doc, { label, position: pos, tags });
-		doc = r.doc;
-		ids.push(r.nodeId);
-		return r.nodeId;
-	};
-	const link = (from: string, to: string, weight = 1, directed = true) => {
-		doc = addEdge(doc, { from, to, weight, directed }).doc;
-	};
-
-	if (kind === 'org') {
-		const ceo = add('CEO', place(0, 2, 0), ['org', 'lead']);
-		const eng = add('Engineering', place(-4, 0, 2), ['org']);
-		const des = add('Design', place(4, 0, 2), ['org']);
-		const fe = add('Frontend', place(-6, 0, 5), ['org', 'team']);
-		const be = add('Backend', place(-2, 0, 5), ['org', 'team']);
-		const ux = add('UX', place(2, 0, 5), ['org', 'team']);
-		const brand = add('Brand', place(6, 0, 5), ['org', 'team']);
-		link(ceo, eng);
-		link(ceo, des);
-		link(eng, fe);
-		link(eng, be);
-		link(des, ux);
-		link(des, brand);
-	} else if (kind === 'roadmap') {
-		const a = add('Discover', place(-6, 0, 0), ['phase']);
-		const b = add('Prototype', place(-2, 0, 0), ['phase']);
-		const c = add('Build', place(2, 0, 0), ['phase']);
-		const d = add('Launch', place(6, 0, 0), ['phase']);
-		const risk = add('Risk review', place(0, 0, 4), ['gate']);
-		link(a, b, 1);
-		link(b, c, 2);
-		link(c, d, 1);
-		link(b, risk, 1);
-		link(risk, c, 1);
-	} else {
-		const root = add('Fundamentals', place(0, 0, -2), ['topic']);
-		const graphs = add('Graphs', place(-4, 0, 2), ['topic']);
-		const search = add('Search', place(0, 0, 2), ['topic']);
-		const path = add('Shortest paths', place(4, 0, 2), ['topic']);
-		const bfs = add('BFS', place(-2, 0, 5), ['algo']);
-		const dij = add('Dijkstra', place(2, 0, 5), ['algo']);
-		const astar = add('A*', place(5, 0, 5), ['algo']);
-		link(root, graphs);
-		link(root, search);
-		link(root, path);
-		link(search, bfs);
-		link(path, dij);
-		link(path, astar);
-		link(graphs, search, 1, false);
-	}
-
-	return doc;
-}
-
-function buildRandomGraph(n: number): GraphDocument {
-	const count = Math.max(2, Math.min(40, Math.floor(n)));
-	let doc = createEmptyDocument(`Random ${count}`);
-	const ids: string[] = [];
-	const tune = worldTune.values;
-	const placed: { x: number; y: number; z: number }[] = [];
-	for (let i = 0; i < count; i++) {
-		const angle = (i / count) * Math.PI * 2;
-		const ring = 4 + (i % 5);
-		const preferred = {
-			x: Math.cos(angle) * ring,
-			y: tune.defaultNodeY,
-			z: Math.sin(angle) * ring
-		};
-		const position = findFreePosition(
-			preferred,
-			placed,
-			tune.nodeRadius,
-			tune.collisionFloorY,
-			createNodePadding(tune.nodeRadius)
-		);
-		placed.push(position);
-		const r = addNode(doc, {
-			label: `N${i + 1}`,
-			position,
-			tags: i % 4 === 0 ? ['hub'] : []
-		});
-		doc = r.doc;
-		ids.push(r.nodeId);
-	}
-	for (let i = 0; i < count; i++) {
-		const to = (i + 1) % count;
-		doc = addEdge(doc, {
-			from: ids[i],
-			to: ids[to],
-			weight: 1 + (i % 3),
-			directed: i % 5 === 0
-		}).doc;
-		if (i % 3 === 0) {
-			const jump = (i + 3) % count;
-			doc = addEdge(doc, { from: ids[i], to: ids[jump], weight: 2, directed: false }).doc;
-		}
-	}
-	return doc;
-}
-
 export const app = new AppStore();
 
-/** Convenience re-exports for templates / tests. */
+/** Convenience re-exports for session / tests. */
 export { AUTOSAVE_KEY, pathIdOf };
