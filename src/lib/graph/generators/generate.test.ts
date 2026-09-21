@@ -83,6 +83,7 @@ describe('generateGraph', () => {
 		const doc = generateGraph('simple', { seed: 3, nodes: 10, density: 0.5 });
 		expect(undirectedSimple(doc)).toBe(true);
 		expect(nodeCount(doc)).toBe(10);
+		expect(edgeCount(doc)).toBe(23);
 	});
 
 	it('builds a k-regular graph with even n·k', () => {
@@ -108,6 +109,7 @@ describe('generateGraph', () => {
 		const doc = generateGraph('dag', { seed: 9, nodes: 8, density: 0.4 });
 		expect(Object.values(doc.edges).every((e) => e.directed)).toBe(true);
 		expect(nodeCount(doc)).toBe(8);
+		expect(edgeCount(doc)).toBe(11);
 	});
 
 	it('honors large node counts instead of capping them', () => {
@@ -291,10 +293,25 @@ describe('solids and extra options', () => {
 		expect(nodeCount(gp)).toBe(14);
 	});
 
-	it('builds a directed simple graph and a helix with chords', () => {
+	it('picks a fixed number of random pairs from density', () => {
+		const ten = generateGraph('simple', { seed: 1, nodes: 10, density: 0.1 });
+		const none = generateGraph('simple', { seed: 1, nodes: 10, density: 0 });
+		const all = generateGraph('simple', { seed: 1, nodes: 10, density: 1 });
+		const a = generateGraph('simple', { seed: 1, nodes: 10, density: 0.1 });
+		const b = generateGraph('simple', { seed: 2, nodes: 10, density: 0.1 });
+		expect(edgeCount(ten)).toBe(5);
+		expect(edgeCount(none)).toBe(0);
+		expect(edgeCount(all)).toBe(45);
+		expect(fingerprint(a)).not.toBe(fingerprint(b));
 		const dig = generateGraph('simple', { seed: 3, nodes: 6, density: 0.4, directed: true });
-		const helix = generateGraph('helix', { seed: 3, nodes: 10, turns: 1.5, chord: 3 });
 		expect(Object.values(dig.edges).every((e) => e.directed)).toBe(true);
+		expect(edgeCount(dig)).toBe(12);
+		const bi = generateGraph('bipartite', { seed: 1, left: 4, right: 5, density: 0.5 });
+		expect(edgeCount(bi)).toBe(10);
+	});
+
+	it('builds a helix with chords', () => {
+		const helix = generateGraph('helix', { seed: 3, nodes: 10, turns: 1.5, chord: 3 });
 		expect(nodeCount(helix)).toBe(10);
 		expect(edgeCount(helix)).toBeGreaterThan(9);
 	});

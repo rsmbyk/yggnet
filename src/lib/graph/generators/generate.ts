@@ -153,6 +153,15 @@ function maybeOrient(edges: EdgeSpec[], directed: boolean, rng: Rng): EdgeSpec[]
 	});
 }
 
+/** `density` fraction of `pairs`, rounded; which pairs is a uniform random subset. */
+function pickByDensity<T>(pairs: T[], density: number, rng: Rng): T[] {
+	const p = Math.min(1, Math.max(0, density));
+	const m = Math.round(p * pairs.length);
+	if (m <= 0) return [];
+	if (m >= pairs.length) return pairs;
+	return rng.shuffle(pairs).slice(0, m);
+}
+
 function finish(
 	title: string,
 	points: Vec3[],
@@ -519,29 +528,28 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			};
 		}
 		case 'simple': {
-			const edges: [number, number][] = [];
 			if (directedFlag) {
+				const pairs: [number, number][] = [];
 				for (let i = 0; i < n; i += 1) {
 					for (let j = 0; j < n; j += 1) {
-						if (i !== j && rng.chance(p)) edges.push([i, j]);
+						if (i !== j) pairs.push([i, j]);
 					}
 				}
 				return {
 					title: `Simple ${n}`,
 					points: circleLayout(n, 5),
-					edges: directed(edges),
+					edges: directed(pickByDensity(pairs, p, rng)),
 					layout: 'yaw'
 				};
 			}
+			const pairs: [number, number][] = [];
 			for (let i = 0; i < n; i += 1) {
-				for (let j = i + 1; j < n; j += 1) {
-					if (rng.chance(p)) edges.push([i, j]);
-				}
+				for (let j = i + 1; j < n; j += 1) pairs.push([i, j]);
 			}
 			return {
 				title: `Simple ${n}`,
 				points: circleLayout(n, 5),
-				edges: undirected(edges),
+				edges: undirected(pickByDensity(pairs, p, rng)),
 				layout: 'yaw'
 			};
 		}
@@ -748,17 +756,20 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 		}
 		case 'dag': {
 			const order = rng.shuffle([...Array(n).keys()]);
-			const edges: EdgeSpec[] = [];
+			const pairs: [number, number][] = [];
 			for (let i = 0; i < n; i += 1) {
-				for (let j = i + 1; j < n; j += 1) {
-					if (rng.chance(p)) edges.push({ from: order[i], to: order[j], directed: true });
-				}
+				for (let j = i + 1; j < n; j += 1) pairs.push([order[i], order[j]]);
 			}
 			const points: Vec3[] = Array.from({ length: n }, () => vec(0, 0, 0));
 			order.forEach((v, idx) => {
 				points[v] = vec((idx - (n - 1) / 2) * 1.6, 0, (rng.next() - 0.5) * 4);
 			});
-			return { title: `DAG ${n}`, points, edges, layout: 'none' };
+			return {
+				title: `DAG ${n}`,
+				points,
+				edges: directed(pickByDensity(pairs, p, rng)),
+				layout: 'none'
+			};
 		}
 		case 'bipartite': {
 			const left = clampNodes(opts.left ?? 5, 1);
@@ -766,16 +777,14 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			const points: Vec3[] = [];
 			for (let i = 0; i < left; i += 1) points.push(vec(-4, 0, (i - (left - 1) / 2) * 2.2));
 			for (let i = 0; i < right; i += 1) points.push(vec(4, 0, (i - (right - 1) / 2) * 2.2));
-			const edges: [number, number][] = [];
+			const pairs: [number, number][] = [];
 			for (let i = 0; i < left; i += 1) {
-				for (let j = 0; j < right; j += 1) {
-					if (rng.chance(p)) edges.push([i, left + j]);
-				}
+				for (let j = 0; j < right; j += 1) pairs.push([i, left + j]);
 			}
 			return {
 				title: `Bipartite ${left}+${right}`,
 				points,
-				edges: undirected(edges),
+				edges: undirected(pickByDensity(pairs, p, rng)),
 				layout: 'yaw'
 			};
 		}
