@@ -18,3 +18,9 @@ export function listSaveSlotNames(storage: Pick<Storage, 'length' | 'key'>): str
 	}
 	return names.sort((a, b) => a.localeCompare(b));
 }
+
+/** True when a named snapshot is already stored under this name. */
+export function saveSlotExists(storage: Pick<Storage, 'getItem'>, name: string): boolean {
+	const key = saveSlotStorageKey(name);
+	return key !== null && storage.getItem(key) != null;
+}

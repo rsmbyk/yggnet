@@ -54,7 +54,7 @@ import { createNodePadding, findFreePosition } from '$lib/world/node-physics';
 import { worldTune } from '$lib/world/world-tune.svelte';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
 import { nextOpenTool, type ToolId } from '$lib/ui/tool-ids';
-import { listSaveSlotNames, saveSlotStorageKey } from './save-slots';
+import { listSaveSlotNames, saveSlotExists, saveSlotStorageKey } from './save-slots';
 
 const AUTOSAVE_KEY = 'yggnet.autosave';
 const AUTOSAVE_MS = 600;
@@ -1034,6 +1034,13 @@ class AppStore {
 	}
 
 	saveNamedSlot(name: string): void {
+		const key = saveSlotStorageKey(name);
+		if (!key) {
+			this.statusMessage = 'Enter a slot name';
+			return;
+		}
+		if (typeof localStorage === 'undefined') return;
+		if (saveSlotExists(localStorage, name) && !this.confirmOverwriteSlot(name.trim())) return;
 		this.saveToSlot(name);
 	}
 
@@ -1079,6 +1086,11 @@ class AppStore {
 		localStorage.removeItem(key);
 		this.refreshNamedSlots();
 		this.statusMessage = 'Deleted';
+	}
+
+	private confirmOverwriteSlot(name: string): boolean {
+		if (typeof window === 'undefined') return true;
+		return window.confirm(`Replace the saved graph “${name}”?`);
 	}
 
 	private confirmReplaceDocument(): boolean {

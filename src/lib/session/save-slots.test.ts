@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { listSaveSlotNames, SAVE_SLOT_PREFIX, saveSlotStorageKey } from './save-slots';
+import {
+	listSaveSlotNames,
+	SAVE_SLOT_PREFIX,
+	saveSlotExists,
+	saveSlotStorageKey
+} from './save-slots';
 
 function fakeStorage(keys: string[]): Pick<Storage, 'length' | 'key'> {
 	return {
@@ -30,5 +35,16 @@ describe('listSaveSlotNames', () => {
 
 	it('skips an empty name after the prefix', () => {
 		expect(listSaveSlotNames(fakeStorage([SAVE_SLOT_PREFIX]))).toEqual([]);
+	});
+});
+
+describe('saveSlotExists', () => {
+	it('is true when the named key is present', () => {
+		const storage = {
+			getItem: (key: string) => (key === `${SAVE_SLOT_PREFIX}demo` ? '{}' : null)
+		};
+		expect(saveSlotExists(storage, 'demo')).toBe(true);
+		expect(saveSlotExists(storage, ' other ')).toBe(false);
+		expect(saveSlotExists(storage, '  ')).toBe(false);
 	});
 });

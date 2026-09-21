@@ -56,6 +56,24 @@ test('enter in the slot name field saves', async ({ page }) => {
 	await expect(page.locator('[data-testid="save-slot-row"]', { hasText: slot })).toBeVisible();
 });
 
+test('saving an existing slot name asks to replace it', async ({ page }) => {
+	await page.goto('/');
+	await openTool(page, 'file');
+	const slot = 'e2e-overwrite-slot';
+	const field = page.getByTestId('save-slot-name');
+	await field.fill(slot);
+	await page.getByTestId('save-named').click();
+	await expect(page.locator('[data-testid="save-slot-row"]', { hasText: slot })).toBeVisible();
+
+	page.once('dialog', (dialog) => {
+		expect(dialog.type()).toBe('confirm');
+		expect(dialog.message()).toContain(slot);
+		void dialog.dismiss();
+	});
+	await page.getByTestId('save-named').click();
+	await expect(page.locator('[data-testid="save-slot-row"]', { hasText: slot })).toBeVisible();
+});
+
 test('palette find jumps to matching node', async ({ page }) => {
 	await page.goto('/');
 	await openTool(page, 'nodes');
