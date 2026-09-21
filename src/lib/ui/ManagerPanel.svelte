@@ -1104,10 +1104,6 @@
 			{/if}
 		</section>
 	{/if}
-
-	{#if app.statusMessage}
-		<p class="status" data-testid="manager-status">{app.statusMessage}</p>
-	{/if}
 </aside>
 
 <style>
@@ -1388,12 +1384,6 @@
 	button.danger {
 		color: #8b3a3a;
 		border-color: color-mix(in srgb, #8b3a3a 35%, var(--yg-border));
-	}
-
-	.status {
-		margin: 0;
-		font-size: 0.8rem;
-		color: var(--yg-accent);
 	}
 
 	.diff {
