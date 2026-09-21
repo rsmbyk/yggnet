@@ -115,6 +115,18 @@ test('saved graph list fills the remaining file column', async ({ page }) => {
 	expect(listBox!.height).toBeGreaterThan(160);
 });
 
+test('saved graph rows highlight on hover', async ({ page }) => {
+	await page.goto('/');
+	await openTool(page, 'file');
+	const slot = 'e2e-hover-slot';
+	await page.getByTestId('save-slot-name').fill(slot);
+	await page.getByTestId('save-named').click();
+	const row = page.locator('[data-testid="save-slot-row"]', { hasText: slot });
+	await expect(row).toBeVisible();
+	await row.hover();
+	await expect(row).toHaveCSS('background-color', 'rgba(255, 255, 255, 0.28)');
+});
+
 test('palette find jumps to matching node', async ({ page }) => {
 	await page.goto('/');
 	await openTool(page, 'nodes');

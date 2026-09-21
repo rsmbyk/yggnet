@@ -1235,6 +1235,13 @@
 	.slot-row {
 		width: 100%;
 		gap: 0.5rem;
+		padding: 0.15rem 0.2rem 0.15rem 0.4rem;
+		border-radius: var(--yg-radius-control);
+		transition: background var(--yg-motion-fast) var(--yg-ease);
+	}
+
+	.slot-row:hover {
+		background: rgba(255, 255, 255, 0.28);
 	}
 
 	.slot-label {
