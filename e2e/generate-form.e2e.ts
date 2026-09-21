@@ -54,3 +54,29 @@ test('Generate toasts Generated and replaces the graph', async ({ page }) => {
 	await expect(page.getByTestId('status-message')).toHaveText('Generated');
 	await expect(page).toHaveTitle(/Cycle/);
 });
+
+test('Generate stretches a lone field across the row', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'generate');
+	const fields = page.getByTestId('generate-fields');
+	await page.getByTestId('generate-kind').selectOption('prism');
+	const typeBox = await page.getByTestId('generate-kind').boundingBox();
+	const sidesBox = await page.getByLabel('Sides').boundingBox();
+	expect(typeBox).toBeTruthy();
+	expect(sidesBox).toBeTruthy();
+	expect(Math.abs(sidesBox!.width - typeBox!.width)).toBeLessThan(12);
+	await expect
+		.poll(async () => fields.evaluate((el) => el.scrollWidth <= el.clientWidth + 1))
+		.toBe(true);
+	await page.getByTestId('generate-kind').selectOption('grid');
+	const rowsBox = await page.getByTestId('generate-rows').boundingBox();
+	const colsBox = await page.getByTestId('generate-columns').boundingBox();
+	expect(rowsBox).toBeTruthy();
+	expect(colsBox).toBeTruthy();
+	expect(rowsBox!.width).toBeLessThan(typeBox!.width * 0.7);
+	expect(Math.abs(rowsBox!.width - colsBox!.width)).toBeLessThan(12);
+	await expect
+		.poll(async () => fields.evaluate((el) => el.scrollWidth <= el.clientWidth + 1))
+		.toBe(true);
+});

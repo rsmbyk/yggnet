@@ -471,7 +471,7 @@
 						{/each}
 					</select>
 				</label>
-				<div class="generate-fields">
+				<div class="generate-fields" data-testid="generate-fields">
 					{#if genFields.includes('paleyQ')}
 						<label>
 							Order q
@@ -1741,6 +1741,7 @@
 		flex-direction: column;
 		gap: 0.4rem;
 		flex: 1 1 auto;
+		min-width: 0;
 		min-height: 0;
 	}
 
@@ -1750,6 +1751,7 @@
 		gap: 0.35rem;
 		margin: 0;
 		flex: 1 1 auto;
+		min-width: 0;
 		min-height: 0;
 	}
 
@@ -1760,15 +1762,33 @@
 
 	.generate-fields {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		gap: 0.35rem 0.45rem;
 		flex: 1 1 auto;
+		min-width: 0;
 		min-height: 0;
-		overflow: auto;
+		overflow-x: hidden;
+		overflow-y: auto;
 	}
 
 	.generate-fields label {
 		margin-bottom: 0;
+		min-width: 0;
+	}
+
+	.generate-fields label:last-child:nth-child(odd) {
+		grid-column: 1 / -1;
+	}
+
+	.generate-form input[type='number'] {
+		appearance: textfield;
+		width: 100%;
+	}
+
+	.generate-form input[type='number']::-webkit-inner-spin-button,
+	.generate-form input[type='number']::-webkit-outer-spin-button {
+		appearance: none;
+		margin: 0;
 	}
 
 	.generate-checks {
