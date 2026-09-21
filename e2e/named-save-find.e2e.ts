@@ -96,6 +96,25 @@ test('saving an existing slot name asks to replace it', async ({ page }) => {
 	await expect(page.locator('[data-testid="save-slot-row"]', { hasText: slot })).toBeVisible();
 });
 
+test('saved graph list fills the remaining file column', async ({ page }) => {
+	await page.goto('/');
+	await openTool(page, 'file');
+	const slot = 'e2e-fill-slot';
+	await page.getByTestId('save-slot-name').fill(slot);
+	await page.getByTestId('save-named').click();
+	const panel = page.getByTestId('yggnet-manager');
+	const list = page.getByTestId('save-slot-list');
+	await expect(list).toBeVisible();
+	const panelBox = await panel.boundingBox();
+	const listBox = await list.boundingBox();
+	expect(panelBox).toBeTruthy();
+	expect(listBox).toBeTruthy();
+	const bottomGap = panelBox!.y + panelBox!.height - (listBox!.y + listBox!.height);
+	expect(bottomGap).toBeGreaterThanOrEqual(8);
+	expect(bottomGap).toBeLessThanOrEqual(24);
+	expect(listBox!.height).toBeGreaterThan(160);
+});
+
 test('palette find jumps to matching node', async ({ page }) => {
 	await page.goto('/');
 	await openTool(page, 'nodes');

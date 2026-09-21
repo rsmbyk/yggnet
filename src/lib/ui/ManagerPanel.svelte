@@ -278,7 +278,7 @@
 	{/if}
 
 	{#if section === 'file'}
-		<section class="block" data-testid="file-saves" aria-label="Saved graphs">
+		<section class="block file-saves" data-testid="file-saves" aria-label="Saved graphs">
 			<h2>Saved graphs</h2>
 			<form
 				class="row slot-save-row"
@@ -1134,6 +1134,23 @@
 	.manager--fill {
 		height: 100%;
 		min-height: 0;
+	}
+
+	.manager__header {
+		flex-shrink: 0;
+	}
+
+	.file-saves {
+		flex: 1 1 auto;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.file-saves .list {
+		flex: 1 1 auto;
+		min-height: 0;
+		max-height: none;
 	}
 
 	.brand {
