@@ -145,3 +145,64 @@ export function orbitDistanceToFitPoint(input: OrbitFitInput): number {
 	}
 	return hi;
 }
+
+export type OrbitFitCloudInput = Omit<OrbitFitInput, 'point'> & {
+	points: Vec3[];
+};
+
+/** Average of `points`, or null when the list is empty. */
+export function centroid(points: Vec3[]): Vec3 | null {
+	if (points.length === 0) return null;
+	let x = 0;
+	let y = 0;
+	let z = 0;
+	for (const p of points) {
+		x += p.x;
+		y += p.y;
+		z += p.z;
+	}
+	const n = points.length;
+	return { x: x / n, y: y / n, z: z / n };
+}
+
+/**
+ * Smallest orbit distance along the eye−target ray that keeps every point on screen.
+ * May zoom in or out. Clamped to min/max.
+ */
+export function orbitDistanceToFitPoints(input: OrbitFitCloudInput): number {
+	const minD = Math.max(input.minDistance, 1e-3);
+	const maxD = Math.max(minD, input.maxDistance);
+	const current = length(sub(input.eye, input.target));
+	if (input.points.length === 0) return Math.min(maxD, Math.max(minD, current || minD));
+	const dir = normalize(sub(input.eye, input.target)) ?? { x: 0, y: 1, z: 0 };
+	const margin = input.marginNdc ?? 0.9;
+	const ball = input.radius ?? 0;
+
+	const fitsAt = (d: number) => {
+		const eye = add(input.target, scale(dir, d));
+		for (const point of input.points) {
+			const proj = projectOrbitPoint(
+				input.target,
+				eye,
+				point,
+				input.up,
+				input.fovDeg,
+				input.aspect
+			);
+			if (!proj) return false;
+			if (!inView(proj, ball, input.fovDeg, input.aspect, margin)) return false;
+		}
+		return true;
+	};
+
+	if (fitsAt(minD)) return minD;
+	if (!fitsAt(maxD)) return maxD;
+	let lo = minD;
+	let hi = maxD;
+	for (let i = 0; i < 24; i += 1) {
+		const mid = (lo + hi) / 2;
+		if (fitsAt(mid)) hi = mid;
+		else lo = mid;
+	}
+	return hi;
+}

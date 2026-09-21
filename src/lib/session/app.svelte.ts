@@ -208,6 +208,8 @@ class AppStore {
 	/** Bumped when a newly created node should be framed if it sits off-screen. */
 	revealEpoch = $state(0);
 	revealPosition = $state.raw<{ x: number; y: number; z: number } | null>(null);
+	/** Bumped to tween the camera onto the current document's nodes. */
+	frameGraphEpoch = $state(0);
 	/**
 	 * Eye−target offset saved when entering 2D — restored on return to 3D
 	 * (scaled to current zoom; target stays where it is).
@@ -912,6 +914,11 @@ class AppStore {
 		this.revealEpoch += 1;
 	}
 
+	/** Ask the scene to look at the current graph and zoom so every node fits. */
+	requestFrameGraph(): void {
+		this.frameGraphEpoch += 1;
+	}
+
 	/** Toggle top-down 2D ↔ free 3D orbit. Keeps current target + zoom. */
 	toggleViewMode(): void {
 		// Orbit snapshot is captured in GraphScene when a 2D tween actually starts
@@ -1160,7 +1167,8 @@ class AppStore {
 
 	applyGeneratedGraph(kind: GraphKind, options: GenerateOptions = {}): void {
 		this.replaceDocument(generateGraph(kind, { ...options, nodeY: worldTune.values.defaultNodeY }));
-		this.statusMessage = `Generated ${kind}`;
+		this.statusMessage = 'Generated';
+		this.requestFrameGraph();
 	}
 
 	findNodeByQuery(query: string): NodeId | null {

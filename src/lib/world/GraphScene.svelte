@@ -9,12 +9,8 @@
 	import type { GraphNode } from '$lib/graph';
 	import { defaultPositionFromTune, worldTune } from './world-tune.svelte';
 	import { clampToFloor, resolveMoveAgainstNodes, snapToGrid } from './node-physics';
-	import { orbitDistanceToFitPoint } from './camera-fit';
-	import {
-		interactionModeFromState,
-		resolveNodeClick,
-		type NodeClickAction
-	} from './node-click';
+	import { centroid, orbitDistanceToFitPoint, orbitDistanceToFitPoints } from './camera-fit';
+	import { interactionModeFromState, resolveNodeClick, type NodeClickAction } from './node-click';
 
 	interactivity();
 
@@ -60,7 +56,6 @@
 	const ROTATE_SENSITIVITY = $derived(tune.rotateSensitivity);
 	const DAMPING_FACTOR = $derived(tune.dampingFactor);
 	const VIEW_MODE_MS = $derived(tune.viewModeTransitionMs);
-
 
 	const dragPlane = new THREE.Plane();
 	const connectPlane = new THREE.Plane();
@@ -381,7 +376,10 @@
 		return '#4a5562';
 	}
 
-	function edgeObject(from: { x: number; y: number; z: number }, to: { x: number; y: number; z: number }) {
+	function edgeObject(
+		from: { x: number; y: number; z: number },
+		to: { x: number; y: number; z: number }
+	) {
 		const dx = to.x - from.x;
 		const dy = to.y - from.y;
 		const dz = to.z - from.z;
@@ -502,13 +500,7 @@
 
 	/** Scale-aware epsilon so large world coords don't spam setCamera every frame. */
 	function cameraSyncEps(distance: number, target: { x: number; y: number; z: number }) {
-		const scale = Math.max(
-			1,
-			distance,
-			Math.abs(target.x),
-			Math.abs(target.y),
-			Math.abs(target.z)
-		);
+		const scale = Math.max(1, distance, Math.abs(target.x), Math.abs(target.y), Math.abs(target.z));
 		return Math.max(0.02, scale * 1e-5);
 	}
 
@@ -670,10 +662,10 @@
 		return {
 			ctrl: Boolean(
 				modsHeld.ctrl ||
-					native?.ctrlKey ||
-					('ctrlKey' in ev && ev.ctrlKey) ||
-					native?.metaKey ||
-					('metaKey' in ev && ev.metaKey)
+				native?.ctrlKey ||
+				('ctrlKey' in ev && ev.ctrlKey) ||
+				native?.metaKey ||
+				('metaKey' in ev && ev.metaKey)
 			),
 			shift: Boolean(modsHeld.shift || native?.shiftKey || ('shiftKey' in ev && ev.shiftKey)),
 			alt: Boolean(modsHeld.alt || native?.altKey || ('altKey' in ev && ev.altKey))
@@ -926,7 +918,10 @@
 	/** RMB while LMB-dragging — Windows often skips a separate button-2 pointerdown. */
 	function maybeCancelMoveFromButtons(ev: PointerEvent) {
 		if (!drag?.allowMove) return;
-		if (!drag.dragging && Math.hypot(ev.clientX - drag.startX, ev.clientY - drag.startY) < DRAG_THRESHOLD_PX) {
+		if (
+			!drag.dragging &&
+			Math.hypot(ev.clientX - drag.startX, ev.clientY - drag.startY) < DRAG_THRESHOLD_PX
+		) {
 			return;
 		}
 		// bit 1 = LMB, bit 2 = RMB
@@ -1213,8 +1208,7 @@
 	/** Don't orbit while a node gesture, RMB pan, 2D mode, or view-mode tween owns the view. */
 	$effect(() => {
 		if (!controls) return;
-		controls.enableRotate =
-			app.ui.viewMode === '3d' && !drag && !pan && !viewModeAnimating;
+		controls.enableRotate = app.ui.viewMode === '3d' && !drag && !pan && !viewModeAnimating;
 	});
 
 	/** Grab over empty space; default arrow over nodes. */
@@ -1407,6 +1401,7 @@
 	let appliedRevealEpoch = 0;
 	let appliedZoomEpoch = 0;
 	let appliedTargetEpoch = 0;
+	let appliedFrameEpoch = 0;
 	/** Which mode the in-flight tween is heading toward (for mash retarget). */
 	let viewModeAnimTarget: '2d' | '3d' | null = null;
 	let viewModeDampingRestore: boolean | null = null;
@@ -1683,6 +1678,63 @@
 		if (!controls || epoch === 0 || epoch === appliedTargetEpoch) return;
 		appliedTargetEpoch = epoch;
 		animateResetTarget();
+	});
+
+	function animateFrameGraph() {
+		if (!controls) return;
+		const points = Object.values(app.document.nodes).map((n) => n.position);
+		const c = centroid(points);
+		if (!c) return;
+		const cam = camera.current;
+		if (!(cam instanceof THREE.PerspectiveCamera)) return;
+		const el = renderer.domElement;
+		const aspect = el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 16 / 9;
+		captureFromPose();
+		const is2d = app.ui.viewMode === '2d';
+		if (is2d) {
+			_toTarget.set(c.x, 0, c.z);
+			_toUp.copy(VIEW2D_UP);
+		} else {
+			_toTarget.set(c.x, c.y, c.z);
+			_toUp.set(0, 1, 0);
+		}
+		let dir = {
+			x: _fromEye.x - _fromTarget.x,
+			y: _fromEye.y - _fromTarget.y,
+			z: _fromEye.z - _fromTarget.z
+		};
+		const len = Math.hypot(dir.x, dir.y, dir.z);
+		if (is2d) {
+			dir = { x: 0, y: 1, z: 0 };
+		} else if (len < 1e-8) {
+			dir = { x: DEFAULT_VIEW_DIR.x, y: DEFAULT_VIEW_DIR.y, z: DEFAULT_VIEW_DIR.z };
+		} else {
+			dir = { x: dir.x / len, y: dir.y / len, z: dir.z / len };
+		}
+		const look = { x: _toTarget.x, y: _toTarget.y, z: _toTarget.z };
+		const fitted = orbitDistanceToFitPoints({
+			target: look,
+			eye: { x: look.x + dir.x, y: look.y + dir.y, z: look.z + dir.z },
+			points,
+			up: is2d ? { x: 0, y: 0, z: -1 } : { x: 0, y: 1, z: 0 },
+			fovDeg: cam.fov,
+			aspect,
+			radius: NODE_RADIUS,
+			minDistance: Math.max(0.05, MIN_DISTANCE_FLOOR),
+			maxDistance: CAM_MAX_DISTANCE
+		});
+		_toEye.set(look.x + dir.x * fitted, look.y + dir.y * fitted, look.z + dir.z * fitted);
+		prepareToQuat();
+		startCamPoseTween(app.ui.viewMode);
+	}
+
+	$effect(() => {
+		const epoch = app.frameGraphEpoch;
+		void Object.keys(app.document.nodes).length;
+		if (!controls || epoch === 0 || epoch === appliedFrameEpoch) return;
+		if (app.directions.traveling) return;
+		appliedFrameEpoch = epoch;
+		animateFrameGraph();
 	});
 
 	$effect(() => {

@@ -40,3 +40,13 @@ test('Generate offers 2D only for prism, hypercube, and Goldner–Harary', async
 	await page.getByTestId('generate-kind').selectOption('simple');
 	await expect(page.getByTestId('generate-planar')).toHaveCount(0);
 });
+
+test('Generate toasts Generated and replaces the graph', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'generate');
+	await page.getByTestId('generate-kind').selectOption('cycle');
+	await page.getByTestId('generate-submit').click();
+	await expect(page.getByTestId('status-message')).toHaveText('Generated');
+	await expect(page).toHaveTitle(/Cycle/);
+});
