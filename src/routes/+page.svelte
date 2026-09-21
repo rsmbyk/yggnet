@@ -164,7 +164,7 @@
 	{/if}
 	<div class="tool-dock">
 		<Toolbar />
-		<div class="tool-panel-stage">
+		<div class="tool-panel-stage" class:fill={app.ui.openTool !== null}>
 			{#if app.ui.openTool}
 				<div class="tool-panel-slot" transition:fly={slide}>
 					<ManagerPanel section={app.ui.openTool} />
@@ -229,12 +229,19 @@
 		pointer-events: none;
 	}
 
+	.tool-panel-stage.fill {
+		align-self: stretch;
+		height: 100%;
+		min-height: 0;
+	}
+
 	.tool-panel-slot {
 		grid-area: 1 / 1;
 		display: flex;
 		min-width: 0;
+		min-height: 0;
+		height: 100%;
 		max-height: 100%;
-		height: auto;
 		pointer-events: auto;
 	}
 
@@ -246,6 +253,11 @@
 	.tool-dock :global(.manager) {
 		pointer-events: auto;
 		cursor: default;
+	}
+
+	.tool-dock :global(.manager--fill) {
+		flex: 1 1 auto;
+		min-height: 0;
 	}
 
 	.world-placeholder {

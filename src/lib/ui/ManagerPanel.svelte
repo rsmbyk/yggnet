@@ -180,7 +180,11 @@
 	}
 </script>
 
-<aside class="manager" data-testid={section === 'selection' ? selectionTestId : 'yggnet-manager'}>
+<aside
+	class="manager"
+	class:manager--fill={section !== 'selection'}
+	data-testid={section === 'selection' ? selectionTestId : 'yggnet-manager'}
+>
 	<header class="manager__header">
 		<p class="brand">{section === 'selection' ? selectionTitle : toolLabel(section)}</p>
 		{#if section === 'file'}
@@ -1125,6 +1129,11 @@
 		overflow: auto;
 		box-shadow: 0 10px 32px rgba(28, 36, 46, 0.16);
 		border-radius: var(--yg-radius-modal);
+	}
+
+	.manager--fill {
+		height: 100%;
+		min-height: 0;
 	}
 
 	.brand {
