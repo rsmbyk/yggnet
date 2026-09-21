@@ -13,6 +13,8 @@ test('named save and load with overwrite confirm', async ({ page }) => {
 	await openTool(page, 'file');
 	await page.getByTestId('save-slot-name').fill(slot);
 	await page.getByTestId('save-named').click();
+	const savedRow = page.locator('[data-testid="save-slot-row"]', { hasText: slot });
+	await expect(savedRow).toBeVisible();
 
 	await openTool(page, 'nodes');
 	await page.getByTestId('add-node').click();
@@ -23,13 +25,25 @@ test('named save and load with overwrite confirm', async ({ page }) => {
 		void dialog.accept();
 	});
 	await openTool(page, 'file');
-	await page.getByTestId('load-named').click();
+	await savedRow.getByTestId('slot-load').click();
 
 	await openTool(page, 'nodes');
 	await expect(page.getByTestId('node-list').locator('li')).toHaveCount(1);
 	await expect(page.getByTestId('node-list')).toContainText('Falcon');
 	await page.getByTestId('node-list').locator('button').first().click();
 	await expect(page.getByTestId('node-label')).toHaveValue('Falcon');
+});
+
+test('named save can be deleted from the file list', async ({ page }) => {
+	await page.goto('/');
+	await openTool(page, 'file');
+	const slot = 'e2e-delete-slot';
+	await page.getByTestId('save-slot-name').fill(slot);
+	await page.getByTestId('save-named').click();
+	const row = page.locator('[data-testid="save-slot-row"]', { hasText: slot });
+	await expect(row).toBeVisible();
+	await row.getByTestId('slot-delete').click();
+	await expect(row).toHaveCount(0);
 });
 
 test('palette find jumps to matching node', async ({ page }) => {

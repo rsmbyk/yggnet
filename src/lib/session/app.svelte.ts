@@ -54,6 +54,7 @@ import { createNodePadding, findFreePosition } from '$lib/world/node-physics';
 import { worldTune } from '$lib/world/world-tune.svelte';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
 import { nextOpenTool, type ToolId } from '$lib/ui/tool-ids';
+import { listSaveSlotNames, saveSlotStorageKey } from './save-slots';
 
 const AUTOSAVE_KEY = 'yggnet.autosave';
 const AUTOSAVE_MS = 600;
@@ -213,6 +214,7 @@ class AppStore {
 		}
 	});
 	groupsCollapsed = $state.raw<Set<string>>(new Set());
+	namedSlots = $state<string[]>([]);
 	ui = $state.raw<UiState>({
 		paletteOpen: false,
 		diffIds: [],
@@ -258,6 +260,7 @@ class AppStore {
 	}
 
 	initFromAutosave(): void {
+		this.refreshNamedSlots();
 		if (typeof localStorage === 'undefined') return;
 		const raw = localStorage.getItem(AUTOSAVE_KEY);
 		if (!raw) return;
@@ -267,6 +270,11 @@ class AppStore {
 		} catch {
 			/* ignore corrupt autosave */
 		}
+	}
+
+	refreshNamedSlots(): void {
+		this.namedSlots =
+			typeof localStorage === 'undefined' ? [] : listSaveSlotNames(localStorage);
 	}
 
 	replaceDocument(doc: GraphDocument, clearRuns = true): void {
@@ -1014,13 +1022,14 @@ class AppStore {
 	}
 
 	saveToSlot(slot: string): void {
-		const name = slot.trim();
-		if (!name) {
+		const key = saveSlotStorageKey(slot);
+		if (!key) {
 			this.statusMessage = 'Enter a slot name';
 			return;
 		}
 		if (typeof localStorage === 'undefined') return;
-		localStorage.setItem(`yggnet.save.${name}`, serializeDocument(this.document));
+		localStorage.setItem(key, serializeDocument(this.document));
+		this.refreshNamedSlots();
 		this.statusMessage = 'Saved';
 	}
 
@@ -1029,13 +1038,13 @@ class AppStore {
 	}
 
 	loadFromSlot(slot: string): void {
-		const name = slot.trim();
-		if (!name) {
+		const key = saveSlotStorageKey(slot);
+		if (!key) {
 			this.statusMessage = 'Enter a slot name';
 			return;
 		}
 		if (typeof localStorage === 'undefined') return;
-		const raw = localStorage.getItem(`yggnet.save.${name}`);
+		const raw = localStorage.getItem(key);
 		if (!raw) {
 			this.statusMessage = 'No save found';
 			return;
@@ -1049,19 +1058,27 @@ class AppStore {
 	}
 
 	loadNamedSlot(name: string): void {
-		const slot = name.trim();
-		if (!slot) {
+		const key = saveSlotStorageKey(name);
+		if (!key) {
 			this.statusMessage = 'Enter a slot name';
 			return;
 		}
 		if (typeof localStorage === 'undefined') return;
-		const raw = localStorage.getItem(`yggnet.save.${slot}`);
+		const raw = localStorage.getItem(key);
 		if (!raw) {
 			this.statusMessage = 'No save found';
 			return;
 		}
 		if (!this.confirmReplaceDocument()) return;
-		this.loadFromSlot(slot);
+		this.loadFromSlot(name);
+	}
+
+	deleteNamedSlot(name: string): void {
+		const key = saveSlotStorageKey(name);
+		if (!key || typeof localStorage === 'undefined') return;
+		localStorage.removeItem(key);
+		this.refreshNamedSlots();
+		this.statusMessage = 'Deleted';
 	}
 
 	private confirmReplaceDocument(): boolean {

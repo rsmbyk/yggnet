@@ -20,6 +20,10 @@
 	let edgeAttachPayload = $state('');
 	let saveSlotName = $state('');
 
+	$effect(() => {
+		if (section === 'file') app.refreshNamedSlots();
+	});
+
 	const nodes = $derived(Object.values(app.document.nodes));
 	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const edges = $derived(Object.values(app.document.edges));
@@ -270,26 +274,48 @@
 	{/if}
 
 	{#if section === 'file'}
-		<section class="toolbar" aria-label="File">
-			<input
-				type="text"
-				placeholder="Slot name"
-				data-testid="save-slot-name"
-				bind:value={saveSlotName}
-				aria-label="Named save slot"
-			/>
-			<button
-				type="button"
-				data-testid="save-named"
-				disabled={!saveSlotName.trim()}
-				onclick={() => app.saveNamedSlot(saveSlotName)}>Save</button
-			>
-			<button
-				type="button"
-				data-testid="load-named"
-				disabled={!saveSlotName.trim()}
-				onclick={() => app.loadNamedSlot(saveSlotName)}>Load</button
-			>
+		<section class="block" data-testid="file-saves" aria-label="Saved graphs">
+			<h2>Saved graphs</h2>
+			<div class="row slot-save-row">
+				<input
+					class="slot-name-input"
+					type="text"
+					placeholder="Slot name"
+					data-testid="save-slot-name"
+					bind:value={saveSlotName}
+					aria-label="Named save slot"
+				/>
+				<button
+					type="button"
+					data-testid="save-named"
+					disabled={!saveSlotName.trim()}
+					onclick={() => app.saveNamedSlot(saveSlotName)}>Save</button
+				>
+			</div>
+			{#if app.namedSlots.length === 0}
+				<p class="hint">No saved graphs yet.</p>
+			{:else}
+				<ul class="list" data-testid="save-slot-list">
+					{#each app.namedSlots as name (name)}
+						<li class="row between slot-row" data-testid="save-slot-row" data-slot={name}>
+							<span class="slot-label">{name}</span>
+							<div class="row">
+								<button
+									type="button"
+									data-testid="slot-load"
+									onclick={() => app.loadNamedSlot(name)}>Load</button
+								>
+								<button
+									type="button"
+									class="danger"
+									data-testid="slot-delete"
+									onclick={() => app.deleteNamedSlot(name)}>Delete</button
+								>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			{/if}
 		</section>
 	{/if}
 
@@ -1114,10 +1140,26 @@
 		cursor: not-allowed;
 	}
 
-	.toolbar {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.3rem;
+	.slot-save-row {
+		width: 100%;
+	}
+
+	.slot-name-input {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.slot-row {
+		width: 100%;
+		gap: 0.5rem;
+	}
+
+	.slot-label {
+		min-width: 0;
+		flex: 1 1 auto;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.block h2 {
