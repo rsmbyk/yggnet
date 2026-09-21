@@ -327,7 +327,7 @@
 									<svg viewBox="0 0 24 24" aria-hidden="true">
 										<path
 											fill="currentColor"
-											d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
+											d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
 										/>
 									</svg>
 								</button>
@@ -1194,7 +1194,6 @@
 		height: var(--yg-hud-btn);
 		padding: 0;
 		flex: 0 0 auto;
-		border-radius: var(--yg-radius-pill);
 	}
 
 	.icon-btn svg {
