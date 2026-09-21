@@ -315,7 +315,7 @@
 			{#if app.namedSlots.length === 0}
 				<p class="hint">No saved graphs yet.</p>
 			{:else}
-				<ul class="list" data-testid="save-slot-list">
+				<ul class="list save-slot-list" data-testid="save-slot-list">
 					{#each app.namedSlots as name (name)}
 						<li class="row between slot-row" data-testid="save-slot-row" data-slot={name}>
 							<span class="slot-label">{name}</span>
@@ -1147,12 +1147,6 @@
 		flex-direction: column;
 	}
 
-	.file-saves .list {
-		flex: 1 1 auto;
-		min-height: 0;
-		max-height: none;
-	}
-
 	.brand {
 		margin: 0;
 		font-size: 1.05rem;
@@ -1324,6 +1318,12 @@
 		gap: 0.2rem;
 		max-height: 10rem;
 		overflow: auto;
+	}
+
+	.list.save-slot-list {
+		flex: 1 1 auto;
+		min-height: 0;
+		max-height: none;
 	}
 
 	.list-item {

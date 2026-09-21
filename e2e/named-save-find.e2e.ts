@@ -113,6 +113,7 @@ test('saved graph list fills the remaining file column', async ({ page }) => {
 	expect(bottomGap).toBeGreaterThanOrEqual(8);
 	expect(bottomGap).toBeLessThanOrEqual(24);
 	expect(listBox!.height).toBeGreaterThan(160);
+	await expect(list).toHaveCSS('max-height', 'none');
 });
 
 test('saved graph rows highlight on hover', async ({ page }) => {
