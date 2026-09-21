@@ -7,6 +7,7 @@
 		generateRequestFromForm,
 		GRAPH_KIND_GROUPS,
 		kindAllowsDirected,
+		kindAllowsPlanar,
 		kindAllowsWeighted,
 		PALEY_ORDERS,
 		pathSeriesMetrics,
@@ -896,6 +897,15 @@
 					{#if kindAllowsWeighted(app.generateForm.kind)}
 						<label class="check"
 							><input type="checkbox" bind:checked={app.generateForm.weighted} /> Weighted</label
+						>
+					{/if}
+					{#if kindAllowsPlanar(app.generateForm.kind)}
+						<label class="check"
+							><input
+								type="checkbox"
+								data-testid="generate-planar"
+								bind:checked={app.generateForm.planar}
+							/> 2D</label
 						>
 					{/if}
 				</div>

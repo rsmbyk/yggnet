@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dist, enforceMinDistance, GENERATE_MIN_DISTANCE, vec } from './geom';
+import { dist, enforceMinDistance, GENERATE_MIN_DISTANCE, projectToPlane, vec } from './geom';
 
 describe('enforceMinDistance', () => {
 	it('leaves already-spaced points unchanged', () => {
@@ -22,5 +22,25 @@ describe('enforceMinDistance', () => {
 		expect(dist(out[0], out[1])).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
 		expect(dist(out[0], out[2])).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
 		expect(dist(out[1], out[2])).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+	});
+
+	it('keeps a planar packing on the XZ plane', () => {
+		const out = enforceMinDistance(
+			[vec(0, 0, 0), vec(0, 0, 0), vec(0, 0, 0)],
+			GENERATE_MIN_DISTANCE,
+			true
+		);
+		expect(out.every((p) => p.y === 0)).toBe(true);
+		expect(dist(out[0], out[1])).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+		expect(dist(out[0], out[2])).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+		expect(dist(out[1], out[2])).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+	});
+});
+
+describe('projectToPlane', () => {
+	it('drops height into the XZ plane without collapsing stacked layers', () => {
+		const out = projectToPlane([vec(0, 2, 0), vec(0, -2, 0)]);
+		expect(out.every((p) => p.y === 0)).toBe(true);
+		expect(dist(out[0], out[1])).toBeGreaterThan(1);
 	});
 });

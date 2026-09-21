@@ -6,6 +6,7 @@ import {
 	dist,
 	dist2,
 	enforceMinDistance,
+	projectToPlane,
 	rotateY,
 	tumble,
 	uniquePairs,
@@ -28,6 +29,7 @@ export {
 	GRAPH_KINDS,
 	isNamedGraphId,
 	kindAllowsDirected,
+	kindAllowsPlanar,
 	kindAllowsWeighted,
 	NAMED_GRAPH_LABELS,
 	NAMED_GRAPHS,
@@ -160,11 +162,14 @@ function finish(
 	layout: 'yaw' | 'tumble' | 'grid90' | 'hex60' | 'none'
 ): GraphDocument {
 	let pts = points;
-	if (layout === 'grid90') pts = applyYaw(pts, rng.int(0, 3) * (Math.PI / 2));
-	else if (layout === 'hex60') pts = applyYaw(pts, rng.int(0, 5) * (Math.PI / 3));
-	else if (layout === 'yaw') pts = applyTumble(pts, rng, false);
-	else if (layout === 'tumble') pts = applyTumble(pts, rng, true);
-	pts = enforceMinDistance(pts);
+	let layoutMode = layout;
+	if (opts.planar && layoutMode === 'tumble') layoutMode = 'yaw';
+	if (layoutMode === 'grid90') pts = applyYaw(pts, rng.int(0, 3) * (Math.PI / 2));
+	else if (layoutMode === 'hex60') pts = applyYaw(pts, rng.int(0, 5) * (Math.PI / 3));
+	else if (layoutMode === 'yaw') pts = applyTumble(pts, rng, false);
+	else if (layoutMode === 'tumble') pts = applyTumble(pts, rng, true);
+	if (opts.planar) pts = projectToPlane(pts);
+	pts = enforceMinDistance(pts, undefined, opts.planar === true);
 	const oriented = maybeOrient(edges, opts.directed === true, rng);
 	return assemble(title, pts, oriented, rng, {
 		nodeY: opts.nodeY ?? 0,
@@ -665,12 +670,19 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 		}
 		case 'prism': {
 			const ng = clampInt(opts.nGons ?? 6, 3, 20);
-			const points = [...circleLayout(ng, 5, 1.6), ...circleLayout(ng, 5, -1.6)];
+			const points = opts.planar
+				? [...circleLayout(ng, 5), ...circleLayout(ng, 2.8)]
+				: [...circleLayout(ng, 5, 1.6), ...circleLayout(ng, 5, -1.6)];
 			const edges: [number, number][] = [];
 			for (let i = 0; i < ng; i += 1) {
 				edges.push([i, (i + 1) % ng], [ng + i, ng + ((i + 1) % ng)], [i, ng + i]);
 			}
-			return { title: `Prism ${ng}`, points, edges: undirected(edges), layout: 'tumble' };
+			return {
+				title: `Prism ${ng}`,
+				points,
+				edges: undirected(edges),
+				layout: opts.planar ? 'yaw' : 'tumble'
+			};
 		}
 		case 'mobiusLadder': {
 			const rungs = clampInt(opts.rungs ?? 6, 3, 20);

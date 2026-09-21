@@ -15,6 +15,7 @@ import {
 	GRAPH_KIND_GROUPS,
 	GRAPH_KINDS,
 	kindAllowsDirected,
+	kindAllowsPlanar,
 	kindAllowsWeighted,
 	NAMED_GRAPHS,
 	type GraphKind,
@@ -219,6 +220,17 @@ describe('kind metadata', () => {
 		expect(kindAllowsWeighted('tree')).toBe(false);
 		expect(kindAllowsDirected('tournament')).toBe(false);
 	});
+
+	it('offers a 2D drawing only for prism, hypercube, and Goldner–Harary', () => {
+		expect(kindAllowsPlanar('prism')).toBe(true);
+		expect(kindAllowsPlanar('hypercube')).toBe(true);
+		expect(kindAllowsPlanar('goldnerHarary')).toBe(true);
+		expect(kindAllowsPlanar('simple')).toBe(false);
+		expect(kindAllowsPlanar('petersen')).toBe(false);
+		expect(kindAllowsPlanar('platonic')).toBe(false);
+		expect(kindAllowsPlanar('helix')).toBe(false);
+		expect(kindAllowsPlanar('cell24')).toBe(false);
+	});
 });
 
 describe('solids and extra options', () => {
@@ -335,6 +347,19 @@ describe('solids and extra options', () => {
 		expect(nodeCount(doc)).toBeGreaterThanOrEqual(2);
 		expect(minPairwiseNodeDistance(doc)).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
 	});
+
+	it.each(['simple', 'prism', 'hypercube'] as const)(
+		'%s planar drawing keeps every node on the XZ plane',
+		(kind) => {
+			const a = generateGraph(kind, { seed: 19, nodes: 12, nGons: 6, dimension: 3, planar: true });
+			const b = generateGraph(kind, { seed: 19, nodes: 12, nGons: 6, dimension: 3, planar: true });
+			expect(fingerprint(a)).toBe(fingerprint(b));
+			expect(minPairwiseNodeDistance(a)).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+			for (const node of Object.values(a.nodes)) {
+				expect(node.position.y).toBeCloseTo(0, 6);
+			}
+		}
+	);
 });
 
 describe('generateOptionsFromForm', () => {
@@ -357,6 +382,18 @@ describe('generateOptionsFromForm', () => {
 		const req = generateRequestFromForm(form);
 		expect(req.kind).toBe('named');
 		expect(req.options.named).toBe('petersen');
+	});
+
+	it('passes planar when the picker allows a 2D drawing', () => {
+		const form = defaultGenerateForm();
+		form.planar = true;
+		expect(generateOptionsFromForm(form).planar).toBe(false);
+		form.kind = 'prism';
+		expect(generateOptionsFromForm(form).planar).toBe(true);
+		form.kind = 'goldnerHarary';
+		expect(generateOptionsFromForm(form).planar).toBe(true);
+		form.kind = 'simple';
+		expect(generateOptionsFromForm(form).planar).toBe(false);
 	});
 });
 

@@ -159,7 +159,7 @@ function isFree(p: Vec3, occupied: Vec3[], minDist: number): boolean {
 	return true;
 }
 
-function findFreePoint(preferred: Vec3, occupied: Vec3[], minDist: number): Vec3 {
+function findFreePoint(preferred: Vec3, occupied: Vec3[], minDist: number, planar: boolean): Vec3 {
 	if (isFree(preferred, occupied, minDist)) return preferred;
 	for (let ring = 1; ring <= 48; ring += 1) {
 		const n = 6 * ring;
@@ -172,6 +172,7 @@ function findFreePoint(preferred: Vec3, occupied: Vec3[], minDist: number): Vec3
 				preferred.z + Math.sin(ang) * rad
 			);
 			if (isFree(xz, occupied, minDist)) return xz;
+			if (planar) continue;
 			for (const sy of [1, -1]) {
 				for (let y = 1; y <= ring; y += 1) {
 					const p = vec(xz.x, preferred.y + sy * minDist * y, xz.z);
@@ -183,12 +184,22 @@ function findFreePoint(preferred: Vec3, occupied: Vec3[], minDist: number): Vec3
 	return vec(preferred.x + minDist * (occupied.length + 1), preferred.y, preferred.z);
 }
 
+/** Drop height into the XZ plane so stacked 3D layers become a flat drawing. */
+export function projectToPlane(points: Vec3[]): Vec3[] {
+	return points.map((p) => vec(p.x + p.y * 0.65, 0, p.z + p.y * 0.35));
+}
+
 /**
  * Guarantee every pair of points is at least `minDist` apart.
  * Prefers a uniform scale about the centroid so lattices stay lattices;
  * falls back to sequential 3D hex search for coincident / degenerate sets.
+ * When `planar`, the search stays in XZ so a 2D drawing does not grow height.
  */
-export function enforceMinDistance(points: Vec3[], minDist = GENERATE_MIN_DISTANCE): Vec3[] {
+export function enforceMinDistance(
+	points: Vec3[],
+	minDist = GENERATE_MIN_DISTANCE,
+	planar = false
+): Vec3[] {
 	if (points.length < 2) return points;
 	const min = minPairwise(points);
 	if (min >= minDist - 1e-6) return points;
@@ -197,6 +208,6 @@ export function enforceMinDistance(points: Vec3[], minDist = GENERATE_MIN_DISTAN
 		if (factor <= MAX_UNIFORM_SCALE) return scaleAbout(points, centroidOf(points), factor);
 	}
 	const out: Vec3[] = [];
-	for (const p of points) out.push(findFreePoint(p, out, minDist));
+	for (const p of points) out.push(findFreePoint(p, out, minDist, planar));
 	return out;
 }

@@ -107,6 +107,7 @@ export {
 	generateRequestFromForm,
 	isNamedGraphId,
 	kindAllowsDirected,
+	kindAllowsPlanar,
 	kindAllowsWeighted,
 	type GraphKind,
 	type GenerateFormState,

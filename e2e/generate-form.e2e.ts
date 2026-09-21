@@ -25,3 +25,18 @@ test('Generate lists named graphs on the type dropdown', async ({ page }) => {
 	await page.getByTestId('generate-kind').selectOption('petersen');
 	await expect(page.getByTestId('generate-kind')).toHaveValue('petersen');
 });
+
+test('Generate offers 2D only for prism, hypercube, and Goldner–Harary', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'generate');
+	await expect(page.getByTestId('generate-planar')).toHaveCount(0);
+	await page.getByTestId('generate-kind').selectOption('prism');
+	await expect(page.getByTestId('generate-planar')).toBeVisible();
+	await page.getByTestId('generate-kind').selectOption('hypercube');
+	await expect(page.getByTestId('generate-planar')).toBeVisible();
+	await page.getByTestId('generate-kind').selectOption('goldnerHarary');
+	await expect(page.getByTestId('generate-planar')).toBeVisible();
+	await page.getByTestId('generate-kind').selectOption('simple');
+	await expect(page.getByTestId('generate-planar')).toHaveCount(0);
+});

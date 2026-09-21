@@ -147,6 +147,8 @@ export interface GenerateOptions {
 	segments?: number;
 	petersenN?: number;
 	petersenK?: number;
+	/** Flatten onto the XZ plane (2D drawing). UI only offers this for prism, hypercube, and Goldner–Harary. */
+	planar?: boolean;
 }
 
 export type KindField =
@@ -284,6 +286,17 @@ export function kindAllowsDirected(kind: GraphKind | NamedGraphId): boolean {
 	return SHARED_DIRECTED.has(kind);
 }
 
+const PLANAR_PICKER_IDS: ReadonlySet<GraphKind | NamedGraphId> = new Set([
+	'prism',
+	'hypercube',
+	'goldnerHarary'
+]);
+
+/** True when Generate can offer a 2D drawing — kinds that actually leave the XZ plane. */
+export function kindAllowsPlanar(kind: GraphKind | NamedGraphId): boolean {
+	return PLANAR_PICKER_IDS.has(kind);
+}
+
 /** Last Generate-tool form values. Survives ManagerPanel remounts in session state. */
 export interface GenerateFormState {
 	kind: GeneratePickerId;
@@ -328,6 +341,7 @@ export interface GenerateFormState {
 	segments: number;
 	petersenN: number;
 	petersenK: number;
+	planar: boolean;
 }
 
 export function defaultGenerateForm(): GenerateFormState {
@@ -373,7 +387,8 @@ export function defaultGenerateForm(): GenerateFormState {
 		rings: 4,
 		segments: 8,
 		petersenN: 5,
-		petersenK: 2
+		petersenK: 2,
+		planar: false
 	};
 }
 
@@ -426,7 +441,8 @@ export function generateOptionsFromForm(form: GenerateFormState): GenerateOption
 		rings: form.rings,
 		segments: form.segments,
 		petersenN: form.petersenN,
-		petersenK: form.petersenK
+		petersenK: form.petersenK,
+		planar: kindAllowsPlanar(form.kind) ? form.planar : false
 	};
 }
 
