@@ -46,6 +46,16 @@ test('named save can be deleted from the file list', async ({ page }) => {
 	await expect(row).toHaveCount(0);
 });
 
+test('enter in the slot name field saves', async ({ page }) => {
+	await page.goto('/');
+	await openTool(page, 'file');
+	const slot = 'e2e-enter-slot';
+	const field = page.getByTestId('save-slot-name');
+	await field.fill(slot);
+	await field.press('Enter');
+	await expect(page.locator('[data-testid="save-slot-row"]', { hasText: slot })).toBeVisible();
+});
+
 test('palette find jumps to matching node', async ({ page }) => {
 	await page.goto('/');
 	await openTool(page, 'nodes');

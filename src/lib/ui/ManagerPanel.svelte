@@ -276,7 +276,14 @@
 	{#if section === 'file'}
 		<section class="block" data-testid="file-saves" aria-label="Saved graphs">
 			<h2>Saved graphs</h2>
-			<div class="row slot-save-row">
+			<form
+				class="row slot-save-row"
+				onsubmit={(e) => {
+					e.preventDefault();
+					if (!saveSlotName.trim()) return;
+					app.saveNamedSlot(saveSlotName);
+				}}
+			>
 				<input
 					class="slot-name-input"
 					type="text"
@@ -286,12 +293,21 @@
 					aria-label="Named save slot"
 				/>
 				<button
-					type="button"
+					type="submit"
+					class="icon-btn"
 					data-testid="save-named"
 					disabled={!saveSlotName.trim()}
-					onclick={() => app.saveNamedSlot(saveSlotName)}>Save</button
+					aria-label="Save"
+					title="Save"
 				>
-			</div>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path
+							fill="currentColor"
+							d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"
+						/>
+					</svg>
+				</button>
+			</form>
 			{#if app.namedSlots.length === 0}
 				<p class="hint">No saved graphs yet.</p>
 			{:else}
@@ -302,15 +318,34 @@
 							<div class="row">
 								<button
 									type="button"
+									class="icon-btn"
 									data-testid="slot-load"
-									onclick={() => app.loadNamedSlot(name)}>Load</button
+									aria-label="Load"
+									title="Load"
+									onclick={() => app.loadNamedSlot(name)}
 								>
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path
+											fill="currentColor"
+											d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
+										/>
+									</svg>
+								</button>
 								<button
 									type="button"
-									class="danger"
+									class="icon-btn danger"
 									data-testid="slot-delete"
-									onclick={() => app.deleteNamedSlot(name)}>Delete</button
+									aria-label="Delete"
+									title="Delete"
+									onclick={() => app.deleteNamedSlot(name)}
 								>
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path
+											fill="currentColor"
+											d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+										/>
+									</svg>
+								</button>
 							</div>
 						</li>
 					{/each}
@@ -1142,11 +1177,30 @@
 
 	.slot-save-row {
 		width: 100%;
+		margin: 0;
 	}
 
 	.slot-name-input {
 		flex: 1 1 auto;
 		min-width: 0;
+		min-height: var(--yg-hud-btn);
+		box-sizing: border-box;
+	}
+
+	.icon-btn {
+		display: inline-grid;
+		place-items: center;
+		width: var(--yg-hud-btn);
+		height: var(--yg-hud-btn);
+		padding: 0;
+		flex: 0 0 auto;
+		border-radius: var(--yg-radius-pill);
+	}
+
+	.icon-btn svg {
+		width: 1.05rem;
+		height: 1.05rem;
+		display: block;
 	}
 
 	.slot-row {
