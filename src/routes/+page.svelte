@@ -6,6 +6,7 @@
 	import { app } from '$lib/session/app.svelte';
 	import { tabTitleFromGraph } from '$lib/session/tab-title';
 	import { selectionPanelOpen } from '$lib/ui/tool-ids';
+	import { forwardWheelEvent, worldCanvas } from '$lib/ui/forward-wheel';
 
 	const slide = { duration: 220, x: -28, opacity: 0 };
 	const panelFade = { duration: 180 };
@@ -86,6 +87,12 @@
 		if (e.target === e.currentTarget) closePalette();
 	}
 
+	function onScrimWheel(e: WheelEvent) {
+		const canvas = worldCanvas(document);
+		if (!canvas) return;
+		forwardWheelEvent(e, canvas);
+	}
+
 	const showSelectionPanel = $derived(
 		selectionPanelOpen(app.ui.openTool, app.selection.nodeIds.length, app.selection.edgeIds.length)
 	);
@@ -153,7 +160,15 @@
 	</main>
 
 	{#if app.ui.openTool}
-		<div class="drawer-scrim" data-testid="manager-scrim" aria-hidden="true"></div>
+		<button
+			type="button"
+			class="drawer-scrim"
+			aria-label="Close tools panel"
+			data-testid="manager-scrim"
+			transition:fade={{ duration: 180 }}
+			onclick={() => app.setOpenTool(null)}
+			onwheel={onScrimWheel}
+		></button>
 	{/if}
 	<div class="tool-dock">
 		<Toolbar />
@@ -196,7 +211,7 @@
 		padding: 0;
 		margin: 0;
 		background: rgba(28, 36, 46, 0.28);
-		pointer-events: none;
+		cursor: pointer;
 	}
 
 	.tool-dock {
