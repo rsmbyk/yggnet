@@ -35,6 +35,22 @@ describe('enforceMinDistance', () => {
 		expect(dist(out[0], out[2])).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
 		expect(dist(out[1], out[2])).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
 	});
+
+	it('scales a tight planar ring past the 3D cap without leaving XZ', () => {
+		const n = 43;
+		const r = 4.5;
+		const pts = Array.from({ length: n }, (_, i) => {
+			const t = (i / n) * Math.PI * 2;
+			return vec(Math.cos(t) * r, 0, Math.sin(t) * r);
+		});
+		const chord = dist(pts[0], pts[1]);
+		expect(GENERATE_MIN_DISTANCE / chord).toBeGreaterThan(6);
+		const out = enforceMinDistance(pts, GENERATE_MIN_DISTANCE, true);
+		expect(out.every((p) => p.y === 0)).toBe(true);
+		const radii = out.map((p) => Math.hypot(p.x, p.z));
+		expect(Math.max(...radii) - Math.min(...radii)).toBeLessThan(1e-6);
+		expect(dist(out[0], out[1])).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+	});
 });
 
 describe('projectToPlane', () => {

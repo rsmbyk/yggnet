@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	centroid,
+	farPlaneForOrbitDistance,
 	orbitDistanceToFitPoint,
 	orbitDistanceToFitPoints,
 	projectOrbitPoint
@@ -57,7 +58,7 @@ describe('orbitDistanceToFitPoint', () => {
 		expect(Math.abs(proj!.ndcY)).toBeLessThanOrEqual(0.9 + 1e-6);
 	});
 
-	it('does not exceed maxDistance', () => {
+	it('does not exceed a finite maxDistance', () => {
 		const d = orbitDistanceToFitPoint({
 			target,
 			eye,
@@ -70,6 +71,39 @@ describe('orbitDistanceToFitPoint', () => {
 			maxDistance: 80
 		});
 		expect(d).toBe(80);
+	});
+
+	it('zooms out past 200 when maxDistance is unbounded', () => {
+		const d = orbitDistanceToFitPoint({
+			target,
+			eye,
+			point: { x: 400, y: 1, z: 0 },
+			up,
+			fovDeg: 50,
+			aspect: 16 / 9,
+			radius: 1,
+			minDistance: 2,
+			maxDistance: Infinity
+		});
+		expect(d).toBeGreaterThan(200);
+		expect(d).toBeGreaterThanOrEqual(2);
+		const current = Math.hypot(10, 10);
+		const eyeAt = {
+			x: (eye.x / current) * d,
+			y: (eye.y / current) * d,
+			z: (eye.z / current) * d
+		};
+		const proj = projectOrbitPoint(target, eyeAt, { x: 400, y: 1, z: 0 }, up, 50, 16 / 9);
+		expect(proj).not.toBeNull();
+		expect(Math.abs(proj!.ndcX)).toBeLessThanOrEqual(0.9 + 1e-6);
+		expect(Math.abs(proj!.ndcY)).toBeLessThanOrEqual(0.9 + 1e-6);
+	});
+});
+
+describe('farPlaneForOrbitDistance', () => {
+	it('keeps the default far until orbit outruns it', () => {
+		expect(farPlaneForOrbitDistance(50, 500)).toBe(500);
+		expect(farPlaneForOrbitDistance(400, 500)).toBeGreaterThan(500);
 	});
 });
 

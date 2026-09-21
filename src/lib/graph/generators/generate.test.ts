@@ -361,6 +361,25 @@ describe('solids and extra options', () => {
 			}
 		}
 	);
+
+	it('grows a Null graph on the floor instead of stacking at 43 nodes', () => {
+		const a = generateGraph('null', { seed: 3, nodes: 42 });
+		const b = generateGraph('null', { seed: 3, nodes: 43 });
+		for (const node of [...Object.values(a.nodes), ...Object.values(b.nodes)]) {
+			expect(node.position.y).toBeCloseTo(0, 6);
+		}
+		expect(minPairwiseNodeDistance(a)).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+		expect(minPairwiseNodeDistance(b)).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+		const radius = (doc: GraphDocument) =>
+			Math.max(...Object.values(doc.nodes).map((n) => Math.hypot(n.position.x, n.position.z)));
+		expect(radius(b)).toBeGreaterThan(radius(a));
+	});
+
+	it('still uses height for a default Prism', () => {
+		const doc = generateGraph('prism', { seed: 1, nGons: 6 });
+		const ys = Object.values(doc.nodes).map((n) => n.position.y);
+		expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(1);
+	});
 });
 
 describe('generateOptionsFromForm', () => {

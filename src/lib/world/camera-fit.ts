@@ -15,8 +15,48 @@ export type OrbitFitInput = {
 	/** NDC half-extent to stay inside (1 = clip edge). */
 	marginNdc?: number;
 	minDistance: number;
+	/** Omit or `Infinity` for unbounded zoom-out. */
 	maxDistance: number;
 };
+
+function resolvedMaxDistance(maxDistance: number, minD: number): number {
+	if (!Number.isFinite(maxDistance)) return Infinity;
+	return Math.max(minD, maxDistance);
+}
+
+/**
+ * Perspective far plane that stays ahead of the orbit eye.
+ * `defaultFar` is the configured floor; zoom-out raises it so the graph does not clip.
+ */
+export function farPlaneForOrbitDistance(
+	distance: number,
+	defaultFar: number,
+	margin = 50
+): number {
+	const d = Number.isFinite(distance) ? Math.abs(distance) : 0;
+	const floor = Number.isFinite(defaultFar) && defaultFar > 0 ? defaultFar : 500;
+	return Math.max(floor, d * 2 + margin);
+}
+
+function searchOrbitFit(fitsAt: (d: number) => boolean, lo: number, maxD: number): number {
+	if (fitsAt(lo)) return lo;
+	let hi = maxD;
+	if (!Number.isFinite(maxD)) {
+		hi = Math.max(lo, 1);
+		while (!fitsAt(hi)) {
+			hi *= 2;
+			if (hi > 1e12) return hi;
+		}
+	} else if (!fitsAt(maxD)) {
+		return maxD;
+	}
+	for (let i = 0; i < 24; i += 1) {
+		const mid = (lo + hi) / 2;
+		if (fitsAt(mid)) hi = mid;
+		else lo = mid;
+	}
+	return hi;
+}
 
 function sub(a: Vec3, b: Vec3): Vec3 {
 	return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
@@ -113,8 +153,10 @@ function inView(
 export function orbitDistanceToFitPoint(input: OrbitFitInput): number {
 	const current = length(sub(input.eye, input.target));
 	const minD = Math.max(input.minDistance, 1e-3);
-	const maxD = Math.max(minD, input.maxDistance);
-	const start = Math.min(maxD, Math.max(minD, current || minD));
+	const maxD = resolvedMaxDistance(input.maxDistance, minD);
+	const start = Number.isFinite(maxD)
+		? Math.min(maxD, Math.max(minD, current || minD))
+		: Math.max(minD, current || minD);
 	const dir = normalize(sub(input.eye, input.target)) ?? { x: 0, y: 1, z: 0 };
 	const margin = input.marginNdc ?? 0.9;
 	const ball = input.radius ?? 0;
@@ -133,17 +175,7 @@ export function orbitDistanceToFitPoint(input: OrbitFitInput): number {
 		return inView(proj, ball, input.fovDeg, input.aspect, margin);
 	};
 
-	if (fitsAt(start)) return start;
-	if (!fitsAt(maxD)) return maxD;
-
-	let lo = start;
-	let hi = maxD;
-	for (let i = 0; i < 24; i++) {
-		const mid = (lo + hi) / 2;
-		if (fitsAt(mid)) hi = mid;
-		else lo = mid;
-	}
-	return hi;
+	return searchOrbitFit(fitsAt, start, maxD);
 }
 
 export type OrbitFitCloudInput = Omit<OrbitFitInput, 'point'> & {
@@ -171,9 +203,13 @@ export function centroid(points: Vec3[]): Vec3 | null {
  */
 export function orbitDistanceToFitPoints(input: OrbitFitCloudInput): number {
 	const minD = Math.max(input.minDistance, 1e-3);
-	const maxD = Math.max(minD, input.maxDistance);
+	const maxD = resolvedMaxDistance(input.maxDistance, minD);
 	const current = length(sub(input.eye, input.target));
-	if (input.points.length === 0) return Math.min(maxD, Math.max(minD, current || minD));
+	if (input.points.length === 0) {
+		return Number.isFinite(maxD)
+			? Math.min(maxD, Math.max(minD, current || minD))
+			: Math.max(minD, current || minD);
+	}
 	const dir = normalize(sub(input.eye, input.target)) ?? { x: 0, y: 1, z: 0 };
 	const margin = input.marginNdc ?? 0.9;
 	const ball = input.radius ?? 0;
@@ -195,14 +231,5 @@ export function orbitDistanceToFitPoints(input: OrbitFitCloudInput): number {
 		return true;
 	};
 
-	if (fitsAt(minD)) return minD;
-	if (!fitsAt(maxD)) return maxD;
-	let lo = minD;
-	let hi = maxD;
-	for (let i = 0; i < 24; i += 1) {
-		const mid = (lo + hi) / 2;
-		if (fitsAt(mid)) hi = mid;
-		else lo = mid;
-	}
-	return hi;
+	return searchOrbitFit(fitsAt, minD, maxD);
 }

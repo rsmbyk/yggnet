@@ -73,10 +73,10 @@ export const WORLD = {
 	camera: {
 		/** Orbit distance at startup and on zoom-reset. */
 		defaultDistance: 50,
-		/** Closest allowed orbit distance. */
+		/** Closest allowed orbit distance. Zoom-in still cannot pass this (floor stop). */
 		minDistance: 2.5,
-		/** Farthest allowed orbit distance. */
-		maxDistance: 200,
+		/** Farthest allowed orbit distance. `Infinity` = no zoom-out cap. */
+		maxDistance: Infinity,
 		/** Perspective near clip plane. */
 		near: 0.5,
 		/** Perspective far clip plane. */

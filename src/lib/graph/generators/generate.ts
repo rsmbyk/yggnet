@@ -169,7 +169,13 @@ function finish(
 	else if (layoutMode === 'yaw') pts = applyTumble(pts, rng, false);
 	else if (layoutMode === 'tumble') pts = applyTumble(pts, rng, true);
 	if (opts.planar) pts = projectToPlane(pts);
-	pts = enforceMinDistance(pts, undefined, opts.planar === true);
+	const packPlanar =
+		opts.planar === true ||
+		layoutMode === 'yaw' ||
+		layoutMode === 'grid90' ||
+		layoutMode === 'hex60' ||
+		pts.every((p) => Math.abs(p.y) < 1e-6);
+	pts = enforceMinDistance(pts, undefined, packPlanar);
 	const oriented = maybeOrient(edges, opts.directed === true, rng);
 	return assemble(title, pts, oriented, rng, {
 		nodeY: opts.nodeY ?? 0,

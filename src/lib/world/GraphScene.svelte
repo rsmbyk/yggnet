@@ -9,7 +9,12 @@
 	import type { GraphNode } from '$lib/graph';
 	import { defaultPositionFromTune, worldTune } from './world-tune.svelte';
 	import { clampToFloor, resolveMoveAgainstNodes, snapToGrid } from './node-physics';
-	import { centroid, orbitDistanceToFitPoint, orbitDistanceToFitPoints } from './camera-fit';
+	import {
+		centroid,
+		farPlaneForOrbitDistance,
+		orbitDistanceToFitPoint,
+		orbitDistanceToFitPoints
+	} from './camera-fit';
 	import { interactionModeFromState, resolveNodeClick, type NodeClickAction } from './node-click';
 
 	interactivity();
@@ -42,6 +47,7 @@
 	const CAM_FOV = $derived(tune.fov);
 	const CAM_NEAR = $derived(tune.near);
 	const CAM_FAR = $derived(tune.far);
+	let liveFar = $state(worldTune.values.far);
 	const SCENE_BG = $derived(tune.background);
 	const DEFAULT_VIEW_DIR = $derived(
 		new THREE.Vector3(...defaultPositionFromTune(tune)).normalize()
@@ -212,14 +218,17 @@
 	 * damping and makes pan/zoom feel like they die near the floor or at steep tilt.
 	 */
 	useTask(() => {
-		if (!ground) return;
 		const cam = camera.current;
+		if (controls && cam instanceof THREE.PerspectiveCamera) {
+			liveFar = farPlaneForOrbitDistance(controls.getDistance(), CAM_FAR);
+		}
+		if (!ground) return;
 		if (viewAnim) {
 			tickViewModeAnim(performance.now());
 		} else if (controls && !viewModeAnimating) {
 			const flat = app.ui.viewMode === '2d';
 			controls.minDistance = Math.max(0.05, MIN_DISTANCE_FLOOR);
-			controls.maxDistance = CAM_MAX_DISTANCE;
+			controls.maxDistance = Number.isFinite(CAM_MAX_DISTANCE) ? CAM_MAX_DISTANCE : Infinity;
 			if (flat) {
 				// 2D: manual top-down pose — don't use SAFE_MIN_POLAR (that leaves ~7° off vertical).
 				controls.minPolarAngle = 0;
@@ -581,7 +590,9 @@
 		if (_spherical.phi < SAFE_MIN_POLAR) _spherical.phi = SAFE_MIN_POLAR;
 		const minDist = Math.max(0.05, MIN_DISTANCE_FLOOR);
 		if (_spherical.radius < minDist) _spherical.radius = minDist;
-		if (_spherical.radius > CAM_MAX_DISTANCE) _spherical.radius = CAM_MAX_DISTANCE;
+		if (Number.isFinite(CAM_MAX_DISTANCE) && _spherical.radius > CAM_MAX_DISTANCE) {
+			_spherical.radius = CAM_MAX_DISTANCE;
+		}
 		_spherical.makeSafe();
 		if (_spherical.phi < SAFE_MIN_POLAR) _spherical.phi = SAFE_MIN_POLAR;
 		_offset.setFromSpherical(_spherical);
@@ -1782,7 +1793,7 @@
 	position={initialCameraPosition}
 	fov={CAM_FOV}
 	near={CAM_NEAR}
-	far={CAM_FAR}
+	far={liveFar}
 >
 	<OrbitControls
 		bind:ref={controls}

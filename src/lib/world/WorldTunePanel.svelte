@@ -56,7 +56,13 @@
 			title: 'Edges',
 			fields: [
 				{ kind: 'number', key: 'shaftRadius', label: 'Shaft', step: 0.01, min: 0.01 },
-				{ kind: 'number', key: 'previewShaftRadius', label: 'Preview shaft', step: 0.01, min: 0.01 },
+				{
+					kind: 'number',
+					key: 'previewShaftRadius',
+					label: 'Preview shaft',
+					step: 0.01,
+					min: 0.01
+				},
 				{ kind: 'number', key: 'arrowRadius', label: 'Arrow base', step: 0.01, min: 0.01 },
 				{ kind: 'number', key: 'arrowHeight', label: 'Arrow height', step: 0.05, min: 0.05 },
 				{
@@ -188,7 +194,9 @@
 									step={f.step}
 									min={f.min}
 									max={f.max}
-									value={worldTune.values[f.key]}
+									value={Number.isFinite(Number(worldTune.values[f.key]))
+										? worldTune.values[f.key]
+										: ''}
 									oninput={(e) => onNumber(f.key, e.currentTarget.value)}
 								/>
 							{/if}

@@ -193,7 +193,8 @@ export function projectToPlane(points: Vec3[]): Vec3[] {
  * Guarantee every pair of points is at least `minDist` apart.
  * Prefers a uniform scale about the centroid so lattices stay lattices;
  * falls back to sequential 3D hex search for coincident / degenerate sets.
- * When `planar`, the search stays in XZ so a 2D drawing does not grow height.
+ * When `planar`, uniform scale is unbounded and the search stays in XZ
+ * so a 2D drawing grows on the floor instead of stacking.
  */
 export function enforceMinDistance(
 	points: Vec3[],
@@ -205,7 +206,8 @@ export function enforceMinDistance(
 	if (min >= minDist - 1e-6) return points;
 	if (min > 1e-4) {
 		const factor = minDist / min;
-		if (factor <= MAX_UNIFORM_SCALE) return scaleAbout(points, centroidOf(points), factor);
+		if (planar || factor <= MAX_UNIFORM_SCALE)
+			return scaleAbout(points, centroidOf(points), factor);
 	}
 	const out: Vec3[] = [];
 	for (const p of points) out.push(findFreePoint(p, out, minDist, planar));
