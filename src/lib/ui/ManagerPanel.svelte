@@ -1167,6 +1167,14 @@
 		border-radius: var(--yg-radius-control);
 		padding: 0.4rem 0.55rem;
 		cursor: pointer;
+		transition:
+			background var(--yg-motion-fast) var(--yg-ease),
+			border-color var(--yg-motion-fast) var(--yg-ease),
+			color var(--yg-motion-fast) var(--yg-ease);
+	}
+
+	button:hover:not(:disabled):not(.active) {
+		background: rgba(255, 255, 255, 0.72);
 	}
 
 	button.active {
@@ -1393,6 +1401,10 @@
 	button.danger {
 		color: #8b3a3a;
 		border-color: color-mix(in srgb, #8b3a3a 35%, var(--yg-border));
+	}
+
+	button.danger:hover:not(:disabled) {
+		background: color-mix(in srgb, #8b3a3a 16%, rgba(255, 255, 255, 0.72));
 	}
 
 	.diff {
