@@ -206,6 +206,7 @@ describe('kind metadata', () => {
 			expect(ids).toContain(id);
 		}
 		expect(ids).toContain('generalizedPetersen');
+		expect(GRAPH_KIND_GROUPS.at(-1)?.label).toBe('Named');
 	});
 
 	it('exposes Paley and Sierpinski fields from the picker id', () => {

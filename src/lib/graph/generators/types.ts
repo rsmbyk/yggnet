@@ -513,13 +513,6 @@ export const GRAPH_KIND_GROUPS: {
 		]
 	},
 	{
-		label: 'Named',
-		kinds: [
-			...NAMED_GRAPHS.map((id) => ({ id, label: NAMED_GRAPH_LABELS[id] })),
-			{ id: 'generalizedPetersen', label: 'Generalized Petersen' }
-		]
-	},
-	{
 		label: 'Acyclic & partitioned',
 		kinds: [
 			{ id: 'tree', label: 'Tree' },
@@ -550,6 +543,13 @@ export const GRAPH_KIND_GROUPS: {
 			{ id: 'delaunay3', label: '3D Delaunay' },
 			{ id: 'helix', label: 'Helix' },
 			{ id: 'torusGrid', label: 'Torus grid' }
+		]
+	},
+	{
+		label: 'Named',
+		kinds: [
+			...NAMED_GRAPHS.map((id) => ({ id, label: NAMED_GRAPH_LABELS[id] })),
+			{ id: 'generalizedPetersen', label: 'Generalized Petersen' }
 		]
 	}
 ];

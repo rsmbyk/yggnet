@@ -24,6 +24,10 @@ test('Generate lists named graphs on the type dropdown', async ({ page }) => {
 	await expect(page.getByTestId('generate-named')).toHaveCount(0);
 	await page.getByTestId('generate-kind').selectOption('petersen');
 	await expect(page.getByTestId('generate-kind')).toHaveValue('petersen');
+	await expect(page.getByTestId('generate-kind').locator('optgroup').last()).toHaveAttribute(
+		'label',
+		'Named'
+	);
 });
 
 test('Generate offers 2D only for prism, hypercube, and Goldner–Harary', async ({ page }) => {
