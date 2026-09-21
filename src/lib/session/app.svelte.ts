@@ -41,6 +41,7 @@ import {
 	undo as historyUndo,
 	updateEdge,
 	updateNode,
+	defaultGenerateForm,
 	type EdgePatch,
 	type GraphDocument,
 	type GenerateOptions,
@@ -220,6 +221,8 @@ class AppStore {
 	});
 	groupsCollapsed = $state.raw<Set<string>>(new Set());
 	namedSlots = $state<string[]>([]);
+	/** Last Generate type + options; lives here so the panel remount does not reset it. */
+	generateForm = $state(defaultGenerateForm());
 	ui = $state.raw<UiState>({
 		paletteOpen: false,
 		diffIds: [],

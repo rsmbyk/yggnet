@@ -2,7 +2,16 @@ import { edgeCount, nodeCount } from '../model/document';
 import type { GraphDocument } from '../model/types';
 import { assemble, clampInt, clampNodes, directed, undirected, type EdgeSpec } from './build';
 import { delaunayEdges3 } from './delaunay';
-import { dist, dist2, rotateY, tumble, uniquePairs, vec, type Vec3 } from './geom';
+import {
+	dist,
+	dist2,
+	enforceMinDistance,
+	rotateY,
+	tumble,
+	uniquePairs,
+	vec,
+	type Vec3
+} from './geom';
 import { generalizedPetersen, namedSpec } from './named';
 import { antiprismSpec, archimedeanSpec, platonicSpec, pyramidSpec } from './polyhedra';
 import { createRng, randomSeed, type Rng } from './rng';
@@ -11,7 +20,9 @@ import { MAX_GRAPH_NODES, type GenerateOptions, type GraphKind } from './types';
 export {
 	ARCHIMEDEAN_LABELS,
 	ARCHIMEDEAN_SOLIDS,
+	defaultGenerateForm,
 	fieldsForKind,
+	generateOptionsFromForm,
 	GRAPH_KIND_GROUPS,
 	GRAPH_KINDS,
 	kindAllowsDirected,
@@ -20,17 +31,20 @@ export {
 	NAMED_GRAPH_LABELS,
 	NAMED_GRAPHS,
 	PALEY_ORDERS,
+	parseJumpList,
 	PLATONIC_LABELS,
 	PLATONIC_SOLIDS
 } from './types';
 export type {
 	ArchimedeanSolid,
+	GenerateFormState,
 	GenerateOptions,
 	GraphKind,
 	KindField,
 	NamedGraphId,
 	PlatonicSolid
 } from './types';
+export { GENERATE_MIN_DISTANCE, enforceMinDistance } from './geom';
 export { randomSeed };
 
 function circleLayout(n: number, radius: number, y = 0): Vec3[] {
@@ -148,6 +162,7 @@ function finish(
 	else if (layout === 'hex60') pts = applyYaw(pts, rng.int(0, 5) * (Math.PI / 3));
 	else if (layout === 'yaw') pts = applyTumble(pts, rng, false);
 	else if (layout === 'tumble') pts = applyTumble(pts, rng, true);
+	pts = enforceMinDistance(pts);
 	const oriented = maybeOrient(edges, opts.directed === true, rng);
 	return assemble(title, pts, oriented, rng, {
 		nodeY: opts.nodeY ?? 0,

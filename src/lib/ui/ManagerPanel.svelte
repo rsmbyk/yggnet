@@ -4,6 +4,7 @@
 		ARCHIMEDEAN_LABELS,
 		ARCHIMEDEAN_SOLIDS,
 		fieldsForKind,
+		generateOptionsFromForm,
 		GRAPH_KIND_GROUPS,
 		kindAllowsDirected,
 		kindAllowsWeighted,
@@ -12,11 +13,7 @@
 		PALEY_ORDERS,
 		pathSeriesMetrics,
 		PLATONIC_LABELS,
-		PLATONIC_SOLIDS,
-		type ArchimedeanSolid,
-		type GraphKind,
-		type NamedGraphId,
-		type PlatonicSolid
+		PLATONIC_SOLIDS
 	} from '$lib/graph';
 	import type { GraphAttachment } from '$lib/graph';
 	import { toolLabel, type PanelSection } from './tool-ids';
@@ -28,101 +25,10 @@
 	let edgeTo = $state('');
 	let filterInput = $state('');
 	let stepNote = $state('');
-	let genKind = $state<GraphKind>('simple');
-	let genNodes = $state(12);
-	let genDensity = $state(0.25);
-	let genExtraEdges = $state(12);
-	let genLoops = $state(false);
-	let genDirected = $state(false);
-	let genWeighted = $state(false);
-	let genDegree = $state(3);
-	let genTransitive = $state(false);
-	let genNamed = $state<NamedGraphId>('petersen');
-	let genPaleyQ = $state(13);
-	let genSierpinskiDepth = $state(2);
-	let genDepth = $state(3);
-	let genBinary = $state(true);
-	let genBranching = $state(3);
-	let genLeft = $state(5);
-	let genRight = $state(5);
-	let genAttachments = $state(2);
-	let genNeighbors = $state(4);
-	let genRewire = $state(0.1);
-	let genJumps = $state('1');
-	let genRungs = $state(6);
-	let genFan = $state(false);
-	let genRows = $state(4);
-	let genColumns = $state(4);
-	let genLayers = $state(3);
-	let genDiagonals = $state(false);
-	let genRadius = $state(3);
-	let genGroups = $state(3);
-	let genPInside = $state(0.55);
-	let genPBetween = $state(0.08);
-	let genNGons = $state(6);
-	let genDimension = $state(3);
-	let genPlatonic = $state<PlatonicSolid>('tetrahedron');
-	let genArchimedean = $state<ArchimedeanSolid>('cuboctahedron');
-	let genExtent = $state(2);
-	let genTurns = $state(2);
-	let genChord = $state(0);
-	let genRings = $state(4);
-	let genSegments = $state(8);
-	let genPetersenN = $state(5);
-	let genPetersenK = $state(2);
-	const genFields = $derived(fieldsForKind(genKind));
-
-	function parseJumps(text: string): number[] {
-		return text
-			.split(/[, ]+/)
-			.map((part) => Number(part))
-			.filter((n) => Number.isFinite(n) && n > 0);
-	}
+	const genFields = $derived(fieldsForKind(app.generateForm.kind));
 
 	function onGenerate() {
-		app.applyGeneratedGraph(genKind, {
-			nodes: genNodes,
-			density: genDensity,
-			extraEdges: genExtraEdges,
-			loops: genLoops,
-			directed: kindAllowsDirected(genKind) ? genDirected : false,
-			weighted: kindAllowsWeighted(genKind) ? genWeighted : false,
-			degree: genDegree,
-			transitive: genTransitive,
-			named: genNamed,
-			paleyQ: genPaleyQ,
-			sierpinskiDepth: genSierpinskiDepth,
-			depth: genDepth,
-			binary: genBinary,
-			branching: genBranching,
-			left: genLeft,
-			right: genRight,
-			attachments: genAttachments,
-			neighbors: genNeighbors,
-			rewire: genRewire,
-			jumps: parseJumps(genJumps),
-			rungs: genRungs,
-			fan: genFan,
-			rows: genRows,
-			columns: genColumns,
-			layers: genLayers,
-			diagonals: genDiagonals,
-			radius: genRadius,
-			groups: genGroups,
-			pInside: genPInside,
-			pBetween: genPBetween,
-			nGons: genNGons,
-			dimension: genDimension,
-			platonic: genPlatonic,
-			archimedean: genArchimedean,
-			extent: genExtent,
-			turns: genTurns,
-			chord: genChord,
-			rings: genRings,
-			segments: genSegments,
-			petersenN: genPetersenN,
-			petersenK: genPetersenK
-		});
+		app.applyGeneratedGraph(app.generateForm.kind, generateOptionsFromForm(app.generateForm));
 	}
 
 	let compareAlgo = $state('dijkstra');
@@ -546,7 +452,11 @@
 			>
 				<label>
 					Type
-					<select class="slot-name-input" data-testid="generate-kind" bind:value={genKind}>
+					<select
+						class="slot-name-input"
+						data-testid="generate-kind"
+						bind:value={app.generateForm.kind}
+					>
 						{#each GRAPH_KIND_GROUPS as group (group.label)}
 							<optgroup label={group.label}>
 								{#each group.kinds as item (item.id)}
@@ -560,24 +470,32 @@
 					{#if genFields.includes('named')}
 						<label>
 							Named graph
-							<select class="slot-name-input" data-testid="generate-named" bind:value={genNamed}>
+							<select
+								class="slot-name-input"
+								data-testid="generate-named"
+								bind:value={app.generateForm.named}
+							>
 								{#each NAMED_GRAPHS as id (id)}
 									<option value={id}>{NAMED_GRAPH_LABELS[id]}</option>
 								{/each}
 							</select>
 						</label>
 					{/if}
-					{#if genFields.includes('paleyQ') && genNamed === 'paley'}
+					{#if genFields.includes('paleyQ') && app.generateForm.named === 'paley'}
 						<label>
 							Order q
-							<select class="slot-name-input" data-testid="generate-paley-q" bind:value={genPaleyQ}>
+							<select
+								class="slot-name-input"
+								data-testid="generate-paley-q"
+								bind:value={app.generateForm.paleyQ}
+							>
 								{#each PALEY_ORDERS as q (q)}
 									<option value={q}>{q}</option>
 								{/each}
 							</select>
 						</label>
 					{/if}
-					{#if genFields.includes('sierpinskiDepth') && (genNamed === 'sierpinskiGasket' || genNamed === 'sierpinskiTetrahedron')}
+					{#if genFields.includes('sierpinskiDepth') && (app.generateForm.named === 'sierpinskiGasket' || app.generateForm.named === 'sierpinskiTetrahedron')}
 						<label>
 							Depth
 							<input
@@ -585,7 +503,7 @@
 								type="number"
 								min="0"
 								max="2"
-								bind:value={genSierpinskiDepth}
+								bind:value={app.generateForm.sierpinskiDepth}
 							/>
 						</label>
 					{/if}
@@ -598,7 +516,7 @@
 								min="0"
 								max="40"
 								data-testid="generate-nodes"
-								bind:value={genNodes}
+								bind:value={app.generateForm.nodes}
 							/>
 						</label>
 					{/if}
@@ -611,7 +529,7 @@
 								min="0"
 								max="1"
 								step="0.05"
-								bind:value={genDensity}
+								bind:value={app.generateForm.density}
 							/>
 						</label>
 					{/if}
@@ -623,7 +541,7 @@
 								type="number"
 								min="0"
 								max="80"
-								bind:value={genExtraEdges}
+								bind:value={app.generateForm.extraEdges}
 							/>
 						</label>
 					{/if}
@@ -635,17 +553,23 @@
 								type="number"
 								min="0"
 								max="39"
-								bind:value={genDegree}
+								bind:value={app.generateForm.degree}
 							/>
 						</label>
 					{/if}
 					{#if genFields.includes('depth')}
 						<label>
 							Depth
-							<input class="slot-name-input" type="number" min="1" max="8" bind:value={genDepth} />
+							<input
+								class="slot-name-input"
+								type="number"
+								min="1"
+								max="8"
+								bind:value={app.generateForm.depth}
+							/>
 						</label>
 					{/if}
-					{#if genFields.includes('branching') && !genBinary}
+					{#if genFields.includes('branching') && !app.generateForm.binary}
 						<label>
 							Branching
 							<input
@@ -653,20 +577,32 @@
 								type="number"
 								min="2"
 								max="6"
-								bind:value={genBranching}
+								bind:value={app.generateForm.branching}
 							/>
 						</label>
 					{/if}
 					{#if genFields.includes('left')}
 						<label>
 							Left
-							<input class="slot-name-input" type="number" min="1" max="39" bind:value={genLeft} />
+							<input
+								class="slot-name-input"
+								type="number"
+								min="1"
+								max="39"
+								bind:value={app.generateForm.left}
+							/>
 						</label>
 					{/if}
 					{#if genFields.includes('right')}
 						<label>
 							Right
-							<input class="slot-name-input" type="number" min="1" max="39" bind:value={genRight} />
+							<input
+								class="slot-name-input"
+								type="number"
+								min="1"
+								max="39"
+								bind:value={app.generateForm.right}
+							/>
 						</label>
 					{/if}
 					{#if genFields.includes('attachments')}
@@ -677,7 +613,7 @@
 								type="number"
 								min="1"
 								max="5"
-								bind:value={genAttachments}
+								bind:value={app.generateForm.attachments}
 							/>
 						</label>
 					{/if}
@@ -689,7 +625,7 @@
 								type="number"
 								min="1"
 								max="20"
-								bind:value={genNeighbors}
+								bind:value={app.generateForm.neighbors}
 							/>
 						</label>
 					{/if}
@@ -702,20 +638,30 @@
 								min="0"
 								max="1"
 								step="0.05"
-								bind:value={genRewire}
+								bind:value={app.generateForm.rewire}
 							/>
 						</label>
 					{/if}
 					{#if genFields.includes('jumps')}
 						<label>
 							Jumps
-							<input class="slot-name-input" bind:value={genJumps} aria-label="Circulant jumps" />
+							<input
+								class="slot-name-input"
+								bind:value={app.generateForm.jumps}
+								aria-label="Circulant jumps"
+							/>
 						</label>
 					{/if}
 					{#if genFields.includes('rungs')}
 						<label>
 							Rungs
-							<input class="slot-name-input" type="number" min="3" max="20" bind:value={genRungs} />
+							<input
+								class="slot-name-input"
+								type="number"
+								min="3"
+								max="20"
+								bind:value={app.generateForm.rungs}
+							/>
 						</label>
 					{/if}
 					{#if genFields.includes('rows')}
@@ -727,7 +673,7 @@
 								min="1"
 								max="20"
 								data-testid="generate-rows"
-								bind:value={genRows}
+								bind:value={app.generateForm.rows}
 							/>
 						</label>
 					{/if}
@@ -740,7 +686,7 @@
 								min="1"
 								max="20"
 								data-testid="generate-columns"
-								bind:value={genColumns}
+								bind:value={app.generateForm.columns}
 							/>
 						</label>
 					{/if}
@@ -752,7 +698,7 @@
 								type="number"
 								min="1"
 								max="10"
-								bind:value={genLayers}
+								bind:value={app.generateForm.layers}
 							/>
 						</label>
 					{/if}
@@ -765,14 +711,20 @@
 								min="0.2"
 								max="20"
 								step="0.2"
-								bind:value={genRadius}
+								bind:value={app.generateForm.radius}
 							/>
 						</label>
 					{/if}
 					{#if genFields.includes('groups')}
 						<label>
 							Groups
-							<input class="slot-name-input" type="number" min="2" max="8" bind:value={genGroups} />
+							<input
+								class="slot-name-input"
+								type="number"
+								min="2"
+								max="8"
+								bind:value={app.generateForm.groups}
+							/>
 						</label>
 					{/if}
 					{#if genFields.includes('pInside')}
@@ -784,7 +736,7 @@
 								min="0"
 								max="1"
 								step="0.05"
-								bind:value={genPInside}
+								bind:value={app.generateForm.pInside}
 							/>
 						</label>
 					{/if}
@@ -797,14 +749,20 @@
 								min="0"
 								max="1"
 								step="0.05"
-								bind:value={genPBetween}
+								bind:value={app.generateForm.pBetween}
 							/>
 						</label>
 					{/if}
 					{#if genFields.includes('nGons')}
 						<label>
 							Sides
-							<input class="slot-name-input" type="number" min="3" max="20" bind:value={genNGons} />
+							<input
+								class="slot-name-input"
+								type="number"
+								min="3"
+								max="20"
+								bind:value={app.generateForm.nGons}
+							/>
 						</label>
 					{/if}
 					{#if genFields.includes('dimension')}
@@ -815,14 +773,14 @@
 								type="number"
 								min="2"
 								max="5"
-								bind:value={genDimension}
+								bind:value={app.generateForm.dimension}
 							/>
 						</label>
 					{/if}
 					{#if genFields.includes('platonic')}
 						<label>
 							Solid
-							<select class="slot-name-input" bind:value={genPlatonic}>
+							<select class="slot-name-input" bind:value={app.generateForm.platonic}>
 								{#each PLATONIC_SOLIDS as id (id)}
 									<option value={id}>{PLATONIC_LABELS[id]}</option>
 								{/each}
@@ -832,7 +790,7 @@
 					{#if genFields.includes('archimedean')}
 						<label>
 							Solid
-							<select class="slot-name-input" bind:value={genArchimedean}>
+							<select class="slot-name-input" bind:value={app.generateForm.archimedean}>
 								{#each ARCHIMEDEAN_SOLIDS as id (id)}
 									<option value={id}>{ARCHIMEDEAN_LABELS[id]}</option>
 								{/each}
@@ -842,7 +800,13 @@
 					{#if genFields.includes('extent')}
 						<label>
 							Extent
-							<input class="slot-name-input" type="number" min="1" max="4" bind:value={genExtent} />
+							<input
+								class="slot-name-input"
+								type="number"
+								min="1"
+								max="4"
+								bind:value={app.generateForm.extent}
+							/>
 						</label>
 					{/if}
 					{#if genFields.includes('turns')}
@@ -854,20 +818,32 @@
 								min="0.5"
 								max="8"
 								step="0.5"
-								bind:value={genTurns}
+								bind:value={app.generateForm.turns}
 							/>
 						</label>
 					{/if}
 					{#if genFields.includes('chord')}
 						<label>
 							Chord
-							<input class="slot-name-input" type="number" min="0" max="39" bind:value={genChord} />
+							<input
+								class="slot-name-input"
+								type="number"
+								min="0"
+								max="39"
+								bind:value={app.generateForm.chord}
+							/>
 						</label>
 					{/if}
 					{#if genFields.includes('rings')}
 						<label>
 							Rings
-							<input class="slot-name-input" type="number" min="3" max="20" bind:value={genRings} />
+							<input
+								class="slot-name-input"
+								type="number"
+								min="3"
+								max="20"
+								bind:value={app.generateForm.rings}
+							/>
 						</label>
 					{/if}
 					{#if genFields.includes('segments')}
@@ -878,7 +854,7 @@
 								type="number"
 								min="3"
 								max="20"
-								bind:value={genSegments}
+								bind:value={app.generateForm.segments}
 							/>
 						</label>
 					{/if}
@@ -890,7 +866,7 @@
 								type="number"
 								min="3"
 								max="20"
-								bind:value={genPetersenN}
+								bind:value={app.generateForm.petersenN}
 							/>
 						</label>
 					{/if}
@@ -902,39 +878,45 @@
 								type="number"
 								min="1"
 								max="10"
-								bind:value={genPetersenK}
+								bind:value={app.generateForm.petersenK}
 							/>
 						</label>
 					{/if}
 				</div>
 				<div class="generate-checks">
 					{#if genFields.includes('loops')}
-						<label class="check"><input type="checkbox" bind:checked={genLoops} /> Loops</label>
+						<label class="check"
+							><input type="checkbox" bind:checked={app.generateForm.loops} /> Loops</label
+						>
 					{/if}
 					{#if genFields.includes('transitive')}
 						<label class="check"
-							><input type="checkbox" bind:checked={genTransitive} /> Transitive</label
+							><input type="checkbox" bind:checked={app.generateForm.transitive} /> Transitive</label
 						>
 					{/if}
 					{#if genFields.includes('binary')}
-						<label class="check"><input type="checkbox" bind:checked={genBinary} /> Binary</label>
+						<label class="check"
+							><input type="checkbox" bind:checked={app.generateForm.binary} /> Binary</label
+						>
 					{/if}
 					{#if genFields.includes('fan')}
-						<label class="check"><input type="checkbox" bind:checked={genFan} /> Fan</label>
+						<label class="check"
+							><input type="checkbox" bind:checked={app.generateForm.fan} /> Fan</label
+						>
 					{/if}
 					{#if genFields.includes('diagonals')}
 						<label class="check"
-							><input type="checkbox" bind:checked={genDiagonals} /> Diagonals</label
+							><input type="checkbox" bind:checked={app.generateForm.diagonals} /> Diagonals</label
 						>
 					{/if}
-					{#if kindAllowsDirected(genKind)}
+					{#if kindAllowsDirected(app.generateForm.kind)}
 						<label class="check"
-							><input type="checkbox" bind:checked={genDirected} /> Directed</label
+							><input type="checkbox" bind:checked={app.generateForm.directed} /> Directed</label
 						>
 					{/if}
-					{#if kindAllowsWeighted(genKind)}
+					{#if kindAllowsWeighted(app.generateForm.kind)}
 						<label class="check"
-							><input type="checkbox" bind:checked={genWeighted} /> Weighted</label
+							><input type="checkbox" bind:checked={app.generateForm.weighted} /> Weighted</label
 						>
 					{/if}
 				</div>

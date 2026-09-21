@@ -110,3 +110,93 @@ export function allSignPerms(x: number, y: number, z: number): Vec3[] {
 	}
 	return out;
 }
+
+/** Center-to-center keep-out for generated nodes (world units). */
+export const GENERATE_MIN_DISTANCE = 4;
+
+/** Uniform scale is skipped past this factor so a 0.01 pair cannot explode the cloud. */
+const MAX_UNIFORM_SCALE = 6;
+
+function minPairwise(points: Vec3[]): number {
+	let min = Infinity;
+	for (let i = 0; i < points.length; i += 1) {
+		for (let j = i + 1; j < points.length; j += 1) {
+			const d = dist(points[i], points[j]);
+			if (d < min) min = d;
+		}
+	}
+	return min;
+}
+
+function centroidOf(points: Vec3[]): Vec3 {
+	const n = points.length || 1;
+	let x = 0;
+	let y = 0;
+	let z = 0;
+	for (const p of points) {
+		x += p.x;
+		y += p.y;
+		z += p.z;
+	}
+	return vec(x / n, y / n, z / n);
+}
+
+function scaleAbout(points: Vec3[], origin: Vec3, s: number): Vec3[] {
+	return points.map((p) =>
+		vec(
+			origin.x + (p.x - origin.x) * s,
+			origin.y + (p.y - origin.y) * s,
+			origin.z + (p.z - origin.z) * s
+		)
+	);
+}
+
+function isFree(p: Vec3, occupied: Vec3[], minDist: number): boolean {
+	const min2 = minDist * minDist;
+	for (const o of occupied) {
+		if (dist2(p, o) < min2 - 1e-8) return false;
+	}
+	return true;
+}
+
+function findFreePoint(preferred: Vec3, occupied: Vec3[], minDist: number): Vec3 {
+	if (isFree(preferred, occupied, minDist)) return preferred;
+	for (let ring = 1; ring <= 48; ring += 1) {
+		const n = 6 * ring;
+		const rad = minDist * ring;
+		for (let slot = 0; slot < n; slot += 1) {
+			const ang = (slot * 2 * Math.PI) / n;
+			const xz = vec(
+				preferred.x + Math.cos(ang) * rad,
+				preferred.y,
+				preferred.z + Math.sin(ang) * rad
+			);
+			if (isFree(xz, occupied, minDist)) return xz;
+			for (const sy of [1, -1]) {
+				for (let y = 1; y <= ring; y += 1) {
+					const p = vec(xz.x, preferred.y + sy * minDist * y, xz.z);
+					if (isFree(p, occupied, minDist)) return p;
+				}
+			}
+		}
+	}
+	return vec(preferred.x + minDist * (occupied.length + 1), preferred.y, preferred.z);
+}
+
+/**
+ * Guarantee every pair of points is at least `minDist` apart.
+ * Prefers a uniform scale about the centroid so lattices stay lattices;
+ * falls back to sequential 3D hex search for coincident / degenerate sets.
+ */
+export function enforceMinDistance(points: Vec3[], minDist = GENERATE_MIN_DISTANCE): Vec3[] {
+	if (points.length < 2) return points;
+	const min = minPairwise(points);
+	if (min >= minDist - 1e-6) return points;
+	if (min > 1e-4) {
+		const factor = minDist / min;
+		if (factor <= MAX_UNIFORM_SCALE) return scaleAbout(points, centroidOf(points), factor);
+	}
+	const out: Vec3[] = [];
+	for (const p of points) out.push(findFreePoint(p, out, minDist));
+	return out;
+}

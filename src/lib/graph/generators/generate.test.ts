@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { edgeCount, nodeCount } from '../model/document';
+import type { GraphDocument } from '../model/types';
 import { delaunayEdges3 } from './delaunay';
-import { vec } from './geom';
+import { GENERATE_MIN_DISTANCE, vec } from './geom';
 import { paleyGraph } from './named';
 import { createRng, randomSeed } from './rng';
 import {
+	defaultGenerateForm,
 	fieldsForKind,
 	fingerprint,
 	generateGraph,
+	generateOptionsFromForm,
 	GRAPH_KINDS,
 	kindAllowsDirected,
 	kindAllowsWeighted,
@@ -15,6 +18,19 @@ import {
 	type GraphKind,
 	type NamedGraphId
 } from './generate';
+
+function minPairwiseNodeDistance(doc: GraphDocument): number {
+	const nodes = Object.values(doc.nodes);
+	let min = Infinity;
+	for (let i = 0; i < nodes.length; i += 1) {
+		for (let j = i + 1; j < nodes.length; j += 1) {
+			const a = nodes[i].position;
+			const b = nodes[j].position;
+			min = Math.min(min, Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z));
+		}
+	}
+	return min;
+}
 
 function degrees(kindDoc: ReturnType<typeof generateGraph>): number[] {
 	const deg = new Map<string, number>();
@@ -297,6 +313,26 @@ describe('solids and extra options', () => {
 		).toBe(5);
 		const seeded = generateGraph('simple', { nodes: 5, density: 0.3 });
 		expect(nodeCount(seeded)).toBe(5);
+	});
+
+	it.each(GRAPH_KINDS)('%s keeps node centers at least 4 world units apart', (kind) => {
+		const doc = generateGraph(kind, { seed: 11, nodes: 12, rows: 3, columns: 3, layers: 2 });
+		expect(nodeCount(doc)).toBeGreaterThanOrEqual(2);
+		expect(minPairwiseNodeDistance(doc)).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+	});
+});
+
+describe('generateOptionsFromForm', () => {
+	it('starts from Simple defaults and parses jump lists', () => {
+		const form = defaultGenerateForm();
+		expect(form.kind).toBe('simple');
+		expect(form.nodes).toBe(12);
+		form.kind = 'circulant';
+		form.jumps = '1, 3';
+		form.directed = true;
+		const opts = generateOptionsFromForm(form);
+		expect(opts.jumps).toEqual([1, 3]);
+		expect(opts.directed).toBe(true);
 	});
 });
 

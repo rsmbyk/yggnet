@@ -269,6 +269,152 @@ export function kindAllowsDirected(kind: GraphKind): boolean {
 	return SHARED_DIRECTED.has(kind);
 }
 
+/** Last Generate-tool form values. Survives ManagerPanel remounts in session state. */
+export interface GenerateFormState {
+	kind: GraphKind;
+	nodes: number;
+	density: number;
+	extraEdges: number;
+	loops: boolean;
+	directed: boolean;
+	weighted: boolean;
+	degree: number;
+	transitive: boolean;
+	named: NamedGraphId;
+	paleyQ: number;
+	sierpinskiDepth: number;
+	depth: number;
+	binary: boolean;
+	branching: number;
+	left: number;
+	right: number;
+	attachments: number;
+	neighbors: number;
+	rewire: number;
+	jumps: string;
+	rungs: number;
+	fan: boolean;
+	rows: number;
+	columns: number;
+	layers: number;
+	diagonals: boolean;
+	radius: number;
+	groups: number;
+	pInside: number;
+	pBetween: number;
+	nGons: number;
+	dimension: number;
+	platonic: PlatonicSolid;
+	archimedean: ArchimedeanSolid;
+	extent: number;
+	turns: number;
+	chord: number;
+	rings: number;
+	segments: number;
+	petersenN: number;
+	petersenK: number;
+}
+
+export function defaultGenerateForm(): GenerateFormState {
+	return {
+		kind: 'simple',
+		nodes: 12,
+		density: 0.25,
+		extraEdges: 12,
+		loops: false,
+		directed: false,
+		weighted: false,
+		degree: 3,
+		transitive: false,
+		named: 'petersen',
+		paleyQ: 13,
+		sierpinskiDepth: 2,
+		depth: 3,
+		binary: true,
+		branching: 3,
+		left: 5,
+		right: 5,
+		attachments: 2,
+		neighbors: 4,
+		rewire: 0.1,
+		jumps: '1',
+		rungs: 6,
+		fan: false,
+		rows: 4,
+		columns: 4,
+		layers: 3,
+		diagonals: false,
+		radius: 3,
+		groups: 3,
+		pInside: 0.55,
+		pBetween: 0.08,
+		nGons: 6,
+		dimension: 3,
+		platonic: 'tetrahedron',
+		archimedean: 'cuboctahedron',
+		extent: 2,
+		turns: 2,
+		chord: 0,
+		rings: 4,
+		segments: 8,
+		petersenN: 5,
+		petersenK: 2
+	};
+}
+
+export function parseJumpList(text: string): number[] {
+	return text
+		.split(/[, ]+/)
+		.map((part) => Number(part))
+		.filter((n) => Number.isFinite(n) && n > 0);
+}
+
+export function generateOptionsFromForm(form: GenerateFormState): GenerateOptions {
+	return {
+		nodes: form.nodes,
+		density: form.density,
+		extraEdges: form.extraEdges,
+		loops: form.loops,
+		directed: kindAllowsDirected(form.kind) ? form.directed : false,
+		weighted: kindAllowsWeighted(form.kind) ? form.weighted : false,
+		degree: form.degree,
+		transitive: form.transitive,
+		named: form.named,
+		paleyQ: form.paleyQ,
+		sierpinskiDepth: form.sierpinskiDepth,
+		depth: form.depth,
+		binary: form.binary,
+		branching: form.branching,
+		left: form.left,
+		right: form.right,
+		attachments: form.attachments,
+		neighbors: form.neighbors,
+		rewire: form.rewire,
+		jumps: parseJumpList(form.jumps),
+		rungs: form.rungs,
+		fan: form.fan,
+		rows: form.rows,
+		columns: form.columns,
+		layers: form.layers,
+		diagonals: form.diagonals,
+		radius: form.radius,
+		groups: form.groups,
+		pInside: form.pInside,
+		pBetween: form.pBetween,
+		nGons: form.nGons,
+		dimension: form.dimension,
+		platonic: form.platonic,
+		archimedean: form.archimedean,
+		extent: form.extent,
+		turns: form.turns,
+		chord: form.chord,
+		rings: form.rings,
+		segments: form.segments,
+		petersenN: form.petersenN,
+		petersenK: form.petersenK
+	};
+}
+
 export const GRAPH_KIND_GROUPS: { label: string; kinds: { id: GraphKind; label: string }[] }[] = [
 	{
 		label: 'Empty & random',
