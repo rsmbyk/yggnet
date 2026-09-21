@@ -15,6 +15,7 @@
 		PLATONIC_SOLIDS
 	} from '$lib/graph';
 	import type { GraphAttachment } from '$lib/graph';
+	import { tick } from 'svelte';
 	import { toolLabel, type PanelSection } from './tool-ids';
 	import { cssLengthToPx, toolsPanelMaxHeight, toolsPanelOverflows } from './tools-panel-limit';
 
@@ -56,6 +57,9 @@
 		const el = panelEl;
 		if (!el) return;
 		const expanded = app.ui.toolsPanelExpanded;
+		void genFields;
+		void app.generateForm.kind;
+		void app.generateForm.binary;
 		const update = () => {
 			const rootSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 			const edge =
@@ -80,7 +84,7 @@
 				expanded
 			});
 			el.style.maxHeight = `${limit}px`;
-			const nested = [...el.querySelectorAll<HTMLElement>('.list')];
+			const nested = [...el.querySelectorAll<HTMLElement>('.list, .generate-fields')];
 			const nestedExtra = nested.reduce(
 				(sum, node) => sum + Math.max(0, node.scrollHeight - node.clientHeight),
 				0
@@ -89,6 +93,7 @@
 			maxHeightPx = limit;
 		};
 		update();
+		void tick().then(update);
 		const ro = new ResizeObserver(update);
 		ro.observe(el);
 		const map = document.querySelector('[data-testid="camera-panel"]');
@@ -1735,6 +1740,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.4rem;
+		flex: 1 1 auto;
+		min-height: 0;
 	}
 
 	.generate-form {
@@ -1742,16 +1749,22 @@
 		flex-direction: column;
 		gap: 0.35rem;
 		margin: 0;
+		flex: 1 1 auto;
+		min-height: 0;
 	}
 
 	.generate-form > label {
 		margin-bottom: 0;
+		flex: 0 0 auto;
 	}
 
 	.generate-fields {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 0.35rem 0.45rem;
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow: auto;
 	}
 
 	.generate-fields label {
@@ -1762,6 +1775,11 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.35rem 0.7rem;
+		flex: 0 0 auto;
+	}
+
+	.generate-form > button {
+		flex: 0 0 auto;
 	}
 
 	.generate-checks .check {

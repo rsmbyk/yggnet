@@ -36,6 +36,22 @@ test('short tools panel hugs content and stays above the minimap', async ({ page
 	await expect(page.getByTestId('tools-panel-expand')).toHaveCount(0);
 });
 
+test('Generate stays above the minimap when a type has more fields', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'generate');
+	await page.getByTestId('generate-kind').selectOption('communities');
+	const panel = page.getByTestId('yggnet-manager');
+	const camera = page.getByTestId('camera-panel');
+	await expect(panel.getByText('p inside', { exact: true })).toBeVisible();
+	const card = await panel.boundingBox();
+	const cam = await camera.boundingBox();
+	expect(card).toBeTruthy();
+	expect(cam).toBeTruthy();
+	expect(card!.y + card!.height).toBeLessThanOrEqual(cam!.y - 8);
+	await expect(panel.getByTestId('generate-submit')).toBeVisible();
+});
+
 test('overflowing tools panel stops above the minimap and can expand', async ({ page }) => {
 	await page.goto('/');
 	await seedNamedSaves(page, 24);
