@@ -3,6 +3,7 @@
 	import { pathSeriesMetrics } from '$lib/graph';
 	import type { GraphAttachment } from '$lib/graph';
 	import { toolLabel, type PanelSection } from './tool-ids';
+	import { cssLengthToPx, toolsPanelMaxHeight, toolsPanelOverflows } from './tools-panel-limit';
 
 	let { section }: { section: PanelSection } = $props();
 
@@ -19,9 +20,65 @@
 	let edgeAttachName = $state('');
 	let edgeAttachPayload = $state('');
 	let saveSlotName = $state('');
+	let panelEl = $state<HTMLElement | undefined>(undefined);
+	let maxHeightPx = $state<number | null>(null);
+	let overflowing = $state(false);
 
 	$effect(() => {
 		if (section === 'file') app.refreshNamedSlots();
+	});
+
+	$effect(() => {
+		if (section === 'selection') {
+			maxHeightPx = null;
+			overflowing = false;
+			return;
+		}
+		const el = panelEl;
+		if (!el) return;
+		const expanded = app.ui.toolsPanelExpanded;
+		const update = () => {
+			const rootSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+			const edge = cssLengthToPx(getComputedStyle(el).getPropertyValue('--yg-hud-edge'), rootSize) || 12;
+			const panelTop = el.getBoundingClientRect().top;
+			const dock = el.closest('.tool-dock');
+			const dockBottom = dock?.getBoundingClientRect().bottom ?? window.innerHeight - edge;
+			const map = document.querySelector('[data-testid="camera-panel"]');
+			const minimapTop = map?.getBoundingClientRect().top ?? null;
+			const collapsedLimit = toolsPanelMaxHeight({
+				panelTop,
+				dockBottom,
+				minimapTop,
+				edge,
+				expanded: false
+			});
+			const limit = toolsPanelMaxHeight({
+				panelTop,
+				dockBottom,
+				minimapTop,
+				edge,
+				expanded
+			});
+			el.style.maxHeight = `${limit}px`;
+			const nested = [...el.querySelectorAll<HTMLElement>('.list')];
+			const nestedExtra = nested.reduce(
+				(sum, node) => sum + Math.max(0, node.scrollHeight - node.clientHeight),
+				0
+			);
+			overflowing = toolsPanelOverflows(el.scrollHeight + nestedExtra, collapsedLimit);
+			maxHeightPx = limit;
+		};
+		update();
+		const ro = new ResizeObserver(update);
+		ro.observe(el);
+		const map = document.querySelector('[data-testid="camera-panel"]');
+		if (map) ro.observe(map);
+		window.addEventListener('resize', update);
+		return () => {
+			ro.disconnect();
+			window.removeEventListener('resize', update);
+			el.style.maxHeight = '';
+		};
 	});
 
 	const nodes = $derived(Object.values(app.document.nodes));
@@ -181,8 +238,10 @@
 </script>
 
 <aside
+	bind:this={panelEl}
 	class="manager"
 	class:manager--fill={section !== 'selection'}
+	style:max-height={maxHeightPx != null ? `${maxHeightPx}px` : undefined}
 	data-testid={section === 'selection' ? selectionTestId : 'yggnet-manager'}
 >
 	<header class="manager__header">
@@ -1108,6 +1167,39 @@
 			{/if}
 		</section>
 	{/if}
+
+	{#if section !== 'selection' && overflowing}
+		<button
+			type="button"
+			class="manager__expand"
+			data-testid={app.ui.toolsPanelExpanded ? 'tools-panel-collapse' : 'tools-panel-expand'}
+			aria-label={app.ui.toolsPanelExpanded ? 'Collapse tools panel' : 'Expand tools panel'}
+			title={app.ui.toolsPanelExpanded ? 'Collapse' : 'Expand'}
+			onclick={() => app.setToolsPanelExpanded(!app.ui.toolsPanelExpanded)}
+		>
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				{#if app.ui.toolsPanelExpanded}
+					<path
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M6 15l6-6 6 6"
+					/>
+				{:else}
+					<path
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M6 9l6 6 6-6"
+					/>
+				{/if}
+			</svg>
+		</button>
+	{/if}
 </aside>
 
 <style>
@@ -1132,12 +1224,42 @@
 	}
 
 	.manager--fill {
-		height: 100%;
 		min-height: 0;
 	}
 
 	.manager__header {
 		flex-shrink: 0;
+	}
+
+	.manager__expand {
+		flex: 0 0 auto;
+		display: grid;
+		place-items: center;
+		width: 100%;
+		height: 0.7rem;
+		margin: calc(-1 * 0.85rem) 0 0;
+		padding: 0;
+		line-height: 0;
+		border: none;
+		background: transparent;
+		color: var(--yg-muted);
+		border-radius: var(--yg-radius-control);
+		cursor: pointer;
+	}
+
+	.manager__expand:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.28);
+		color: var(--yg-fg);
+	}
+
+	.manager__expand svg {
+		width: 0.65rem;
+		height: 0.65rem;
+		display: block;
+	}
+
+	.manager:has(.manager__expand) {
+		padding-bottom: 0.05rem;
 	}
 
 	.file-saves {
@@ -1256,6 +1378,8 @@
 	}
 
 	.node-panel {
+		flex: 1 1 auto;
+		min-height: 0;
 		display: flex;
 		flex-direction: column;
 		gap: 0.4rem;
@@ -1266,7 +1390,9 @@
 	}
 
 	.node-list {
-		max-height: 12rem;
+		flex: 1 1 auto;
+		min-height: 0;
+		max-height: none;
 	}
 
 	.node-list-label {
@@ -1316,7 +1442,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.2rem;
-		max-height: 10rem;
 		overflow: auto;
 	}
 
@@ -1487,5 +1612,19 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	button.manager__expand {
+		border: none;
+		background: transparent;
+		box-shadow: none;
+		padding: 0;
+		min-height: 0;
+		font-size: 0;
+	}
+
+	button.manager__expand:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.28);
+		color: var(--yg-fg);
 	}
 </style>

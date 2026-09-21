@@ -230,17 +230,18 @@
 	}
 
 	.tool-panel-stage.fill {
-		align-self: stretch;
-		height: 100%;
+		align-self: flex-start;
+		max-height: 100%;
 		min-height: 0;
 	}
 
 	.tool-panel-slot {
 		grid-area: 1 / 1;
 		display: flex;
+		align-items: flex-start;
 		min-width: 0;
 		min-height: 0;
-		height: 100%;
+		height: auto;
 		max-height: 100%;
 		pointer-events: auto;
 	}
@@ -256,7 +257,7 @@
 	}
 
 	.tool-dock :global(.manager--fill) {
-		flex: 1 1 auto;
+		flex: 0 1 auto;
 		min-height: 0;
 	}
 

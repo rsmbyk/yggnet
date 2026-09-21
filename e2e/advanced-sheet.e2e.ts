@@ -41,9 +41,10 @@ test('tool panel sits right of the toolbar under the menubar', async ({ page }) 
 	expect(gapUnderMenubar).toBeLessThanOrEqual(20);
 	expect(rail!.x).toBeLessThan(bar!.x + 8);
 	expect(rail!.x + rail!.width).toBeLessThanOrEqual(card!.x + 2);
-	const bottomGap = page.viewportSize()!.height - (card!.y + card!.height);
-	expect(bottomGap).toBeGreaterThanOrEqual(8);
-	expect(bottomGap).toBeLessThanOrEqual(20);
+	const camera = page.getByTestId('camera-panel');
+	const camBox = await camera.boundingBox();
+	expect(camBox).toBeTruthy();
+	expect(card!.y + card!.height).toBeLessThanOrEqual(camBox!.y - 8);
 	const icon = await page.getByTestId('tool-nodes').boundingBox();
 	expect(icon).toBeTruthy();
 	const innerPadX = (rail!.width - icon!.width) / 2;

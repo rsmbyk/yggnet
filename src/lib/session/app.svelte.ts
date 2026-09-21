@@ -125,6 +125,8 @@ export type UiState = {
 	 * orbit off; pan/move locked to XZ; nodes sit on the floor.
 	 */
 	viewMode: ViewMode;
+	/** Tools panel may grow past the minimap down to the dock bottom. */
+	toolsPanelExpanded: boolean;
 };
 
 const runner = new MainThreadRunner();
@@ -225,7 +227,8 @@ class AppStore {
 		connectDirectedLocked: false,
 		connectAltHeld: false,
 		multiSelectMode: false,
-		viewMode: '3d'
+		viewMode: '3d',
+		toolsPanelExpanded: false
 	});
 	statusMessage = $state<string>('');
 
@@ -932,7 +935,15 @@ class AppStore {
 	}
 
 	setOpenTool(id: ToolId | null): void {
-		this.ui = { ...this.ui, openTool: id };
+		this.ui = {
+			...this.ui,
+			openTool: id,
+			toolsPanelExpanded: false
+		};
+	}
+
+	setToolsPanelExpanded(expanded: boolean): void {
+		this.ui = { ...this.ui, toolsPanelExpanded: expanded };
 	}
 
 	toggleTool(id: ToolId): void {
