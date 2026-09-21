@@ -412,6 +412,106 @@ describe('solids and extra options', () => {
 	});
 });
 
+type Xz = { x: number; z: number };
+
+function nodeXz(doc: GraphDocument): Xz[] {
+	return Object.values(doc.nodes).map((n) => ({ x: n.position.x, z: n.position.z }));
+}
+
+function xzDist(a: Xz, b: Xz): number {
+	return Math.hypot(a.x - b.x, a.z - b.z);
+}
+
+function xzCentroid(pts: Xz[]): Xz {
+	const n = pts.length || 1;
+	return {
+		x: pts.reduce((s, p) => s + p.x, 0) / n,
+		z: pts.reduce((s, p) => s + p.z, 0) / n
+	};
+}
+
+function xzCircumradius(pts: Xz[]): number {
+	const c = xzCentroid(pts);
+	return Math.max(0, ...pts.map((p) => xzDist(p, c)));
+}
+
+/** Split a ring of clusters on the g largest angular gaps. */
+function clustersByAngle(pts: Xz[], groups: number): Xz[][] {
+	const tagged = pts.map((p) => ({ ...p, a: Math.atan2(p.z, p.x) }));
+	tagged.sort((a, b) => a.a - b.a);
+	const gaps = tagged.map((p, i) => {
+		const next = tagged[(i + 1) % tagged.length];
+		let d = next.a - p.a;
+		if (d < 0) d += Math.PI * 2;
+		return { after: i, d };
+	});
+	const splitAfter = new Set(
+		[...gaps]
+			.sort((a, b) => b.d - a.d)
+			.slice(0, groups)
+			.map((g) => g.after)
+	);
+	const clusters: Xz[][] = [];
+	let current: Xz[] = [];
+	for (let i = 0; i < tagged.length; i += 1) {
+		current.push({ x: tagged[i].x, z: tagged[i].z });
+		if (splitAfter.has(i)) {
+			clusters.push(current);
+			current = [];
+		}
+	}
+	if (current.length) {
+		if (clusters.length) clusters[0] = current.concat(clusters[0]);
+		else clusters.push(current);
+	}
+	return clusters.filter((c) => c.length > 0);
+}
+
+function adjacentCentroidDistances(clusters: Xz[][]): number[] {
+	const cs = clusters.map(xzCentroid);
+	const g = cs.length;
+	const ds: number[] = [];
+	for (let i = 0; i < g; i += 1) ds.push(xzDist(cs[i], cs[(i + 1) % g]));
+	return ds;
+}
+
+describe('communities layout', () => {
+	it('spaces singleton groups 3× keep-out apart', () => {
+		const doc = generateGraph('communities', { seed: 4, nodes: 3, groups: 3 });
+		expect(nodeCount(doc)).toBe(3);
+		const pts = nodeXz(doc);
+		expect(xzDist(pts[0], pts[1])).toBeCloseTo(3 * GENERATE_MIN_DISTANCE, 5);
+		expect(xzDist(pts[1], pts[2])).toBeCloseTo(3 * GENERATE_MIN_DISTANCE, 5);
+		expect(xzDist(pts[2], pts[0])).toBeCloseTo(3 * GENERATE_MIN_DISTANCE, 5);
+	});
+
+	it('lays out each group like Simple and puts adjacent centers at 3R', () => {
+		const groups = 3;
+		const doc = generateGraph('communities', { seed: 9, nodes: 12, groups });
+		const clusters = clustersByAngle(nodeXz(doc), groups);
+		expect(clusters).toHaveLength(groups);
+		expect(clusters.map((c) => c.length).sort()).toEqual([4, 4, 4]);
+		const R = Math.max(...clusters.map(xzCircumradius));
+		expect(R).toBeGreaterThan(1);
+		for (const d of adjacentCentroidDistances(clusters)) {
+			expect(d).toBeCloseTo(3 * R, 5);
+		}
+		expect(minPairwiseNodeDistance(doc)).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+	});
+
+	it('uses a larger ring when the fattest group grows', () => {
+		const small = generateGraph('communities', { seed: 2, nodes: 12, groups: 3 });
+		const large = generateGraph('communities', { seed: 2, nodes: 30, groups: 3 });
+		const rSmall = Math.max(...clustersByAngle(nodeXz(small), 3).map(xzCircumradius));
+		const rLarge = Math.max(...clustersByAngle(nodeXz(large), 3).map(xzCircumradius));
+		expect(rLarge).toBeGreaterThan(rSmall);
+		const dSmall = Math.min(...adjacentCentroidDistances(clustersByAngle(nodeXz(small), 3)));
+		const dLarge = Math.min(...adjacentCentroidDistances(clustersByAngle(nodeXz(large), 3)));
+		expect(dSmall).toBeCloseTo(3 * rSmall, 5);
+		expect(dLarge).toBeCloseTo(3 * rLarge, 5);
+	});
+});
+
 describe('generateOptionsFromForm', () => {
 	it('starts from Simple defaults and parses jump lists', () => {
 		const form = defaultGenerateForm();

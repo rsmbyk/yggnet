@@ -6,6 +6,7 @@ import {
 	dist,
 	dist2,
 	enforceMinDistance,
+	GENERATE_MIN_DISTANCE,
 	projectToPlane,
 	rotateY,
 	tumble,
@@ -57,6 +58,56 @@ function circleLayout(n: number, radius: number, y = 0): Vec3[] {
 		const t = (i / n) * Math.PI * 2;
 		return vec(Math.cos(t) * radius, y, Math.sin(t) * radius);
 	});
+}
+
+function centroid(points: Vec3[]): Vec3 {
+	const n = points.length || 1;
+	let x = 0;
+	let y = 0;
+	let z = 0;
+	for (const p of points) {
+		x += p.x;
+		y += p.y;
+		z += p.z;
+	}
+	return vec(x / n, y / n, z / n);
+}
+
+/** Regular polygon, packed, recentered — the same settling Simple uses. */
+function layoutLikeSimple(count: number): Vec3[] {
+	if (count <= 0) return [];
+	if (count === 1) return [vec(0, 0, 0)];
+	const packed = enforceMinDistance(circleLayout(count, 5), GENERATE_MIN_DISTANCE, true);
+	const c = centroid(packed);
+	return packed.map((p) => vec(p.x - c.x, p.y - c.y, p.z - c.z));
+}
+
+/**
+ * Place each community as a mini Simple graph, then sit group centers on a
+ * ring so adjacent bounding circles are 3R apart (R = fattest group radius).
+ */
+function communityPoints(n: number, groupCount: number, assigned: number[]): Vec3[] {
+	const members: number[][] = Array.from({ length: groupCount }, () => []);
+	for (let i = 0; i < n; i += 1) members[assigned[i]].push(i);
+	const local = members.map((ids) => layoutLikeSimple(ids.length));
+	let R = 0;
+	for (const pts of local) {
+		for (const p of pts) R = Math.max(R, Math.hypot(p.x, p.y, p.z));
+	}
+	if (R < 1e-9) R = GENERATE_MIN_DISTANCE;
+	const rho = (3 * R) / (2 * Math.sin(Math.PI / groupCount));
+	const points: Vec3[] = Array.from({ length: n }, () => vec(0, 0, 0));
+	for (let k = 0; k < groupCount; k += 1) {
+		const t = (k / groupCount) * Math.PI * 2;
+		const cx = Math.cos(t) * rho;
+		const cz = Math.sin(t) * rho;
+		const pts = local[k];
+		const ids = members[k];
+		for (let j = 0; j < ids.length; j += 1) {
+			points[ids[j]] = vec(pts[j].x + cx, pts[j].y, pts[j].z + cz);
+		}
+	}
+	return points;
 }
 
 function applyYaw(points: Vec3[], yaw: number): Vec3[] {
@@ -587,14 +638,12 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 					if (rng.chance(same ? pin : pout)) edges.push([i, j]);
 				}
 			}
-			const points: Vec3[] = [];
-			for (let i = 0; i < n; i += 1) {
-				const t = (assigned[i] / g) * Math.PI * 2;
-				const cx = Math.cos(t) * 6;
-				const cz = Math.sin(t) * 6;
-				points.push(vec(cx + (rng.next() - 0.5) * 2.4, 0, cz + (rng.next() - 0.5) * 2.4));
-			}
-			return { title: `Communities ${n}`, points, edges: undirected(edges), layout: 'yaw' };
+			return {
+				title: `Communities ${n}`,
+				points: communityPoints(n, g, assigned),
+				edges: undirected(edges),
+				layout: 'yaw'
+			};
 		}
 		case 'cycle': {
 			const c = clampNodes(opts.nodes ?? 8, 3);
