@@ -8,6 +8,7 @@
 	import { selectionPanelOpen } from '$lib/ui/tool-ids';
 
 	const slide = { duration: 220, x: -28, opacity: 0 };
+	const panelFade = { duration: 180 };
 	let WorldCanvas: typeof import('$lib/world/WorldCanvas.svelte').default | null = $state(null);
 
 	onMount(() => {
@@ -163,15 +164,17 @@
 	{/if}
 	<div class="tool-dock">
 		<Toolbar />
-		{#if app.ui.openTool}
-			<div class="tool-panel-slot" transition:fly={slide}>
-				<ManagerPanel section={app.ui.openTool} />
-			</div>
-		{:else if showSelectionPanel}
-			<div class="tool-panel-slot" transition:fly={slide}>
-				<ManagerPanel section="selection" />
-			</div>
-		{/if}
+		<div class="tool-panel-stage">
+			{#if app.ui.openTool}
+				<div class="tool-panel-slot" transition:fly={slide}>
+					<ManagerPanel section={app.ui.openTool} />
+				</div>
+			{:else if showSelectionPanel}
+				<div class="tool-panel-slot" transition:fade={panelFade}>
+					<ManagerPanel section="selection" />
+				</div>
+			{/if}
+		</div>
 	</div>
 </div>
 
@@ -218,7 +221,16 @@
 		pointer-events: none;
 	}
 
+	.tool-panel-stage {
+		position: relative;
+		display: grid;
+		min-width: 0;
+		max-height: 100%;
+		pointer-events: none;
+	}
+
 	.tool-panel-slot {
+		grid-area: 1 / 1;
 		display: flex;
 		min-width: 0;
 		max-height: 100%;
