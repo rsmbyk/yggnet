@@ -12,6 +12,7 @@
 	let filterInput = $state('');
 	let stepNote = $state('');
 	let randomN = $state(12);
+	let templateKind = $state<'blank' | 'org' | 'roadmap' | 'learning'>('blank');
 	let compareAlgo = $state('dijkstra');
 	let compareRunIdA = $state('');
 	let compareRunIdB = $state('');
@@ -418,26 +419,36 @@
 	{/if}
 
 	{#if section === 'templates'}
-		<section class="block" data-testid="templates">
-			<h2>Templates</h2>
-			<div class="row wrap">
-				<button type="button" data-testid="tpl-blank" onclick={() => app.loadTemplate('blank')}
-					>Blank</button
+		<section class="block templates-block" data-testid="templates" aria-label="Templates">
+			<form
+				class="row slot-save-row"
+				onsubmit={(e) => {
+					e.preventDefault();
+					app.loadTemplate(templateKind);
+				}}
+			>
+				<select
+					class="slot-name-input"
+					data-testid="template-kind"
+					aria-label="Template"
+					bind:value={templateKind}
 				>
-				<button type="button" data-testid="tpl-org" onclick={() => app.loadTemplate('org')}
-					>Org</button
-				>
-				<button type="button" data-testid="tpl-roadmap" onclick={() => app.loadTemplate('roadmap')}
-					>Roadmap</button
-				>
-				<button
-					type="button"
-					data-testid="tpl-learning"
-					onclick={() => app.loadTemplate('learning')}>Learning</button
-				>
-			</div>
-			<div class="row">
+					<option value="blank">Blank</option>
+					<option value="org">Org</option>
+					<option value="roadmap">Roadmap</option>
+					<option value="learning">Learning</option>
+				</select>
+				<button type="submit" data-testid="apply-template">Apply</button>
+			</form>
+			<form
+				class="row slot-save-row"
+				onsubmit={(e) => {
+					e.preventDefault();
+					app.randomGraph(randomN);
+				}}
+			>
 				<input
+					class="slot-name-input"
 					type="number"
 					min="2"
 					max="40"
@@ -445,10 +456,8 @@
 					aria-label="Random node count"
 					data-testid="random-n"
 				/>
-				<button type="button" data-testid="random-graph" onclick={() => app.randomGraph(randomN)}
-					>Random</button
-				>
-			</div>
+				<button type="submit" data-testid="random-graph">Random</button>
+			</form>
 		</section>
 	{/if}
 
@@ -1267,6 +1276,12 @@
 		min-height: 0;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.templates-block {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
 	}
 
 	.brand {

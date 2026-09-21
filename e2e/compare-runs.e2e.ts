@@ -1,10 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { openTool } from './open-tool';
+import { applyTemplate, openTool } from './open-tool';
 
 test('compare two stored runs shows dual summary and dismisses', async ({ page }) => {
 	await page.goto('/');
-	await openTool(page, 'templates');
-	await page.getByTestId('tpl-learning').click();
+	await applyTemplate(page, 'learning');
 	await openTool(page, 'pathfinder');
 
 	const fromSelect = page.getByTestId('path-from');

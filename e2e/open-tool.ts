@@ -8,3 +8,13 @@ export async function openTool(page: Page, id: string) {
 		await btn.click();
 	}
 }
+
+/** Apply a starter template from the Templates form. */
+export async function applyTemplate(
+	page: Page,
+	kind: 'blank' | 'org' | 'roadmap' | 'learning'
+) {
+	await openTool(page, 'templates');
+	await page.getByTestId('template-kind').selectOption(kind);
+	await page.getByTestId('apply-template').click();
+}
