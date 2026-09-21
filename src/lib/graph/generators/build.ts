@@ -2,7 +2,6 @@ import { createEmptyDocument } from '../model/document';
 import type { GraphDocument, GraphEdge, GraphNode } from '../model/types';
 import type { Vec3 } from './geom';
 import type { Rng } from './rng';
-import { MAX_GRAPH_NODES } from './types';
 
 export function clampInt(n: number, min: number, max: number): number {
 	if (!Number.isFinite(n)) return min;
@@ -10,7 +9,8 @@ export function clampInt(n: number, min: number, max: number): number {
 }
 
 export function clampNodes(n: number, min = 1): number {
-	return clampInt(n, min, MAX_GRAPH_NODES);
+	if (!Number.isFinite(n)) return min;
+	return Math.max(min, Math.round(n));
 }
 
 export type EdgeSpec = {

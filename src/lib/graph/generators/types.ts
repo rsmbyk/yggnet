@@ -91,7 +91,15 @@ export type ArchimedeanSolid = (typeof ARCHIMEDEAN_SOLIDS)[number];
 
 export const PALEY_ORDERS = [5, 9, 13, 17, 25, 29, 37] as const;
 
-export const MAX_GRAPH_NODES = 40;
+const NAMED_GRAPH_SET = new Set<string>(NAMED_GRAPHS);
+
+/** True when `id` is a catalog named graph rather than a procedural kind. */
+export function isNamedGraphId(id: string): id is NamedGraphId {
+	return NAMED_GRAPH_SET.has(id);
+}
+
+/** Type-dropdown ids: procedural kinds plus each catalog named graph. */
+export type GeneratePickerId = Exclude<GraphKind, 'named'> | NamedGraphId;
 
 /** Options for {@link generateGraph}. Unspecified fields use per-kind defaults. */
 export interface GenerateOptions {
@@ -257,21 +265,28 @@ const SHARED_DIRECTED: ReadonlySet<GraphKind> = new Set([
 	'spherical'
 ]);
 
-export function fieldsForKind(kind: GraphKind): readonly KindField[] {
+export function fieldsForKind(kind: GraphKind | NamedGraphId): readonly KindField[] {
+	if (isNamedGraphId(kind)) {
+		if (kind === 'paley') return ['paleyQ'];
+		if (kind === 'sierpinskiGasket' || kind === 'sierpinskiTetrahedron') return ['sierpinskiDepth'];
+		return [];
+	}
 	return KIND_FIELDS[kind];
 }
 
-export function kindAllowsWeighted(kind: GraphKind): boolean {
+export function kindAllowsWeighted(kind: GraphKind | NamedGraphId): boolean {
+	if (isNamedGraphId(kind)) return false;
 	return SHARED_WEIGHTED.has(kind);
 }
 
-export function kindAllowsDirected(kind: GraphKind): boolean {
+export function kindAllowsDirected(kind: GraphKind | NamedGraphId): boolean {
+	if (isNamedGraphId(kind)) return false;
 	return SHARED_DIRECTED.has(kind);
 }
 
 /** Last Generate-tool form values. Survives ManagerPanel remounts in session state. */
 export interface GenerateFormState {
-	kind: GraphKind;
+	kind: GeneratePickerId;
 	nodes: number;
 	density: number;
 	extraEdges: number;
@@ -415,7 +430,47 @@ export function generateOptionsFromForm(form: GenerateFormState): GenerateOption
 	};
 }
 
-export const GRAPH_KIND_GROUPS: { label: string; kinds: { id: GraphKind; label: string }[] }[] = [
+/** Map the Generate picker onto {@link generateGraph} kind + options. */
+export function generateRequestFromForm(form: GenerateFormState): {
+	kind: GraphKind;
+	options: GenerateOptions;
+} {
+	const options = generateOptionsFromForm(form);
+	if (isNamedGraphId(form.kind)) {
+		return { kind: 'named', options: { ...options, named: form.kind } };
+	}
+	return { kind: form.kind, options };
+}
+
+export const NAMED_GRAPH_LABELS: Record<NamedGraphId, string> = {
+	petersen: 'Petersen',
+	heawood: 'Heawood',
+	grotzsch: 'Grötzsch',
+	wagner: 'Wagner',
+	frucht: 'Frucht',
+	herschel: 'Herschel',
+	desargues: 'Desargues',
+	pappus: 'Pappus',
+	chvatal: 'Chvátal',
+	coxeter: 'Coxeter',
+	tutteCoxeter: 'Tutte–Coxeter',
+	clebsch: 'Clebsch',
+	dyck: 'Dyck',
+	goldnerHarary: 'Goldner–Harary',
+	paley: 'Paley',
+	sierpinskiGasket: 'Sierpinski gasket',
+	cell24: '24-cell',
+	csaszar: 'Császár',
+	szilassi: 'Szilassi',
+	stella: 'Stella octangula',
+	rhombicDodecahedron: 'Rhombic dodecahedron',
+	sierpinskiTetrahedron: 'Sierpinski tetrahedron'
+};
+
+export const GRAPH_KIND_GROUPS: {
+	label: string;
+	kinds: { id: GeneratePickerId; label: string }[];
+}[] = [
 	{
 		label: 'Empty & random',
 		kinds: [
@@ -444,7 +499,7 @@ export const GRAPH_KIND_GROUPS: { label: string; kinds: { id: GraphKind; label: 
 	{
 		label: 'Named',
 		kinds: [
-			{ id: 'named', label: 'Named graph' },
+			...NAMED_GRAPHS.map((id) => ({ id, label: NAMED_GRAPH_LABELS[id] })),
 			{ id: 'generalizedPetersen', label: 'Generalized Petersen' }
 		]
 	},
@@ -482,31 +537,6 @@ export const GRAPH_KIND_GROUPS: { label: string; kinds: { id: GraphKind; label: 
 		]
 	}
 ];
-
-export const NAMED_GRAPH_LABELS: Record<NamedGraphId, string> = {
-	petersen: 'Petersen',
-	heawood: 'Heawood',
-	grotzsch: 'Grötzsch',
-	wagner: 'Wagner',
-	frucht: 'Frucht',
-	herschel: 'Herschel',
-	desargues: 'Desargues',
-	pappus: 'Pappus',
-	chvatal: 'Chvátal',
-	coxeter: 'Coxeter',
-	tutteCoxeter: 'Tutte–Coxeter',
-	clebsch: 'Clebsch',
-	dyck: 'Dyck',
-	goldnerHarary: 'Goldner–Harary',
-	paley: 'Paley',
-	sierpinskiGasket: 'Sierpinski gasket',
-	cell24: '24-cell',
-	csaszar: 'Császár',
-	szilassi: 'Szilassi',
-	stella: 'Stella octangula',
-	rhombicDodecahedron: 'Rhombic dodecahedron',
-	sierpinskiTetrahedron: 'Sierpinski tetrahedron'
-};
 
 export const PLATONIC_LABELS: Record<PlatonicSolid, string> = {
 	tetrahedron: 'Tetrahedron',

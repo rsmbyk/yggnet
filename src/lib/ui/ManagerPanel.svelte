@@ -4,12 +4,10 @@
 		ARCHIMEDEAN_LABELS,
 		ARCHIMEDEAN_SOLIDS,
 		fieldsForKind,
-		generateOptionsFromForm,
+		generateRequestFromForm,
 		GRAPH_KIND_GROUPS,
 		kindAllowsDirected,
 		kindAllowsWeighted,
-		NAMED_GRAPH_LABELS,
-		NAMED_GRAPHS,
 		PALEY_ORDERS,
 		pathSeriesMetrics,
 		PLATONIC_LABELS,
@@ -28,7 +26,8 @@
 	const genFields = $derived(fieldsForKind(app.generateForm.kind));
 
 	function onGenerate() {
-		app.applyGeneratedGraph(app.generateForm.kind, generateOptionsFromForm(app.generateForm));
+		const { kind, options } = generateRequestFromForm(app.generateForm);
+		app.applyGeneratedGraph(kind, options);
 	}
 
 	let compareAlgo = $state('dijkstra');
@@ -467,21 +466,7 @@
 					</select>
 				</label>
 				<div class="generate-fields">
-					{#if genFields.includes('named')}
-						<label>
-							Named graph
-							<select
-								class="slot-name-input"
-								data-testid="generate-named"
-								bind:value={app.generateForm.named}
-							>
-								{#each NAMED_GRAPHS as id (id)}
-									<option value={id}>{NAMED_GRAPH_LABELS[id]}</option>
-								{/each}
-							</select>
-						</label>
-					{/if}
-					{#if genFields.includes('paleyQ') && app.generateForm.named === 'paley'}
+					{#if genFields.includes('paleyQ')}
 						<label>
 							Order q
 							<select
@@ -495,7 +480,7 @@
 							</select>
 						</label>
 					{/if}
-					{#if genFields.includes('sierpinskiDepth') && (app.generateForm.named === 'sierpinskiGasket' || app.generateForm.named === 'sierpinskiTetrahedron')}
+					{#if genFields.includes('sierpinskiDepth')}
 						<label>
 							Depth
 							<input
@@ -514,7 +499,6 @@
 								class="slot-name-input"
 								type="number"
 								min="0"
-								max="40"
 								data-testid="generate-nodes"
 								bind:value={app.generateForm.nodes}
 							/>
@@ -540,7 +524,6 @@
 								class="slot-name-input"
 								type="number"
 								min="0"
-								max="80"
 								bind:value={app.generateForm.extraEdges}
 							/>
 						</label>
@@ -552,7 +535,6 @@
 								class="slot-name-input"
 								type="number"
 								min="0"
-								max="39"
 								bind:value={app.generateForm.degree}
 							/>
 						</label>
@@ -588,7 +570,6 @@
 								class="slot-name-input"
 								type="number"
 								min="1"
-								max="39"
 								bind:value={app.generateForm.left}
 							/>
 						</label>
@@ -600,7 +581,6 @@
 								class="slot-name-input"
 								type="number"
 								min="1"
-								max="39"
 								bind:value={app.generateForm.right}
 							/>
 						</label>
@@ -829,7 +809,6 @@
 								class="slot-name-input"
 								type="number"
 								min="0"
-								max="39"
 								bind:value={app.generateForm.chord}
 							/>
 						</label>
@@ -1999,6 +1978,16 @@
 		padding: 0.35rem 0.5rem;
 		background: var(--yg-chip);
 		color: var(--yg-fg);
+	}
+
+	select {
+		appearance: none;
+		background-color: var(--yg-chip);
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path fill='%230f1620' d='M1.2 1.4 6 6.2 10.8 1.4'/></svg>");
+		background-repeat: no-repeat;
+		background-position: right 0.55rem center;
+		background-size: 0.7rem 0.45rem;
+		padding-right: 1.65rem;
 	}
 
 	.edge-row {

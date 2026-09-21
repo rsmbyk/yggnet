@@ -15,7 +15,7 @@ import {
 import { generalizedPetersen, namedSpec } from './named';
 import { antiprismSpec, archimedeanSpec, platonicSpec, pyramidSpec } from './polyhedra';
 import { createRng, randomSeed, type Rng } from './rng';
-import { MAX_GRAPH_NODES, type GenerateOptions, type GraphKind } from './types';
+import { type GenerateOptions, type GraphKind } from './types';
 
 export {
 	ARCHIMEDEAN_LABELS,
@@ -23,11 +23,12 @@ export {
 	defaultGenerateForm,
 	fieldsForKind,
 	generateOptionsFromForm,
+	generateRequestFromForm,
 	GRAPH_KIND_GROUPS,
 	GRAPH_KINDS,
+	isNamedGraphId,
 	kindAllowsDirected,
 	kindAllowsWeighted,
-	MAX_GRAPH_NODES,
 	NAMED_GRAPH_LABELS,
 	NAMED_GRAPHS,
 	PALEY_ORDERS,
@@ -39,6 +40,7 @@ export type {
 	ArchimedeanSolid,
 	GenerateFormState,
 	GenerateOptions,
+	GeneratePickerId,
 	GraphKind,
 	KindField,
 	NamedGraphId,
@@ -234,8 +236,8 @@ function randomTree(
 	const parent: number[] = [-1];
 	const depths: number[] = [0];
 	const kids: number[] = [0];
-	const want = Math.min(MAX_GRAPH_NODES, 1 + (branch ** (maxD + 1) - 1) / Math.max(branch - 1, 1));
-	while (parent.length < want && parent.length < MAX_GRAPH_NODES) {
+	const want = Math.max(1, Math.round(1 + (branch ** (maxD + 1) - 1) / Math.max(branch - 1, 1)));
+	while (parent.length < want) {
 		const candidates = parent.map((_, i) => i).filter((i) => depths[i] < maxD && kids[i] < branch);
 		if (candidates.length === 0) break;
 		const p = rng.pick(candidates);
@@ -244,9 +246,9 @@ function randomTree(
 		kids.push(0);
 		kids[p] += 1;
 	}
-	if (!depths.some((d) => d === maxD) && parent.length < MAX_GRAPH_NODES) {
+	if (!depths.some((d) => d === maxD)) {
 		let p = 0;
-		while (depths[p] < maxD && parent.length < MAX_GRAPH_NODES) {
+		while (depths[p] < maxD) {
 			const cur = parent.length;
 			parent.push(p);
 			depths.push(depths[p] + 1);
@@ -439,7 +441,7 @@ function hexGrid(rows: number, cols: number): { points: Vec3[]; edges: [number, 
 }
 
 function diamondLattice(extent: number): { points: Vec3[]; edges: [number, number][] } {
-	let s = clampInt(extent, 1, 4);
+	const s = clampInt(extent, 1, 4);
 	const make = (size: number) => {
 		const pts: Vec3[] = [];
 		for (let i = 0; i < size; i += 1) {
@@ -453,12 +455,7 @@ function diamondLattice(extent: number): { points: Vec3[]; edges: [number, numbe
 		}
 		return pts;
 	};
-	let points = make(s);
-	while (points.length > MAX_GRAPH_NODES && s > 1) {
-		s -= 1;
-		points = make(s);
-	}
-	if (points.length > MAX_GRAPH_NODES) points = points.slice(0, MAX_GRAPH_NODES);
+	const points = make(s);
 	const edges: [number, number][] = [];
 	const bond = 1.25;
 	for (let i = 0; i < points.length; i += 1) {
@@ -747,10 +744,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 		}
 		case 'bipartite': {
 			const left = clampNodes(opts.left ?? 5, 1);
-			const right = Math.min(
-				MAX_GRAPH_NODES - left,
-				clampInt(opts.right ?? 5, 1, MAX_GRAPH_NODES - 1)
-			);
+			const right = clampNodes(opts.right ?? 5, 1);
 			const points: Vec3[] = [];
 			for (let i = 0; i < left; i += 1) points.push(vec(-4, 0, (i - (left - 1) / 2) * 2.2));
 			for (let i = 0; i < right; i += 1) points.push(vec(4, 0, (i - (right - 1) / 2) * 2.2));
@@ -770,30 +764,18 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 		case 'grid': {
 			const rows = clampInt(opts.rows ?? 4, 1, 20);
 			const cols = clampInt(opts.columns ?? 4, 1, 20);
-			let r = rows;
-			let c = cols;
-			while (r * c > MAX_GRAPH_NODES) {
-				if (r >= c && r > 1) r -= 1;
-				else if (c > 1) c -= 1;
-				else break;
-			}
-			const g = cartesianGrid(1, c, r, opts.diagonals === true);
+			const g = cartesianGrid(1, cols, rows, opts.diagonals === true);
 			g.points = g.points.map((p) => vec(p.x, 0, p.z));
 			return {
-				title: `Grid ${c}×${r}`,
+				title: `Grid ${cols}×${rows}`,
 				points: g.points,
 				edges: undirected(g.edges),
 				layout: 'grid90'
 			};
 		}
 		case 'hexGrid': {
-			let rows = clampInt(opts.rows ?? 4, 1, 20);
-			let cols = clampInt(opts.columns ?? 5, 1, 20);
-			while (rows * cols > MAX_GRAPH_NODES) {
-				if (rows >= cols && rows > 1) rows -= 1;
-				else if (cols > 1) cols -= 1;
-				else break;
-			}
+			const rows = clampInt(opts.rows ?? 4, 1, 20);
+			const cols = clampInt(opts.columns ?? 5, 1, 20);
 			const g = hexGrid(rows, cols);
 			return { title: `Hex ${cols}×${rows}`, ...g, edges: undirected(g.edges), layout: 'hex60' };
 		}
@@ -834,15 +816,9 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'tumble' };
 		}
 		case 'cubicLattice': {
-			let rows = clampInt(opts.rows ?? 3, 1, 10);
-			let cols = clampInt(opts.columns ?? 3, 1, 10);
-			let layers = clampInt(opts.layers ?? 3, 1, 10);
-			while (rows * cols * layers > MAX_GRAPH_NODES) {
-				if (layers >= rows && layers >= cols && layers > 1) layers -= 1;
-				else if (rows >= cols && rows > 1) rows -= 1;
-				else if (cols > 1) cols -= 1;
-				else break;
-			}
+			const rows = clampInt(opts.rows ?? 3, 1, 10);
+			const cols = clampInt(opts.columns ?? 3, 1, 10);
+			const layers = clampInt(opts.layers ?? 3, 1, 10);
 			const g = cartesianGrid(rows, cols, layers, opts.diagonals === true);
 			return {
 				title: `Cubic ${cols}×${rows}×${layers}`,
@@ -910,13 +886,8 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			return { title: `Helix ${count}`, points, edges: undirected(edges), layout: 'none' };
 		}
 		case 'torusGrid': {
-			let u = clampInt(opts.rings ?? 4, 3, 20);
-			let v = clampInt(opts.segments ?? 8, 3, 20);
-			while (u * v > MAX_GRAPH_NODES) {
-				if (v >= u && v > 3) v -= 1;
-				else if (u > 3) u -= 1;
-				else break;
-			}
+			const u = clampInt(opts.rings ?? 4, 3, 20);
+			const v = clampInt(opts.segments ?? 8, 3, 20);
 			const R = 5;
 			const r = 2;
 			const points: Vec3[] = [];

@@ -153,14 +153,7 @@
 	</main>
 
 	{#if app.ui.openTool}
-		<button
-			type="button"
-			class="drawer-scrim"
-			aria-label="Close tools panel"
-			data-testid="manager-scrim"
-			transition:fade={{ duration: 180 }}
-			onclick={() => app.setOpenTool(null)}
-		></button>
+		<div class="drawer-scrim" data-testid="manager-scrim" aria-hidden="true"></div>
 	{/if}
 	<div class="tool-dock">
 		<Toolbar />
@@ -203,7 +196,7 @@
 		padding: 0;
 		margin: 0;
 		background: rgba(28, 36, 46, 0.28);
-		cursor: pointer;
+		pointer-events: none;
 	}
 
 	.tool-dock {

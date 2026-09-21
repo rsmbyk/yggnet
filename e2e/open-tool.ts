@@ -16,10 +16,9 @@ export async function applyGeneratedGraph(
 	fields: Record<string, string | number> = {}
 ) {
 	await openTool(page, 'generate');
-	await page.getByTestId('generate-kind').selectOption(kind);
-	if (kind === 'named' && fields.named) {
-		await page.getByTestId('generate-named').selectOption(String(fields.named));
-	}
+	await page
+		.getByTestId('generate-kind')
+		.selectOption(kind === 'named' && fields.named ? String(fields.named) : kind);
 	if (fields.rows !== undefined) {
 		await page.getByTestId('generate-rows').fill(String(fields.rows));
 	}

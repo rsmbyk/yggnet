@@ -11,6 +11,8 @@ import {
 	fingerprint,
 	generateGraph,
 	generateOptionsFromForm,
+	generateRequestFromForm,
+	GRAPH_KIND_GROUPS,
 	GRAPH_KINDS,
 	kindAllowsDirected,
 	kindAllowsWeighted,
@@ -107,9 +109,14 @@ describe('generateGraph', () => {
 		expect(nodeCount(doc)).toBe(8);
 	});
 
-	it('clamps to 40 nodes', () => {
+	it('honors large node counts instead of capping them', () => {
 		const doc = generateGraph('simple', { seed: 1, nodes: 99 });
-		expect(nodeCount(doc)).toBe(40);
+		expect(nodeCount(doc)).toBe(99);
+	});
+
+	it('builds grids larger than the old 40-node cap', () => {
+		const doc = generateGraph('grid', { seed: 1, rows: 8, columns: 8 });
+		expect(nodeCount(doc)).toBe(64);
 	});
 
 	it('assigns random weights when weighted', () => {
@@ -139,7 +146,6 @@ describe('generateGraph', () => {
 		} else {
 			expect(nodeCount(doc)).toBeGreaterThan(0);
 		}
-		expect(nodeCount(doc)).toBeLessThanOrEqual(40);
 		expect(doc.title.length).toBeGreaterThan(0);
 	});
 });
@@ -188,6 +194,23 @@ describe('kind metadata', () => {
 		for (const kind of GRAPH_KINDS) {
 			expect(Array.isArray(fieldsForKind(kind))).toBe(true);
 		}
+	});
+
+	it('lists every catalog named graph on the main picker', () => {
+		const namedGroup = GRAPH_KIND_GROUPS.find((g) => g.label === 'Named');
+		expect(namedGroup).toBeTruthy();
+		const ids = namedGroup!.kinds.map((k) => k.id);
+		expect(ids).not.toContain('named');
+		for (const id of NAMED_GRAPHS) {
+			expect(ids).toContain(id);
+		}
+		expect(ids).toContain('generalizedPetersen');
+	});
+
+	it('exposes Paley and Sierpinski fields from the picker id', () => {
+		expect(fieldsForKind('paley')).toContain('paleyQ');
+		expect(fieldsForKind('sierpinskiGasket')).toContain('sierpinskiDepth');
+		expect(fieldsForKind('petersen')).toEqual([]);
 	});
 
 	it('allows weighted/directed on simple but not on tree', () => {
@@ -269,21 +292,13 @@ describe('solids and extra options', () => {
 			nodeCount(generateGraph('tree', { seed: 1, depth: 2, binary: false, branching: 3 }))
 		).toBeGreaterThan(1);
 		expect(nodeCount(generateGraph('circulant', { seed: 1, nodes: 10, jumps: [] }))).toBe(10);
-		expect(nodeCount(generateGraph('diamondLattice', { seed: 1, extent: 6 }))).toBeLessThanOrEqual(
-			40
-		);
-		expect(
-			nodeCount(generateGraph('grid', { seed: 1, rows: 20, columns: 20 }))
-		).toBeLessThanOrEqual(40);
-		expect(
-			nodeCount(generateGraph('hexGrid', { seed: 1, rows: 20, columns: 20 }))
-		).toBeLessThanOrEqual(40);
-		expect(
-			nodeCount(generateGraph('torusGrid', { seed: 1, rings: 20, segments: 20 }))
-		).toBeLessThanOrEqual(40);
+		expect(nodeCount(generateGraph('diamondLattice', { seed: 1, extent: 6 }))).toBe(64);
+		expect(nodeCount(generateGraph('grid', { seed: 1, rows: 20, columns: 20 }))).toBe(400);
+		expect(nodeCount(generateGraph('hexGrid', { seed: 1, rows: 20, columns: 20 }))).toBe(400);
+		expect(nodeCount(generateGraph('torusGrid', { seed: 1, rings: 20, segments: 20 }))).toBe(400);
 		expect(
 			nodeCount(generateGraph('cubicLattice', { seed: 1, rows: 6, columns: 6, layers: 6 }))
-		).toBeLessThanOrEqual(40);
+		).toBe(216);
 		expect(
 			degrees(generateGraph('regular', { seed: 1, nodes: 9, degree: 3 })).every((d) => d === 2)
 		).toBe(true);
@@ -327,12 +342,21 @@ describe('generateOptionsFromForm', () => {
 		const form = defaultGenerateForm();
 		expect(form.kind).toBe('simple');
 		expect(form.nodes).toBe(12);
+		expect(generateRequestFromForm(form).kind).toBe('simple');
 		form.kind = 'circulant';
 		form.jumps = '1, 3';
 		form.directed = true;
 		const opts = generateOptionsFromForm(form);
 		expect(opts.jumps).toEqual([1, 3]);
 		expect(opts.directed).toBe(true);
+	});
+
+	it('maps a catalog named picker onto generateGraph named', () => {
+		const form = defaultGenerateForm();
+		form.kind = 'petersen';
+		const req = generateRequestFromForm(form);
+		expect(req.kind).toBe('named');
+		expect(req.options.named).toBe('petersen');
 	});
 });
 

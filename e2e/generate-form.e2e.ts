@@ -15,3 +15,13 @@ test('Generate remembers type and options after closing the panel', async ({ pag
 	await expect(page.getByTestId('generate-rows')).toHaveValue('3');
 	await expect(page.getByTestId('generate-columns')).toHaveValue('5');
 });
+
+test('Generate lists named graphs on the type dropdown', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'generate');
+	await expect(page.getByTestId('generate-kind')).toContainText('Petersen');
+	await expect(page.getByTestId('generate-named')).toHaveCount(0);
+	await page.getByTestId('generate-kind').selectOption('petersen');
+	await expect(page.getByTestId('generate-kind')).toHaveValue('petersen');
+});
