@@ -9,6 +9,7 @@
 		kindAllowsDirected,
 		kindAllowsPlanar,
 		kindAllowsWeighted,
+		kindHelp,
 		PALEY_ORDERS,
 		pathSeriesMetrics,
 		PLATONIC_LABELS,
@@ -460,6 +461,7 @@
 					<select
 						class="slot-name-input"
 						data-testid="generate-kind"
+						aria-describedby="generate-kind-help"
 						bind:value={app.generateForm.kind}
 					>
 						{#each GRAPH_KIND_GROUPS as group (group.label)}
@@ -470,6 +472,13 @@
 							</optgroup>
 						{/each}
 					</select>
+					<p
+						class="hint generate-kind-help"
+						id="generate-kind-help"
+						data-testid="generate-kind-help"
+					>
+						{kindHelp(app.generateForm.kind)}
+					</p>
 				</label>
 				<div class="generate-fields" data-testid="generate-fields">
 					{#if genFields.includes('paleyQ')}
@@ -1758,6 +1767,10 @@
 	.generate-form > label {
 		margin-bottom: 0;
 		flex: 0 0 auto;
+	}
+
+	.generate-kind-help {
+		margin: 0.28rem 0 0;
 	}
 
 	.generate-fields {

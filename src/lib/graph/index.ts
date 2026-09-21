@@ -109,6 +109,7 @@ export {
 	kindAllowsDirected,
 	kindAllowsPlanar,
 	kindAllowsWeighted,
+	kindHelp,
 	type GraphKind,
 	type GenerateFormState,
 	type GenerateOptions,

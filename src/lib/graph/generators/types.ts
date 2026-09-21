@@ -554,6 +554,71 @@ export const GRAPH_KIND_GROUPS: {
 	}
 ];
 
+/** One-line Generate helper for the selected type. */
+export const GRAPH_KIND_HELP: Record<GeneratePickerId, string> = {
+	null: 'Nodes only — no edges.',
+	simple: 'Random edges between distinct pairs. Density is how many of the possible pairs you get.',
+	multi: 'Random extra edges; the same pair can appear more than once, and loops are optional.',
+	scaleFree: 'Preferential attachment: a few hubs collect most of the links.',
+	communities: 'Clusters with more edges inside each group than between groups.',
+	cycle: 'One loop that visits every node and returns to the start.',
+	wheel: 'A cycle plus a hub joined to every node on the rim.',
+	regular: 'Every node has the same number of neighbors (the degree you set).',
+	complete: 'Every pair of nodes is connected.',
+	tournament: 'A directed complete graph: one way between every pair.',
+	smallWorld: 'A ring of nearby neighbors, then a few random rewires.',
+	circulant: 'A cycle plus extra chords at the jump lengths you list.',
+	prism: 'Two matching polygons with corresponding corners joined.',
+	mobiusLadder: 'A circular ladder with a half-twist.',
+	hypercube: 'The n-dimensional cube graph (Q3 is the ordinary cube).',
+	tree: 'Connected and acyclic — unique path between any two nodes.',
+	dag: 'Directed acyclic graph; edges only run forward in a random order.',
+	bipartite: 'Two parts; edges only go from left to right.',
+	grid: 'A rectangular lattice on the floor.',
+	hexGrid: 'A honeycomb lattice.',
+	geometric: 'Random points on the floor; join a pair if they are close enough.',
+	knn: 'Each node joins its k nearest neighbors.',
+	platonic: 'The graph of a Platonic solid — tetrahedron through icosahedron.',
+	archimedean: 'The graph of an Archimedean (truncated or snub) solid.',
+	antiprism: 'Two polygons, rotated, with triangular sides between them.',
+	pyramid: 'An apex over a polygonal base.',
+	cubicLattice: 'A 3D grid of cubes.',
+	diamondLattice: 'The carbon-diamond crystal graph.',
+	unitBall: 'Random points in a ball; join a pair if they are close enough.',
+	spherical: 'Random points on a sphere; join a pair if they are close enough.',
+	delaunay3: 'Tetrahedral mesh of a random 3D point cloud.',
+	helix: 'Points along a helix, consecutive plus optional chords.',
+	torusGrid: 'A grid wrapped into a doughnut.',
+	generalizedPetersen: 'Outer cycle, inner star, and spokes — G(n,k).',
+	petersen: 'The famous 10-vertex non-Hamiltonian graph.',
+	heawood: '14-vertex cage; the map graph of the torus.',
+	grotzsch: 'Smallest triangle-free graph that needs four colors.',
+	wagner: 'Möbius ladder on eight vertices.',
+	frucht: 'Smallest cubic graph with no symmetries.',
+	herschel: 'Smallest non-Hamiltonian polyhedral graph.',
+	desargues: '20-vertex incidence graph of the Desargues configuration.',
+	pappus: '18-vertex incidence graph of the Pappus configuration.',
+	chvatal: '12-vertex regular triangle-free graph.',
+	coxeter: '28-vertex cubic cage.',
+	tutteCoxeter: '30-vertex cubic cage (Tutte 8-cage).',
+	clebsch: '16-vertex strongly regular graph.',
+	dyck: '32-vertex cubic symmetric graph.',
+	goldnerHarary: 'Smallest non-Hamiltonian maximal planar graph.',
+	paley: 'Paley graph from a finite field of order q.',
+	sierpinskiGasket: 'Recursive triangle fractal.',
+	cell24: 'Skeleton of the 24-cell, a regular 4-polytope.',
+	csaszar: 'Polyhedral graph in which every pair of vertices is joined.',
+	szilassi: 'Dual of the Császár; every pair of faces shares an edge.',
+	stella: 'Two tetrahedra interpenetrating (stella octangula).',
+	rhombicDodecahedron: 'Catalan solid with 14 vertices.',
+	sierpinskiTetrahedron: 'Recursive tetrahedron fractal.'
+};
+
+/** Helper copy for the Generate type dropdown. */
+export function kindHelp(kind: GeneratePickerId): string {
+	return GRAPH_KIND_HELP[kind];
+}
+
 export const PLATONIC_LABELS: Record<PlatonicSolid, string> = {
 	tetrahedron: 'Tetrahedron',
 	cube: 'Cube',

@@ -31,6 +31,7 @@ export {
 	kindAllowsDirected,
 	kindAllowsPlanar,
 	kindAllowsWeighted,
+	kindHelp,
 	NAMED_GRAPH_LABELS,
 	NAMED_GRAPHS,
 	PALEY_ORDERS,

@@ -17,6 +17,7 @@ import {
 	kindAllowsDirected,
 	kindAllowsPlanar,
 	kindAllowsWeighted,
+	kindHelp,
 	NAMED_GRAPHS,
 	type GraphKind,
 	type NamedGraphId
@@ -209,6 +210,18 @@ describe('kind metadata', () => {
 		}
 		expect(ids).toContain('generalizedPetersen');
 		expect(GRAPH_KIND_GROUPS.at(-1)?.label).toBe('Named');
+	});
+
+	it('has a one-line helper for every Generate type', () => {
+		const ids = GRAPH_KIND_GROUPS.flatMap((g) => g.kinds.map((k) => k.id));
+		expect(ids.length).toBeGreaterThan(20);
+		for (const id of ids) {
+			const help = kindHelp(id);
+			expect(help.length).toBeGreaterThan(12);
+			expect(help).not.toMatch(/\n/);
+		}
+		expect(kindHelp('simple')).toMatch(/density/i);
+		expect(kindHelp('null')).toMatch(/no edges/i);
 	});
 
 	it('exposes Paley and Sierpinski fields from the picker id', () => {

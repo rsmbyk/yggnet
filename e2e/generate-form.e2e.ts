@@ -1,6 +1,20 @@
 import { expect, test } from '@playwright/test';
 import { openTool } from './open-tool';
 
+test('Generate explains the selected type under the dropdown', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'generate');
+	const help = page.getByTestId('generate-kind-help');
+	await expect(page.getByTestId('generate-kind')).toHaveValue('simple');
+	await expect(help).toBeVisible();
+	await expect(help).toContainText(/density/i);
+	await page.getByTestId('generate-kind').selectOption('cycle');
+	await expect(help).toContainText(/loop/i);
+	await page.getByTestId('generate-kind').selectOption('petersen');
+	await expect(help).toContainText(/10-vertex/i);
+});
+
 test('Generate remembers type and options after closing the panel', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
