@@ -42,8 +42,30 @@ test('named save can be deleted from the file list', async ({ page }) => {
 	await page.getByTestId('save-named').click();
 	const row = page.locator('[data-testid="save-slot-row"]', { hasText: slot });
 	await expect(row).toBeVisible();
+	page.once('dialog', (dialog) => {
+		expect(dialog.type()).toBe('confirm');
+		expect(dialog.message()).toContain(slot);
+		void dialog.accept();
+	});
 	await row.getByTestId('slot-delete').click();
 	await expect(row).toHaveCount(0);
+});
+
+test('deleting a saved graph can be cancelled', async ({ page }) => {
+	await page.goto('/');
+	await openTool(page, 'file');
+	const slot = 'e2e-keep-slot';
+	await page.getByTestId('save-slot-name').fill(slot);
+	await page.getByTestId('save-named').click();
+	const row = page.locator('[data-testid="save-slot-row"]', { hasText: slot });
+	await expect(row).toBeVisible();
+	page.once('dialog', (dialog) => {
+		expect(dialog.type()).toBe('confirm');
+		expect(dialog.message()).toContain(slot);
+		void dialog.dismiss();
+	});
+	await row.getByTestId('slot-delete').click();
+	await expect(row).toBeVisible();
 });
 
 test('enter in the slot name field saves', async ({ page }) => {

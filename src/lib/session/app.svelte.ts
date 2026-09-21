@@ -1083,6 +1083,7 @@ class AppStore {
 	deleteNamedSlot(name: string): void {
 		const key = saveSlotStorageKey(name);
 		if (!key || typeof localStorage === 'undefined') return;
+		if (!this.confirmDeleteSlot(name.trim())) return;
 		localStorage.removeItem(key);
 		this.refreshNamedSlots();
 		this.statusMessage = 'Deleted';
@@ -1091,6 +1092,11 @@ class AppStore {
 	private confirmOverwriteSlot(name: string): boolean {
 		if (typeof window === 'undefined') return true;
 		return window.confirm(`Replace the saved graph “${name}”?`);
+	}
+
+	private confirmDeleteSlot(name: string): boolean {
+		if (typeof window === 'undefined') return true;
+		return window.confirm(`Delete the saved graph “${name}”?`);
 	}
 
 	private confirmReplaceDocument(): boolean {
