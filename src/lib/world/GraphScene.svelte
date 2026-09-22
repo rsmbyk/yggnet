@@ -24,6 +24,7 @@
 		instanceCapacity,
 		instanceTint
 	} from './edge-pose';
+	import { createNodeSphereGeometry } from './node-sphere';
 
 	interactivity();
 
@@ -36,6 +37,12 @@
 	const GRID_MAJOR = $derived(tune.gridMajor);
 	const GRID_MEGA = $derived(tune.gridMega);
 	const NODE_RADIUS = $derived(tune.nodeRadius);
+	const nodeSphereGeometry = createNodeSphereGeometry();
+	const nodeSphereScale = $derived<[number, number, number]>([
+		NODE_RADIUS,
+		NODE_RADIUS,
+		NODE_RADIUS
+	]);
 	const NODE_COLOR = $derived(tune.nodeColor);
 	const NODE_SELECTED_COLOR = $derived(tune.nodeSelectedColor);
 	const NODE_HOVER_COLOR = $derived(tune.nodeHoverColor);
@@ -1875,6 +1882,7 @@
 		viewAnim = null;
 		gridTexture.dispose();
 		groundMaterial.dispose();
+		nodeSphereGeometry.dispose();
 	});
 </script>
 
@@ -1915,12 +1923,13 @@
 	{@const color = nodeColor(node.id)}
 	{@const pos = displayPosition(node)}
 	<T.Mesh
+		geometry={nodeSphereGeometry}
+		scale={nodeSphereScale}
 		position={[pos.x, pos.y, pos.z]}
 		onpointerenter={() => onNodePointerEnter(node.id)}
 		onpointerleave={() => onNodePointerLeave(node.id)}
 		onpointerdown={(ev: PointerLike) => onNodePointerDown(node, ev)}
 	>
-		<T.SphereGeometry args={[NODE_RADIUS, 24, 24]} />
 		<T.MeshStandardMaterial {color} transparent {opacity} roughness={0.45} metalness={0.15} />
 	</T.Mesh>
 	{#if labelVisibleAt(pos)}
