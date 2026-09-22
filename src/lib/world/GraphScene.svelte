@@ -17,6 +17,13 @@
 	} from './camera-fit';
 	import { interactionModeFromState, resolveNodeClick, type NodeClickAction } from './node-click';
 	import { sceneRevealComplete, stepSceneReveal } from './scene-reveal';
+	import {
+		composeEdgeArrowMatrix,
+		composeEdgeShaftMatrix,
+		edgePose,
+		instanceCapacity,
+		instanceTint
+	} from './edge-pose';
 
 	interactivity();
 
@@ -88,6 +95,12 @@
 	/** 2D/3D camera tween — declared early so useTask can see it. */
 	let viewModeAnimating = $state(false);
 	let viewAnim: { mode: '2d' | '3d'; t0: number; duration: number } | null = null;
+	let shaftMesh: THREE.InstancedMesh | undefined;
+	let arrowMesh: THREE.InstancedMesh | undefined;
+	let shaftCap = $state(8);
+	let arrowCap = $state(8);
+	const _edgeMat = new THREE.Matrix4();
+	const _edgeCol = new THREE.Color();
 
 	/** One texture tile = one mega cell, with major/minor subdivisions from live tune. */
 	function createGridTexture(): THREE.CanvasTexture {
@@ -223,37 +236,39 @@
 		if (controls && cam instanceof THREE.PerspectiveCamera) {
 			liveFar = farPlaneForOrbitDistance(controls.getDistance(), CAM_FAR);
 		}
-		if (!ground) return;
-		if (viewAnim) {
-			tickViewModeAnim(performance.now());
-		} else if (controls && !viewModeAnimating) {
-			const flat = app.ui.viewMode === '2d';
-			controls.minDistance = Math.max(0.05, MIN_DISTANCE_FLOOR);
-			controls.maxDistance = Number.isFinite(CAM_MAX_DISTANCE) ? CAM_MAX_DISTANCE : Infinity;
-			if (flat) {
-				// 2D: manual top-down pose — don't use SAFE_MIN_POLAR (that leaves ~7° off vertical).
-				controls.minPolarAngle = 0;
-				controls.maxPolarAngle = Math.PI;
-				if (pan) enforcePanPlaneLock(pan.plane, pan.planeLock, pan.eyeLock);
-				enforce2dCamera();
-			} else {
-				controls.minPolarAngle = SAFE_MIN_POLAR;
-				controls.maxPolarAngle = MAX_POLAR;
-				if (pan) {
-					enforcePanPlaneLock(pan.plane, pan.planeLock, pan.eyeLock);
-				} else if (!Number.isFinite(controls.object.position.x + controls.object.position.y)) {
-					clampCameraAboveGround();
-					controls.update();
+		if (ground) {
+			if (viewAnim) {
+				tickViewModeAnim(performance.now());
+			} else if (controls && !viewModeAnimating) {
+				const flat = app.ui.viewMode === '2d';
+				controls.minDistance = Math.max(0.05, MIN_DISTANCE_FLOOR);
+				controls.maxDistance = Number.isFinite(CAM_MAX_DISTANCE) ? CAM_MAX_DISTANCE : Infinity;
+				if (flat) {
+					// 2D: manual top-down pose — don't use SAFE_MIN_POLAR (that leaves ~7° off vertical).
+					controls.minPolarAngle = 0;
+					controls.maxPolarAngle = Math.PI;
+					if (pan) enforcePanPlaneLock(pan.plane, pan.planeLock, pan.eyeLock);
+					enforce2dCamera();
+				} else {
+					controls.minPolarAngle = SAFE_MIN_POLAR;
+					controls.maxPolarAngle = MAX_POLAR;
+					if (pan) {
+						enforcePanPlaneLock(pan.plane, pan.planeLock, pan.eyeLock);
+					} else if (!Number.isFinite(controls.object.position.x + controls.object.position.y)) {
+						clampCameraAboveGround();
+						controls.update();
+					}
 				}
+				syncCameraFromControls();
 			}
-			syncCameraFromControls();
+			const tx = controls?.target.x ?? cam?.position.x ?? 0;
+			const tz = controls?.target.z ?? cam?.position.z ?? 0;
+			ground.position.x = tx;
+			ground.position.z = tz;
+			gridTexture.offset.x = tx / GRID_MEGA - gridTiles * 0.5;
+			gridTexture.offset.y = -tz / GRID_MEGA - gridTiles * 0.5;
 		}
-		const tx = controls?.target.x ?? cam?.position.x ?? 0;
-		const tz = controls?.target.z ?? cam?.position.z ?? 0;
-		ground.position.x = tx;
-		ground.position.z = tz;
-		gridTexture.offset.x = tx / GRID_MEGA - gridTiles * 0.5;
-		gridTexture.offset.y = -tz / GRID_MEGA - gridTiles * 0.5;
+		syncInstancedEdges();
 	});
 
 	const nodes = $derived(Object.values(app.document.nodes));
@@ -297,7 +312,6 @@
 	let shownNodes = $state(0);
 	let shownEdges = $state(0);
 	const revealedNodes = $derived(visibleNodes.slice(0, shownNodes));
-	const revealedEdges = $derived(edges.slice(0, shownEdges));
 
 	$effect(() => {
 		void app.document.id;
@@ -313,7 +327,7 @@
 		const id = requestAnimationFrame(() => {
 			const next = stepSceneReveal({ nodes: shownNodes, edges: shownEdges }, totals);
 			shownNodes = next.nodes;
-			shownEdges = next.edges;
+			shownEdges = totals.edges;
 		});
 		return () => cancelAnimationFrame(id);
 	});
@@ -414,41 +428,7 @@
 		from: { x: number; y: number; z: number },
 		to: { x: number; y: number; z: number }
 	) {
-		const dx = to.x - from.x;
-		const dy = to.y - from.y;
-		const dz = to.z - from.z;
-		const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.001;
-		const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2 };
-		const axis = { x: dx / len, y: dy / len, z: dz / len };
-		const yAxis = { x: 0, y: 1, z: 0 };
-		const dot = yAxis.x * axis.x + yAxis.y * axis.y + yAxis.z * axis.z;
-		let qx = 0;
-		let qy = 0;
-		let qz = 0;
-		let qw = 1;
-		if (dot < -0.999) {
-			qx = 1;
-			qw = 0;
-		} else {
-			const cx = yAxis.y * axis.z - yAxis.z * axis.y;
-			const cy = yAxis.z * axis.x - yAxis.x * axis.z;
-			const cz = yAxis.x * axis.y - yAxis.y * axis.x;
-			qx = cx;
-			qy = cy;
-			qz = cz;
-			qw = 1 + dot;
-			const n = Math.sqrt(qx * qx + qy * qy + qz * qz + qw * qw) || 1;
-			qx /= n;
-			qy /= n;
-			qz /= n;
-			qw /= n;
-		}
-		return {
-			mid,
-			len,
-			axis,
-			quaternion: [qx, qy, qz, qw] as [number, number, number, number]
-		};
+		return edgePose(from, to);
 	}
 
 	function edgeArrowHead(
@@ -462,6 +442,91 @@
 			y: to.y - geo.axis.y * inset,
 			z: to.z - geo.axis.z * inset
 		};
+	}
+
+	function skipInstanceRaycast(mesh: THREE.InstancedMesh) {
+		mesh.raycast = () => {};
+	}
+
+	function attachShaftMesh(mesh: THREE.InstancedMesh) {
+		skipInstanceRaycast(mesh);
+		shaftMesh = mesh;
+		syncInstancedEdges();
+		return () => {
+			if (shaftMesh === mesh) shaftMesh = undefined;
+		};
+	}
+
+	function attachArrowMesh(mesh: THREE.InstancedMesh) {
+		skipInstanceRaycast(mesh);
+		arrowMesh = mesh;
+		syncInstancedEdges();
+		return () => {
+			if (arrowMesh === mesh) arrowMesh = undefined;
+		};
+	}
+
+	function edgeIsHidden(from: string, to: string): boolean {
+		if (!app.document.nodes[from] || !app.document.nodes[to]) return true;
+		if (app.filters.hideFiltered && app.filters.tags.length > 0) {
+			return !app.nodePassesFilter(from) || !app.nodePassesFilter(to);
+		}
+		return false;
+	}
+
+	function syncInstancedEdges() {
+		if (!shaftMesh && !arrowMesh) return;
+		let shaftCount = 0;
+		let arrowCount = 0;
+		for (const edge of edges) {
+			if (edgeIsHidden(edge.from, edge.to)) continue;
+			shaftCount += 1;
+			if (edge.directed) arrowCount += 1;
+		}
+		const nextShaft = instanceCapacity(shaftCount, shaftCap);
+		const nextArrow = instanceCapacity(arrowCount, arrowCap);
+		if (nextShaft !== shaftCap || nextArrow !== arrowCap) {
+			shaftCap = nextShaft;
+			arrowCap = nextArrow;
+			return;
+		}
+		if (shaftMesh) {
+			let i = 0;
+			for (const edge of edges) {
+				if (edgeIsHidden(edge.from, edge.to)) continue;
+				const from = nodePos(edge.from);
+				const to = nodePos(edge.to);
+				composeEdgeShaftMatrix(edgePose(from, to), _edgeMat);
+				shaftMesh.setMatrixAt(i, _edgeMat);
+				shaftMesh.setColorAt(
+					i,
+					instanceTint(edgeColor(edge.id), edgeOpacity(edge.id), SCENE_BG, _edgeCol)
+				);
+				i += 1;
+			}
+			shaftMesh.count = shaftCount;
+			shaftMesh.instanceMatrix.needsUpdate = true;
+			if (shaftMesh.instanceColor) shaftMesh.instanceColor.needsUpdate = true;
+		}
+		if (arrowMesh) {
+			let i = 0;
+			for (const edge of edges) {
+				if (edgeIsHidden(edge.from, edge.to) || !edge.directed) continue;
+				const from = nodePos(edge.from);
+				const to = nodePos(edge.to);
+				const pose = edgePose(from, to);
+				composeEdgeArrowMatrix(to, pose, ARROW_HEIGHT, ARROW_GAP_FRACTION, _edgeMat);
+				arrowMesh.setMatrixAt(i, _edgeMat);
+				arrowMesh.setColorAt(
+					i,
+					instanceTint(edgeColor(edge.id), edgeOpacity(edge.id), SCENE_BG, _edgeCol)
+				);
+				i += 1;
+			}
+			arrowMesh.count = arrowCount;
+			arrowMesh.instanceMatrix.needsUpdate = true;
+			if (arrowMesh.instanceColor) arrowMesh.instanceColor.needsUpdate = true;
+		}
 	}
 
 	/**
@@ -1897,40 +1962,26 @@
 	{/if}
 {/each}
 
-{#each revealedEdges as edge (edge.id)}
-	{@const fromPos = nodePos(edge.from)}
-	{@const toPos = nodePos(edge.to)}
-	{#if app.document.nodes[edge.from] && app.document.nodes[edge.to]}
-		{@const geo = edgeObject(fromPos, toPos)}
-		{@const hidden =
-			app.filters.hideFiltered &&
-			app.filters.tags.length > 0 &&
-			(!app.nodePassesFilter(edge.from) || !app.nodePassesFilter(edge.to))}
-		{#if !hidden}
-			{@const color = edgeColor(edge.id)}
-			{@const opacity = edgeOpacity(edge.id)}
-			<T.Mesh position={[geo.mid.x, geo.mid.y, geo.mid.z]} quaternion={geo.quaternion}>
-				<T.CylinderGeometry args={[EDGE_SHAFT_RADIUS, EDGE_SHAFT_RADIUS, geo.len, 8]} />
-				<T.MeshStandardMaterial {color} transparent {opacity} roughness={0.45} metalness={0.15} />
-			</T.Mesh>
-			{#if edge.directed}
-				{@const arrow = edgeArrowHead(toPos, geo)}
-				<T.Mesh position={[arrow.x, arrow.y, arrow.z]} quaternion={geo.quaternion}>
-					<!-- radius, height, radialSegments, heightSegments, openEnded=false → capped solid cone -->
-					<T.ConeGeometry args={[ARROW_RADIUS, ARROW_HEIGHT, 32, 1, false]} />
-					<T.MeshStandardMaterial
-						{color}
-						transparent={opacity < 1}
-						{opacity}
-						roughness={0.45}
-						metalness={0.15}
-						side={THREE.DoubleSide}
-					/>
-				</T.Mesh>
-			{/if}
-		{/if}
-	{/if}
-{/each}
+{#key shaftCap}
+	<T.InstancedMesh
+		args={[undefined, undefined, shaftCap]}
+		frustumCulled={false}
+		oncreate={attachShaftMesh}
+	>
+		<T.CylinderGeometry args={[EDGE_SHAFT_RADIUS, EDGE_SHAFT_RADIUS, 1, 8]} />
+		<T.MeshStandardMaterial roughness={0.45} metalness={0.15} />
+	</T.InstancedMesh>
+{/key}
+{#key arrowCap}
+	<T.InstancedMesh
+		args={[undefined, undefined, arrowCap]}
+		frustumCulled={false}
+		oncreate={attachArrowMesh}
+	>
+		<T.ConeGeometry args={[ARROW_RADIUS, ARROW_HEIGHT, 32, 1, false]} />
+		<T.MeshStandardMaterial roughness={0.45} metalness={0.15} side={THREE.DoubleSide} />
+	</T.InstancedMesh>
+{/key}
 
 {#if app.ui.connectFromId && connectCursor}
 	{@const fromPos = nodePos(app.ui.connectFromId)}
