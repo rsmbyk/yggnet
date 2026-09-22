@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import ManagerPanel from '$lib/ui/ManagerPanel.svelte';
 	import Toolbar from '$lib/ui/Toolbar.svelte';
@@ -13,10 +13,13 @@
 	let WorldCanvas: typeof import('$lib/world/WorldCanvas.svelte').default | null = $state(null);
 
 	onMount(() => {
-		app.initFromAutosave();
 		let cancelled = false;
-		import('$lib/world/WorldCanvas.svelte').then((m) => {
-			if (!cancelled) WorldCanvas = m.default;
+		import('$lib/world/WorldCanvas.svelte').then(async (m) => {
+			if (cancelled) return;
+			WorldCanvas = m.default;
+			await tick();
+			if (cancelled) return;
+			app.initFromAutosave();
 		});
 		return () => {
 			cancelled = true;

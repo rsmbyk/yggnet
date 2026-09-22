@@ -16,6 +16,7 @@
 		orbitDistanceToFitPoints
 	} from './camera-fit';
 	import { interactionModeFromState, resolveNodeClick, type NodeClickAction } from './node-click';
+	import { sceneRevealComplete, stepSceneReveal } from './scene-reveal';
 
 	interactivity();
 
@@ -292,6 +293,30 @@
 			return true;
 		})
 	);
+
+	let shownNodes = $state(0);
+	let shownEdges = $state(0);
+	const revealedNodes = $derived(visibleNodes.slice(0, shownNodes));
+	const revealedEdges = $derived(edges.slice(0, shownEdges));
+
+	$effect(() => {
+		void app.document.id;
+		shownNodes = 0;
+		shownEdges = 0;
+	});
+
+	$effect(() => {
+		const totals = { nodes: visibleNodes.length, edges: edges.length };
+		if (sceneRevealComplete({ nodes: shownNodes, edges: shownEdges }, totals)) {
+			return;
+		}
+		const id = requestAnimationFrame(() => {
+			const next = stepSceneReveal({ nodes: shownNodes, edges: shownEdges }, totals);
+			shownNodes = next.nodes;
+			shownEdges = next.edges;
+		});
+		return () => cancelAnimationFrame(id);
+	});
 
 	const groupProxies = $derived.by(() => {
 		const map = new Map<string, { id: string; x: number; y: number; z: number; count: number }>();
@@ -1820,7 +1845,7 @@
 	<T.PlaneGeometry args={[GROUND_SIZE, GROUND_SIZE]} />
 </T.Mesh>
 
-{#each visibleNodes as node (node.id)}
+{#each revealedNodes as node (node.id)}
 	{@const opacity = nodeOpacity(node.id)}
 	{@const color = nodeColor(node.id)}
 	{@const pos = displayPosition(node)}
@@ -1872,7 +1897,7 @@
 	{/if}
 {/each}
 
-{#each edges as edge (edge.id)}
+{#each revealedEdges as edge (edge.id)}
 	{@const fromPos = nodePos(edge.from)}
 	{@const toPos = nodePos(edge.to)}
 	{#if app.document.nodes[edge.from] && app.document.nodes[edge.to]}
