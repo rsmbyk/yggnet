@@ -3,6 +3,8 @@
 	import {
 		ARCHIMEDEAN_LABELS,
 		ARCHIMEDEAN_SOLIDS,
+		COMMUNITY_P_BETWEEN_HELP,
+		COMMUNITY_P_INSIDE_HELP,
 		fieldsForKind,
 		generateRequestFromForm,
 		GRAPH_KIND_GROUPS,
@@ -717,7 +719,8 @@
 								class="slot-name-input"
 								type="number"
 								min="2"
-								max="8"
+								max={Math.max(2, Number(app.generateForm.nodes) || 2)}
+								data-testid="generate-groups"
 								bind:value={app.generateForm.groups}
 							/>
 						</label>
@@ -731,8 +734,16 @@
 								min="0"
 								max="1"
 								step="0.05"
+								aria-describedby="generate-p-inside-help"
 								bind:value={app.generateForm.pInside}
 							/>
+							<p
+								class="hint generate-kind-help"
+								id="generate-p-inside-help"
+								data-testid="generate-p-inside-help"
+							>
+								{COMMUNITY_P_INSIDE_HELP}
+							</p>
 						</label>
 					{/if}
 					{#if genFields.includes('pBetween')}
@@ -744,8 +755,16 @@
 								min="0"
 								max="1"
 								step="0.05"
+								aria-describedby="generate-p-between-help"
 								bind:value={app.generateForm.pBetween}
 							/>
+							<p
+								class="hint generate-kind-help"
+								id="generate-p-between-help"
+								data-testid="generate-p-between-help"
+							>
+								{COMMUNITY_P_BETWEEN_HELP}
+							</p>
 						</label>
 					{/if}
 					{#if genFields.includes('nGons')}

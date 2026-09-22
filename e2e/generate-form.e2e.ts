@@ -1,6 +1,23 @@
 import { expect, test } from '@playwright/test';
 import { openTool } from './open-tool';
 
+test('Communities Groups follows node count and explains p inside / p between', async ({
+	page
+}) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'generate');
+	await page.getByTestId('generate-kind').selectOption('communities');
+	const groups = page.getByTestId('generate-groups');
+	await expect(groups).toBeVisible();
+	await expect(groups).not.toHaveAttribute('max', '8');
+	await expect(groups).toHaveAttribute('max', '12');
+	await page.getByTestId('generate-nodes').fill('20');
+	await expect(groups).toHaveAttribute('max', '20');
+	await expect(page.getByTestId('generate-p-inside-help')).toContainText(/same group/i);
+	await expect(page.getByTestId('generate-p-between-help')).toContainText(/different groups/i);
+});
+
 test('Generate explains the selected type under the dropdown', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });

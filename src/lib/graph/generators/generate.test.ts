@@ -6,6 +6,8 @@ import { GENERATE_MIN_DISTANCE, vec } from './geom';
 import { paleyGraph } from './named';
 import { createRng, randomSeed } from './rng';
 import {
+	COMMUNITY_P_BETWEEN_HELP,
+	COMMUNITY_P_INSIDE_HELP,
 	defaultGenerateForm,
 	fieldsForKind,
 	fingerprint,
@@ -222,6 +224,10 @@ describe('kind metadata', () => {
 		}
 		expect(kindHelp('simple')).toMatch(/density/i);
 		expect(kindHelp('null')).toMatch(/no edges/i);
+		expect(COMMUNITY_P_INSIDE_HELP).toMatch(/same group/i);
+		expect(COMMUNITY_P_BETWEEN_HELP).toMatch(/different groups/i);
+		expect(COMMUNITY_P_INSIDE_HELP).not.toMatch(/\n/);
+		expect(COMMUNITY_P_BETWEEN_HELP).not.toMatch(/\n/);
 	});
 
 	it('exposes Paley and Sierpinski fields from the picker id', () => {
@@ -497,6 +503,18 @@ describe('communities layout', () => {
 			expect(d).toBeCloseTo(3 * R, 5);
 		}
 		expect(minPairwiseNodeDistance(doc)).toBeGreaterThanOrEqual(GENERATE_MIN_DISTANCE - 1e-6);
+	});
+
+	it('does not clamp groups at eight', () => {
+		const eight = generateGraph('communities', { seed: 1, nodes: 24, groups: 8 });
+		const twelve = generateGraph('communities', { seed: 1, nodes: 24, groups: 12 });
+		expect(fingerprint(twelve)).not.toBe(fingerprint(eight));
+	});
+
+	it('caps groups at the node count', () => {
+		const atNodes = generateGraph('communities', { seed: 7, nodes: 10, groups: 10 });
+		const above = generateGraph('communities', { seed: 7, nodes: 10, groups: 40 });
+		expect(fingerprint(above)).toBe(fingerprint(atNodes));
 	});
 
 	it('uses a larger ring when the fattest group grows', () => {

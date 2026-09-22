@@ -110,6 +110,8 @@ export {
 	kindAllowsPlanar,
 	kindAllowsWeighted,
 	kindHelp,
+	COMMUNITY_P_BETWEEN_HELP,
+	COMMUNITY_P_INSIDE_HELP,
 	type GraphKind,
 	type GenerateFormState,
 	type GenerateOptions,

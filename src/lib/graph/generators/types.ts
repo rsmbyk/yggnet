@@ -619,6 +619,12 @@ export function kindHelp(kind: GeneratePickerId): string {
 	return GRAPH_KIND_HELP[kind];
 }
 
+/** Generate helper under Communities p inside. */
+export const COMMUNITY_P_INSIDE_HELP = 'Chance two nodes in the same group get an edge.';
+
+/** Generate helper under Communities p between. */
+export const COMMUNITY_P_BETWEEN_HELP = 'Chance two nodes in different groups get an edge.';
+
 export const PLATONIC_LABELS: Record<PlatonicSolid, string> = {
 	tetrahedron: 'Tetrahedron',
 	cube: 'Cube',

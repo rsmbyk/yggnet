@@ -22,6 +22,8 @@ import { type GenerateOptions, type GraphKind } from './types';
 export {
 	ARCHIMEDEAN_LABELS,
 	ARCHIMEDEAN_SOLIDS,
+	COMMUNITY_P_BETWEEN_HELP,
+	COMMUNITY_P_INSIDE_HELP,
 	defaultGenerateForm,
 	fieldsForKind,
 	generateOptionsFromForm,
@@ -627,7 +629,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			};
 		}
 		case 'communities': {
-			const g = clampInt(opts.groups ?? 3, 2, 8);
+			const g = clampInt(opts.groups ?? 3, 2, n);
 			const pin = Math.min(1, Math.max(0, opts.pInside ?? 0.55));
 			const pout = Math.min(1, Math.max(0, opts.pBetween ?? 0.08));
 			const assigned = rng.shuffle(Array.from({ length: n }, (_, i) => i % g));
