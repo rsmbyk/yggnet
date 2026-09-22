@@ -23,7 +23,6 @@ export const GRAPH_KINDS = [
 	'bipartite',
 	'grid',
 	'hexGrid',
-	'geometric',
 	'knn',
 	'platonic',
 	'archimedean',
@@ -216,7 +215,6 @@ const KIND_FIELDS: Record<GraphKind, readonly KindField[]> = {
 	bipartite: ['left', 'right', 'density'],
 	grid: ['rows', 'columns', 'diagonals'],
 	hexGrid: ['rows', 'columns'],
-	geometric: ['nodes', 'radius'],
 	knn: ['nodes', 'neighbors'],
 	platonic: ['platonic'],
 	archimedean: ['archimedean'],
@@ -241,7 +239,6 @@ const SHARED_WEIGHTED: ReadonlySet<GraphKind> = new Set([
 	'bipartite',
 	'grid',
 	'hexGrid',
-	'geometric',
 	'knn',
 	'cubicLattice',
 	'unitBall',
@@ -260,7 +257,6 @@ const SHARED_DIRECTED: ReadonlySet<GraphKind> = new Set([
 	'bipartite',
 	'grid',
 	'hexGrid',
-	'geometric',
 	'knn',
 	'cubicLattice',
 	'unitBall',
@@ -288,7 +284,6 @@ const NODE_MIN: Partial<Record<GraphKind, number>> = {
 	regular: 2,
 	tournament: 2,
 	dag: 2,
-	geometric: 2,
 	knn: 2,
 	unitBall: 2,
 	spherical: 2,
@@ -329,7 +324,7 @@ export function generateFieldLimit(
 		case 'rewire':
 			return { min: 0, max: 1 };
 		case 'extraEdges':
-			return { min: 0, max: 80 };
+			return { min: 0 };
 		case 'degree': {
 			const nodes = counted(ctx.nodes, NODE_MIN.regular ?? 2);
 			return { min: 0, max: Math.max(0, nodes - 1) };
@@ -387,9 +382,6 @@ export function generateFieldLimit(
 			return undefined;
 	}
 }
-
-/** Generate helper under Circulant jumps. */
-export const JUMPS_FIELD_HELP = 'Each jump is an integer from 1 up to half the nodes.';
 
 export function kindAllowsWeighted(kind: GraphKind | NamedGraphId): boolean {
 	if (isNamedGraphId(kind)) return false;
@@ -640,7 +632,6 @@ export const GRAPH_KIND_GROUPS: {
 		kinds: [
 			{ id: 'grid', label: 'Grid' },
 			{ id: 'hexGrid', label: 'Hex grid' },
-			{ id: 'geometric', label: 'Random geometric' },
 			{ id: 'knn', label: 'k-nearest neighbors' }
 		]
 	},
@@ -691,7 +682,6 @@ export const GRAPH_KIND_HELP: Record<GeneratePickerId, string> = {
 	bipartite: 'Two parts; edges only go from left to right.',
 	grid: 'A rectangular lattice on the floor.',
 	hexGrid: 'A honeycomb lattice.',
-	geometric: 'Random points on the floor; join a pair if they are close enough.',
 	knn: 'Each node joins its k nearest neighbors.',
 	platonic: 'The graph of a Platonic solid — tetrahedron through icosahedron.',
 	archimedean: 'The graph of an Archimedean (truncated or snub) solid.',
@@ -748,6 +738,23 @@ export const DENSITY_FIELD_HELP = `Share of the possible pairs that get an edge.
 
 /** Generate helper under Small-world Rewire. */
 export const REWIRE_FIELD_HELP = `Chance each nearby edge is swapped for a random one. ${PROBABILITY_RANGE_HELP}`;
+
+/** Generate helper under Scale-free Attachments. */
+export const ATTACHMENTS_FIELD_HELP =
+	'How many links each new node grows toward existing hubs. From 1 up to the smaller of 5 and nodes − 1.';
+
+/** Generate helper under Regular Degree. */
+export const DEGREE_FIELD_HELP = 'Neighbors per node. From 0 to nodes − 1.';
+
+/** Generate helper under Small-world Neighbors. */
+export const NEIGHBORS_FIELD_HELP =
+	'Nearby ring neighbors before any rewire. From 2 to nodes − 2 (kept even).';
+
+/** Generate helper under Möbius ladder Rungs. */
+export const RUNGS_FIELD_HELP = 'Rungs around the circular ladder. From 3 to 20.';
+
+/** Generate helper under Circulant jumps. */
+export const JUMPS_FIELD_HELP = 'Each jump is an integer from 1 up to half the nodes.';
 
 export const PLATONIC_LABELS: Record<PlatonicSolid, string> = {
 	tetrahedron: 'Tetrahedron',

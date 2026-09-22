@@ -24,6 +24,7 @@
 				if (cancelled) return;
 				app.initFromAutosave();
 				await app.waitForSceneReady(app.document.id, app.workSignal);
+				app.frameOpenGraph();
 				if (!cancelled && app.busyKind === 'load') app.finishWork();
 			})
 			.catch(() => {

@@ -9,6 +9,8 @@ import {
 	COMMUNITY_P_BETWEEN_HELP,
 	COMMUNITY_P_INSIDE_HELP,
 	DENSITY_FIELD_HELP,
+	ATTACHMENTS_FIELD_HELP,
+	DEGREE_FIELD_HELP,
 	defaultGenerateForm,
 	fieldsForKind,
 	fingerprint,
@@ -23,8 +25,10 @@ import {
 	kindAllowsWeighted,
 	kindHelp,
 	NAMED_GRAPHS,
+	NEIGHBORS_FIELD_HELP,
 	PROBABILITY_RANGE_HELP,
 	REWIRE_FIELD_HELP,
+	RUNGS_FIELD_HELP,
 	type GraphKind,
 	type NamedGraphId
 } from './generate';
@@ -235,15 +239,47 @@ describe('kind metadata', () => {
 		expect(DENSITY_FIELD_HELP).toMatch(/0 to 1, step 0\.01/);
 		expect(REWIRE_FIELD_HELP).toMatch(/0 to 1, step 0\.01/);
 		expect(PROBABILITY_RANGE_HELP).toBe('From 0 to 1, step 0.01.');
+		expect(ATTACHMENTS_FIELD_HELP).toMatch(/hubs/i);
+		expect(DEGREE_FIELD_HELP).toMatch(/nodes − 1|nodes - 1/);
+		expect(NEIGHBORS_FIELD_HELP).toMatch(/ring/i);
+		expect(RUNGS_FIELD_HELP).toMatch(/3 to 20/);
 		expect(COMMUNITY_P_INSIDE_HELP).not.toMatch(/\n/);
 		expect(COMMUNITY_P_BETWEEN_HELP).not.toMatch(/\n/);
+	});
+
+	it('allows Multi to request more than eighty edges', () => {
+		expect(edgeCount(generateGraph('multi', { seed: 1, nodes: 6, extraEdges: 120 }))).toBe(120);
+	});
+
+	it('no longer offers Random geometric', () => {
+		expect(GRAPH_KINDS).not.toContain('geometric');
+		expect(GRAPH_KIND_GROUPS.flatMap((g) => g.kinds.map((k) => k.id))).not.toContain('geometric');
+	});
+
+	it('lays tree depth toward −Z and keeps grid rows horizontal', () => {
+		const tree = generateGraph('tree', { seed: 1, depth: 2, binary: true, nodeY: 1 });
+		const zs = Object.values(tree.nodes).map((n) => n.position.z);
+		expect(Math.min(...zs)).toBeLessThan(0);
+		const grid = generateGraph('grid', { seed: 1, rows: 3, columns: 4, nodeY: 1 });
+		const xs = Object.values(grid.nodes).map((n) => n.position.x);
+		const gzs = Object.values(grid.nodes).map((n) => n.position.z);
+		expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(Math.max(...gzs) - Math.min(...gzs));
+	});
+
+	it('keeps 3D graphs upright and off the floor', () => {
+		const doc = generateGraph('platonic', { seed: 1, platonic: 'cube', nodeY: 1 });
+		const ys = Object.values(doc.nodes).map((n) => n.position.y);
+		expect(Math.min(...ys)).toBeGreaterThanOrEqual(2 - 1e-6);
+		const sameSeedA = generateGraph('platonic', { seed: 7, platonic: 'cube', nodeY: 1 });
+		const sameSeedB = generateGraph('platonic', { seed: 7, platonic: 'cube', nodeY: 1 });
+		expect(fingerprint(sameSeedA)).toBe(fingerprint(sameSeedB));
 	});
 
 	it('mirrors generator floors and ceilings on each Generate field', () => {
 		expect(generateFieldLimit('null', 'nodes')).toEqual({ min: 0 });
 		expect(generateFieldLimit('complete', 'nodes')).toEqual({ min: 1 });
 		expect(generateFieldLimit('multi', 'nodes')).toEqual({ min: 2 });
-		expect(generateFieldLimit('multi', 'extraEdges')).toEqual({ min: 0, max: 80 });
+		expect(generateFieldLimit('multi', 'extraEdges')).toEqual({ min: 0 });
 		expect(generateFieldLimit('cycle', 'nodes')).toEqual({ min: 3 });
 		expect(generateFieldLimit('scaleFree', 'nodes')).toEqual({ min: 3 });
 		expect(generateFieldLimit('wheel', 'nodes')).toEqual({ min: 4 });
@@ -260,7 +296,7 @@ describe('kind metadata', () => {
 		expect(generateFieldLimit('antiprism', 'nGons')).toEqual({ min: 3 });
 		expect(generateFieldLimit('helix', 'turns')).toEqual({ min: 0.5 });
 		expect(generateFieldLimit('helix', 'chord', { nodes: 16 })).toEqual({ min: 0, max: 15 });
-		expect(generateFieldLimit('geometric', 'radius')).toEqual({ min: 0.2 });
+		expect(generateFieldLimit('unitBall', 'radius')).toEqual({ min: 0.2 });
 		expect(generateFieldLimit('communities', 'groups', { nodes: 12 })).toEqual({ min: 2, max: 12 });
 		expect(generateFieldLimit('generalizedPetersen', 'petersenK', { petersenN: 8 })).toEqual({
 			min: 1,
@@ -398,7 +434,6 @@ describe('solids and extra options', () => {
 			nodeCount(generateGraph('bipartite', { seed: 1, left: 4, right: 5, density: 0.5 }))
 		).toBe(9);
 		expect(nodeCount(generateGraph('knn', { seed: 1, nodes: 8, neighbors: 2 }))).toBe(8);
-		expect(nodeCount(generateGraph('geometric', { seed: 1, nodes: 8, radius: 2 }))).toBe(8);
 		expect(nodeCount(generateGraph('unitBall', { seed: 1, nodes: 8, radius: 2 }))).toBe(8);
 		expect(nodeCount(generateGraph('spherical', { seed: 1, nodes: 8, radius: 2 }))).toBe(8);
 		expect(nodeCount(generateGraph('prism', { seed: 1, nGons: 5 }))).toBe(10);

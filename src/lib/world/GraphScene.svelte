@@ -10,10 +10,9 @@
 	import { defaultPositionFromTune, worldTune } from './world-tune.svelte';
 	import { clampToFloor, resolveMoveAgainstNodes, snapToGrid } from './node-physics';
 	import {
-		centroid,
 		farPlaneForOrbitDistance,
 		orbitDistanceToFitPoint,
-		orbitDistanceToFitPoints
+		orbitDistanceToFitPointsOutOnly
 	} from './camera-fit';
 	import { interactionModeFromState, resolveNodeClick, type NodeClickAction } from './node-click';
 	import { sceneRevealComplete, stepSceneReveal } from './scene-reveal';
@@ -333,13 +332,22 @@
 			app.onSceneReady(docId);
 			return;
 		}
-		const id = requestAnimationFrame(() => {
+		let done = false;
+		const advance = () => {
+			if (done) return;
+			done = true;
 			if (app.document.id !== docId) return;
 			const next = stepSceneReveal({ nodes: shownNodes, edges: shownEdges }, totals);
 			shownNodes = next.nodes;
 			shownEdges = totals.edges;
-		});
-		return () => cancelAnimationFrame(id);
+		};
+		const raf = requestAnimationFrame(advance);
+		/** Fallback when rAF is starved (background / some embedded browsers). */
+		const timer = setTimeout(advance, 32);
+		return () => {
+			cancelAnimationFrame(raf);
+			clearTimeout(timer);
+		};
 	});
 
 	const groupProxies = $derived.by(() => {
@@ -1794,47 +1802,52 @@
 	function animateFrameGraph() {
 		if (!controls) return;
 		const points = Object.values(app.document.nodes).map((n) => n.position);
-		const c = centroid(points);
-		if (!c) return;
+		if (points.length === 0) return;
 		const cam = camera.current;
 		if (!(cam instanceof THREE.PerspectiveCamera)) return;
 		const el = renderer.domElement;
 		const aspect = el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 16 / 9;
 		captureFromPose();
+		const v = worldTune.values;
 		const is2d = app.ui.viewMode === '2d';
+		const defaultD = clampViewDistance(v.defaultDistance);
 		if (is2d) {
-			_toTarget.set(c.x, 0, c.z);
+			_toTarget.set(v.defaultTargetX, 0, v.defaultTargetZ);
 			_toUp.copy(VIEW2D_UP);
+			const fitted = orbitDistanceToFitPointsOutOnly({
+				target: { x: _toTarget.x, y: _toTarget.y, z: _toTarget.z },
+				eye: { x: _toTarget.x, y: _toTarget.y + defaultD, z: _toTarget.z },
+				points,
+				up: { x: 0, y: 0, z: -1 },
+				fovDeg: cam.fov,
+				aspect,
+				radius: NODE_RADIUS,
+				minDistance: Math.max(0.05, MIN_DISTANCE_FLOOR),
+				maxDistance: CAM_MAX_DISTANCE
+			});
+			_toEye.set(_toTarget.x, fitted, _toTarget.z);
 		} else {
-			_toTarget.set(c.x, c.y, c.z);
+			_toTarget.set(v.defaultTargetX, v.defaultTargetY, v.defaultTargetZ);
 			_toUp.set(0, 1, 0);
+			const dir = DEFAULT_VIEW_DIR;
+			const look = { x: _toTarget.x, y: _toTarget.y, z: _toTarget.z };
+			const fitted = orbitDistanceToFitPointsOutOnly({
+				target: look,
+				eye: {
+					x: look.x + dir.x * defaultD,
+					y: look.y + dir.y * defaultD,
+					z: look.z + dir.z * defaultD
+				},
+				points,
+				up: { x: 0, y: 1, z: 0 },
+				fovDeg: cam.fov,
+				aspect,
+				radius: NODE_RADIUS,
+				minDistance: Math.max(0.05, MIN_DISTANCE_FLOOR),
+				maxDistance: CAM_MAX_DISTANCE
+			});
+			_toEye.set(look.x + dir.x * fitted, look.y + dir.y * fitted, look.z + dir.z * fitted);
 		}
-		let dir = {
-			x: _fromEye.x - _fromTarget.x,
-			y: _fromEye.y - _fromTarget.y,
-			z: _fromEye.z - _fromTarget.z
-		};
-		const len = Math.hypot(dir.x, dir.y, dir.z);
-		if (is2d) {
-			dir = { x: 0, y: 1, z: 0 };
-		} else if (len < 1e-8) {
-			dir = { x: DEFAULT_VIEW_DIR.x, y: DEFAULT_VIEW_DIR.y, z: DEFAULT_VIEW_DIR.z };
-		} else {
-			dir = { x: dir.x / len, y: dir.y / len, z: dir.z / len };
-		}
-		const look = { x: _toTarget.x, y: _toTarget.y, z: _toTarget.z };
-		const fitted = orbitDistanceToFitPoints({
-			target: look,
-			eye: { x: look.x + dir.x, y: look.y + dir.y, z: look.z + dir.z },
-			points,
-			up: is2d ? { x: 0, y: 0, z: -1 } : { x: 0, y: 1, z: 0 },
-			fovDeg: cam.fov,
-			aspect,
-			radius: NODE_RADIUS,
-			minDistance: Math.max(0.05, MIN_DISTANCE_FLOOR),
-			maxDistance: CAM_MAX_DISTANCE
-		});
-		_toEye.set(look.x + dir.x * fitted, look.y + dir.y * fitted, look.z + dir.z * fitted);
 		prepareToQuat();
 		startCamPoseTween(app.ui.viewMode);
 	}

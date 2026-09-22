@@ -25,6 +25,10 @@ export {
 	COMMUNITY_P_BETWEEN_HELP,
 	COMMUNITY_P_INSIDE_HELP,
 	DENSITY_FIELD_HELP,
+	ATTACHMENTS_FIELD_HELP,
+	DEGREE_FIELD_HELP,
+	NEIGHBORS_FIELD_HELP,
+	RUNGS_FIELD_HELP,
 	defaultGenerateForm,
 	fieldsForKind,
 	generateFieldLimit,
@@ -127,6 +131,20 @@ function applyTumble(points: Vec3[], rng: Rng, extra: boolean): Vec3[] {
 	const pitch = (rng.next() - 0.5) * Math.PI;
 	const roll = (rng.next() - 0.5) * Math.PI;
 	return points.map((p) => tumble(p, yaw, pitch, roll));
+}
+
+/**
+ * Raise a 3D cloud so sphere bottoms clear the ground after `assemble` adds `nodeY`.
+ * Assumes unit-ish node radius of 1 (matches world default).
+ */
+function liftOffFloor(points: Vec3[], nodeY: number, radius = 1, gap = 1): Vec3[] {
+	if (points.length === 0) return points;
+	let minY = Infinity;
+	for (const p of points) minY = Math.min(minY, p.y);
+	const targetMin = gap + radius - nodeY;
+	const dy = targetMin - minY;
+	if (!(dy > 1e-9)) return points;
+	return points.map((p) => vec(p.x, p.y + dy, p.z));
 }
 
 function scatterDisk(n: number, radius: number, rng: Rng): Vec3[] {
@@ -244,6 +262,8 @@ function finish(
 		layoutMode === 'hex60' ||
 		pts.every((p) => Math.abs(p.y) < 1e-6);
 	pts = enforceMinDistance(pts, undefined, packPlanar);
+	const flat = pts.every((p) => Math.abs(p.y) < 1e-6);
+	if (!flat) pts = liftOffFloor(pts, opts.nodeY ?? 0);
 	const oriented = maybeOrient(edges, opts.directed === true, rng);
 	return assemble(title, pts, oriented, rng, {
 		nodeY: opts.nodeY ?? 0,
@@ -347,7 +367,7 @@ function randomTree(
 	for (let d = 0; d < byDepth.length; d += 1) {
 		const row = byDepth[d] ?? [];
 		row.forEach((id, k) => {
-			points[id] = vec((k - (row.length - 1) / 2) * 2.6, 0, d * 3);
+			points[id] = vec((k - (row.length - 1) / 2) * 2.6, 0, -d * 3);
 		});
 	}
 	return { points, edges };
@@ -496,8 +516,8 @@ function hexGrid(rows: number, cols: number): { points: Vec3[]; edges: [number, 
 	for (let row = 0; row < r; row += 1) {
 		for (let col = 0; col < c; col += 1) {
 			const x = (col + (row % 2) * 0.5) * 2.4;
-			const z = row * 2.08;
-			points.push(vec(x - c * 1.2, 0, z - r));
+			const z = -row * 2.08;
+			points.push(vec(x - c * 1.2, 0, z + r));
 		}
 	}
 	const edges: [number, number][] = [];
@@ -613,7 +633,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			};
 		}
 		case 'multi': {
-			const m = clampInt(opts.extraEdges ?? 12, 0, 80);
+			const m = Math.max(0, Math.round(opts.extraEdges ?? 12));
 			const loops = opts.loops === true;
 			const edges: EdgeSpec[] = [];
 			for (let i = 0; i < m; i += 1) {
@@ -752,7 +772,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: `Prism ${ng}`,
 				points,
 				edges: undirected(edges),
-				layout: opts.planar ? 'yaw' : 'tumble'
+				layout: 'yaw'
 			};
 		}
 		case 'mobiusLadder': {
@@ -776,7 +796,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: `Hypercube Q${clampInt(opts.dimension ?? 3, 2, 5)}`,
 				...g,
 				edges: undirected(g.edges),
-				layout: 'tumble'
+				layout: 'yaw'
 			};
 		}
 		case 'named': {
@@ -789,7 +809,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: spec.title,
 				points: spec.points,
 				edges: undirected(spec.edges),
-				layout: spec.tumble ? 'tumble' : 'yaw'
+				layout: 'yaw'
 			};
 		}
 		case 'generalizedPetersen': {
@@ -809,7 +829,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 		}
 		case 'tree': {
 			const g = randomTree(opts.depth ?? 3, opts.binary !== false, opts.branching ?? 3, rng);
-			return { title: 'Tree', points: g.points, edges: undirected(g.edges), layout: 'yaw' };
+			return { title: 'Tree', points: g.points, edges: undirected(g.edges), layout: 'none' };
 		}
 		case 'dag': {
 			const order = rng.shuffle([...Array(n).keys()]);
@@ -842,36 +862,26 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: `Bipartite ${left}+${right}`,
 				points,
 				edges: undirected(pickByDensity(pairs, p, rng)),
-				layout: 'yaw'
+				layout: 'none'
 			};
 		}
 		case 'grid': {
 			const rows = clampInt(opts.rows ?? 4, 1, 20);
 			const cols = clampInt(opts.columns ?? 4, 1, 20);
 			const g = cartesianGrid(1, cols, rows, opts.diagonals === true);
-			g.points = g.points.map((p) => vec(p.x, 0, p.z));
+			g.points = g.points.map((pt) => vec(pt.x, 0, -pt.z));
 			return {
 				title: `Grid ${cols}×${rows}`,
 				points: g.points,
 				edges: undirected(g.edges),
-				layout: 'grid90'
+				layout: 'none'
 			};
 		}
 		case 'hexGrid': {
 			const rows = clampInt(opts.rows ?? 4, 1, 20);
 			const cols = clampInt(opts.columns ?? 5, 1, 20);
 			const g = hexGrid(rows, cols);
-			return { title: `Hex ${cols}×${rows}`, ...g, edges: undirected(g.edges), layout: 'hex60' };
-		}
-		case 'geometric': {
-			const pts = scatterDisk(n, 6, rng);
-			const r = Math.max(0.2, opts.radius ?? 3);
-			return {
-				title: `Geometric ${n}`,
-				points: pts,
-				edges: undirected(geometricEdges(pts, r)),
-				layout: 'yaw'
-			};
+			return { title: `Hex ${cols}×${rows}`, ...g, edges: undirected(g.edges), layout: 'none' };
 		}
 		case 'knn': {
 			const pts = scatterDisk(n, 6, rng);
@@ -885,19 +895,19 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 		}
 		case 'platonic': {
 			const g = platonicSpec(opts.platonic ?? 'tetrahedron');
-			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'tumble' };
+			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'yaw' };
 		}
 		case 'archimedean': {
 			const g = archimedeanSpec(opts.archimedean ?? 'cuboctahedron');
-			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'tumble' };
+			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'yaw' };
 		}
 		case 'antiprism': {
 			const g = antiprismSpec(opts.nGons ?? 6);
-			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'tumble' };
+			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'yaw' };
 		}
 		case 'pyramid': {
 			const g = pyramidSpec(opts.nGons ?? 5, opts.fan === true);
-			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'tumble' };
+			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'yaw' };
 		}
 		case 'cubicLattice': {
 			const rows = clampInt(opts.rows ?? 3, 1, 10);
@@ -908,7 +918,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: `Cubic ${cols}×${rows}×${layers}`,
 				points: g.points,
 				edges: undirected(g.edges),
-				layout: 'tumble'
+				layout: 'yaw'
 			};
 		}
 		case 'diamondLattice': {
@@ -917,7 +927,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: 'Diamond lattice',
 				points: g.points,
 				edges: undirected(g.edges),
-				layout: 'tumble'
+				layout: 'yaw'
 			};
 		}
 		case 'unitBall': {
@@ -927,7 +937,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: `Unit-ball ${n}`,
 				points: pts,
 				edges: undirected(geometricEdges(pts, r)),
-				layout: 'tumble'
+				layout: 'yaw'
 			};
 		}
 		case 'spherical': {
@@ -937,7 +947,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: `Spherical ${n}`,
 				points: pts,
 				edges: undirected(geometricEdges(pts, r)),
-				layout: 'tumble'
+				layout: 'yaw'
 			};
 		}
 		case 'delaunay3': {
@@ -946,7 +956,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: `Delaunay ${pts.length}`,
 				points: pts,
 				edges: undirected(delaunayEdges3(pts)),
-				layout: 'tumble'
+				layout: 'yaw'
 			};
 		}
 		case 'helix': {
@@ -1000,7 +1010,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 				title: `Torus ${u}×${v}`,
 				points,
 				edges: undirected(uniquePairs(edges)),
-				layout: 'tumble'
+				layout: 'yaw'
 			};
 		}
 	}

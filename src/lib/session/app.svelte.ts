@@ -291,12 +291,19 @@ class AppStore {
 		}
 	}
 
+	/** Frame the open graph from the default pose (zoom out only if needed). */
+	frameOpenGraph(): void {
+		if (Object.keys(this.document.nodes).length === 0) return;
+		this.requestFrameGraph();
+	}
+
 	refreshNamedSlots(): void {
 		this.namedSlots = typeof localStorage === 'undefined' ? [] : listSaveSlotNames(localStorage);
 	}
 
 	replaceDocument(doc: GraphDocument, clearRuns = true): void {
 		this.document = doc;
+		this.lastReadyDocId = null;
 		this.history = clearHistory(this.history);
 		this.selection = clearSelection(this.selection);
 		if (clearRuns) this.runStore = createRunStore();
@@ -1229,10 +1236,10 @@ class AppStore {
 			await waitForBusyOverlayPaint();
 			const doc = generateGraph(kind, { ...options, nodeY: worldTune.values.defaultNodeY });
 			this.replaceDocument(doc);
-			this.statusMessage = 'Generated';
 			this.requestFrameGraph();
 			await busyHold(signal);
 			await this.waitForSceneReady(this.document.id, signal);
+			this.statusMessage = 'Generated';
 		} finally {
 			this.finishWork();
 		}

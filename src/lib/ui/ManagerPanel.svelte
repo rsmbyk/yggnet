@@ -3,8 +3,10 @@
 	import {
 		ARCHIMEDEAN_LABELS,
 		ARCHIMEDEAN_SOLIDS,
+		ATTACHMENTS_FIELD_HELP,
 		COMMUNITY_P_BETWEEN_HELP,
 		COMMUNITY_P_INSIDE_HELP,
+		DEGREE_FIELD_HELP,
 		DENSITY_FIELD_HELP,
 		fieldsForKind,
 		generateFieldLimit,
@@ -15,12 +17,14 @@
 		kindAllowsWeighted,
 		kindHelp,
 		JUMPS_FIELD_HELP,
+		NEIGHBORS_FIELD_HELP,
 		PALEY_ORDERS,
 		pathSeriesMetrics,
 		PLATONIC_LABELS,
 		PLATONIC_SOLIDS,
 		PROBABILITY_RANGE_HELP,
-		REWIRE_FIELD_HELP
+		REWIRE_FIELD_HELP,
+		RUNGS_FIELD_HELP
 	} from '$lib/graph';
 	import type { GraphAttachment, KindField } from '$lib/graph';
 	import { tick } from 'svelte';
@@ -570,8 +574,12 @@
 								type="number"
 								min={fieldLimit('degree')?.min}
 								max={fieldLimit('degree')?.max}
+								aria-describedby="generate-degree-help"
 								bind:value={app.generateForm.degree}
 							/>
+							<p class="hint" id="generate-degree-help" data-testid="generate-degree-help">
+								{DEGREE_FIELD_HELP}
+							</p>
 						</label>
 					{/if}
 					{#if genFields.includes('depth')}
@@ -628,8 +636,12 @@
 								type="number"
 								min={fieldLimit('attachments')?.min}
 								max={fieldLimit('attachments')?.max}
+								aria-describedby="generate-attachments-help"
 								bind:value={app.generateForm.attachments}
 							/>
+							<p class="hint" id="generate-attachments-help" data-testid="generate-attachments-help">
+								{ATTACHMENTS_FIELD_HELP}
+							</p>
 						</label>
 					{/if}
 					{#if genFields.includes('neighbors')}
@@ -640,8 +652,16 @@
 								type="number"
 								min={fieldLimit('neighbors')?.min}
 								max={fieldLimit('neighbors')?.max}
+								aria-describedby={app.generateForm.kind === 'smallWorld'
+									? 'generate-neighbors-help'
+									: undefined}
 								bind:value={app.generateForm.neighbors}
 							/>
+							{#if app.generateForm.kind === 'smallWorld'}
+								<p class="hint" id="generate-neighbors-help" data-testid="generate-neighbors-help">
+									{NEIGHBORS_FIELD_HELP}
+								</p>
+							{/if}
 						</label>
 					{/if}
 					{#if genFields.includes('rewire')}
@@ -681,8 +701,12 @@
 								type="number"
 								min={fieldLimit('rungs')?.min}
 								max={fieldLimit('rungs')?.max}
+								aria-describedby="generate-rungs-help"
 								bind:value={app.generateForm.rungs}
 							/>
+							<p class="hint" id="generate-rungs-help" data-testid="generate-rungs-help">
+								{RUNGS_FIELD_HELP}
+							</p>
 						</label>
 					{/if}
 					{#if genFields.includes('rows')}

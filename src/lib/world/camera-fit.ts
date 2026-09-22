@@ -233,3 +233,39 @@ export function orbitDistanceToFitPoints(input: OrbitFitCloudInput): number {
 
 	return searchOrbitFit(fitsAt, minD, maxD);
 }
+
+/**
+ * Smallest orbit distance along the eye−target ray that keeps every point on screen.
+ * Never zooms in (result ≥ current distance). Clamped to min/max.
+ */
+export function orbitDistanceToFitPointsOutOnly(input: OrbitFitCloudInput): number {
+	const minD = Math.max(input.minDistance, 1e-3);
+	const maxD = resolvedMaxDistance(input.maxDistance, minD);
+	const current = length(sub(input.eye, input.target));
+	const start = Number.isFinite(maxD)
+		? Math.min(maxD, Math.max(minD, current || minD))
+		: Math.max(minD, current || minD);
+	if (input.points.length === 0) return start;
+	const dir = normalize(sub(input.eye, input.target)) ?? { x: 0, y: 1, z: 0 };
+	const margin = input.marginNdc ?? 0.9;
+	const ball = input.radius ?? 0;
+
+	const fitsAt = (d: number) => {
+		const eye = add(input.target, scale(dir, d));
+		for (const point of input.points) {
+			const proj = projectOrbitPoint(
+				input.target,
+				eye,
+				point,
+				input.up,
+				input.fovDeg,
+				input.aspect
+			);
+			if (!proj) return false;
+			if (!inView(proj, ball, input.fovDeg, input.aspect, margin)) return false;
+		}
+		return true;
+	};
+
+	return searchOrbitFit(fitsAt, start, maxD);
+}

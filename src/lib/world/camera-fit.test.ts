@@ -4,6 +4,7 @@ import {
 	farPlaneForOrbitDistance,
 	orbitDistanceToFitPoint,
 	orbitDistanceToFitPoints,
+	orbitDistanceToFitPointsOutOnly,
 	projectOrbitPoint
 } from './camera-fit';
 
@@ -178,5 +179,56 @@ describe('orbitDistanceToFitPoints', () => {
 	it('returns the current clamped distance when there are no points', () => {
 		const d = orbitDistanceToFitPoints({ ...base, points: [] });
 		expect(d).toBeCloseTo(Math.hypot(10, 10));
+	});
+});
+
+describe('orbitDistanceToFitPointsOutOnly', () => {
+	const base = {
+		target,
+		eye,
+		up,
+		fovDeg: 50,
+		aspect: 16 / 9,
+		radius: 1,
+		minDistance: 2,
+		maxDistance: 200
+	};
+
+	it('keeps the current distance when the cloud already fits', () => {
+		const current = Math.hypot(10, 10);
+		const d = orbitDistanceToFitPointsOutOnly({
+			...base,
+			points: [
+				{ x: 0, y: 1, z: 0 },
+				{ x: 1, y: 1, z: 0 }
+			]
+		});
+		expect(d).toBeCloseTo(current);
+	});
+
+	it('zooms out until a wide cloud fits, but never zooms in', () => {
+		const current = Math.hypot(10, 10);
+		const d = orbitDistanceToFitPointsOutOnly({
+			...base,
+			points: [
+				{ x: 40, y: 1, z: 0 },
+				{ x: -40, y: 1, z: 0 }
+			]
+		});
+		expect(d).toBeGreaterThan(current);
+		const eyeAt = {
+			x: (eye.x / current) * d,
+			y: (eye.y / current) * d,
+			z: (eye.z / current) * d
+		};
+		for (const point of [
+			{ x: 40, y: 1, z: 0 },
+			{ x: -40, y: 1, z: 0 }
+		]) {
+			const proj = projectOrbitPoint(target, eyeAt, point, up, 50, 16 / 9);
+			expect(proj).not.toBeNull();
+			expect(Math.abs(proj!.ndcX)).toBeLessThanOrEqual(0.9 + 1e-6);
+			expect(Math.abs(proj!.ndcY)).toBeLessThanOrEqual(0.9 + 1e-6);
+		}
 	});
 });
