@@ -619,11 +619,20 @@ export function kindHelp(kind: GeneratePickerId): string {
 	return GRAPH_KIND_HELP[kind];
 }
 
+/** Shared note for every 0–1 field that steps by 0.01. */
+export const PROBABILITY_RANGE_HELP = 'From 0 to 1, step 0.01.';
+
 /** Generate helper under Communities p inside. */
-export const COMMUNITY_P_INSIDE_HELP = 'Chance two nodes in the same group get an edge.';
+export const COMMUNITY_P_INSIDE_HELP = `Chance two nodes in the same group get an edge. ${PROBABILITY_RANGE_HELP}`;
 
 /** Generate helper under Communities p between. */
-export const COMMUNITY_P_BETWEEN_HELP = 'Chance two nodes in different groups get an edge.';
+export const COMMUNITY_P_BETWEEN_HELP = `Chance two nodes in different groups get an edge. ${PROBABILITY_RANGE_HELP}`;
+
+/** Generate helper under Density. */
+export const DENSITY_FIELD_HELP = `Share of the possible pairs that get an edge. ${PROBABILITY_RANGE_HELP}`;
+
+/** Generate helper under Small-world Rewire. */
+export const REWIRE_FIELD_HELP = `Chance each nearby edge is swapped for a random one. ${PROBABILITY_RANGE_HELP}`;
 
 export const PLATONIC_LABELS: Record<PlatonicSolid, string> = {
 	tetrahedron: 'Tetrahedron',

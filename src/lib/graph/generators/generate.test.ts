@@ -8,6 +8,7 @@ import { createRng, randomSeed } from './rng';
 import {
 	COMMUNITY_P_BETWEEN_HELP,
 	COMMUNITY_P_INSIDE_HELP,
+	DENSITY_FIELD_HELP,
 	defaultGenerateForm,
 	fieldsForKind,
 	fingerprint,
@@ -21,6 +22,8 @@ import {
 	kindAllowsWeighted,
 	kindHelp,
 	NAMED_GRAPHS,
+	PROBABILITY_RANGE_HELP,
+	REWIRE_FIELD_HELP,
 	type GraphKind,
 	type NamedGraphId
 } from './generate';
@@ -226,6 +229,11 @@ describe('kind metadata', () => {
 		expect(kindHelp('null')).toMatch(/no edges/i);
 		expect(COMMUNITY_P_INSIDE_HELP).toMatch(/same group/i);
 		expect(COMMUNITY_P_BETWEEN_HELP).toMatch(/different groups/i);
+		expect(COMMUNITY_P_INSIDE_HELP).toMatch(/0 to 1, step 0\.01/);
+		expect(COMMUNITY_P_BETWEEN_HELP).toMatch(/0 to 1, step 0\.01/);
+		expect(DENSITY_FIELD_HELP).toMatch(/0 to 1, step 0\.01/);
+		expect(REWIRE_FIELD_HELP).toMatch(/0 to 1, step 0\.01/);
+		expect(PROBABILITY_RANGE_HELP).toBe('From 0 to 1, step 0.01.');
 		expect(COMMUNITY_P_INSIDE_HELP).not.toMatch(/\n/);
 		expect(COMMUNITY_P_BETWEEN_HELP).not.toMatch(/\n/);
 	});

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import { PROBABILITY_RANGE_HELP } from '$lib/graph';
 	import { worldTune, type WorldTuneValues } from './world-tune.svelte';
 
 	type NumField = {
@@ -9,6 +10,7 @@
 		step: number;
 		min?: number;
 		max?: number;
+		hint?: string;
 	};
 	type ColorField = {
 		kind: 'color';
@@ -71,7 +73,8 @@
 					label: 'Arrow gap (0–1)',
 					step: 0.01,
 					min: 0,
-					max: 1
+					max: 1,
+					hint: PROBABILITY_RANGE_HELP
 				}
 			]
 		},
@@ -127,7 +130,15 @@
 					step: 0.05,
 					min: 0.05
 				},
-				{ kind: 'number', key: 'dampingFactor', label: 'Damping', step: 0.01, min: 0, max: 1 },
+				{
+					kind: 'number',
+					key: 'dampingFactor',
+					label: 'Damping',
+					step: 0.01,
+					min: 0,
+					max: 1,
+					hint: PROBABILITY_RANGE_HELP
+				},
 				{
 					kind: 'number',
 					key: 'viewModeTransitionMs',
@@ -199,6 +210,9 @@
 										: ''}
 									oninput={(e) => onNumber(f.key, e.currentTarget.value)}
 								/>
+								{#if f.hint}
+									<p class="hint">{f.hint}</p>
+								{/if}
 							{/if}
 						</label>
 					{/each}
@@ -302,6 +316,11 @@
 		font-size: 0.72rem;
 		font-weight: 600;
 		color: var(--yg-fg);
+	}
+
+	label .hint {
+		grid-column: 1 / -1;
+		margin: 0;
 	}
 
 	input[type='number'] {

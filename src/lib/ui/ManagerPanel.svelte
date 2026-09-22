@@ -5,6 +5,7 @@
 		ARCHIMEDEAN_SOLIDS,
 		COMMUNITY_P_BETWEEN_HELP,
 		COMMUNITY_P_INSIDE_HELP,
+		DENSITY_FIELD_HELP,
 		fieldsForKind,
 		generateRequestFromForm,
 		GRAPH_KIND_GROUPS,
@@ -15,7 +16,9 @@
 		PALEY_ORDERS,
 		pathSeriesMetrics,
 		PLATONIC_LABELS,
-		PLATONIC_SOLIDS
+		PLATONIC_SOLIDS,
+		PROBABILITY_RANGE_HELP,
+		REWIRE_FIELD_HELP
 	} from '$lib/graph';
 	import type { GraphAttachment } from '$lib/graph';
 	import { tick } from 'svelte';
@@ -530,8 +533,12 @@
 								min="0"
 								max="1"
 								step="0.01"
+								aria-describedby="generate-density-help"
 								bind:value={app.generateForm.density}
 							/>
+							<p class="hint" id="generate-density-help" data-testid="generate-density-help">
+								{DENSITY_FIELD_HELP}
+							</p>
 						</label>
 					{/if}
 					{#if genFields.includes('extraEdges')}
@@ -635,8 +642,12 @@
 								min="0"
 								max="1"
 								step="0.01"
+								aria-describedby="generate-rewire-help"
 								bind:value={app.generateForm.rewire}
 							/>
+							<p class="hint" id="generate-rewire-help" data-testid="generate-rewire-help">
+								{REWIRE_FIELD_HELP}
+							</p>
 						</label>
 					{/if}
 					{#if genFields.includes('jumps')}
@@ -1436,9 +1447,13 @@
 						max="1"
 						step="0.01"
 						data-testid="travel-progress"
+						aria-describedby="travel-progress-help"
 						value={app.directions.travelProgress}
 						oninput={(e) => app.setTravelProgress(Number(e.currentTarget.value))}
 					/>
+					<p class="hint" id="travel-progress-help" data-testid="travel-progress-help">
+						{PROBABILITY_RANGE_HELP}
+					</p>
 				</label>
 			{/if}
 		</section>

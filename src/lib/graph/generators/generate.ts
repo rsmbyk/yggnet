@@ -24,6 +24,7 @@ export {
 	ARCHIMEDEAN_SOLIDS,
 	COMMUNITY_P_BETWEEN_HELP,
 	COMMUNITY_P_INSIDE_HELP,
+	DENSITY_FIELD_HELP,
 	defaultGenerateForm,
 	fieldsForKind,
 	generateOptionsFromForm,
@@ -40,7 +41,9 @@ export {
 	PALEY_ORDERS,
 	parseJumpList,
 	PLATONIC_LABELS,
-	PLATONIC_SOLIDS
+	PLATONIC_SOLIDS,
+	PROBABILITY_RANGE_HELP,
+	REWIRE_FIELD_HELP
 } from './types';
 export type {
 	ArchimedeanSolid,
