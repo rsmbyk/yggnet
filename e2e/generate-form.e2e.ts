@@ -16,6 +16,53 @@ test('Communities Groups follows node count and explains p inside / p between', 
 	await expect(groups).toHaveAttribute('max', '20');
 	await expect(page.getByTestId('generate-p-inside-help')).toContainText(/same group/i);
 	await expect(page.getByTestId('generate-p-between-help')).toContainText(/different groups/i);
+	const nodesBox = await page.getByTestId('generate-nodes').boundingBox();
+	const insideBox = await page.getByRole('spinbutton', { name: /p inside/i }).boundingBox();
+	expect(nodesBox).toBeTruthy();
+	expect(insideBox).toBeTruthy();
+	expect(Math.abs(insideBox!.height - nodesBox!.height)).toBeLessThan(2);
+	const tone = await page.evaluate(() => {
+		const hint = document.querySelector('[data-testid="generate-p-inside-help"]');
+		const label = hint?.closest('label');
+		if (!hint || !label) return null;
+		const title = getComputedStyle(label);
+		const help = getComputedStyle(hint);
+		return {
+			titleWeight: Number(title.fontWeight),
+			helpWeight: Number(help.fontWeight),
+			titleSize: Number.parseFloat(title.fontSize),
+			helpSize: Number.parseFloat(help.fontSize)
+		};
+	});
+	expect(tone).toBeTruthy();
+	expect(tone!.titleWeight).toBeGreaterThan(tone!.helpWeight);
+	expect(tone!.helpSize).toBeLessThan(tone!.titleSize);
+	await openTool(page, 'file');
+	const nameTone = await page.evaluate(() => {
+		const label = document.querySelector('.title-field');
+		const input = document.querySelector('[data-testid="doc-title"]');
+		if (!label || !input) return null;
+		return {
+			titleWeight: Number(getComputedStyle(label).fontWeight),
+			valueWeight: Number(getComputedStyle(input).fontWeight)
+		};
+	});
+	expect(nameTone).toBeTruthy();
+	expect(nameTone!.titleWeight).toBe(tone!.titleWeight);
+	expect(nameTone!.valueWeight).toBeLessThan(nameTone!.titleWeight);
+	await openTool(page, 'generate');
+	await page.getByTestId('generate-kind').selectOption('communities');
+	const checkTone = await page.evaluate(() => {
+		const label = [...document.querySelectorAll('label.check')].find((el) =>
+			el.textContent?.includes('Directed')
+		);
+		if (!label) return null;
+		const style = getComputedStyle(label);
+		return { weight: Number(style.fontWeight), color: style.color };
+	});
+	expect(checkTone).toBeTruthy();
+	expect(checkTone!.weight).toBeLessThan(tone!.titleWeight);
+	expect(checkTone!.color).not.toBe('rgb(15, 22, 32)');
 });
 
 test('Generate explains the selected type under the dropdown', async ({ page }) => {

@@ -1790,13 +1790,14 @@
 		flex: 0 0 auto;
 	}
 
-	.generate-kind-help {
-		margin: 0.28rem 0 0;
+	.generate-form .hint {
+		margin: 0.2rem 0 0;
 	}
 
 	.generate-fields {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		align-items: start;
 		gap: 0.35rem 0.45rem;
 		flex: 1 1 auto;
 		min-width: 0;
@@ -1808,6 +1809,11 @@
 	.generate-fields label {
 		margin-bottom: 0;
 		min-width: 0;
+	}
+
+	.generate-fields .slot-name-input,
+	.generate-form > label .slot-name-input {
+		flex: 0 0 auto;
 	}
 
 	.generate-fields label:last-child:nth-child(odd) {
@@ -1865,6 +1871,7 @@
 		background: var(--yg-chip);
 		color: var(--yg-fg);
 		font: inherit;
+		font-weight: 400;
 	}
 
 	button {
@@ -2045,7 +2052,8 @@
 		flex-direction: column;
 		gap: 0.25rem;
 		font-size: 0.8rem;
-		color: var(--yg-muted);
+		font-weight: 600;
+		color: var(--yg-fg);
 		margin-bottom: 0.4rem;
 	}
 
@@ -2053,6 +2061,8 @@
 		flex-direction: row;
 		align-items: center;
 		gap: 0.4rem;
+		font-weight: 400;
+		color: var(--yg-muted);
 	}
 
 	input,
@@ -2060,6 +2070,7 @@
 	select {
 		font: inherit;
 		font-size: 0.85rem;
+		font-weight: 400;
 		border: 1px solid var(--yg-border);
 		border-radius: var(--yg-radius-control);
 		padding: 0.35rem 0.5rem;
@@ -2128,9 +2139,10 @@
 
 	.hint {
 		margin: 0.25rem 0 0.5rem;
-		font-size: 0.75rem;
-		color: var(--yg-muted);
-		line-height: 1.35;
+		font-size: 0.7rem;
+		font-weight: 400;
+		line-height: 1.3;
+		color: color-mix(in srgb, var(--yg-muted) 62%, var(--yg-panel));
 	}
 
 	button.danger {

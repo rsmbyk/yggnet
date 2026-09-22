@@ -253,8 +253,10 @@
 
 	.hint {
 		margin: 0.2rem 0 0;
-		font-size: 0.68rem;
-		color: var(--yg-muted);
+		font-size: 0.7rem;
+		font-weight: 400;
+		line-height: 1.3;
+		color: color-mix(in srgb, var(--yg-muted) 62%, var(--yg-panel));
 	}
 
 	.hint code {
@@ -298,12 +300,14 @@
 		align-items: center;
 		gap: 0.45rem;
 		font-size: 0.72rem;
-		color: var(--yg-muted);
+		font-weight: 600;
+		color: var(--yg-fg);
 	}
 
 	input[type='number'] {
 		font: inherit;
 		font-size: 0.8rem;
+		font-weight: 400;
 		font-variant-numeric: tabular-nums;
 		padding: 0.28rem 0.4rem;
 		border: 1px solid var(--yg-border);
