@@ -276,6 +276,121 @@ export function fieldsForKind(kind: GraphKind | NamedGraphId): readonly KindFiel
 	return KIND_FIELDS[kind];
 }
 
+/** Inclusive bounds the generator enforces for a Generate number field. */
+export type FieldLimit = { min: number; max?: number };
+
+const NODE_MIN: Partial<Record<GraphKind, number>> = {
+	null: 0,
+	complete: 1,
+	simple: 2,
+	multi: 2,
+	communities: 2,
+	regular: 2,
+	tournament: 2,
+	dag: 2,
+	geometric: 2,
+	knn: 2,
+	unitBall: 2,
+	spherical: 2,
+	scaleFree: 3,
+	cycle: 3,
+	circulant: 3,
+	helix: 3,
+	smallWorld: 4,
+	wheel: 4,
+	delaunay3: 4
+};
+
+function counted(n: number | undefined, min: number): number {
+	const v = Number(n);
+	if (!Number.isFinite(v)) return min;
+	return Math.max(min, Math.round(v));
+}
+
+/**
+ * Min and max for a Generate field. `max` is omitted when the generator has no ceiling.
+ * Node-dependent ceilings use the count the generator would actually keep.
+ */
+export function generateFieldLimit(
+	kind: GeneratePickerId,
+	field: KindField,
+	ctx: { nodes?: number; petersenN?: number } = {}
+): FieldLimit | undefined {
+	if (field === 'sierpinskiDepth') return { min: 0, max: 2 };
+	if (isNamedGraphId(kind)) return undefined;
+	switch (field) {
+		case 'nodes': {
+			const min = NODE_MIN[kind];
+			return min === undefined ? undefined : { min };
+		}
+		case 'density':
+		case 'pInside':
+		case 'pBetween':
+		case 'rewire':
+			return { min: 0, max: 1 };
+		case 'extraEdges':
+			return { min: 0, max: 80 };
+		case 'degree': {
+			const nodes = counted(ctx.nodes, NODE_MIN.regular ?? 2);
+			return { min: 0, max: Math.max(0, nodes - 1) };
+		}
+		case 'depth':
+			return { min: 1, max: 8 };
+		case 'branching':
+			return { min: 2, max: 6 };
+		case 'left':
+		case 'right':
+			return { min: 1 };
+		case 'attachments': {
+			const nodes = counted(ctx.nodes, NODE_MIN.scaleFree ?? 3);
+			return { min: 1, max: Math.min(5, Math.max(1, nodes - 1)) };
+		}
+		case 'neighbors': {
+			if (kind === 'smallWorld') {
+				const nodes = counted(ctx.nodes, NODE_MIN.smallWorld ?? 4);
+				return { min: 2, max: Math.max(2, nodes - 2) };
+			}
+			const nodes = counted(ctx.nodes, NODE_MIN.knn ?? 2);
+			return { min: 1, max: Math.max(1, nodes - 1) };
+		}
+		case 'rungs':
+		case 'rings':
+		case 'segments':
+		case 'petersenN':
+			return { min: 3, max: 20 };
+		case 'rows':
+		case 'columns':
+			return kind === 'cubicLattice' ? { min: 1, max: 10 } : { min: 1, max: 20 };
+		case 'layers':
+			return { min: 1, max: 10 };
+		case 'radius':
+			return { min: 0.2 };
+		case 'groups':
+			return { min: 2, max: counted(ctx.nodes, NODE_MIN.communities ?? 2) };
+		case 'nGons':
+			return kind === 'prism' ? { min: 3, max: 20 } : { min: 3 };
+		case 'dimension':
+			return { min: 2, max: 5 };
+		case 'extent':
+			return { min: 1, max: 4 };
+		case 'turns':
+			return { min: 0.5 };
+		case 'chord': {
+			const nodes = counted(ctx.nodes, NODE_MIN.helix ?? 3);
+			return { min: 0, max: Math.max(0, nodes - 1) };
+		}
+		case 'petersenK': {
+			const pn = counted(ctx.petersenN, 3);
+			return { min: 1, max: Math.max(1, Math.floor(pn / 2) - (pn % 2 === 0 ? 1 : 0)) };
+		}
+		default:
+			return undefined;
+	}
+}
+
+/** Generate helper under Circulant jumps. */
+export const JUMPS_FIELD_HELP = 'Each jump is an integer from 1 up to half the nodes.';
+
 export function kindAllowsWeighted(kind: GraphKind | NamedGraphId): boolean {
 	if (isNamedGraphId(kind)) return false;
 	return SHARED_WEIGHTED.has(kind);

@@ -12,6 +12,7 @@ import {
 	defaultGenerateForm,
 	fieldsForKind,
 	fingerprint,
+	generateFieldLimit,
 	generateGraph,
 	generateOptionsFromForm,
 	generateRequestFromForm,
@@ -236,6 +237,36 @@ describe('kind metadata', () => {
 		expect(PROBABILITY_RANGE_HELP).toBe('From 0 to 1, step 0.01.');
 		expect(COMMUNITY_P_INSIDE_HELP).not.toMatch(/\n/);
 		expect(COMMUNITY_P_BETWEEN_HELP).not.toMatch(/\n/);
+	});
+
+	it('mirrors generator floors and ceilings on each Generate field', () => {
+		expect(generateFieldLimit('null', 'nodes')).toEqual({ min: 0 });
+		expect(generateFieldLimit('complete', 'nodes')).toEqual({ min: 1 });
+		expect(generateFieldLimit('multi', 'nodes')).toEqual({ min: 2 });
+		expect(generateFieldLimit('multi', 'extraEdges')).toEqual({ min: 0, max: 80 });
+		expect(generateFieldLimit('cycle', 'nodes')).toEqual({ min: 3 });
+		expect(generateFieldLimit('scaleFree', 'nodes')).toEqual({ min: 3 });
+		expect(generateFieldLimit('wheel', 'nodes')).toEqual({ min: 4 });
+		expect(generateFieldLimit('smallWorld', 'nodes')).toEqual({ min: 4 });
+		expect(generateFieldLimit('smallWorld', 'neighbors', { nodes: 12 })).toEqual({ min: 2, max: 10 });
+		expect(generateFieldLimit('knn', 'neighbors', { nodes: 12 })).toEqual({ min: 1, max: 11 });
+		expect(generateFieldLimit('regular', 'degree', { nodes: 12 })).toEqual({ min: 0, max: 11 });
+		expect(generateFieldLimit('scaleFree', 'attachments', { nodes: 4 })).toEqual({ min: 1, max: 3 });
+		expect(generateFieldLimit('scaleFree', 'attachments', { nodes: 40 })).toEqual({ min: 1, max: 5 });
+		expect(generateFieldLimit('grid', 'rows')).toEqual({ min: 1, max: 20 });
+		expect(generateFieldLimit('cubicLattice', 'rows')).toEqual({ min: 1, max: 10 });
+		expect(generateFieldLimit('cubicLattice', 'layers')).toEqual({ min: 1, max: 10 });
+		expect(generateFieldLimit('prism', 'nGons')).toEqual({ min: 3, max: 20 });
+		expect(generateFieldLimit('antiprism', 'nGons')).toEqual({ min: 3 });
+		expect(generateFieldLimit('helix', 'turns')).toEqual({ min: 0.5 });
+		expect(generateFieldLimit('helix', 'chord', { nodes: 16 })).toEqual({ min: 0, max: 15 });
+		expect(generateFieldLimit('geometric', 'radius')).toEqual({ min: 0.2 });
+		expect(generateFieldLimit('communities', 'groups', { nodes: 12 })).toEqual({ min: 2, max: 12 });
+		expect(generateFieldLimit('generalizedPetersen', 'petersenK', { petersenN: 8 })).toEqual({
+			min: 1,
+			max: 3
+		});
+		expect(generateFieldLimit('sierpinskiGasket', 'sierpinskiDepth')).toEqual({ min: 0, max: 2 });
 	});
 
 	it('exposes Paley and Sierpinski fields from the picker id', () => {

@@ -7,12 +7,14 @@
 		COMMUNITY_P_INSIDE_HELP,
 		DENSITY_FIELD_HELP,
 		fieldsForKind,
+		generateFieldLimit,
 		generateRequestFromForm,
 		GRAPH_KIND_GROUPS,
 		kindAllowsDirected,
 		kindAllowsPlanar,
 		kindAllowsWeighted,
 		kindHelp,
+		JUMPS_FIELD_HELP,
 		PALEY_ORDERS,
 		pathSeriesMetrics,
 		PLATONIC_LABELS,
@@ -20,7 +22,7 @@
 		PROBABILITY_RANGE_HELP,
 		REWIRE_FIELD_HELP
 	} from '$lib/graph';
-	import type { GraphAttachment } from '$lib/graph';
+	import type { GraphAttachment, KindField } from '$lib/graph';
 	import { tick } from 'svelte';
 	import { toolLabel, type PanelSection } from './tool-ids';
 	import { cssLengthToPx, toolsPanelMaxHeight, toolsPanelOverflows } from './tools-panel-limit';
@@ -32,6 +34,13 @@
 	let filterInput = $state('');
 	let stepNote = $state('');
 	const genFields = $derived(fieldsForKind(app.generateForm.kind));
+
+	function fieldLimit(field: KindField) {
+		return generateFieldLimit(app.generateForm.kind, field, {
+			nodes: app.generateForm.nodes,
+			petersenN: app.generateForm.petersenN
+		});
+	}
 
 	function onGenerate() {
 		const { kind, options } = generateRequestFromForm(app.generateForm);
@@ -506,8 +515,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0"
-								max="2"
+								min={fieldLimit('sierpinskiDepth')?.min}
+								max={fieldLimit('sierpinskiDepth')?.max}
 								bind:value={app.generateForm.sierpinskiDepth}
 							/>
 						</label>
@@ -518,7 +527,7 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0"
+								min={fieldLimit('nodes')?.min}
 								data-testid="generate-nodes"
 								bind:value={app.generateForm.nodes}
 							/>
@@ -530,8 +539,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0"
-								max="1"
+								min={fieldLimit('density')?.min}
+								max={fieldLimit('density')?.max}
 								step="0.01"
 								aria-describedby="generate-density-help"
 								bind:value={app.generateForm.density}
@@ -547,7 +556,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0"
+								min={fieldLimit('extraEdges')?.min}
+								max={fieldLimit('extraEdges')?.max}
 								bind:value={app.generateForm.extraEdges}
 							/>
 						</label>
@@ -558,7 +568,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0"
+								min={fieldLimit('degree')?.min}
+								max={fieldLimit('degree')?.max}
 								bind:value={app.generateForm.degree}
 							/>
 						</label>
@@ -569,8 +580,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
-								max="8"
+								min={fieldLimit('depth')?.min}
+								max={fieldLimit('depth')?.max}
 								bind:value={app.generateForm.depth}
 							/>
 						</label>
@@ -581,8 +592,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="2"
-								max="6"
+								min={fieldLimit('branching')?.min}
+								max={fieldLimit('branching')?.max}
 								bind:value={app.generateForm.branching}
 							/>
 						</label>
@@ -593,7 +604,7 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
+								min={fieldLimit('left')?.min}
 								bind:value={app.generateForm.left}
 							/>
 						</label>
@@ -604,7 +615,7 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
+								min={fieldLimit('right')?.min}
 								bind:value={app.generateForm.right}
 							/>
 						</label>
@@ -615,8 +626,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
-								max="5"
+								min={fieldLimit('attachments')?.min}
+								max={fieldLimit('attachments')?.max}
 								bind:value={app.generateForm.attachments}
 							/>
 						</label>
@@ -627,8 +638,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
-								max="20"
+								min={fieldLimit('neighbors')?.min}
+								max={fieldLimit('neighbors')?.max}
 								bind:value={app.generateForm.neighbors}
 							/>
 						</label>
@@ -639,8 +650,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0"
-								max="1"
+								min={fieldLimit('rewire')?.min}
+								max={fieldLimit('rewire')?.max}
 								step="0.01"
 								aria-describedby="generate-rewire-help"
 								bind:value={app.generateForm.rewire}
@@ -657,7 +668,9 @@
 								class="slot-name-input"
 								bind:value={app.generateForm.jumps}
 								aria-label="Circulant jumps"
+								aria-describedby="generate-jumps-help"
 							/>
+							<p class="hint" id="generate-jumps-help">{JUMPS_FIELD_HELP}</p>
 						</label>
 					{/if}
 					{#if genFields.includes('rungs')}
@@ -666,8 +679,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="3"
-								max="20"
+								min={fieldLimit('rungs')?.min}
+								max={fieldLimit('rungs')?.max}
 								bind:value={app.generateForm.rungs}
 							/>
 						</label>
@@ -678,8 +691,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
-								max="20"
+								min={fieldLimit('rows')?.min}
+								max={fieldLimit('rows')?.max}
 								data-testid="generate-rows"
 								bind:value={app.generateForm.rows}
 							/>
@@ -691,8 +704,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
-								max="20"
+								min={fieldLimit('columns')?.min}
+								max={fieldLimit('columns')?.max}
 								data-testid="generate-columns"
 								bind:value={app.generateForm.columns}
 							/>
@@ -704,8 +717,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
-								max="10"
+								min={fieldLimit('layers')?.min}
+								max={fieldLimit('layers')?.max}
 								bind:value={app.generateForm.layers}
 							/>
 						</label>
@@ -716,8 +729,7 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0.2"
-								max="20"
+								min={fieldLimit('radius')?.min}
 								step="0.2"
 								bind:value={app.generateForm.radius}
 							/>
@@ -729,8 +741,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="2"
-								max={Math.max(2, Number(app.generateForm.nodes) || 2)}
+								min={fieldLimit('groups')?.min}
+								max={fieldLimit('groups')?.max}
 								data-testid="generate-groups"
 								bind:value={app.generateForm.groups}
 							/>
@@ -742,8 +754,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0"
-								max="1"
+								min={fieldLimit('pInside')?.min}
+								max={fieldLimit('pInside')?.max}
 								step="0.01"
 								aria-describedby="generate-p-inside-help"
 								bind:value={app.generateForm.pInside}
@@ -763,8 +775,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0"
-								max="1"
+								min={fieldLimit('pBetween')?.min}
+								max={fieldLimit('pBetween')?.max}
 								step="0.01"
 								aria-describedby="generate-p-between-help"
 								bind:value={app.generateForm.pBetween}
@@ -784,8 +796,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="3"
-								max="20"
+								min={fieldLimit('nGons')?.min}
+								max={fieldLimit('nGons')?.max}
 								bind:value={app.generateForm.nGons}
 							/>
 						</label>
@@ -796,8 +808,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="2"
-								max="5"
+								min={fieldLimit('dimension')?.min}
+								max={fieldLimit('dimension')?.max}
 								bind:value={app.generateForm.dimension}
 							/>
 						</label>
@@ -828,8 +840,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
-								max="4"
+								min={fieldLimit('extent')?.min}
+								max={fieldLimit('extent')?.max}
 								bind:value={app.generateForm.extent}
 							/>
 						</label>
@@ -840,8 +852,7 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0.5"
-								max="8"
+								min={fieldLimit('turns')?.min}
 								step="0.5"
 								bind:value={app.generateForm.turns}
 							/>
@@ -853,7 +864,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="0"
+								min={fieldLimit('chord')?.min}
+								max={fieldLimit('chord')?.max}
 								bind:value={app.generateForm.chord}
 							/>
 						</label>
@@ -864,8 +876,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="3"
-								max="20"
+								min={fieldLimit('rings')?.min}
+								max={fieldLimit('rings')?.max}
 								bind:value={app.generateForm.rings}
 							/>
 						</label>
@@ -876,8 +888,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="3"
-								max="20"
+								min={fieldLimit('segments')?.min}
+								max={fieldLimit('segments')?.max}
 								bind:value={app.generateForm.segments}
 							/>
 						</label>
@@ -888,8 +900,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="3"
-								max="20"
+								min={fieldLimit('petersenN')?.min}
+								max={fieldLimit('petersenN')?.max}
 								bind:value={app.generateForm.petersenN}
 							/>
 						</label>
@@ -900,8 +912,8 @@
 							<input
 								class="slot-name-input"
 								type="number"
-								min="1"
-								max="10"
+								min={fieldLimit('petersenK')?.min}
+								max={fieldLimit('petersenK')?.max}
 								bind:value={app.generateForm.petersenK}
 							/>
 						</label>
