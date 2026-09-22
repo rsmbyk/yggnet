@@ -634,7 +634,7 @@
 								type="number"
 								min="0"
 								max="1"
-								step="0.05"
+								step="0.01"
 								bind:value={app.generateForm.rewire}
 							/>
 						</label>
@@ -733,7 +733,7 @@
 								type="number"
 								min="0"
 								max="1"
-								step="0.05"
+								step="0.01"
 								aria-describedby="generate-p-inside-help"
 								bind:value={app.generateForm.pInside}
 							/>
@@ -754,7 +754,7 @@
 								type="number"
 								min="0"
 								max="1"
-								step="0.05"
+								step="0.01"
 								aria-describedby="generate-p-between-help"
 								bind:value={app.generateForm.pBetween}
 							/>

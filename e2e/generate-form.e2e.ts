@@ -16,6 +16,8 @@ test('Communities Groups follows node count and explains p inside / p between', 
 	await expect(groups).toHaveAttribute('max', '20');
 	await expect(page.getByTestId('generate-p-inside-help')).toContainText(/same group/i);
 	await expect(page.getByTestId('generate-p-between-help')).toContainText(/different groups/i);
+	await expect(page.getByRole('spinbutton', { name: /p inside/i })).toHaveAttribute('step', '0.01');
+	await expect(page.getByRole('spinbutton', { name: /p between/i })).toHaveAttribute('step', '0.01');
 	const nodesBox = await page.getByTestId('generate-nodes').boundingBox();
 	const insideBox = await page.getByRole('spinbutton', { name: /p inside/i }).boundingBox();
 	expect(nodesBox).toBeTruthy();
@@ -37,6 +39,10 @@ test('Communities Groups follows node count and explains p inside / p between', 
 	expect(tone).toBeTruthy();
 	expect(tone!.titleWeight).toBeGreaterThan(tone!.helpWeight);
 	expect(tone!.helpSize).toBeLessThan(tone!.titleSize);
+	await page.getByTestId('generate-kind').selectOption('smallWorld');
+	await expect(page.getByRole('spinbutton', { name: 'Rewire' })).toHaveAttribute('step', '0.01');
+	await page.getByTestId('generate-kind').selectOption('simple');
+	await expect(page.getByRole('spinbutton', { name: 'Density' })).toHaveAttribute('step', '0.01');
 	await openTool(page, 'file');
 	const nameTone = await page.evaluate(() => {
 		const label = document.querySelector('.title-field');
