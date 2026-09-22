@@ -320,18 +320,21 @@
 	let shownEdges = $state(0);
 	const revealedNodes = $derived(visibleNodes.slice(0, shownNodes));
 
-	$effect(() => {
+	$effect.pre(() => {
 		void app.document.id;
 		shownNodes = 0;
 		shownEdges = 0;
 	});
 
 	$effect(() => {
+		const docId = app.document.id;
 		const totals = { nodes: visibleNodes.length, edges: edges.length };
 		if (sceneRevealComplete({ nodes: shownNodes, edges: shownEdges }, totals)) {
+			app.onSceneReady(docId);
 			return;
 		}
 		const id = requestAnimationFrame(() => {
+			if (app.document.id !== docId) return;
 			const next = stepSceneReveal({ nodes: shownNodes, edges: shownEdges }, totals);
 			shownNodes = next.nodes;
 			shownEdges = totals.edges;

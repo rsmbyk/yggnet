@@ -923,7 +923,9 @@
 						>
 					{/if}
 				</div>
-				<button type="submit" data-testid="generate-submit">Generate</button>
+				<button type="submit" data-testid="generate-submit" disabled={app.busyKind !== null}
+					>Generate</button
+				>
 			</form>
 		</section>
 	{/if}
@@ -1813,6 +1815,11 @@
 
 	.generate-form > button {
 		flex: 0 0 auto;
+	}
+
+	.generate-form > button:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
 	}
 
 	.generate-checks .check {

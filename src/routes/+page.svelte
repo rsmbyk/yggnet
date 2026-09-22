@@ -4,6 +4,7 @@
 	import ManagerPanel from '$lib/ui/ManagerPanel.svelte';
 	import Toolbar from '$lib/ui/Toolbar.svelte';
 	import { app } from '$lib/session/app.svelte';
+	import { applyBeforeUnloadGuard } from '$lib/session/work-busy';
 	import { tabTitleFromGraph } from '$lib/session/tab-title';
 	import { selectionPanelOpen } from '$lib/ui/tool-ids';
 	import { forwardWheelEvent, worldCanvas } from '$lib/ui/forward-wheel';
@@ -14,19 +15,31 @@
 
 	onMount(() => {
 		let cancelled = false;
-		import('$lib/world/WorldCanvas.svelte').then(async (m) => {
-			if (cancelled) return;
-			WorldCanvas = m.default;
-			await tick();
-			if (cancelled) return;
-			app.initFromAutosave();
-		});
+		app.beginWork('load');
+		import('$lib/world/WorldCanvas.svelte')
+			.then(async (m) => {
+				if (cancelled) return;
+				WorldCanvas = m.default;
+				await tick();
+				if (cancelled) return;
+				app.initFromAutosave();
+				await app.waitForSceneReady(app.document.id, app.workSignal);
+				if (!cancelled && app.busyKind === 'load') app.finishWork();
+			})
+			.catch(() => {
+				if (!cancelled) app.finishWork();
+			});
 		return () => {
 			cancelled = true;
+			if (app.busyKind === 'load') app.finishWork();
 		};
 	});
 
 	function onKeydown(e: KeyboardEvent) {
+		if (app.busyKind) {
+			e.preventDefault();
+			return;
+		}
 		const target = e.target as HTMLElement | null;
 		const typing =
 			target &&
@@ -101,13 +114,17 @@
 	);
 
 	const tabTitle = $derived(tabTitleFromGraph(app.document.title));
+
+	function onBeforeUnload(e: BeforeUnloadEvent) {
+		applyBeforeUnloadGuard(app.busyKind !== null, e);
+	}
 </script>
 
 <svelte:head>
 	<title>{tabTitle}</title>
 </svelte:head>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} onbeforeunload={onBeforeUnload} />
 
 <div id="yggnet-app" class="shell" data-testid="yggnet-shell">
 	<main class="viewport">
@@ -187,6 +204,24 @@
 			{/if}
 		</div>
 	</div>
+
+	{#if app.busyKind || !WorldCanvas}
+		{@const kind = app.busyKind ?? 'load'}
+		<div
+			class="work-overlay"
+			data-testid="work-overlay"
+			role="alertdialog"
+			aria-modal="true"
+			tabindex="-1"
+			aria-labelledby="work-overlay-title"
+		>
+			<div class="work-overlay-card">
+				<p id="work-overlay-title">
+					{kind === 'generate' ? 'Generating graph…' : 'Loading graph…'}
+				</p>
+			</div>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -342,5 +377,36 @@
 		margin: 0.5rem 0 0;
 		font-size: 0.9rem;
 		color: var(--yg-muted);
+	}
+
+	.work-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 1000;
+		display: grid;
+		place-items: center;
+		background: rgba(28, 36, 46, 0.72);
+		pointer-events: auto;
+		cursor: default;
+	}
+
+	.work-overlay-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.85rem;
+		padding: 1.15rem 1.4rem;
+		border-radius: var(--yg-radius-modal);
+		background: var(--yg-panel-glass-strong);
+		border: 1px solid var(--yg-border);
+		box-shadow: 0 10px 28px rgba(28, 36, 46, 0.2);
+		pointer-events: auto;
+	}
+
+	.work-overlay-card p {
+		margin: 0;
+		font-size: 0.95rem;
+		font-weight: 650;
+		color: var(--yg-fg);
 	}
 </style>

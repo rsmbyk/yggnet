@@ -59,6 +59,7 @@ import { worldTune } from '$lib/world/world-tune.svelte';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
 import { nextOpenTool, type ToolId } from '$lib/ui/tool-ids';
 import { listSaveSlotNames, saveSlotExists, saveSlotStorageKey } from './save-slots';
+import { busyHold, waitForBusyOverlayPaint } from './work-busy';
 
 const AUTOSAVE_KEY = 'yggnet.autosave';
 const AUTOSAVE_MS = 600;
@@ -101,6 +102,8 @@ export type CameraState = {
 };
 
 export type ViewMode = '3d' | '2d';
+
+export type WorkKind = 'load' | 'generate';
 
 export type UiState = {
 	paletteOpen: boolean;
@@ -239,6 +242,11 @@ class AppStore {
 		toolsPanelExpanded: false
 	});
 	statusMessage = $state<string>('');
+	/** Full-screen overlay while a document is loading or generating. */
+	busyKind = $state<WorkKind | null>(null);
+	private workAbort: AbortController | null = null;
+	private lastReadyDocId: string | null = null;
+	private sceneReadyWait: { docId: string; resolve: () => void } | null = null;
 
 	readonly algorithms = listAlgorithms();
 
@@ -297,6 +305,55 @@ class AppStore {
 		this.groupsCollapsed = new Set();
 		this.analyze = { ...emptyAnalyze(), algorithmId: this.analyze.algorithmId };
 		this.scheduleAutosave();
+	}
+
+	beginWork(kind: WorkKind): boolean {
+		if (this.busyKind) return false;
+		this.workAbort = new AbortController();
+		this.busyKind = kind;
+		return true;
+	}
+
+	get workSignal(): AbortSignal | undefined {
+		return this.workAbort?.signal;
+	}
+
+	finishWork(): void {
+		this.workAbort?.abort();
+		this.busyKind = null;
+		this.workAbort = null;
+		if (this.sceneReadyWait) {
+			const resolve = this.sceneReadyWait.resolve;
+			this.sceneReadyWait = null;
+			resolve();
+		}
+	}
+
+	onSceneReady(docId: string): void {
+		this.lastReadyDocId = docId;
+		if (this.sceneReadyWait?.docId === docId) {
+			const resolve = this.sceneReadyWait.resolve;
+			this.sceneReadyWait = null;
+			resolve();
+		}
+	}
+
+	waitForSceneReady(docId: string, signal?: AbortSignal): Promise<void> {
+		if (this.lastReadyDocId === docId) return Promise.resolve();
+		if (signal?.aborted) return Promise.resolve();
+		return new Promise((resolve) => {
+			this.sceneReadyWait = { docId, resolve };
+			signal?.addEventListener(
+				'abort',
+				() => {
+					if (this.sceneReadyWait?.docId === docId) {
+						this.sceneReadyWait = null;
+						resolve();
+					}
+				},
+				{ once: true }
+			);
+		});
 	}
 
 	setDocumentTitle(title: string): void {
@@ -1082,8 +1139,8 @@ class AppStore {
 			return;
 		}
 		try {
-			this.replaceDocument(parseDocument(raw));
-			this.statusMessage = 'Loaded';
+			const doc = parseDocument(raw);
+			void this.applyLoadedDocument(doc, 'Loaded');
 		} catch (e) {
 			this.statusMessage = e instanceof Error ? e.message : 'Load failed';
 		}
@@ -1155,20 +1212,43 @@ class AppStore {
 		URL.revokeObjectURL(url);
 	}
 
-	importJson(json: string): void {
+	async importJson(json: string): Promise<void> {
 		try {
-			this.replaceDocument(parseDocument(json));
-			this.statusMessage = 'Imported';
+			const doc = parseDocument(json);
+			await this.applyLoadedDocument(doc, 'Imported');
 		} catch (e) {
 			this.statusMessage = e instanceof Error ? e.message : 'Import failed';
 			throw e;
 		}
 	}
 
-	applyGeneratedGraph(kind: GraphKind, options: GenerateOptions = {}): void {
-		this.replaceDocument(generateGraph(kind, { ...options, nodeY: worldTune.values.defaultNodeY }));
-		this.statusMessage = 'Generated';
-		this.requestFrameGraph();
+	async applyGeneratedGraph(kind: GraphKind, options: GenerateOptions = {}): Promise<void> {
+		if (!this.beginWork('generate')) return;
+		const signal = this.workAbort?.signal;
+		try {
+			await waitForBusyOverlayPaint();
+			const doc = generateGraph(kind, { ...options, nodeY: worldTune.values.defaultNodeY });
+			this.replaceDocument(doc);
+			this.statusMessage = 'Generated';
+			this.requestFrameGraph();
+			await busyHold(signal);
+			await this.waitForSceneReady(this.document.id, signal);
+		} finally {
+			this.finishWork();
+		}
+	}
+
+	private async applyLoadedDocument(doc: GraphDocument, doneMessage: string): Promise<void> {
+		if (!this.beginWork('load')) return;
+		const signal = this.workAbort?.signal;
+		try {
+			await waitForBusyOverlayPaint();
+			this.replaceDocument(doc);
+			this.statusMessage = doneMessage;
+			await this.waitForSceneReady(this.document.id, signal);
+		} finally {
+			this.finishWork();
+		}
 	}
 
 	findNodeByQuery(query: string): NodeId | null {
