@@ -38,6 +38,7 @@
 	import { tick } from 'svelte';
 	import { toolLabel, type PanelSection } from './tool-ids';
 	import { cssLengthToPx, toolsPanelMaxHeight, toolsPanelOverflows } from './tools-panel-limit';
+	import TagPicker from './TagPicker.svelte';
 
 	let { section }: { section: PanelSection } = $props();
 
@@ -132,6 +133,9 @@
 	});
 
 	const nodes = $derived(Object.values(app.document.nodes));
+	const allTags = $derived(
+		[...new Set(nodes.flatMap((n) => n.tags))].sort((a, b) => a.localeCompare(b))
+	);
 	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const edges = $derived(Object.values(app.document.edges));
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
@@ -343,13 +347,6 @@
 					>
 					<button
 						type="button"
-						data-testid="world-pin"
-						class:active={selectedNode.pinned}
-						onclick={() => app.pinNode(selectedNode.id, !selectedNode.pinned)}
-						>{selectedNode.pinned ? 'Unpin' : 'Pin'}</button
-					>
-					<button
-						type="button"
 						class="danger"
 						data-testid="world-delete-node"
 						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
@@ -401,18 +398,10 @@
 				</div>
 				<label>
 					Tags
-					<input
-						data-testid="node-tags"
-						placeholder="comma-separated"
-						value={selectedNode.tags.join(', ')}
-						oninput={(e) =>
-							app.setNodeTags(
-								selectedNode.id,
-								e.currentTarget.value
-									.split(',')
-									.map((t) => t.trim())
-									.filter(Boolean)
-							)}
+					<TagPicker
+						tags={selectedNode.tags}
+						suggestions={allTags}
+						onChange={(next) => app.setNodeTags(selectedNode.id, next)}
 					/>
 				</label>
 				<label>
@@ -425,7 +414,7 @@
 					></textarea>
 				</label>
 				<div class="incident-edges" data-testid="node-incident-edges">
-					<h3 class="subhead">Edges ({incidentEdges.length})</h3>
+					<h3 class="section-label">Edges ({incidentEdges.length})</h3>
 					{#if incidentEdges.length === 0}
 						<p class="hint muted">No edges</p>
 					{:else}
@@ -1140,7 +1129,6 @@
 							onclick={(e) => onSelectNode(node.id, e)}
 						>
 							<span class="node-list-label">{node.label}</span>
-							{#if node.pinned}<span class="tag">pin</span>{/if}
 						</button>
 						<button
 							type="button"
@@ -1150,8 +1138,15 @@
 							onclick={(e) => {
 								e.stopPropagation();
 								app.removeNode(node.id);
-							}}>×</button
+							}}
 						>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path
+									fill="currentColor"
+									d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+								/>
+							</svg>
+						</button>
 					</li>
 				{/each}
 			</ul>
@@ -2034,7 +2029,7 @@
 
 	.node-row {
 		display: flex;
-		align-items: center;
+		align-items: stretch;
 		gap: 0.25rem;
 	}
 
@@ -2045,10 +2040,17 @@
 
 	.node-row .icon-btn {
 		flex: 0 0 auto;
-		width: 1.65rem;
-		height: 1.65rem;
-		font-size: 1rem;
-		line-height: 1;
+		width: auto;
+		height: auto;
+		aspect-ratio: 1 / 1;
+		align-self: stretch;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	.node-row .icon-btn svg {
+		width: 0.95rem;
+		height: 0.95rem;
 	}
 
 	.inspect {
@@ -2275,6 +2277,15 @@
 
 	.incident-edges {
 		margin-top: 0;
+	}
+
+	.incident-edges .section-label {
+		margin: 0 0 0.35rem;
+		font-size: 0.8rem;
+		font-weight: 600;
+		color: var(--yg-fg);
+		letter-spacing: normal;
+		text-transform: none;
 	}
 
 	.incident-edges .subhead {

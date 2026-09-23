@@ -14,6 +14,8 @@ declare global {
 		__YGGNET_BUSY_HOLD_MS?: number;
 		/** E2E-only: run pin-aware re-layout (no UI button). */
 		__YGGNET_RELAYOUT?: () => void;
+		/** E2E-only: pin/unpin a node by id (pin UI removed). */
+		__YGGNET_PIN_NODE?: (id: string, pinned?: boolean) => void;
 	}
 }
 

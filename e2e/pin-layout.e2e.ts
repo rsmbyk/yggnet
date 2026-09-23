@@ -9,8 +9,15 @@ test('relayout moves unpinned nodes but keeps pinned fixed', async ({ page }) =>
 	await page.getByTestId('node-pos-x').fill('10');
 	await page.getByTestId('node-pos-y').fill('1');
 	await page.getByTestId('node-pos-z').fill('20');
-	await page.getByTestId('world-pin').click();
-	await expect(page.getByTestId('world-pin')).toHaveClass(/active/);
+
+	const pinnedId = await page
+		.getByTestId('node-list')
+		.locator('button.list-item')
+		.first()
+		.getAttribute('data-testid');
+	expect(pinnedId).toBeTruthy();
+	const nodeId = pinnedId!.replace('node-item-', '');
+	await page.evaluate((id) => window.__YGGNET_PIN_NODE?.(id, true), nodeId);
 
 	await page.getByTestId('add-node').click();
 	const unpinnedX = page.getByTestId('node-pos-x');

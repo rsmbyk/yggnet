@@ -15,6 +15,7 @@
 	onMount(() => {
 		let cancelled = false;
 		window.__YGGNET_RELAYOUT = () => app.relayout();
+		window.__YGGNET_PIN_NODE = (id: string, pinned = true) => app.pinNode(id, pinned);
 		app.beginWork('load');
 		import('$lib/world/WorldCanvas.svelte')
 			.then(async (m) => {
@@ -33,6 +34,7 @@
 		return () => {
 			cancelled = true;
 			delete window.__YGGNET_RELAYOUT;
+			delete window.__YGGNET_PIN_NODE;
 			if (app.busyKind === 'load') app.finishWork();
 		};
 	});
