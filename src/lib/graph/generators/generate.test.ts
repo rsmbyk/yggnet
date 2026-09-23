@@ -219,6 +219,8 @@ describe('kind metadata', () => {
 			expect(ids).toContain(id);
 		}
 		expect(ids).toContain('generalizedPetersen');
+		expect(ids.indexOf('petersen')).toBeLessThan(ids.indexOf('generalizedPetersen'));
+		expect(ids.indexOf('generalizedPetersen')).toBeLessThan(ids.indexOf('heawood'));
 		expect(GRAPH_KIND_GROUPS.at(-1)?.label).toBe('Named');
 	});
 

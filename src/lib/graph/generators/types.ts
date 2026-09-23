@@ -44,11 +44,11 @@ export const NAMED_GRAPHS = [
 	'heawood',
 	'grotzsch',
 	'wagner',
+	'desargues',
 	'frucht',
 	'herschel',
-	'desargues',
-	'pappus',
 	'chvatal',
+	'pappus',
 	'coxeter',
 	'tutteCoxeter',
 	'clebsch',
@@ -56,12 +56,12 @@ export const NAMED_GRAPHS = [
 	'goldnerHarary',
 	'paley',
 	'sierpinskiGasket',
+	'sierpinskiTetrahedron',
 	'cell24',
-	'csaszar',
-	'szilassi',
 	'stella',
 	'rhombicDodecahedron',
-	'sierpinskiTetrahedron'
+	'csaszar',
+	'szilassi'
 ] as const;
 
 export type NamedGraphId = (typeof NAMED_GRAPHS)[number];
@@ -654,8 +654,29 @@ export const GRAPH_KIND_GROUPS: {
 	{
 		label: 'Named',
 		kinds: [
-			...NAMED_GRAPHS.map((id) => ({ id, label: NAMED_GRAPH_LABELS[id] })),
-			{ id: 'generalizedPetersen', label: 'Generalized Petersen' }
+			{ id: 'petersen', label: NAMED_GRAPH_LABELS.petersen },
+			{ id: 'generalizedPetersen', label: 'Generalized Petersen' },
+			{ id: 'heawood', label: NAMED_GRAPH_LABELS.heawood },
+			{ id: 'grotzsch', label: NAMED_GRAPH_LABELS.grotzsch },
+			{ id: 'wagner', label: NAMED_GRAPH_LABELS.wagner },
+			{ id: 'desargues', label: NAMED_GRAPH_LABELS.desargues },
+			{ id: 'frucht', label: NAMED_GRAPH_LABELS.frucht },
+			{ id: 'herschel', label: NAMED_GRAPH_LABELS.herschel },
+			{ id: 'chvatal', label: NAMED_GRAPH_LABELS.chvatal },
+			{ id: 'pappus', label: NAMED_GRAPH_LABELS.pappus },
+			{ id: 'coxeter', label: NAMED_GRAPH_LABELS.coxeter },
+			{ id: 'tutteCoxeter', label: NAMED_GRAPH_LABELS.tutteCoxeter },
+			{ id: 'clebsch', label: NAMED_GRAPH_LABELS.clebsch },
+			{ id: 'dyck', label: NAMED_GRAPH_LABELS.dyck },
+			{ id: 'goldnerHarary', label: NAMED_GRAPH_LABELS.goldnerHarary },
+			{ id: 'paley', label: NAMED_GRAPH_LABELS.paley },
+			{ id: 'sierpinskiGasket', label: NAMED_GRAPH_LABELS.sierpinskiGasket },
+			{ id: 'sierpinskiTetrahedron', label: NAMED_GRAPH_LABELS.sierpinskiTetrahedron },
+			{ id: 'cell24', label: NAMED_GRAPH_LABELS.cell24 },
+			{ id: 'stella', label: NAMED_GRAPH_LABELS.stella },
+			{ id: 'rhombicDodecahedron', label: NAMED_GRAPH_LABELS.rhombicDodecahedron },
+			{ id: 'csaszar', label: NAMED_GRAPH_LABELS.csaszar },
+			{ id: 'szilassi', label: NAMED_GRAPH_LABELS.szilassi }
 		]
 	}
 ];
