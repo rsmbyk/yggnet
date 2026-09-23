@@ -1013,8 +1013,11 @@
 						>
 					{/if}
 				</div>
-				<button type="submit" data-testid="generate-submit" disabled={app.busyKind !== null}
-					>Generate</button
+				<button
+					type="submit"
+					class="generate-submit"
+					data-testid="generate-submit"
+					disabled={app.busyKind !== null}>Generate</button
 				>
 			</form>
 		</section>
@@ -1915,6 +1918,22 @@
 
 	.generate-form > button {
 		flex: 0 0 auto;
+	}
+
+	.generate-form > button.generate-submit {
+		align-self: stretch;
+		padding: 0.55rem 1rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		background: var(--yg-accent);
+		color: #f4f8f9;
+		border-color: color-mix(in srgb, var(--yg-accent) 70%, #062e34);
+	}
+
+	.generate-form > button.generate-submit:hover:not(:disabled) {
+		background: color-mix(in srgb, var(--yg-accent) 88%, #062e34);
+		border-color: color-mix(in srgb, var(--yg-accent) 55%, #062e34);
+		color: #f4f8f9;
 	}
 
 	.generate-form > button:disabled {
