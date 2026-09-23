@@ -62,8 +62,6 @@
 	let compareAlgo = $state('dijkstra');
 	let compareRunIdA = $state('');
 	let compareRunIdB = $state('');
-	let attachName = $state('');
-	let attachPayload = $state('');
 	let edgeAttachName = $state('');
 	let edgeAttachPayload = $state('');
 	let saveSlotName = $state('');
@@ -140,6 +138,11 @@
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
 	const selectedCount = $derived(app.selection.nodeIds.length);
 	const selectedNode = $derived(selectedId ? app.document.nodes[selectedId] : null);
+	const incidentEdges = $derived(
+		selectedId
+			? edges.filter((e) => e.from === selectedId || e.to === selectedId)
+			: []
+	);
 	const selectedEdgeId = $derived(app.selection.edgeIds[0] ?? null);
 	const selectedEdge = $derived(selectedEdgeId ? app.document.edges[selectedEdgeId] : null);
 	const lastRun = $derived(app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null);
@@ -322,7 +325,7 @@
 				<label>
 					Label
 					<input
-						data-testid="world-node-label"
+						data-testid="node-label"
 						value={selectedNode.label}
 						oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
 					/>
@@ -347,6 +350,89 @@
 						data-testid="world-delete-node"
 						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
 					>
+				</div>
+				<div class="pos-row" data-testid="node-position">
+					<label>
+						X
+						<input
+							type="number"
+							step="0.1"
+							data-testid="node-pos-x"
+							value={selectedNode.position.x}
+							oninput={(e) =>
+								app.updateNode(selectedNode.id, {
+									position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
+								})}
+						/>
+					</label>
+					<label>
+						Y
+						<input
+							type="number"
+							step="0.1"
+							data-testid="node-pos-y"
+							value={selectedNode.position.y}
+							oninput={(e) =>
+								app.updateNode(selectedNode.id, {
+									position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
+								})}
+						/>
+					</label>
+					<label>
+						Z
+						<input
+							type="number"
+							step="0.1"
+							data-testid="node-pos-z"
+							value={selectedNode.position.z}
+							oninput={(e) =>
+								app.updateNode(selectedNode.id, {
+									position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
+								})}
+						/>
+					</label>
+				</div>
+				<label>
+					Tags
+					<input
+						data-testid="node-tags"
+						placeholder="comma-separated"
+						value={selectedNode.tags.join(', ')}
+						oninput={(e) =>
+							app.setNodeTags(
+								selectedNode.id,
+								e.currentTarget.value
+									.split(',')
+									.map((t) => t.trim())
+									.filter(Boolean)
+							)}
+					/>
+				</label>
+				<label>
+					Notes
+					<textarea
+						data-testid="node-notes"
+						rows="2"
+						value={selectedNode.notes ?? ''}
+						oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
+					></textarea>
+				</label>
+				<div class="incident-edges" data-testid="node-incident-edges">
+					<h3 class="subhead">Edges ({incidentEdges.length})</h3>
+					{#if incidentEdges.length === 0}
+						<p class="hint muted">No edges</p>
+					{:else}
+						<ul class="list incident-edge-list">
+							{#each incidentEdges as edge (edge.id)}
+								<li class="incident-edge-row">
+									{app.document.nodes[edge.from]?.label ?? '?'}
+									{edge.directed ? '→' : '—'}
+									{app.document.nodes[edge.to]?.label ?? '?'}
+									<span class="muted">w={edge.weight}</span>
+								</li>
+							{/each}
+						</ul>
+					{/if}
 				</div>
 				<p class="hint">
 					Drag to move · Alt-click connect · Ctrl+Alt directed · Shift add-select · Del to delete
@@ -1029,9 +1115,6 @@
 				<h2>Nodes ({nodes.length})</h2>
 				<div class="row wrap">
 					<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
-					<button type="button" data-testid="relayout" onclick={() => app.relayout()}
-						>Re-layout</button
-					>
 				</div>
 			</div>
 			{#if selectedCount > 0}
@@ -1039,7 +1122,7 @@
 			{/if}
 			<ul class="list node-list" data-testid="node-list">
 				{#each nodes as node (node.id)}
-					<li>
+					<li class="node-row">
 						<button
 							type="button"
 							class="list-item"
@@ -1050,6 +1133,16 @@
 							<span class="node-list-label">{node.label}</span>
 							{#if node.pinned}<span class="tag">pin</span>{/if}
 						</button>
+						<button
+							type="button"
+							class="icon-btn danger"
+							data-testid={`delete-node-row-${node.id}`}
+							aria-label={`Delete ${node.label}`}
+							onclick={(e) => {
+								e.stopPropagation();
+								app.removeNode(node.id);
+							}}>×</button
+						>
 					</li>
 				{/each}
 			</ul>
@@ -1066,162 +1159,6 @@
 					<button type="button" data-testid="delete-selection" onclick={() => app.deleteSelection()}
 						>Delete</button
 					>
-				</div>
-			{/if}
-
-			{#if selectedNode && selectedCount === 1}
-				<div class="inspect" data-testid="node-editor">
-					<h3 class="subhead">Inspect</h3>
-					<div class="row wrap inspect-actions">
-						<button
-							type="button"
-							data-testid="node-connect"
-							class:active={app.ui.connectFromId === selectedNode.id}
-							onclick={() => app.setConnectFrom(selectedNode.id)}>Connect</button
-						>
-						<button
-							type="button"
-							data-testid="delete-node"
-							onclick={() => app.removeNode(selectedNode.id)}>Delete</button
-						>
-						<button type="button" data-testid="diff-add" onclick={() => pushDiff(selectedNode.id)}
-							>Add to diff</button
-						>
-					</div>
-					<label>
-						Label
-						<input
-							data-testid="node-label"
-							value={selectedNode.label}
-							oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
-						/>
-					</label>
-					<label>
-						Notes
-						<textarea
-							data-testid="node-notes"
-							rows="2"
-							value={selectedNode.notes ?? ''}
-							oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
-						></textarea>
-					</label>
-					<div class="pos-row" data-testid="node-position">
-						<label>
-							X
-							<input
-								type="number"
-								step="0.1"
-								data-testid="node-pos-x"
-								value={selectedNode.position.x}
-								oninput={(e) =>
-									app.updateNode(selectedNode.id, {
-										position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
-									})}
-							/>
-						</label>
-						<label>
-							Y
-							<input
-								type="number"
-								step="0.1"
-								data-testid="node-pos-y"
-								value={selectedNode.position.y}
-								oninput={(e) =>
-									app.updateNode(selectedNode.id, {
-										position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
-									})}
-							/>
-						</label>
-						<label>
-							Z
-							<input
-								type="number"
-								step="0.1"
-								data-testid="node-pos-z"
-								value={selectedNode.position.z}
-								oninput={(e) =>
-									app.updateNode(selectedNode.id, {
-										position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
-									})}
-							/>
-						</label>
-					</div>
-					<label>
-						Tags
-						<input
-							data-testid="node-tags"
-							placeholder="comma-separated"
-							value={selectedNode.tags.join(', ')}
-							oninput={(e) =>
-								app.setNodeTags(
-									selectedNode.id,
-									e.currentTarget.value
-										.split(',')
-										.map((t) => t.trim())
-										.filter(Boolean)
-								)}
-						/>
-					</label>
-					<label class="check">
-						<input
-							type="checkbox"
-							data-testid="node-pin"
-							checked={selectedNode.pinned}
-							onchange={(e) => app.pinNode(selectedNode.id, e.currentTarget.checked)}
-						/>
-						Pinned
-					</label>
-					<div class="attachments" data-testid="attachments-section">
-						<h3 class="subhead">Attachments</h3>
-						<ul class="list attachment-list" data-testid="attachment-list">
-							{#each selectedNode.attachments as att, i (i)}
-								<li class="attachment-row">
-									<span class="attachment-name">{att.name}</span>
-									<span class="muted attachment-preview"
-										>{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span
-									>
-									<button
-										type="button"
-										data-testid={`remove-attachment-${i}`}
-										aria-label={`Remove attachment ${att.name}`}
-										onclick={() =>
-											removeAttachment('node', selectedNode.id, selectedNode.attachments, i)}
-										>×</button
-									>
-								</li>
-							{/each}
-						</ul>
-						<div class="row wrap">
-							<input
-								data-testid="attachment-name"
-								placeholder="Name"
-								aria-label="Attachment name"
-								bind:value={attachName}
-							/>
-							<input
-								data-testid="attachment-payload"
-								placeholder="Text or data URL"
-								aria-label="Attachment payload"
-								bind:value={attachPayload}
-							/>
-							<button
-								type="button"
-								data-testid="add-attachment"
-								onclick={() =>
-									addAttachment(
-										'node',
-										selectedNode.id,
-										selectedNode.attachments,
-										attachName,
-										attachPayload,
-										() => {
-											attachName = '';
-											attachPayload = '';
-										}
-									)}>Add</button
-							>
-						</div>
-					</div>
 				</div>
 			{/if}
 		</section>
@@ -1738,7 +1675,15 @@
 				>
 				<button type="button" onclick={() => app.setDiffIds([])}>Clear</button>
 			{:else}
-				<p class="hint">Add two nodes to the diff from Inspect.</p>
+				<p class="hint">Select up to two nodes, then add them here.</p>
+				<button
+					type="button"
+					data-testid="diff-add-selection"
+					disabled={app.selection.nodeIds.length === 0}
+					onclick={() => {
+						for (const id of app.selection.nodeIds.slice(0, 2)) pushDiff(id);
+					}}>Add selection</button
+				>
 			{/if}
 		</section>
 	{/if}
@@ -2078,6 +2023,25 @@
 		white-space: nowrap;
 	}
 
+	.node-row {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.node-row .list-item {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.node-row .icon-btn {
+		flex: 0 0 auto;
+		width: 1.65rem;
+		height: 1.65rem;
+		font-size: 1rem;
+		line-height: 1;
+	}
+
 	.inspect {
 		margin-top: 0.1rem;
 		padding: 0.65rem 0.7rem 0.55rem;
@@ -2257,13 +2221,45 @@
 
 	.pos-row {
 		display: grid;
-		grid-template-columns: 1fr 1fr 1fr;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 0.35rem;
 		margin-bottom: 0.4rem;
+		width: 100%;
+		min-width: 0;
 	}
 
 	.pos-row label {
 		margin-bottom: 0;
+		min-width: 0;
+	}
+
+	.pos-row input {
+		width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.incident-edges {
+		margin-top: 0.15rem;
+	}
+
+	.incident-edges .subhead {
+		margin: 0 0 0.25rem;
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--yg-muted);
+		font-weight: 600;
+	}
+
+	.incident-edge-list {
+		max-height: 8rem;
+		margin: 0;
+	}
+
+	.incident-edge-row {
+		font-size: 0.8rem;
+		padding: 0.2rem 0.15rem;
 	}
 
 	.compare-panel h3 {

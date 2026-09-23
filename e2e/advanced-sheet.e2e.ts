@@ -1,25 +1,44 @@
 import { expect, test } from '@playwright/test';
 import { openTool } from './open-tool';
 
-test('world selection panel sits in the tools dock and hides while a tool is open', async ({ page }) => {
+test('world selection panel sits in the tools dock and hides while a non-Nodes tool is open', async ({
+	page
+}) => {
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
 
 	await page.getByTestId('world-add-node').click();
 	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
 
-	await openTool(page, 'nodes');
+	await openTool(page, 'file');
 	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
-	await expect(
-		page.getByTestId('yggnet-manager').getByText('Nodes', { exact: true })
-	).toBeVisible();
 	await expect(page.getByTestId('world-node-sheet')).toHaveCount(0);
-	await expect(page.getByTestId('node-editor')).toBeVisible();
-	await expect(page.getByTestId('node-connect')).toBeVisible();
 
-	await page.getByTestId('tool-nodes').click();
+	await page.getByTestId('tool-file').click();
 	await expect(page.getByTestId('yggnet-manager')).toHaveCount(0);
 	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
+});
+
+test('Nodes tool shows node panel beside it for a single selection', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+
+	await openTool(page, 'nodes');
+	await page.getByTestId('add-node').click();
+	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
+	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
+	await expect(page.getByTestId('world-connect')).toBeVisible();
+	await expect(page.getByTestId('node-label')).toBeVisible();
+	await expect(page.getByTestId('node-editor')).toHaveCount(0);
+
+	const tool = await page.getByTestId('yggnet-manager').boundingBox();
+	const sheet = await page.getByTestId('world-node-sheet').boundingBox();
+	expect(tool).toBeTruthy();
+	expect(sheet).toBeTruthy();
+	expect(sheet!.x).toBeGreaterThanOrEqual(tool!.x + tool!.width - 2);
+
+	await openTool(page, 'edges');
+	await expect(page.getByTestId('world-node-sheet')).toHaveCount(0);
 });
 
 test('tool panel sits right of the toolbar under the menubar', async ({ page }) => {

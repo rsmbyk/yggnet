@@ -11,6 +11,6 @@ test('add node via manager is visible in list', async ({ page }) => {
 	await page.getByTestId('add-node').click();
 
 	await expect(list.locator('li')).toHaveCount(before + 1);
-	await expect(page.getByTestId('node-editor')).toBeVisible();
+	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
 	await expect(page.getByTestId('node-label')).toBeVisible();
 });

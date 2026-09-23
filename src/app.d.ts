@@ -12,6 +12,8 @@ declare global {
 	interface Window {
 		/** E2E-only: keep the work overlay up this many ms after the document is swapped. */
 		__YGGNET_BUSY_HOLD_MS?: number;
+		/** E2E-only: run pin-aware re-layout (no UI button). */
+		__YGGNET_RELAYOUT?: () => void;
 	}
 }
 

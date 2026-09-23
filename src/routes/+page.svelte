@@ -6,15 +6,15 @@
 	import { app } from '$lib/session/app.svelte';
 	import { applyBeforeUnloadGuard } from '$lib/session/work-busy';
 	import { tabTitleFromGraph } from '$lib/session/tab-title';
-	import { selectionPanelOpen } from '$lib/ui/tool-ids';
+	import { nodesCompanionOpen, selectionPanelOpen } from '$lib/ui/tool-ids';
 	import { forwardWheelEvent, worldCanvas } from '$lib/ui/forward-wheel';
 
 	const slide = { duration: 220, x: -28, opacity: 0 };
-	const panelFade = { duration: 180 };
 	let WorldCanvas: typeof import('$lib/world/WorldCanvas.svelte').default | null = $state(null);
 
 	onMount(() => {
 		let cancelled = false;
+		window.__YGGNET_RELAYOUT = () => app.relayout();
 		app.beginWork('load');
 		import('$lib/world/WorldCanvas.svelte')
 			.then(async (m) => {
@@ -32,6 +32,7 @@
 			});
 		return () => {
 			cancelled = true;
+			delete window.__YGGNET_RELAYOUT;
 			if (app.busyKind === 'load') app.finishWork();
 		};
 	});
@@ -113,6 +114,10 @@
 	const showSelectionPanel = $derived(
 		selectionPanelOpen(app.ui.openTool, app.selection.nodeIds.length, app.selection.edgeIds.length)
 	);
+	const showNodesCompanion = $derived(
+		nodesCompanionOpen(app.ui.openTool, app.selection.nodeIds.length)
+	);
+	const showSelectionSlot = $derived(showSelectionPanel || showNodesCompanion);
 
 	const tabTitle = $derived(tabTitleFromGraph(app.document.title));
 
@@ -193,13 +198,18 @@
 	{/if}
 	<div class="tool-dock">
 		<Toolbar />
-		<div class="tool-panel-stage" class:fill={app.ui.openTool !== null}>
+		<div
+			class="tool-panel-stage"
+			class:fill={app.ui.openTool !== null}
+			class:companion={showNodesCompanion}
+		>
 			{#if app.ui.openTool}
 				<div class="tool-panel-slot" transition:fly={slide}>
 					<ManagerPanel section={app.ui.openTool} />
 				</div>
-			{:else if showSelectionPanel}
-				<div class="tool-panel-slot" transition:fade={panelFade}>
+			{/if}
+			{#if showSelectionSlot}
+				<div class="tool-panel-slot">
 					<ManagerPanel section="selection" />
 				</div>
 			{/if}
@@ -270,7 +280,10 @@
 
 	.tool-panel-stage {
 		position: relative;
-		display: grid;
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		gap: var(--yg-hud-edge);
 		min-width: 0;
 		max-height: 100%;
 		pointer-events: none;
@@ -283,7 +296,6 @@
 	}
 
 	.tool-panel-slot {
-		grid-area: 1 / 1;
 		display: flex;
 		align-items: flex-start;
 		min-width: 0;

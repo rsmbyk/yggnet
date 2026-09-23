@@ -35,11 +35,16 @@ export function nextOpenTool(current: ToolId | null, clicked: ToolId): ToolId | 
 	return current === clicked ? null : clicked;
 }
 
-/** Selection inspect card in the tools dock — no toolbar icon, hidden while a tool is open. */
+/** Freestanding selection card — no toolbar icon; hidden while any tool is open. */
 export function selectionPanelOpen(
 	openTool: ToolId | null,
 	nodeCount: number,
 	edgeCount: number
 ): boolean {
 	return openTool === null && (nodeCount > 0 || edgeCount > 0);
+}
+
+/** Node details companion — sits to the right of the Nodes tool when one node is selected. */
+export function nodesCompanionOpen(openTool: ToolId | null, nodeCount: number): boolean {
+	return openTool === 'nodes' && nodeCount === 1;
 }

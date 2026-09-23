@@ -6,7 +6,7 @@ test('named save and load with overwrite confirm', async ({ page }) => {
 	await openTool(page, 'nodes');
 
 	await page.getByTestId('add-node').click();
-	await expect(page.getByTestId('node-editor')).toBeVisible();
+	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
 	await page.getByTestId('node-label').fill('Falcon');
 
 	const slot = 'e2e-named-slot';
@@ -30,7 +30,7 @@ test('named save and load with overwrite confirm', async ({ page }) => {
 	await openTool(page, 'nodes');
 	await expect(page.getByTestId('node-list').locator('li')).toHaveCount(1);
 	await expect(page.getByTestId('node-list')).toContainText('Falcon');
-	await page.getByTestId('node-list').locator('button').first().click();
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
 	await expect(page.getByTestId('node-label')).toHaveValue('Falcon');
 });
 
@@ -144,6 +144,6 @@ test('palette find jumps to matching node', async ({ page }) => {
 
 	await results.locator('button').first().click();
 	await expect(page.getByTestId('command-palette')).not.toBeVisible();
-	await expect(page.getByTestId('node-editor')).toBeVisible();
+	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
 	await expect(page.getByTestId('node-label')).toHaveValue('ZebraNode');
 });
