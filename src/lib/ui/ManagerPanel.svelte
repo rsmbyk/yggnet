@@ -320,7 +320,11 @@
 	</header>
 
 	{#if section === 'selection'}
-		<section class="block" aria-label="Selection">
+		<section
+			class="block"
+			class:selection-sheet={selectedNode && selectedCount === 1}
+			aria-label="Selection"
+		>
 			{#if selectedNode && selectedCount === 1}
 				<label>
 					Label
@@ -330,7 +334,7 @@
 						oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
 					/>
 				</label>
-				<div class="row wrap">
+				<div class="row wrap selection-actions">
 					<button
 						type="button"
 						data-testid="world-connect"
@@ -351,12 +355,13 @@
 						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
 					>
 				</div>
-				<div class="pos-row" data-testid="node-position">
+				<div class="pos-stack" data-testid="node-position">
 					<label>
 						X
 						<input
 							type="number"
 							step="0.1"
+							class="no-spinner"
 							data-testid="node-pos-x"
 							value={selectedNode.position.x}
 							oninput={(e) =>
@@ -370,6 +375,7 @@
 						<input
 							type="number"
 							step="0.1"
+							class="no-spinner"
 							data-testid="node-pos-y"
 							value={selectedNode.position.y}
 							oninput={(e) =>
@@ -383,6 +389,7 @@
 						<input
 							type="number"
 							step="0.1"
+							class="no-spinner"
 							data-testid="node-pos-z"
 							value={selectedNode.position.z}
 							oninput={(e) =>
@@ -434,9 +441,11 @@
 						</ul>
 					{/if}
 				</div>
-				<p class="hint">
-					Drag to move · Alt-click connect · Ctrl+Alt directed · Shift add-select · Del to delete
-				</p>
+				{#if app.ui.openTool === null}
+					<p class="hint">
+						Drag to move · Alt-click connect · Ctrl+Alt directed · Shift add-select · Del to delete
+					</p>
+				{/if}
 			{:else if selectedCount > 1}
 				<div class="row wrap">
 					<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
@@ -2101,8 +2110,9 @@
 	}
 
 	.list-item.selected {
-		background: var(--yg-accent-soft);
-		border-color: color-mix(in srgb, var(--yg-accent) 35%, var(--yg-border));
+		background: color-mix(in srgb, var(--yg-accent) 42%, rgba(255, 255, 255, 0.55));
+		border-color: color-mix(in srgb, var(--yg-accent) 55%, var(--yg-border));
+		color: var(--yg-fg);
 	}
 
 	label {
@@ -2219,28 +2229,52 @@
 		font-size: 0.85rem;
 	}
 
-	.pos-row {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 0.35rem;
-		margin-bottom: 0.4rem;
+	.pos-stack {
+		display: flex;
+		flex-direction: column;
+		gap: 0.55rem;
 		width: 100%;
 		min-width: 0;
 	}
 
-	.pos-row label {
+	.pos-stack label {
 		margin-bottom: 0;
-		min-width: 0;
 	}
 
-	.pos-row input {
+	.pos-stack input {
 		width: 100%;
 		min-width: 0;
 		box-sizing: border-box;
 	}
 
+	input.no-spinner {
+		appearance: textfield;
+		-moz-appearance: textfield;
+	}
+
+	input.no-spinner::-webkit-inner-spin-button,
+	input.no-spinner::-webkit-outer-spin-button {
+		appearance: none;
+		-webkit-appearance: none;
+		margin: 0;
+	}
+
+	.selection-sheet {
+		display: flex;
+		flex-direction: column;
+		gap: 0.85rem;
+	}
+
+	.selection-sheet > label,
+	.selection-sheet > .selection-actions,
+	.selection-sheet > .pos-stack,
+	.selection-sheet > .incident-edges,
+	.selection-sheet > .hint {
+		margin-bottom: 0;
+	}
+
 	.incident-edges {
-		margin-top: 0.15rem;
+		margin-top: 0;
 	}
 
 	.incident-edges .subhead {
