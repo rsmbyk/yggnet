@@ -4,10 +4,15 @@
 		ARCHIMEDEAN_LABELS,
 		ARCHIMEDEAN_SOLIDS,
 		ATTACHMENTS_FIELD_HELP,
+		BRANCHING_FIELD_HELP,
+		CHORD_FIELD_HELP,
 		COMMUNITY_P_BETWEEN_HELP,
 		COMMUNITY_P_INSIDE_HELP,
 		DEGREE_FIELD_HELP,
 		DENSITY_FIELD_HELP,
+		DEPTH_FIELD_HELP,
+		DIMENSION_FIELD_HELP,
+		EXTENT_FIELD_HELP,
 		fieldsForKind,
 		generateFieldLimit,
 		generateRequestFromForm,
@@ -24,7 +29,10 @@
 		PLATONIC_SOLIDS,
 		PROBABILITY_RANGE_HELP,
 		REWIRE_FIELD_HELP,
-		RUNGS_FIELD_HELP
+		RINGS_FIELD_HELP,
+		RUNGS_FIELD_HELP,
+		SEGMENTS_FIELD_HELP,
+		TURNS_FIELD_HELP
 	} from '$lib/graph';
 	import type { GraphAttachment, KindField } from '$lib/graph';
 	import { tick } from 'svelte';
@@ -590,8 +598,10 @@
 								type="number"
 								min={fieldLimit('depth')?.min}
 								max={fieldLimit('depth')?.max}
+								aria-describedby="generate-depth-help"
 								bind:value={app.generateForm.depth}
 							/>
+							<p class="hint" id="generate-depth-help">{DEPTH_FIELD_HELP}</p>
 						</label>
 					{/if}
 					{#if genFields.includes('branching') && !app.generateForm.binary}
@@ -602,8 +612,10 @@
 								type="number"
 								min={fieldLimit('branching')?.min}
 								max={fieldLimit('branching')?.max}
+								aria-describedby="generate-branching-help"
 								bind:value={app.generateForm.branching}
 							/>
+							<p class="hint" id="generate-branching-help">{BRANCHING_FIELD_HELP}</p>
 						</label>
 					{/if}
 					{#if genFields.includes('left')}
@@ -834,8 +846,10 @@
 								type="number"
 								min={fieldLimit('dimension')?.min}
 								max={fieldLimit('dimension')?.max}
+								aria-describedby="generate-dimension-help"
 								bind:value={app.generateForm.dimension}
 							/>
+							<p class="hint" id="generate-dimension-help">{DIMENSION_FIELD_HELP}</p>
 						</label>
 					{/if}
 					{#if genFields.includes('platonic')}
@@ -866,8 +880,10 @@
 								type="number"
 								min={fieldLimit('extent')?.min}
 								max={fieldLimit('extent')?.max}
+								aria-describedby="generate-extent-help"
 								bind:value={app.generateForm.extent}
 							/>
+							<p class="hint" id="generate-extent-help">{EXTENT_FIELD_HELP}</p>
 						</label>
 					{/if}
 					{#if genFields.includes('turns')}
@@ -878,8 +894,10 @@
 								type="number"
 								min={fieldLimit('turns')?.min}
 								step="0.5"
+								aria-describedby="generate-turns-help"
 								bind:value={app.generateForm.turns}
 							/>
+							<p class="hint" id="generate-turns-help">{TURNS_FIELD_HELP}</p>
 						</label>
 					{/if}
 					{#if genFields.includes('chord')}
@@ -890,8 +908,10 @@
 								type="number"
 								min={fieldLimit('chord')?.min}
 								max={fieldLimit('chord')?.max}
+								aria-describedby="generate-chord-help"
 								bind:value={app.generateForm.chord}
 							/>
+							<p class="hint" id="generate-chord-help">{CHORD_FIELD_HELP}</p>
 						</label>
 					{/if}
 					{#if genFields.includes('rings')}
@@ -902,8 +922,10 @@
 								type="number"
 								min={fieldLimit('rings')?.min}
 								max={fieldLimit('rings')?.max}
+								aria-describedby="generate-rings-help"
 								bind:value={app.generateForm.rings}
 							/>
+							<p class="hint" id="generate-rings-help">{RINGS_FIELD_HELP}</p>
 						</label>
 					{/if}
 					{#if genFields.includes('segments')}
@@ -914,8 +936,10 @@
 								type="number"
 								min={fieldLimit('segments')?.min}
 								max={fieldLimit('segments')?.max}
+								aria-describedby="generate-segments-help"
 								bind:value={app.generateForm.segments}
 							/>
+							<p class="hint" id="generate-segments-help">{SEGMENTS_FIELD_HELP}</p>
 						</label>
 					{/if}
 					{#if genFields.includes('petersenN')}

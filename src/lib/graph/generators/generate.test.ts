@@ -256,10 +256,22 @@ describe('kind metadata', () => {
 		expect(GRAPH_KIND_GROUPS.flatMap((g) => g.kinds.map((k) => k.id))).not.toContain('geometric');
 	});
 
-	it('lays tree depth toward −Z and keeps grid rows horizontal', () => {
+	it('lays tree with root on top and children under their parent', () => {
 		const tree = generateGraph('tree', { seed: 1, depth: 2, binary: true, nodeY: 1 });
-		const zs = Object.values(tree.nodes).map((n) => n.position.z);
-		expect(Math.min(...zs)).toBeLessThan(0);
+		const nodes = Object.values(tree.nodes);
+		const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+		const rootZ = Math.min(...nodes.map((n) => n.position.z));
+		expect(nodes.some((n) => n.position.z > rootZ)).toBe(true);
+		for (const e of Object.values(tree.edges)) {
+			const a = byId[e.from];
+			const b = byId[e.to];
+			const parent = a.position.z <= b.position.z ? a : b;
+			const child = parent === a ? b : a;
+			expect(parent.position.z).toBeLessThan(child.position.z);
+		}
+	});
+
+	it('keeps grid rows wider than columns are tall', () => {
 		const grid = generateGraph('grid', { seed: 1, rows: 3, columns: 4, nodeY: 1 });
 		const xs = Object.values(grid.nodes).map((n) => n.position.x);
 		const gzs = Object.values(grid.nodes).map((n) => n.position.z);
@@ -289,9 +301,9 @@ describe('kind metadata', () => {
 		expect(generateFieldLimit('regular', 'degree', { nodes: 12 })).toEqual({ min: 0, max: 11 });
 		expect(generateFieldLimit('scaleFree', 'attachments', { nodes: 4 })).toEqual({ min: 1, max: 3 });
 		expect(generateFieldLimit('scaleFree', 'attachments', { nodes: 40 })).toEqual({ min: 1, max: 5 });
-		expect(generateFieldLimit('grid', 'rows')).toEqual({ min: 1, max: 20 });
-		expect(generateFieldLimit('cubicLattice', 'rows')).toEqual({ min: 1, max: 10 });
-		expect(generateFieldLimit('cubicLattice', 'layers')).toEqual({ min: 1, max: 10 });
+		expect(generateFieldLimit('grid', 'rows')).toEqual({ min: 1 });
+		expect(generateFieldLimit('cubicLattice', 'rows')).toEqual({ min: 1 });
+		expect(generateFieldLimit('cubicLattice', 'layers')).toEqual({ min: 1 });
 		expect(generateFieldLimit('prism', 'nGons')).toEqual({ min: 3, max: 20 });
 		expect(generateFieldLimit('antiprism', 'nGons')).toEqual({ min: 3 });
 		expect(generateFieldLimit('helix', 'turns')).toEqual({ min: 0.5 });
@@ -302,7 +314,23 @@ describe('kind metadata', () => {
 			min: 1,
 			max: 3
 		});
-		expect(generateFieldLimit('sierpinskiGasket', 'sierpinskiDepth')).toEqual({ min: 0, max: 2 });
+		expect(generateFieldLimit('sierpinskiGasket', 'sierpinskiDepth')).toEqual({ min: 0 });
+		expect(generateFieldLimit('tree', 'depth')).toEqual({ min: 1 });
+		expect(generateFieldLimit('tree', 'branching')).toEqual({ min: 2 });
+		expect(generateFieldLimit('hypercube', 'dimension')).toEqual({ min: 2 });
+		expect(generateFieldLimit('diamondLattice', 'extent')).toEqual({ min: 1 });
+		expect(generateFieldLimit('torusGrid', 'rings')).toEqual({ min: 3 });
+		expect(generateFieldLimit('torusGrid', 'segments')).toEqual({ min: 3 });
+	});
+
+	it('no longer caps Sierpinski depth at two', () => {
+		const d2 = nodeCount(
+			generateGraph('named', { seed: 1, named: 'sierpinskiGasket', sierpinskiDepth: 2 })
+		);
+		const d3 = nodeCount(
+			generateGraph('named', { seed: 1, named: 'sierpinskiGasket', sierpinskiDepth: 3 })
+		);
+		expect(d3).toBeGreaterThan(d2);
 	});
 
 	it('exposes Paley and Sierpinski fields from the picker id', () => {
@@ -416,7 +444,10 @@ describe('solids and extra options', () => {
 			nodeCount(generateGraph('tree', { seed: 1, depth: 2, binary: false, branching: 3 }))
 		).toBeGreaterThan(1);
 		expect(nodeCount(generateGraph('circulant', { seed: 1, nodes: 10, jumps: [] }))).toBe(10);
-		expect(nodeCount(generateGraph('diamondLattice', { seed: 1, extent: 6 }))).toBe(64);
+		expect(nodeCount(generateGraph('diamondLattice', { seed: 1, extent: 4 }))).toBe(64);
+		expect(
+			nodeCount(generateGraph('diamondLattice', { seed: 1, extent: 5 }))
+		).toBeGreaterThan(64);
 		expect(nodeCount(generateGraph('grid', { seed: 1, rows: 20, columns: 20 }))).toBe(400);
 		expect(nodeCount(generateGraph('hexGrid', { seed: 1, rows: 20, columns: 20 }))).toBe(400);
 		expect(nodeCount(generateGraph('torusGrid', { seed: 1, rings: 20, segments: 20 }))).toBe(400);

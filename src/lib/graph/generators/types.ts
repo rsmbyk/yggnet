@@ -311,7 +311,7 @@ export function generateFieldLimit(
 	field: KindField,
 	ctx: { nodes?: number; petersenN?: number } = {}
 ): FieldLimit | undefined {
-	if (field === 'sierpinskiDepth') return { min: 0, max: 2 };
+	if (field === 'sierpinskiDepth') return { min: 0 };
 	if (isNamedGraphId(kind)) return undefined;
 	switch (field) {
 		case 'nodes': {
@@ -330,9 +330,9 @@ export function generateFieldLimit(
 			return { min: 0, max: Math.max(0, nodes - 1) };
 		}
 		case 'depth':
-			return { min: 1, max: 8 };
+			return { min: 1 };
 		case 'branching':
-			return { min: 2, max: 6 };
+			return { min: 2 };
 		case 'left':
 		case 'right':
 			return { min: 1 };
@@ -349,15 +349,15 @@ export function generateFieldLimit(
 			return { min: 1, max: Math.max(1, nodes - 1) };
 		}
 		case 'rungs':
-		case 'rings':
-		case 'segments':
 		case 'petersenN':
 			return { min: 3, max: 20 };
+		case 'rings':
+		case 'segments':
+			return { min: 3 };
 		case 'rows':
 		case 'columns':
-			return kind === 'cubicLattice' ? { min: 1, max: 10 } : { min: 1, max: 20 };
 		case 'layers':
-			return { min: 1, max: 10 };
+			return { min: 1 };
 		case 'radius':
 			return { min: 0.2 };
 		case 'groups':
@@ -365,9 +365,9 @@ export function generateFieldLimit(
 		case 'nGons':
 			return kind === 'prism' ? { min: 3, max: 20 } : { min: 3 };
 		case 'dimension':
-			return { min: 2, max: 5 };
+			return { min: 2 };
 		case 'extent':
-			return { min: 1, max: 4 };
+			return { min: 1 };
 		case 'turns':
 			return { min: 0.5 };
 		case 'chord': {
@@ -752,6 +752,31 @@ export const NEIGHBORS_FIELD_HELP =
 
 /** Generate helper under Möbius ladder Rungs. */
 export const RUNGS_FIELD_HELP = 'Rungs around the circular ladder. From 3 to 20.';
+
+/** Generate helper under Hypercube Dimension. */
+export const DIMENSION_FIELD_HELP = 'Dimension n of the hypercube Qₙ. At least 2.';
+
+/** Generate helper under Tree Branching. */
+export const BRANCHING_FIELD_HELP = 'Children per node when Binary is off. At least 2.';
+
+/** Generate helper under Tree Depth. */
+export const DEPTH_FIELD_HELP = 'How many steps from the root to the deepest leaf. At least 1.';
+
+/** Generate helper under Diamond Extent. */
+export const EXTENT_FIELD_HELP = 'How far the diamond lattice grows from the origin. At least 1.';
+
+/** Generate helper under Helix Turns. */
+export const TURNS_FIELD_HELP = 'How many full twists the helix makes. At least 0.5, step 0.5.';
+
+/** Generate helper under Helix Chord. */
+export const CHORD_FIELD_HELP =
+	'Extra edges that skip this many steps along the helix. From 0 to nodes − 1.';
+
+/** Generate helper under Torus Rings. */
+export const RINGS_FIELD_HELP = 'Loops around the doughnut hole. At least 3.';
+
+/** Generate helper under Torus Segments. */
+export const SEGMENTS_FIELD_HELP = 'Points around each ring tube. At least 3.';
 
 /** Generate helper under Circulant jumps. */
 export const JUMPS_FIELD_HELP = 'Each jump is an integer from 1 up to half the nodes.';

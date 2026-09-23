@@ -29,6 +29,14 @@ export {
 	DEGREE_FIELD_HELP,
 	NEIGHBORS_FIELD_HELP,
 	RUNGS_FIELD_HELP,
+	DIMENSION_FIELD_HELP,
+	BRANCHING_FIELD_HELP,
+	DEPTH_FIELD_HELP,
+	EXTENT_FIELD_HELP,
+	TURNS_FIELD_HELP,
+	CHORD_FIELD_HELP,
+	RINGS_FIELD_HELP,
+	SEGMENTS_FIELD_HELP,
 	defaultGenerateForm,
 	fieldsForKind,
 	generateFieldLimit,
@@ -330,8 +338,8 @@ function randomTree(
 	points: Vec3[];
 	edges: [number, number][];
 } {
-	const maxD = clampInt(depth, 1, 8);
-	const branch = binary ? 2 : clampInt(branching, 2, 6);
+	const maxD = Math.max(1, Math.round(depth));
+	const branch = binary ? 2 : Math.max(2, Math.round(branching));
 	const parent: number[] = [-1];
 	const depths: number[] = [0];
 	const kids: number[] = [0];
@@ -357,19 +365,29 @@ function randomTree(
 		}
 	}
 	const n = parent.length;
-	const byDepth: number[][] = [];
-	for (let i = 0; i < n; i += 1) {
-		(byDepth[depths[i]] ??= []).push(i);
-	}
-	const points: Vec3[] = Array.from({ length: n }, () => vec(0, 0, 0));
+	const children: number[][] = Array.from({ length: n }, () => []);
+	for (let i = 1; i < n; i += 1) children[parent[i]].push(i);
+	const xOf = Array.from({ length: n }, () => 0);
+	let nextLeafX = 0;
+	const gap = 2.6;
+	const depthGap = 4;
+	const place = (id: number) => {
+		const kidsOf = children[id];
+		if (kidsOf.length === 0) {
+			xOf[id] = nextLeafX;
+			nextLeafX += gap;
+			return;
+		}
+		for (const c of kidsOf) place(c);
+		xOf[id] = (xOf[kidsOf[0]] + xOf[kidsOf[kidsOf.length - 1]]) / 2;
+	};
+	place(0);
+	const mid = xOf[0];
+	const points: Vec3[] = Array.from({ length: n }, (_, i) =>
+		vec(xOf[i] - mid, 0, depths[i] * depthGap)
+	);
 	const edges: [number, number][] = [];
 	for (let i = 1; i < n; i += 1) edges.push([parent[i], i]);
-	for (let d = 0; d < byDepth.length; d += 1) {
-		const row = byDepth[d] ?? [];
-		row.forEach((id, k) => {
-			points[id] = vec((k - (row.length - 1) / 2) * 2.6, 0, -d * 3);
-		});
-	}
 	return { points, edges };
 }
 
@@ -540,7 +558,7 @@ function hexGrid(rows: number, cols: number): { points: Vec3[]; edges: [number, 
 }
 
 function diamondLattice(extent: number): { points: Vec3[]; edges: [number, number][] } {
-	const s = clampInt(extent, 1, 4);
+	const s = Math.max(1, Math.round(extent));
 	const make = (size: number) => {
 		const pts: Vec3[] = [];
 		for (let i = 0; i < size; i += 1) {
@@ -566,7 +584,7 @@ function diamondLattice(extent: number): { points: Vec3[]; edges: [number, numbe
 }
 
 function hypercube(dim: number): { points: Vec3[]; edges: [number, number][] } {
-	const d = clampInt(dim, 2, 5);
+	const d = Math.max(2, Math.round(dim));
 	const n = 2 ** d;
 	const points: Vec3[] = [];
 	const edges: [number, number][] = [];
@@ -793,7 +811,7 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 		case 'hypercube': {
 			const g = hypercube(opts.dimension ?? 3);
 			return {
-				title: `Hypercube Q${clampInt(opts.dimension ?? 3, 2, 5)}`,
+				title: `Hypercube Q${Math.max(2, Math.round(opts.dimension ?? 3))}`,
 				...g,
 				edges: undirected(g.edges),
 				layout: 'yaw'
@@ -866,8 +884,8 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			};
 		}
 		case 'grid': {
-			const rows = clampInt(opts.rows ?? 4, 1, 20);
-			const cols = clampInt(opts.columns ?? 4, 1, 20);
+			const rows = Math.max(1, Math.round(opts.rows ?? 4));
+			const cols = Math.max(1, Math.round(opts.columns ?? 4));
 			const g = cartesianGrid(1, cols, rows, opts.diagonals === true);
 			g.points = g.points.map((pt) => vec(pt.x, 0, -pt.z));
 			return {
@@ -878,8 +896,8 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			};
 		}
 		case 'hexGrid': {
-			const rows = clampInt(opts.rows ?? 4, 1, 20);
-			const cols = clampInt(opts.columns ?? 5, 1, 20);
+			const rows = Math.max(1, Math.round(opts.rows ?? 4));
+			const cols = Math.max(1, Math.round(opts.columns ?? 5));
 			const g = hexGrid(rows, cols);
 			return { title: `Hex ${cols}×${rows}`, ...g, edges: undirected(g.edges), layout: 'none' };
 		}
@@ -910,9 +928,9 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			return { title: g.title, points: g.points, edges: undirected(g.edges), layout: 'yaw' };
 		}
 		case 'cubicLattice': {
-			const rows = clampInt(opts.rows ?? 3, 1, 10);
-			const cols = clampInt(opts.columns ?? 3, 1, 10);
-			const layers = clampInt(opts.layers ?? 3, 1, 10);
+			const rows = Math.max(1, Math.round(opts.rows ?? 3));
+			const cols = Math.max(1, Math.round(opts.columns ?? 3));
+			const layers = Math.max(1, Math.round(opts.layers ?? 3));
 			const g = cartesianGrid(rows, cols, layers, opts.diagonals === true);
 			return {
 				title: `Cubic ${cols}×${rows}×${layers}`,
@@ -980,8 +998,8 @@ function buildKind(kind: GraphKind, opts: GenerateOptions, rng: Rng): Built {
 			return { title: `Helix ${count}`, points, edges: undirected(edges), layout: 'none' };
 		}
 		case 'torusGrid': {
-			const u = clampInt(opts.rings ?? 4, 3, 20);
-			const v = clampInt(opts.segments ?? 8, 3, 20);
+			const u = Math.max(3, Math.round(opts.rings ?? 4));
+			const v = Math.max(3, Math.round(opts.segments ?? 8));
 			const R = 5;
 			const r = 2;
 			const points: Vec3[] = [];

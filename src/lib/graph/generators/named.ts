@@ -53,7 +53,7 @@ function levi(
 }
 
 function sierpinskiGasket(depth: number): { points: Vec3[]; edges: [number, number][] } {
-	const d = Math.max(0, Math.min(2, depth));
+	const d = Math.max(0, Math.round(depth));
 	const corners = [vec(-4, 0, -2.2), vec(4, 0, -2.2), vec(0, 0, 4)];
 	const points: Vec3[] = [];
 	const key = (p: Vec3) => `${p.x.toFixed(6)},${p.z.toFixed(6)}`;
@@ -89,7 +89,7 @@ function sierpinskiGasket(depth: number): { points: Vec3[]; edges: [number, numb
 }
 
 function sierpinskiTetrahedron(depth: number): { points: Vec3[]; edges: [number, number][] } {
-	const d = Math.max(0, Math.min(2, depth));
+	const d = Math.max(0, Math.round(depth));
 	const corners = [vec(1, 1, 1), vec(1, -1, -1), vec(-1, 1, -1), vec(-1, -1, 1)];
 	const points: Vec3[] = [];
 	const key = (p: Vec3) => `${p.x.toFixed(5)},${p.y.toFixed(5)},${p.z.toFixed(5)}`;
