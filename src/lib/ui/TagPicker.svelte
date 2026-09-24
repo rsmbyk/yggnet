@@ -137,7 +137,6 @@
 	<div
 		class="tag-field"
 		class:open
-		class:empty={tags.length === 0}
 		bind:this={fieldEl}
 		role="button"
 		tabindex="0"
@@ -247,13 +246,7 @@
 		cursor: pointer;
 		transition:
 			background var(--yg-motion-fast, 120ms) var(--yg-ease, ease),
-			border-color var(--yg-motion-fast, 120ms) var(--yg-ease, ease),
-			border-style var(--yg-motion-fast, 120ms) var(--yg-ease, ease);
-	}
-
-	.tag-field.empty {
-		border-style: dashed;
-		background: color-mix(in srgb, var(--yg-chip) 70%, transparent);
+			border-color var(--yg-motion-fast, 120ms) var(--yg-ease, ease);
 	}
 
 	.tag-field:hover {
@@ -261,13 +254,7 @@
 		border-color: color-mix(in srgb, var(--yg-accent) 35%, var(--yg-border));
 	}
 
-	.tag-field.empty:hover {
-		background: color-mix(in srgb, rgba(255, 255, 255, 0.72) 85%, var(--yg-chip));
-		border-style: dashed;
-	}
-
 	.tag-field.open {
-		border-style: solid;
 		border-color: color-mix(in srgb, var(--yg-accent) 45%, var(--yg-border));
 		background: rgba(255, 255, 255, 0.72);
 	}
