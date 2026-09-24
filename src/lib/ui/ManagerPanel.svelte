@@ -401,7 +401,7 @@
 		const field = listSearchFieldEl;
 		if (!field) return;
 		const rect = field.getBoundingClientRect();
-		listSearchDropdownStyle = `top:${rect.bottom}px;left:${rect.left}px;width:${rect.width}px;`;
+		listSearchDropdownStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px;`;
 	}
 
 	function setListSearchQuery(value: string) {
@@ -647,7 +647,9 @@
 						<div class="list-search-pills">
 							{#each edgeSearchNodeIds as id (id)}
 								<span class="list-search-chip">
-									{app.document.nodes[id]?.label ?? id}
+									<span class="list-search-chip-label"
+										>{app.document.nodes[id]?.label ?? id}</span
+									>
 									<button
 										type="button"
 										class="list-search-chip-remove"
@@ -661,7 +663,7 @@
 							{/each}
 							{#each edgeSearchTags as tag (tag)}
 								<span class="list-search-chip">
-									{tag}
+									<span class="list-search-chip-label">{tag}</span>
 									<button
 										type="button"
 										class="list-search-chip-remove"
@@ -728,7 +730,7 @@
 					<div class="list-search-field" bind:this={listSearchFieldEl}>
 						{#each listSearchTags as tag (tag)}
 							<span class="list-search-chip">
-								{tag}
+								<span class="list-search-chip-label">{tag}</span>
 								<button
 									type="button"
 									class="list-search-chip-remove"
@@ -1679,7 +1681,7 @@
 								{app.document.nodes[edge.to]?.label ?? '?'}
 							</span>
 							{#if edge.weight !== 1}
-								<span class="muted">w={edge.weight}</span>
+								<span class="edge-weight-pill">{edge.weight}</span>
 							{/if}
 						</button>
 						<button
@@ -2344,29 +2346,37 @@
 	.list-search-chip {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.1rem;
+		gap: 0.15rem;
 		max-width: 100%;
-		padding: 0.15rem 0.15rem 0.15rem 0.4rem;
+		padding: 0.12rem 0.2rem 0.12rem 0.45rem;
 		border-radius: var(--yg-radius-pill);
 		border: 1px solid var(--yg-border);
 		background: rgba(255, 255, 255, 0.55);
 		color: var(--yg-fg);
-		font-size: 0.72rem;
+		font-size: 0.75rem;
 		font-weight: 500;
-		line-height: 1;
+		line-height: 1.2;
+	}
+
+	.list-search-chip-label {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		line-height: 1.2;
 	}
 
 	.list-search-chip-remove {
 		display: inline-grid;
 		place-items: center;
-		width: 1rem;
-		height: 1rem;
+		width: 1.1rem;
+		height: 1.1rem;
 		padding: 0;
 		border: none;
 		border-radius: 50%;
 		background: transparent;
 		color: var(--yg-muted);
-		font-size: 0.8rem;
+		font-size: 0.85rem;
 		line-height: 0;
 		cursor: pointer;
 	}

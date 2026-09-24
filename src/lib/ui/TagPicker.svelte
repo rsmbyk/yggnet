@@ -380,6 +380,7 @@
 		text-align: left;
 		font: inherit;
 		font-size: 0.8rem;
+		font-weight: 400;
 		padding: 0.35rem 0.45rem;
 		border: 1px solid transparent;
 		border-radius: var(--yg-radius-control);
@@ -394,7 +395,7 @@
 
 	.tag-option.create {
 		color: var(--yg-accent);
-		font-weight: 600;
+		font-weight: 400;
 	}
 
 	.tag-option.added {
