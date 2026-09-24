@@ -97,6 +97,7 @@ export {
 export { layoutUnpinned, type LayoutOptions } from './layout/layout';
 export { findNodeByQuery, findNodesByQuery } from './search/findNodes';
 export { nodeMatchesListFilter } from './search/nodeListFilter';
+export { edgeMatchesListFilter } from './search/edgeListFilter';
 export {
 	generateGraph,
 	fingerprint,

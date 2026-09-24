@@ -37,7 +37,8 @@
 		RUNGS_FIELD_HELP,
 		SEGMENTS_FIELD_HELP,
 		TURNS_FIELD_HELP,
-		nodeMatchesListFilter
+		nodeMatchesListFilter,
+		edgeMatchesListFilter
 	} from '$lib/graph';
 	import type { GraphAttachment, KindField } from '$lib/graph';
 	import { tick } from 'svelte';
@@ -52,9 +53,11 @@
 	let stepNote = $state('');
 	let nodeSearchQuery = $state('');
 	let nodeSearchTags = $state<string[]>([]);
-	let nodeSearchRootEl = $state<HTMLDivElement | undefined>(undefined);
-	let nodeSearchFieldEl = $state<HTMLDivElement | undefined>(undefined);
-	let nodeSearchDropdownStyle = $state('');
+	let edgeSearchQuery = $state('');
+	let edgeSearchTags = $state<string[]>([]);
+	let listSearchRootEl = $state<HTMLDivElement | undefined>(undefined);
+	let listSearchFieldEl = $state<HTMLDivElement | undefined>(undefined);
+	let listSearchDropdownStyle = $state('');
 	const genFields = $derived(fieldsForKind(app.generateForm.kind));
 
 	function fieldLimit(field: KindField) {
@@ -168,24 +171,34 @@
 	const allTags = $derived(
 		[...new Set(nodes.flatMap((n) => n.tags))].sort((a, b) => a.localeCompare(b))
 	);
-	const nodeSearchQ = $derived(nodeSearchQuery.trim().toLowerCase());
-	const nodeSearchTagSuggestions = $derived(
-		nodeSearchQ
-			? allTags
-					.filter((t) => !nodeSearchTags.includes(t) && t.toLowerCase().includes(nodeSearchQ))
-					.slice(0, 40)
-			: []
-	);
-	const showNodeSearchTagDropdown = $derived(nodeSearchTagSuggestions.length > 0);
-	const filteredNodes = $derived(
-		nodes.filter((n) => nodeMatchesListFilter(n, nodeSearchQuery, nodeSearchTags))
-	);
-	const nodePickerOptions = $derived(nodes.map((n) => ({ id: n.id, label: n.label })));
-	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const edges = $derived(Object.values(app.document.edges));
 	const allEdgeTags = $derived(
 		[...new Set(edges.flatMap((e) => e.tags ?? []))].sort((a, b) => a.localeCompare(b))
 	);
+
+	const listSearchActive = $derived(section === 'nodes' || section === 'edges');
+	const listSearchQuery = $derived(section === 'edges' ? edgeSearchQuery : nodeSearchQuery);
+	const listSearchTags = $derived(section === 'edges' ? edgeSearchTags : nodeSearchTags);
+	const listSearchAllTags = $derived(section === 'edges' ? allEdgeTags : allTags);
+	const listSearchQ = $derived(listSearchQuery.trim().toLowerCase());
+	const listSearchTagSuggestions = $derived(
+		listSearchQ
+			? listSearchAllTags
+					.filter((t) => !listSearchTags.includes(t) && t.toLowerCase().includes(listSearchQ))
+					.slice(0, 40)
+			: []
+	);
+	const showListSearchTagDropdown = $derived(listSearchTagSuggestions.length > 0);
+	const filteredNodes = $derived(
+		nodes.filter((n) => nodeMatchesListFilter(n, nodeSearchQuery, nodeSearchTags))
+	);
+	const filteredEdges = $derived(
+		edges.filter((e) =>
+			edgeMatchesListFilter(e, app.document.nodes, edgeSearchQuery, edgeSearchTags)
+		)
+	);
+	const nodePickerOptions = $derived(nodes.map((n) => ({ id: n.id, label: n.label })));
+	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
 	const selectedCount = $derived(app.selection.nodeIds.length);
@@ -358,55 +371,70 @@
 		app.addNodeNearView();
 	}
 
-	function syncNodeSearchDropdownPosition() {
-		const field = nodeSearchFieldEl;
+	function syncListSearchDropdownPosition() {
+		const field = listSearchFieldEl;
 		if (!field) return;
 		const rect = field.getBoundingClientRect();
-		nodeSearchDropdownStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px;`;
+		listSearchDropdownStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px;`;
 	}
 
-	function addNodeSearchTag(tag: string) {
+	function setListSearchQuery(value: string) {
+		if (section === 'edges') edgeSearchQuery = value;
+		else nodeSearchQuery = value;
+	}
+
+	function addListSearchTag(tag: string) {
+		if (section === 'edges') {
+			if (edgeSearchTags.includes(tag)) return;
+			edgeSearchTags = [...edgeSearchTags, tag];
+			edgeSearchQuery = '';
+			return;
+		}
 		if (nodeSearchTags.includes(tag)) return;
 		nodeSearchTags = [...nodeSearchTags, tag];
 		nodeSearchQuery = '';
 	}
 
-	function removeNodeSearchTag(tag: string) {
+	function removeListSearchTag(tag: string) {
+		if (section === 'edges') {
+			edgeSearchTags = edgeSearchTags.filter((t) => t !== tag);
+			return;
+		}
 		nodeSearchTags = nodeSearchTags.filter((t) => t !== tag);
 	}
 
-	function onNodeSearchKeydown(e: KeyboardEvent) {
+	function onListSearchKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
-			nodeSearchQuery = '';
+			setListSearchQuery('');
 			return;
 		}
-		if (e.key === 'Enter' && nodeSearchTagSuggestions.length > 0) {
+		if (e.key === 'Enter' && listSearchTagSuggestions.length > 0) {
 			e.preventDefault();
-			addNodeSearchTag(nodeSearchTagSuggestions[0]);
+			addListSearchTag(listSearchTagSuggestions[0]);
 		}
-		if (e.key === 'Backspace' && !nodeSearchQuery && nodeSearchTags.length > 0) {
-			removeNodeSearchTag(nodeSearchTags[nodeSearchTags.length - 1]);
+		if (e.key === 'Backspace' && !listSearchQuery && listSearchTags.length > 0) {
+			removeListSearchTag(listSearchTags[listSearchTags.length - 1]);
 		}
 	}
 
 	$effect(() => {
-		if (!showNodeSearchTagDropdown) {
-			nodeSearchDropdownStyle = '';
+		if (!showListSearchTagDropdown) {
+			listSearchDropdownStyle = '';
 			return;
 		}
-		syncNodeSearchDropdownPosition();
+		syncListSearchDropdownPosition();
 		const onDoc = (e: PointerEvent) => {
-			if (!nodeSearchRootEl) return;
-			if (e.target instanceof Node && nodeSearchRootEl.contains(e.target)) return;
-			nodeSearchQuery = '';
+			if (!listSearchRootEl) return;
+			if (e.target instanceof Node && listSearchRootEl.contains(e.target)) return;
+			setListSearchQuery('');
 		};
 		document.addEventListener('pointerdown', onDoc, true);
-		window.addEventListener('resize', syncNodeSearchDropdownPosition);
-		window.addEventListener('scroll', syncNodeSearchDropdownPosition, true);
+		window.addEventListener('resize', syncListSearchDropdownPosition);
+		window.addEventListener('scroll', syncListSearchDropdownPosition, true);
 		return () => {
 			document.removeEventListener('pointerdown', onDoc, true);
-			window.removeEventListener('resize', syncNodeSearchDropdownPosition);
-			window.removeEventListener('scroll', syncNodeSearchDropdownPosition, true);
+			window.removeEventListener('resize', syncListSearchDropdownPosition);
+			window.removeEventListener('scroll', syncListSearchDropdownPosition, true);
 		};
 	});
 
@@ -477,54 +505,6 @@
 		<div class="manager__header-row">
 			<p class="brand">{brandTitle}</p>
 			{#if section === 'nodes'}
-				<div class="nodes-search" bind:this={nodeSearchRootEl}>
-					<div class="nodes-search-field" bind:this={nodeSearchFieldEl}>
-						{#each nodeSearchTags as tag (tag)}
-							<span class="nodes-search-chip">
-								{tag}
-								<button
-									type="button"
-									class="nodes-search-chip-remove"
-									aria-label={`Remove filter tag ${tag}`}
-									data-testid={`nodes-search-tag-remove-${tag}`}
-									onclick={() => removeNodeSearchTag(tag)}>×</button
-								>
-							</span>
-						{/each}
-						<input
-							class="nodes-search-input"
-							type="search"
-							placeholder="Search…"
-							aria-label="Filter nodes"
-							data-testid="nodes-search"
-							bind:value={nodeSearchQuery}
-							onkeydown={onNodeSearchKeydown}
-							oninput={syncNodeSearchDropdownPosition}
-						/>
-					</div>
-					{#if showNodeSearchTagDropdown}
-						<div
-							class="nodes-search-dropdown"
-							role="listbox"
-							aria-label="Matching tags"
-							style={nodeSearchDropdownStyle}
-						>
-							<ul class="nodes-search-results">
-								{#each nodeSearchTagSuggestions as tag (tag)}
-									<li>
-										<button
-											type="button"
-											class="nodes-search-option"
-											role="option"
-											data-testid={`nodes-search-tag-${tag}`}
-											onclick={() => addNodeSearchTag(tag)}>{tag}</button
-										>
-									</li>
-								{/each}
-							</ul>
-						</div>
-					{/if}
-				</div>
 				<button
 					type="button"
 					class="btn-with-icon"
@@ -538,6 +518,59 @@
 				</button>
 			{/if}
 		</div>
+		{#if listSearchActive}
+			<div class="list-search" bind:this={listSearchRootEl}>
+				<div class="list-search-field" bind:this={listSearchFieldEl}>
+					{#each listSearchTags as tag (tag)}
+						<span class="list-search-chip">
+							{tag}
+							<button
+								type="button"
+								class="list-search-chip-remove"
+								aria-label={`Remove filter tag ${tag}`}
+								data-testid={`list-search-tag-remove-${tag}`}
+								onclick={() => removeListSearchTag(tag)}>×</button
+							>
+						</span>
+					{/each}
+					<input
+						class="list-search-input"
+						type="search"
+						placeholder="Search…"
+						aria-label={section === 'edges' ? 'Filter edges' : 'Filter nodes'}
+						data-testid={section === 'edges' ? 'edges-search' : 'nodes-search'}
+						value={listSearchQuery}
+						oninput={(e) => {
+							setListSearchQuery(e.currentTarget.value);
+							syncListSearchDropdownPosition();
+						}}
+						onkeydown={onListSearchKeydown}
+					/>
+				</div>
+				{#if showListSearchTagDropdown}
+					<div
+						class="list-search-dropdown"
+						role="listbox"
+						aria-label="Matching tags"
+						style={listSearchDropdownStyle}
+					>
+						<ul class="list-search-results">
+							{#each listSearchTagSuggestions as tag (tag)}
+								<li>
+									<button
+										type="button"
+										class="list-search-option"
+										role="option"
+										data-testid={`list-search-tag-${tag}`}
+										onclick={() => addListSearchTag(tag)}>{tag}</button
+									>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+			</div>
+		{/if}
 		{#if section === 'file'}
 			<label class="title-field">
 				Name
@@ -1425,7 +1458,7 @@
 	{#if section === 'edges'}
 		<section class="block edge-panel" data-testid="edges-section">
 			<ul class="list edge-list" data-testid="edge-list">
-				{#each edges as edge (edge.id)}
+				{#each filteredEdges as edge (edge.id)}
 					<li class="node-row">
 						<button
 							type="button"
@@ -2019,13 +2052,13 @@
 		gap: 0.5rem;
 	}
 
-	.nodes-search {
+	.list-search {
 		position: relative;
-		flex: 1 1 auto;
-		min-width: 0;
+		width: 100%;
+		margin-top: 0.4rem;
 	}
 
-	.nodes-search-field {
+	.list-search-field {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
@@ -2037,13 +2070,13 @@
 		background: var(--yg-chip);
 	}
 
-	.nodes-search-field:focus-within {
+	.list-search-field:focus-within {
 		border-color: color-mix(in srgb, var(--yg-accent) 45%, var(--yg-border));
 		outline: 2px solid color-mix(in srgb, var(--yg-accent) 35%, transparent);
 		outline-offset: 0;
 	}
 
-	.nodes-search-input {
+	.list-search-input {
 		flex: 1 1 4rem;
 		min-width: 3rem;
 		border: none;
@@ -2051,18 +2084,19 @@
 		color: var(--yg-fg);
 		font: inherit;
 		font-size: 0.8rem;
+		font-weight: 400;
 		padding: 0.15rem 0.1rem;
 	}
 
-	.nodes-search-input:focus {
+	.list-search-input:focus {
 		outline: none;
 	}
 
-	.nodes-search-input::-webkit-search-cancel-button {
+	.list-search-input::-webkit-search-cancel-button {
 		appearance: none;
 	}
 
-	.nodes-search-chip {
+	.list-search-chip {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.1rem;
@@ -2077,7 +2111,7 @@
 		line-height: 1.2;
 	}
 
-	.nodes-search-chip-remove {
+	.list-search-chip-remove {
 		display: inline-grid;
 		place-items: center;
 		width: 1rem;
@@ -2092,12 +2126,12 @@
 		cursor: pointer;
 	}
 
-	.nodes-search-chip-remove:hover {
+	.list-search-chip-remove:hover {
 		color: #8b3a3a;
 		background: color-mix(in srgb, #8b3a3a 12%, transparent);
 	}
 
-	.nodes-search-dropdown {
+	.list-search-dropdown {
 		position: fixed;
 		z-index: 80;
 		max-height: min(12rem, 40vh);
@@ -2110,13 +2144,13 @@
 		box-sizing: border-box;
 	}
 
-	.nodes-search-results {
+	.list-search-results {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
 
-	.nodes-search-option {
+	.list-search-option {
 		display: block;
 		width: 100%;
 		padding: 0.35rem 0.5rem;
@@ -2126,11 +2160,12 @@
 		color: var(--yg-fg);
 		font: inherit;
 		font-size: 0.8rem;
+		font-weight: 400;
 		text-align: left;
 		cursor: pointer;
 	}
 
-	.nodes-search-option:hover {
+	.list-search-option:hover {
 		background: color-mix(in srgb, var(--yg-accent) 14%, transparent);
 	}
 

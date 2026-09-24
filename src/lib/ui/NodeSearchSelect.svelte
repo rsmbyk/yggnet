@@ -166,6 +166,7 @@
 		color: var(--yg-fg);
 		font: inherit;
 		font-size: 0.85rem;
+		font-weight: 400;
 		text-align: left;
 		cursor: pointer;
 		box-sizing: border-box;

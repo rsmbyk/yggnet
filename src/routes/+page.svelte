@@ -211,7 +211,7 @@
 			class:companion={showNodesCompanion || showEdgesCompanion}
 		>
 			{#if app.ui.openTool}
-				<div class="tool-panel-slot" transition:fly={slide}>
+				<div class="tool-panel-slot" in:fly={slide} out:fade={{ duration: 180 }}>
 					<ManagerPanel section={app.ui.openTool} />
 				</div>
 			{/if}
