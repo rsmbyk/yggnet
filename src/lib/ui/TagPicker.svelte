@@ -128,12 +128,14 @@
 	<div
 		class="tag-field"
 		class:open
+		class:empty={tags.length === 0}
 		bind:this={fieldEl}
 		role="button"
 		tabindex="0"
 		data-testid="node-tags-open"
-		aria-label="Add tag"
+		aria-label="Add tags"
 		aria-expanded={open}
+		aria-haspopup="listbox"
 		onclick={onFieldClick}
 		onkeydown={onFieldKeydown}
 	>
@@ -153,9 +155,12 @@
 				</span>
 			{/each}
 			{#if tags.length === 0}
-				<span class="tag-empty">No tags</span>
+				<span class="tag-empty">Add tags…</span>
 			{/if}
 		</div>
+		<svg class="tag-chevron" viewBox="0 0 12 8" aria-hidden="true">
+			<path fill="currentColor" d="M1.2 1.4 6 6.2 10.8 1.4" />
+		</svg>
 	</div>
 
 	{#if open}
@@ -214,15 +219,36 @@
 		align-items: center;
 		gap: 0.35rem;
 		min-height: 2rem;
-		padding: 0.3rem 0.4rem;
+		padding: 0.3rem 0.45rem 0.3rem 0.4rem;
 		border: 1px solid var(--yg-border);
 		border-radius: var(--yg-radius-control);
 		background: var(--yg-chip);
 		cursor: pointer;
+		transition:
+			background var(--yg-motion-fast, 120ms) var(--yg-ease, ease),
+			border-color var(--yg-motion-fast, 120ms) var(--yg-ease, ease),
+			border-style var(--yg-motion-fast, 120ms) var(--yg-ease, ease);
+	}
+
+	.tag-field.empty {
+		border-style: dashed;
+		background: color-mix(in srgb, var(--yg-chip) 70%, transparent);
+	}
+
+	.tag-field:hover {
+		background: rgba(255, 255, 255, 0.72);
+		border-color: color-mix(in srgb, var(--yg-accent) 35%, var(--yg-border));
+	}
+
+	.tag-field.empty:hover {
+		background: color-mix(in srgb, rgba(255, 255, 255, 0.72) 85%, var(--yg-chip));
+		border-style: dashed;
 	}
 
 	.tag-field.open {
+		border-style: solid;
 		border-color: color-mix(in srgb, var(--yg-accent) 45%, var(--yg-border));
+		background: rgba(255, 255, 255, 0.72);
 	}
 
 	.tag-field:focus-visible {
@@ -237,6 +263,23 @@
 		gap: 0.3rem;
 		min-width: 0;
 		align-items: center;
+	}
+
+	.tag-chevron {
+		flex: 0 0 auto;
+		width: 0.7rem;
+		height: 0.45rem;
+		color: var(--yg-muted);
+		transition: transform var(--yg-motion-fast, 120ms) var(--yg-ease, ease);
+	}
+
+	.tag-field.open .tag-chevron {
+		transform: rotate(180deg);
+		color: var(--yg-accent);
+	}
+
+	.tag-field:hover .tag-chevron {
+		color: var(--yg-fg);
 	}
 
 	.tag-pill {
