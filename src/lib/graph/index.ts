@@ -96,6 +96,7 @@ export {
 } from './release/semver';
 export { layoutUnpinned, type LayoutOptions } from './layout/layout';
 export { findNodeByQuery, findNodesByQuery } from './search/findNodes';
+export { nodeMatchesListFilter } from './search/nodeListFilter';
 export {
 	generateGraph,
 	fingerprint,

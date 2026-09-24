@@ -1053,6 +1053,7 @@ class AppStore {
 			toolsPanelExpanded: false,
 			selectionPanelExpanded: false
 		};
+		if (id === null) this.clearAllSelection();
 	}
 
 	setToolsPanelExpanded(expanded: boolean): void {

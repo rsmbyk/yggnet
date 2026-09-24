@@ -17,11 +17,13 @@ test('toggle directed on edge keeps world visible', async ({ page }) => {
 	const source = page.getByTestId('edge-source');
 	const destination = page.getByTestId('edge-destination');
 	await direction.selectOption('forward');
-	const fromId = await source.inputValue();
-	const toId = await destination.inputValue();
+	const fromId = await source.getAttribute('data-value');
+	const toId = await destination.getAttribute('data-value');
+	expect(fromId).toBeTruthy();
+	expect(toId).toBeTruthy();
 	await direction.selectOption('reverse');
-	await expect(source).toHaveValue(toId);
-	await expect(destination).toHaveValue(fromId);
+	await expect(source).toHaveAttribute('data-value', toId!);
+	await expect(destination).toHaveAttribute('data-value', fromId!);
 	await expect(direction).toHaveValue('forward');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible();
 	await expect(page.getByTestId('yggnet-world').locator('canvas')).toBeVisible();

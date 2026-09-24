@@ -36,18 +36,25 @@
 		RINGS_FIELD_HELP,
 		RUNGS_FIELD_HELP,
 		SEGMENTS_FIELD_HELP,
-		TURNS_FIELD_HELP
+		TURNS_FIELD_HELP,
+		nodeMatchesListFilter
 	} from '$lib/graph';
 	import type { GraphAttachment, KindField } from '$lib/graph';
 	import { tick } from 'svelte';
 	import { toolLabel, type PanelSection } from './tool-ids';
 	import { cssLengthToPx, toolsPanelMaxHeight, toolsPanelOverflows } from './tools-panel-limit';
 	import TagPicker from './TagPicker.svelte';
+	import NodeSearchSelect from './NodeSearchSelect.svelte';
 
 	let { section }: { section: PanelSection } = $props();
 
 	let filterInput = $state('');
 	let stepNote = $state('');
+	let nodeSearchQuery = $state('');
+	let nodeSearchTags = $state<string[]>([]);
+	let nodeSearchRootEl = $state<HTMLDivElement | undefined>(undefined);
+	let nodeSearchFieldEl = $state<HTMLDivElement | undefined>(undefined);
+	let nodeSearchDropdownStyle = $state('');
 	const genFields = $derived(fieldsForKind(app.generateForm.kind));
 
 	function fieldLimit(field: KindField) {
@@ -161,6 +168,19 @@
 	const allTags = $derived(
 		[...new Set(nodes.flatMap((n) => n.tags))].sort((a, b) => a.localeCompare(b))
 	);
+	const nodeSearchQ = $derived(nodeSearchQuery.trim().toLowerCase());
+	const nodeSearchTagSuggestions = $derived(
+		nodeSearchQ
+			? allTags
+					.filter((t) => !nodeSearchTags.includes(t) && t.toLowerCase().includes(nodeSearchQ))
+					.slice(0, 40)
+			: []
+	);
+	const showNodeSearchTagDropdown = $derived(nodeSearchTagSuggestions.length > 0);
+	const filteredNodes = $derived(
+		nodes.filter((n) => nodeMatchesListFilter(n, nodeSearchQuery, nodeSearchTags))
+	);
+	const nodePickerOptions = $derived(nodes.map((n) => ({ id: n.id, label: n.label })));
 	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const edges = $derived(Object.values(app.document.edges));
 	const allEdgeTags = $derived(
@@ -338,6 +358,58 @@
 		app.addNodeNearView();
 	}
 
+	function syncNodeSearchDropdownPosition() {
+		const field = nodeSearchFieldEl;
+		if (!field) return;
+		const rect = field.getBoundingClientRect();
+		nodeSearchDropdownStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px;`;
+	}
+
+	function addNodeSearchTag(tag: string) {
+		if (nodeSearchTags.includes(tag)) return;
+		nodeSearchTags = [...nodeSearchTags, tag];
+		nodeSearchQuery = '';
+	}
+
+	function removeNodeSearchTag(tag: string) {
+		nodeSearchTags = nodeSearchTags.filter((t) => t !== tag);
+	}
+
+	function onNodeSearchKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			nodeSearchQuery = '';
+			return;
+		}
+		if (e.key === 'Enter' && nodeSearchTagSuggestions.length > 0) {
+			e.preventDefault();
+			addNodeSearchTag(nodeSearchTagSuggestions[0]);
+		}
+		if (e.key === 'Backspace' && !nodeSearchQuery && nodeSearchTags.length > 0) {
+			removeNodeSearchTag(nodeSearchTags[nodeSearchTags.length - 1]);
+		}
+	}
+
+	$effect(() => {
+		if (!showNodeSearchTagDropdown) {
+			nodeSearchDropdownStyle = '';
+			return;
+		}
+		syncNodeSearchDropdownPosition();
+		const onDoc = (e: PointerEvent) => {
+			if (!nodeSearchRootEl) return;
+			if (e.target instanceof Node && nodeSearchRootEl.contains(e.target)) return;
+			nodeSearchQuery = '';
+		};
+		document.addEventListener('pointerdown', onDoc, true);
+		window.addEventListener('resize', syncNodeSearchDropdownPosition);
+		window.addEventListener('scroll', syncNodeSearchDropdownPosition, true);
+		return () => {
+			document.removeEventListener('pointerdown', onDoc, true);
+			window.removeEventListener('resize', syncNodeSearchDropdownPosition);
+			window.removeEventListener('scroll', syncNodeSearchDropdownPosition, true);
+		};
+	});
+
 	/** Ego-centric incident edge: current node left; direction relative to it. */
 	function incidentEdgeParts(edge: (typeof edges)[number], egoId: string) {
 		const fromLabel = app.document.nodes[edge.from]?.label ?? '?';
@@ -405,6 +477,54 @@
 		<div class="manager__header-row">
 			<p class="brand">{brandTitle}</p>
 			{#if section === 'nodes'}
+				<div class="nodes-search" bind:this={nodeSearchRootEl}>
+					<div class="nodes-search-field" bind:this={nodeSearchFieldEl}>
+						{#each nodeSearchTags as tag (tag)}
+							<span class="nodes-search-chip">
+								{tag}
+								<button
+									type="button"
+									class="nodes-search-chip-remove"
+									aria-label={`Remove filter tag ${tag}`}
+									data-testid={`nodes-search-tag-remove-${tag}`}
+									onclick={() => removeNodeSearchTag(tag)}>×</button
+								>
+							</span>
+						{/each}
+						<input
+							class="nodes-search-input"
+							type="search"
+							placeholder="Search…"
+							aria-label="Filter nodes"
+							data-testid="nodes-search"
+							bind:value={nodeSearchQuery}
+							onkeydown={onNodeSearchKeydown}
+							oninput={syncNodeSearchDropdownPosition}
+						/>
+					</div>
+					{#if showNodeSearchTagDropdown}
+						<div
+							class="nodes-search-dropdown"
+							role="listbox"
+							aria-label="Matching tags"
+							style={nodeSearchDropdownStyle}
+						>
+							<ul class="nodes-search-results">
+								{#each nodeSearchTagSuggestions as tag (tag)}
+									<li>
+										<button
+											type="button"
+											class="nodes-search-option"
+											role="option"
+											data-testid={`nodes-search-tag-${tag}`}
+											onclick={() => addNodeSearchTag(tag)}>{tag}</button
+										>
+									</li>
+								{/each}
+							</ul>
+						</div>
+					{/if}
+				</div>
 				<button
 					type="button"
 					class="btn-with-icon"
@@ -562,37 +682,24 @@
 			{:else if selectedEdge && selectedEdgeCount === 1}
 				<div class="selection-sheet-body" data-testid="edge-editor">
 					<label>
-						Label
-						<input
-							data-testid="edge-label"
-							value={selectedEdge.label ?? ''}
-							oninput={(e) => app.updateEdge(selectedEdge.id, { label: e.currentTarget.value })}
+						Source
+						<NodeSearchSelect
+							nodes={nodePickerOptions}
+							value={selectedEdge.from}
+							testid="edge-source"
+							ariaLabel="Source"
+							onChange={(id) => app.updateEdge(selectedEdge.id, { from: id })}
 						/>
 					</label>
 					<label>
-						Source
-						<select
-							data-testid="edge-source"
-							value={selectedEdge.from}
-							onchange={(e) =>
-								app.updateEdge(selectedEdge.id, { from: e.currentTarget.value })}
-						>
-							{#each nodes as n (n.id)}
-								<option value={n.id}>{n.label}</option>
-							{/each}
-						</select>
-					</label>
-					<label>
 						Destination
-						<select
-							data-testid="edge-destination"
+						<NodeSearchSelect
+							nodes={nodePickerOptions}
 							value={selectedEdge.to}
-							onchange={(e) => app.updateEdge(selectedEdge.id, { to: e.currentTarget.value })}
-						>
-							{#each nodes as n (n.id)}
-								<option value={n.id}>{n.label}</option>
-							{/each}
-						</select>
+							testid="edge-destination"
+							ariaLabel="Destination"
+							onChange={(id) => app.updateEdge(selectedEdge.id, { to: id })}
+						/>
 					</label>
 					<label>
 						Direction
@@ -1281,7 +1388,7 @@
 	{#if section === 'nodes'}
 		<section class="block node-panel" data-testid="nodes-section">
 			<ul class="list node-list" data-testid="node-list">
-				{#each nodes as node (node.id)}
+				{#each filteredNodes as node (node.id)}
 					<li class="node-row">
 						<button
 							type="button"
@@ -1319,7 +1426,7 @@
 		<section class="block edge-panel" data-testid="edges-section">
 			<ul class="list edge-list" data-testid="edge-list">
 				{#each edges as edge (edge.id)}
-					<li class="edge-row node-row">
+					<li class="node-row">
 						<button
 							type="button"
 							class="list-item edge-select"
@@ -1912,6 +2019,121 @@
 		gap: 0.5rem;
 	}
 
+	.nodes-search {
+		position: relative;
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.nodes-search-field {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.3rem;
+		min-height: 2rem;
+		padding: 0.2rem 0.4rem;
+		border: 1px solid var(--yg-border);
+		border-radius: var(--yg-radius-control);
+		background: var(--yg-chip);
+	}
+
+	.nodes-search-field:focus-within {
+		border-color: color-mix(in srgb, var(--yg-accent) 45%, var(--yg-border));
+		outline: 2px solid color-mix(in srgb, var(--yg-accent) 35%, transparent);
+		outline-offset: 0;
+	}
+
+	.nodes-search-input {
+		flex: 1 1 4rem;
+		min-width: 3rem;
+		border: none;
+		background: transparent;
+		color: var(--yg-fg);
+		font: inherit;
+		font-size: 0.8rem;
+		padding: 0.15rem 0.1rem;
+	}
+
+	.nodes-search-input:focus {
+		outline: none;
+	}
+
+	.nodes-search-input::-webkit-search-cancel-button {
+		appearance: none;
+	}
+
+	.nodes-search-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.1rem;
+		max-width: 100%;
+		padding: 0.1rem 0.15rem 0.1rem 0.4rem;
+		border-radius: var(--yg-radius-pill);
+		border: 1px solid var(--yg-border);
+		background: rgba(255, 255, 255, 0.55);
+		color: var(--yg-fg);
+		font-size: 0.72rem;
+		font-weight: 500;
+		line-height: 1.2;
+	}
+
+	.nodes-search-chip-remove {
+		display: inline-grid;
+		place-items: center;
+		width: 1rem;
+		height: 1rem;
+		padding: 0;
+		border: none;
+		border-radius: 50%;
+		background: transparent;
+		color: var(--yg-muted);
+		font-size: 0.8rem;
+		line-height: 0;
+		cursor: pointer;
+	}
+
+	.nodes-search-chip-remove:hover {
+		color: #8b3a3a;
+		background: color-mix(in srgb, #8b3a3a 12%, transparent);
+	}
+
+	.nodes-search-dropdown {
+		position: fixed;
+		z-index: 80;
+		max-height: min(12rem, 40vh);
+		overflow-y: auto;
+		padding: 0.35rem;
+		border: 1px solid var(--yg-border);
+		border-radius: var(--yg-radius-panel);
+		background: var(--yg-panel, #eef1f5);
+		box-shadow: 0 8px 24px rgba(15, 22, 32, 0.18);
+		box-sizing: border-box;
+	}
+
+	.nodes-search-results {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.nodes-search-option {
+		display: block;
+		width: 100%;
+		padding: 0.35rem 0.5rem;
+		border: none;
+		border-radius: var(--yg-radius-control);
+		background: transparent;
+		color: var(--yg-fg);
+		font: inherit;
+		font-size: 0.8rem;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.nodes-search-option:hover {
+		background: color-mix(in srgb, var(--yg-accent) 14%, transparent);
+	}
+
 	.manager__body {
 		flex: 1 1 auto;
 		min-height: 0;
@@ -2105,6 +2327,11 @@
 		font-weight: 600;
 		letter-spacing: 0.02em;
 		color: var(--yg-fg);
+		flex: 0 0 auto;
+	}
+
+	.manager__header-row .btn-with-icon {
+		flex: 0 0 auto;
 	}
 
 	.title-field {
@@ -2379,19 +2606,6 @@
 		background-position: right 0.55rem center;
 		background-size: 0.7rem 0.45rem;
 		padding-right: 1.65rem;
-	}
-
-	.edge-row {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem;
-		align-items: center;
-		font-size: 0.8rem;
-	}
-
-	.edge-label {
-		flex: 1;
-		min-width: 6rem;
 	}
 
 	.tag {
