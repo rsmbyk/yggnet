@@ -82,6 +82,10 @@
 		void genFields;
 		void app.generateForm.kind;
 		void app.generateForm.binary;
+		void selectedId;
+		void selectedNode?.tags.length;
+		void incidentEdges.length;
+		void selectedNode?.notes;
 		const update = () => {
 			const rootSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 			const edge =
@@ -106,7 +110,9 @@
 				expanded
 			});
 			el.style.maxHeight = `${limit}px`;
-			const nested = [...el.querySelectorAll<HTMLElement>('.list, .generate-fields')];
+			const nested = [
+				...el.querySelectorAll<HTMLElement>('.list, .generate-fields, .selection-sheet-body')
+			];
 			const nestedExtra = nested.reduce(
 				(sum, node) => sum + Math.max(0, node.scrollHeight - node.clientHeight),
 				0
@@ -120,6 +126,8 @@
 		ro.observe(el);
 		const map = document.querySelector('[data-testid="camera-panel"]');
 		if (map) ro.observe(map);
+		const sheetBody = el.querySelector<HTMLElement>('.selection-sheet-body');
+		if (sheetBody) ro.observe(sheetBody);
 		window.addEventListener('resize', update);
 		return () => {
 			ro.disconnect();
@@ -258,6 +266,17 @@
 		app.addEdge(edgeFrom, edgeTo);
 		edgeFrom = '';
 		edgeTo = '';
+	}
+
+	/** Ego-centric incident edge: current node left; direction relative to it. */
+	function incidentEdgeParts(edge: (typeof edges)[number], egoId: string) {
+		const fromLabel = app.document.nodes[edge.from]?.label ?? '?';
+		const toLabel = app.document.nodes[edge.to]?.label ?? '?';
+		const outgoing = edge.from === egoId;
+		const otherLabel = outgoing ? toLabel : fromLabel;
+		const egoLabel = app.document.nodes[egoId]?.label ?? '?';
+		const connector = !edge.directed ? '—' : outgoing ? '→' : '←';
+		return { egoLabel, connector, otherLabel };
 	}
 
 	function applyFilter() {
@@ -429,11 +448,16 @@
 						{:else}
 							<ul class="list incident-edge-list">
 								{#each incidentEdges as edge (edge.id)}
+									{@const parts = incidentEdgeParts(edge, selectedNode.id)}
 									<li class="incident-edge-row">
-										{app.document.nodes[edge.from]?.label ?? '?'}
-										{edge.directed ? '→' : '—'}
-										{app.document.nodes[edge.to]?.label ?? '?'}
-										<span class="muted">w={edge.weight}</span>
+										<span class="incident-edge-text"
+											>{parts.egoLabel} {parts.connector} {parts.otherLabel}</span
+										>
+										{#if edge.weight !== 1}
+											<span class="muted" aria-label={`weight ${edge.weight}`}
+												>{edge.weight}</span
+											>
+										{/if}
 									</li>
 								{/each}
 							</ul>
@@ -2353,6 +2377,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.85rem;
+		margin-inline: calc(-1 * var(--yg-hud-panel-inset));
+		padding-inline: var(--yg-hud-panel-inset);
 	}
 
 	.selection-sheet-body > label,
@@ -2405,13 +2431,22 @@
 	}
 
 	.incident-edge-list {
-		max-height: 8rem;
 		margin: 0;
 	}
 
 	.incident-edge-row {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
 		font-size: 0.8rem;
-		padding: 0.2rem 0.15rem;
+		line-height: 1.2;
+		padding: 0.25rem 0.15rem;
+		min-height: 1.4rem;
+		box-sizing: border-box;
+	}
+
+	.incident-edge-text {
+		min-width: 0;
 	}
 
 	.compare-panel h3 {

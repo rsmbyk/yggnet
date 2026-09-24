@@ -52,6 +52,7 @@
 		open = false;
 		query = '';
 		dropdownStyle = '';
+		queueMicrotask(() => fieldEl?.focus());
 	}
 
 	function toggleDropdown() {
@@ -80,8 +81,13 @@
 		queueMicrotask(() => searchEl?.focus());
 	}
 
-	function removeTag(tag: string) {
+	function removeTag(tag: string, e?: MouseEvent) {
+		e?.stopPropagation();
 		onChange(tags.filter((t) => t !== tag));
+	}
+
+	function onRemovePointerDown(e: PointerEvent) {
+		e.stopPropagation();
 	}
 
 	function onSearchKeydown(e: KeyboardEvent) {
@@ -138,9 +144,11 @@
 					<button
 						type="button"
 						class="tag-remove"
+						tabindex="-1"
 						aria-label={`Remove tag ${tag}`}
 						data-testid={`node-tag-remove-${tag}`}
-						onclick={() => removeTag(tag)}>×</button
+						onpointerdown={onRemovePointerDown}
+						onclick={(e) => removeTag(tag, e)}>×</button
 					>
 				</span>
 			{/each}
@@ -257,13 +265,18 @@
 		background: transparent;
 		color: var(--yg-muted);
 		font-size: 0.85rem;
-		line-height: 1;
+		line-height: 0;
 		cursor: pointer;
 	}
 
 	.tag-remove:hover {
 		color: #8b3a3a;
 		background: color-mix(in srgb, #8b3a3a 12%, transparent);
+	}
+
+	.tag-remove:focus-visible {
+		outline: 2px solid color-mix(in srgb, var(--yg-accent) 55%, transparent);
+		outline-offset: 1px;
 	}
 
 	.tag-empty {
