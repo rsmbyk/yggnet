@@ -27,11 +27,20 @@
 			.slice(0, 40)
 	);
 
+	/** Selected tags that match the query — shown muted at the bottom while searching. */
+	const alreadyAdded = $derived(
+		qLower
+			? tags.filter((t) => t.toLowerCase().includes(qLower)).slice(0, 20)
+			: []
+	);
+
 	const canCreate = $derived(
 		q.length > 0 &&
 			!selected.has(q) &&
 			!suggestions.some((t) => t.toLowerCase() === qLower)
 	);
+
+	const showEmpty = $derived(filtered.length === 0 && !canCreate && alreadyAdded.length === 0);
 
 	function syncDropdownPosition() {
 		const field = fieldEl;
@@ -200,7 +209,19 @@
 						>
 					</li>
 				{/if}
-				{#if filtered.length === 0 && !canCreate}
+				{#each alreadyAdded as tag (tag)}
+					<li>
+						<span
+							class="tag-option added"
+							aria-disabled="true"
+							data-testid={`node-tag-added-${tag}`}
+						>
+							<span class="tag-option-label">{tag}</span>
+							<span class="tag-added-badge">Added</span>
+						</span>
+					</li>
+				{/each}
+				{#if showEmpty}
 					<li class="tag-none muted">No matching tags</li>
 				{/if}
 			</ul>
@@ -379,13 +400,45 @@
 		cursor: pointer;
 	}
 
-	.tag-option:hover {
+	.tag-option:hover:not(.added) {
 		background: rgba(255, 255, 255, 0.55);
 	}
 
 	.tag-option.create {
 		color: var(--yg-accent);
 		font-weight: 600;
+	}
+
+	.tag-option.added {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		box-sizing: border-box;
+		color: var(--yg-muted);
+		cursor: default;
+		pointer-events: none;
+		opacity: 0.72;
+	}
+
+	.tag-option-label {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.tag-added-badge {
+		flex: 0 0 auto;
+		font-size: 0.65rem;
+		font-weight: 600;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+		color: var(--yg-muted);
+		padding: 0.1rem 0.35rem;
+		border-radius: var(--yg-radius-pill);
+		border: 1px solid var(--yg-border);
+		background: color-mix(in srgb, var(--yg-chip) 80%, transparent);
 	}
 
 	.tag-none {
