@@ -23,10 +23,7 @@
 	});
 
 	function addNearView() {
-		const t = app.camera.target;
-		const n = Object.keys(app.document.nodes).length;
-		const jitter = (n % 5) * 0.4;
-		app.addNodeAt({ x: t.x + jitter, y: worldTune.values.defaultNodeY, z: t.z + jitter });
+		app.addNodeNearView();
 	}
 
 	function cancelConnect() {

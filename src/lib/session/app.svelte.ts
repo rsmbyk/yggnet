@@ -1097,6 +1097,17 @@ class AppStore {
 		});
 	}
 
+	/** Place a node near the current camera look-target (HUD / Nodes panel create). */
+	addNodeNearView(label?: string): string {
+		const t = this.camera.target;
+		const n = Object.keys(this.document.nodes).length;
+		const jitter = (n % 5) * 0.4;
+		return this.addNodeAt(
+			{ x: t.x + jitter, y: worldTune.values.defaultNodeY, z: t.z + jitter },
+			label
+		);
+	}
+
 	/** Remove current selection (nodes and/or edges). */
 	deleteSelection(): void {
 		const nodeIds = [...this.selection.nodeIds];

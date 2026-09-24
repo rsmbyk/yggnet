@@ -268,7 +268,7 @@
 	}
 
 	function onAddNode() {
-		app.addNode({ label: `Node ${nodes.length + 1}` });
+		app.addNodeNearView();
 	}
 
 	function onAddEdge() {
