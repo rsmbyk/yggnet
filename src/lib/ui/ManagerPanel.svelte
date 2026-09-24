@@ -2427,41 +2427,46 @@
 		flex: 0 0 auto;
 		display: flex;
 		flex-direction: column;
-		gap: 0.2rem;
+		gap: 0.3rem;
 	}
 
 	.node-selection-controls > .hint {
 		margin: 0;
+		/* Match button content inset (padding + 1px border). */
+		padding-inline: calc(0.5rem + 1px);
+		font-size: 0.72rem;
+		line-height: 1.2;
 	}
 
 	.node-selection-controls .row {
-		gap: 0.2rem;
+		gap: 0.3rem;
 	}
 
 	.node-selection-controls button {
-		padding: 0.15rem 0.4rem;
-		font-size: 0.72rem;
+		padding: 0.22rem 0.5rem;
+		font-size: 0.75rem;
 		font-weight: 500;
-		color: var(--yg-muted);
-		background: transparent;
-		border-color: transparent;
+		color: var(--yg-fg);
+		background: color-mix(in srgb, var(--yg-chip) 70%, transparent);
+		border-color: color-mix(in srgb, var(--yg-border) 70%, transparent);
 	}
 
 	.node-selection-controls button:hover:not(:disabled):not(.active):not(.selected) {
 		color: var(--yg-fg);
-		background: rgba(255, 255, 255, 0.35);
-		border-color: transparent;
+		background: rgba(255, 255, 255, 0.72);
+		border-color: var(--yg-border);
 	}
 
 	.node-selection-controls button.danger {
-		color: color-mix(in srgb, #8b3a3a 75%, var(--yg-muted));
-		border-color: transparent;
+		color: #8b3a3a;
+		border-color: color-mix(in srgb, #8b3a3a 28%, var(--yg-border));
+		background: color-mix(in srgb, #8b3a3a 6%, var(--yg-chip));
 	}
 
 	.node-selection-controls button.danger:hover:not(:disabled) {
 		color: #8b3a3a;
-		background: color-mix(in srgb, #8b3a3a 10%, transparent);
-		border-color: transparent;
+		background: color-mix(in srgb, #8b3a3a 14%, rgba(255, 255, 255, 0.72));
+		border-color: color-mix(in srgb, #8b3a3a 40%, var(--yg-border));
 	}
 
 	.incident-edges .subhead {
