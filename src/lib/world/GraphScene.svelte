@@ -15,7 +15,7 @@
 		orbitDistanceToFitPointsOutOnly
 	} from './camera-fit';
 	import { interactionModeFromState, resolveNodeClick, type NodeClickAction } from './node-click';
-	import { sceneRevealComplete, stepSceneReveal } from './scene-reveal';
+	import { sceneRevealComplete, sceneRevealShouldReset, stepSceneReveal } from './scene-reveal';
 	import {
 		composeEdgeArrowMatrix,
 		composeEdgeShaftMatrix,
@@ -317,10 +317,13 @@
 
 	let shownNodes = $state(0);
 	let shownEdges = $state(0);
+	let revealDocId: string | null = null;
 	const revealedNodes = $derived(visibleNodes.slice(0, shownNodes));
 
 	$effect.pre(() => {
-		void app.document.id;
+		const id = app.document.id;
+		if (!sceneRevealShouldReset(revealDocId, id)) return;
+		revealDocId = id;
 		shownNodes = 0;
 		shownEdges = 0;
 	});

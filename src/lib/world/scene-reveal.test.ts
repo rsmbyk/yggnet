@@ -3,6 +3,7 @@ import {
 	SCENE_REVEAL_EDGE_CHUNK,
 	SCENE_REVEAL_NODE_CHUNK,
 	sceneRevealComplete,
+	sceneRevealShouldReset,
 	stepSceneReveal
 } from './scene-reveal';
 
@@ -28,5 +29,16 @@ describe('sceneRevealComplete', () => {
 	it('is true only when both counts have caught up', () => {
 		expect(sceneRevealComplete({ nodes: 10, edges: 10 }, { nodes: 10, edges: 10 })).toBe(true);
 		expect(sceneRevealComplete({ nodes: 9, edges: 10 }, { nodes: 10, edges: 10 })).toBe(false);
+	});
+});
+
+describe('sceneRevealShouldReset', () => {
+	it('resets on first document and when the identity changes', () => {
+		expect(sceneRevealShouldReset(null, 'doc-a')).toBe(true);
+		expect(sceneRevealShouldReset('doc-a', 'doc-b')).toBe(true);
+	});
+
+	it('does not reset when the same document is replaced in place', () => {
+		expect(sceneRevealShouldReset('doc-a', 'doc-a')).toBe(false);
 	});
 });

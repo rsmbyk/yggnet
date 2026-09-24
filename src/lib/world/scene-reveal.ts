@@ -15,6 +15,14 @@ export function sceneRevealComplete(shown: SceneReveal, totals: SceneReveal): bo
 }
 
 /**
+ * Progressive reveal restarts only when the loaded document identity changes —
+ * not when the same document is replaced by an immutable mutate (add/edit/delete).
+ */
+export function sceneRevealShouldReset(previousDocId: string | null, nextDocId: string): boolean {
+	return previousDocId !== nextDocId;
+}
+
+/**
  * Advance one frame of streamed scene construction so the canvas can paint
  * before every node and edge mesh exists.
  */
