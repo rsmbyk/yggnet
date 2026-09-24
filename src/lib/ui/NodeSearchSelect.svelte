@@ -67,6 +67,7 @@
 	function onSearchKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			e.preventDefault();
+			e.stopPropagation();
 			closeDropdown();
 			return;
 		}
@@ -259,6 +260,7 @@
 		color: var(--yg-fg);
 		font: inherit;
 		font-size: 0.8rem;
+		font-weight: 400;
 		text-align: left;
 		cursor: pointer;
 	}
@@ -269,7 +271,7 @@
 
 	.nss-option.selected {
 		background: color-mix(in srgb, var(--yg-accent) 22%, transparent);
-		font-weight: 600;
+		font-weight: 400;
 	}
 
 	.nss-none {

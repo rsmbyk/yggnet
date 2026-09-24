@@ -102,6 +102,7 @@
 	function onSearchKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			e.preventDefault();
+			e.stopPropagation();
 			closeDropdown();
 			return;
 		}

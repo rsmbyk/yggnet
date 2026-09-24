@@ -55,6 +55,7 @@
 	let nodeSearchTags = $state<string[]>([]);
 	let edgeSearchQuery = $state('');
 	let edgeSearchTags = $state<string[]>([]);
+	let edgeSearchNodeIds = $state<string[]>([]);
 	let listSearchRootEl = $state<HTMLDivElement | undefined>(undefined);
 	let listSearchFieldEl = $state<HTMLDivElement | undefined>(undefined);
 	let listSearchDropdownStyle = $state('');
@@ -188,14 +189,28 @@
 					.slice(0, 40)
 			: []
 	);
-	const showListSearchTagDropdown = $derived(listSearchTagSuggestions.length > 0);
+	const edgeNodeSuggestions = $derived(
+		section === 'edges' && listSearchQ
+			? nodes
+					.filter(
+						(n) =>
+							!edgeSearchNodeIds.includes(n.id) &&
+							(n.label.toLowerCase().includes(listSearchQ) ||
+								n.id.toLowerCase().startsWith(listSearchQ))
+					)
+					.slice(0, 40)
+			: []
+	);
+	const showListSearchDropdown = $derived(
+		section === 'edges'
+			? edgeNodeSuggestions.length > 0 || listSearchTagSuggestions.length > 0
+			: listSearchTagSuggestions.length > 0
+	);
 	const filteredNodes = $derived(
 		nodes.filter((n) => nodeMatchesListFilter(n, nodeSearchQuery, nodeSearchTags))
 	);
 	const filteredEdges = $derived(
-		edges.filter((e) =>
-			edgeMatchesListFilter(e, app.document.nodes, edgeSearchQuery, edgeSearchTags)
-		)
+		edges.filter((e) => edgeMatchesListFilter(e, edgeSearchNodeIds, edgeSearchTags))
 	);
 	const nodePickerOptions = $derived(nodes.map((n) => ({ id: n.id, label: n.label })));
 	const storedRuns = $derived(Object.values(app.runStore.runs));
@@ -395,6 +410,12 @@
 		nodeSearchQuery = '';
 	}
 
+	function addEdgeSearchNode(id: string) {
+		if (edgeSearchNodeIds.includes(id)) return;
+		edgeSearchNodeIds = [...edgeSearchNodeIds, id];
+		edgeSearchQuery = '';
+	}
+
 	function removeListSearchTag(tag: string) {
 		if (section === 'edges') {
 			edgeSearchTags = edgeSearchTags.filter((t) => t !== tag);
@@ -403,22 +424,47 @@
 		nodeSearchTags = nodeSearchTags.filter((t) => t !== tag);
 	}
 
+	function removeEdgeSearchNode(id: string) {
+		edgeSearchNodeIds = edgeSearchNodeIds.filter((n) => n !== id);
+	}
+
 	function onListSearchKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
+			e.preventDefault();
+			e.stopPropagation();
 			setListSearchQuery('');
 			return;
 		}
-		if (e.key === 'Enter' && listSearchTagSuggestions.length > 0) {
+		if (e.key === 'Enter') {
 			e.preventDefault();
-			addListSearchTag(listSearchTagSuggestions[0]);
+			if (section === 'edges' && edgeNodeSuggestions.length > 0) {
+				addEdgeSearchNode(edgeNodeSuggestions[0].id);
+				return;
+			}
+			if (listSearchTagSuggestions.length > 0) {
+				addListSearchTag(listSearchTagSuggestions[0]);
+			}
+			return;
 		}
-		if (e.key === 'Backspace' && !listSearchQuery && listSearchTags.length > 0) {
-			removeListSearchTag(listSearchTags[listSearchTags.length - 1]);
+		if (e.key === 'Backspace' && !listSearchQuery) {
+			if (section === 'edges') {
+				if (edgeSearchTags.length > 0) {
+					removeListSearchTag(edgeSearchTags[edgeSearchTags.length - 1]);
+					return;
+				}
+				if (edgeSearchNodeIds.length > 0) {
+					removeEdgeSearchNode(edgeSearchNodeIds[edgeSearchNodeIds.length - 1]);
+				}
+				return;
+			}
+			if (listSearchTags.length > 0) {
+				removeListSearchTag(listSearchTags[listSearchTags.length - 1]);
+			}
 		}
 	}
 
 	$effect(() => {
-		if (!showListSearchTagDropdown) {
+		if (!showListSearchDropdown) {
 			listSearchDropdownStyle = '';
 			return;
 		}
@@ -521,6 +567,20 @@
 		{#if listSearchActive}
 			<div class="list-search" bind:this={listSearchRootEl}>
 				<div class="list-search-field" bind:this={listSearchFieldEl}>
+					{#if section === 'edges'}
+						{#each edgeSearchNodeIds as id (id)}
+							<span class="list-search-chip">
+								{app.document.nodes[id]?.label ?? id}
+								<button
+									type="button"
+									class="list-search-chip-remove"
+									aria-label={`Remove filter node ${app.document.nodes[id]?.label ?? id}`}
+									data-testid={`edges-search-node-remove-${id}`}
+									onclick={() => removeEdgeSearchNode(id)}>×</button
+								>
+							</span>
+						{/each}
+					{/if}
 					{#each listSearchTags as tag (tag)}
 						<span class="list-search-chip">
 							{tag}
@@ -547,14 +607,27 @@
 						onkeydown={onListSearchKeydown}
 					/>
 				</div>
-				{#if showListSearchTagDropdown}
+				{#if showListSearchDropdown}
 					<div
 						class="list-search-dropdown"
 						role="listbox"
-						aria-label="Matching tags"
+						aria-label={section === 'edges' ? 'Matching nodes and tags' : 'Matching tags'}
 						style={listSearchDropdownStyle}
 					>
 						<ul class="list-search-results">
+							{#if section === 'edges'}
+								{#each edgeNodeSuggestions as n (n.id)}
+									<li>
+										<button
+											type="button"
+											class="list-search-option"
+											role="option"
+											data-testid={`edges-search-node-${n.id}`}
+											onclick={() => addEdgeSearchNode(n.id)}>{n.label}</button
+										>
+									</li>
+								{/each}
+							{/if}
 							{#each listSearchTagSuggestions as tag (tag)}
 								<li>
 									<button
