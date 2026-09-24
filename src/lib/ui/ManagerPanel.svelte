@@ -2107,6 +2107,8 @@
 		flex: 1 1 auto;
 		min-height: 0;
 		max-height: none;
+		margin-inline: calc(-1 * var(--yg-hud-panel-inset));
+		padding-inline: var(--yg-hud-panel-inset);
 	}
 
 	.node-list-label {
