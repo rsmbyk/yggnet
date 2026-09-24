@@ -424,14 +424,14 @@
 							</label>
 						</div>
 					</div>
-					<label>
-						Tags
+					<div class="field">
+						<span class="field-caption">Tags</span>
 						<TagPicker
 							tags={selectedNode.tags}
 							suggestions={allTags}
 							onChange={(next) => app.setNodeTags(selectedNode.id, next)}
 						/>
-					</label>
+					</div>
 					<label>
 						Notes
 						<textarea
@@ -2196,7 +2196,8 @@
 		border-color: color-mix(in srgb, var(--yg-accent) 65%, var(--yg-border));
 	}
 
-	label {
+	label,
+	.field {
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
@@ -2204,6 +2205,13 @@
 		font-weight: 600;
 		color: var(--yg-fg);
 		margin-bottom: 0.4rem;
+	}
+
+	.field-caption {
+		font: inherit;
+		font-size: inherit;
+		font-weight: inherit;
+		color: inherit;
 	}
 
 	label.check {
@@ -2382,6 +2390,7 @@
 	}
 
 	.selection-sheet-body > label,
+	.selection-sheet-body > .field,
 	.selection-sheet-body > .pos-stack,
 	.selection-sheet-body > .incident-edges,
 	.selection-sheet-body > .hint {
