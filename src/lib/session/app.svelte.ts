@@ -134,6 +134,8 @@ export type UiState = {
 	viewMode: ViewMode;
 	/** Tools panel may grow past the minimap down to the dock bottom. */
 	toolsPanelExpanded: boolean;
+	/** Companion / selection sheet may grow past the minimap down to the dock bottom. */
+	selectionPanelExpanded: boolean;
 };
 
 const runner = new MainThreadRunner();
@@ -239,7 +241,8 @@ class AppStore {
 		connectAltHeld: false,
 		multiSelectMode: false,
 		viewMode: '3d',
-		toolsPanelExpanded: false
+		toolsPanelExpanded: false,
+		selectionPanelExpanded: false
 	});
 	statusMessage = $state<string>('');
 	/** Full-screen overlay while a document is loading or generating. */
@@ -1016,12 +1019,17 @@ class AppStore {
 		this.ui = {
 			...this.ui,
 			openTool: id,
-			toolsPanelExpanded: false
+			toolsPanelExpanded: false,
+			selectionPanelExpanded: false
 		};
 	}
 
 	setToolsPanelExpanded(expanded: boolean): void {
 		this.ui = { ...this.ui, toolsPanelExpanded: expanded };
+	}
+
+	setSelectionPanelExpanded(expanded: boolean): void {
+		this.ui = { ...this.ui, selectionPanelExpanded: expanded };
 	}
 
 	toggleTool(id: ToolId): void {

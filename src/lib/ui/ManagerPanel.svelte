@@ -75,14 +75,10 @@
 	});
 
 	$effect(() => {
-		if (section === 'selection') {
-			maxHeightPx = null;
-			overflowing = false;
-			return;
-		}
 		const el = panelEl;
 		if (!el) return;
-		const expanded = app.ui.toolsPanelExpanded;
+		const isSelection = section === 'selection';
+		const expanded = isSelection ? app.ui.selectionPanelExpanded : app.ui.toolsPanelExpanded;
 		void genFields;
 		void app.generateForm.kind;
 		void app.generateForm.binary;
@@ -231,14 +227,22 @@
 	const diffB = $derived(app.ui.diffIds[1] ? app.document.nodes[app.ui.diffIds[1]] : null);
 
 	function onSelectNode(id: string, ev: MouseEvent) {
+		const node = app.document.nodes[id];
 		if (app.ui.connectFromId) {
-			app.tryConnectTo(id, { ctrlHeld: ev.ctrlKey || ev.metaKey });
+			app.tryConnectTo(id, { altHeld: ev.altKey });
+			if (node) app.setCamera({ target: { ...node.position } });
+			return;
+		}
+		const plain = !ev.shiftKey && !ev.ctrlKey && !ev.metaKey;
+		if (plain && app.selection.nodeIds.length === 1 && app.selection.nodeIds[0] === id) {
+			app.clearAllSelection();
 			return;
 		}
 		const multi = app.selection.nodeIds.length > 1;
 		if (ev.shiftKey) app.selectNodeWithModifiers(id, 'add');
 		else if (ev.ctrlKey || ev.metaKey) app.selectNodeWithModifiers(id, 'toggle');
 		else app.selectNodeWithModifiers(id, multi ? 'add' : 'replace');
+		if (node) app.setCamera({ target: { ...node.position } });
 	}
 
 	function onSelectEdge(id: string, ev: MouseEvent) {
@@ -330,14 +334,6 @@
 			aria-label="Selection"
 		>
 			{#if selectedNode && selectedCount === 1}
-				<label>
-					Label
-					<input
-						data-testid="node-label"
-						value={selectedNode.label}
-						oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
-					/>
-				</label>
 				<div class="row wrap selection-actions">
 					<button
 						type="button"
@@ -352,7 +348,16 @@
 						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
 					>
 				</div>
+				<label>
+					Label
+					<input
+						data-testid="node-label"
+						value={selectedNode.label}
+						oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
+					/>
+				</label>
 				<div class="pos-stack" data-testid="node-position">
+					<h3 class="section-label">Position</h3>
 					<label>
 						X
 						<input
@@ -1115,9 +1120,6 @@
 					<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
 				</div>
 			</div>
-			{#if selectedCount > 0}
-				<p class="hint" data-testid="selection-count">{selectedCount} selected</p>
-			{/if}
 			<ul class="list node-list" data-testid="node-list">
 				{#each nodes as node (node.id)}
 					<li class="node-row">
@@ -1150,6 +1152,9 @@
 					</li>
 				{/each}
 			</ul>
+			{#if selectedCount > 0}
+				<p class="hint" data-testid="selection-count">{selectedCount} selected</p>
+			{/if}
 			{#if selectedCount > 1}
 				<div class="row wrap">
 					<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
@@ -1692,17 +1697,45 @@
 		</section>
 	{/if}
 
-	{#if section !== 'selection' && overflowing}
+	{#if overflowing}
 		<button
 			type="button"
 			class="manager__expand"
-			data-testid={app.ui.toolsPanelExpanded ? 'tools-panel-collapse' : 'tools-panel-expand'}
-			aria-label={app.ui.toolsPanelExpanded ? 'Collapse tools panel' : 'Expand tools panel'}
-			title={app.ui.toolsPanelExpanded ? 'Collapse' : 'Expand'}
-			onclick={() => app.setToolsPanelExpanded(!app.ui.toolsPanelExpanded)}
+			data-testid={
+				section === 'selection'
+					? app.ui.selectionPanelExpanded
+						? 'selection-panel-collapse'
+						: 'selection-panel-expand'
+					: app.ui.toolsPanelExpanded
+						? 'tools-panel-collapse'
+						: 'tools-panel-expand'
+			}
+			aria-label={
+				section === 'selection'
+					? app.ui.selectionPanelExpanded
+						? 'Collapse selection panel'
+						: 'Expand selection panel'
+					: app.ui.toolsPanelExpanded
+						? 'Collapse tools panel'
+						: 'Expand tools panel'
+			}
+			title={
+				section === 'selection'
+					? app.ui.selectionPanelExpanded
+						? 'Collapse'
+						: 'Expand'
+					: app.ui.toolsPanelExpanded
+						? 'Collapse'
+						: 'Expand'
+			}
+			onclick={() =>
+				section === 'selection'
+					? app.setSelectionPanelExpanded(!app.ui.selectionPanelExpanded)
+					: app.setToolsPanelExpanded(!app.ui.toolsPanelExpanded)
+			}
 		>
 			<svg viewBox="0 0 24 24" aria-hidden="true">
-				{#if app.ui.toolsPanelExpanded}
+				{#if (section === 'selection' ? app.ui.selectionPanelExpanded : app.ui.toolsPanelExpanded)}
 					<path
 						fill="none"
 						stroke="currentColor"
@@ -1932,7 +1965,7 @@
 			color var(--yg-motion-fast) var(--yg-ease);
 	}
 
-	button:hover:not(:disabled):not(.active) {
+	button:hover:not(:disabled):not(.active):not(.selected) {
 		background: rgba(255, 255, 255, 0.72);
 	}
 
@@ -2029,7 +2062,7 @@
 
 	.node-row {
 		display: flex;
-		align-items: stretch;
+		align-items: center;
 		gap: 0.25rem;
 	}
 
@@ -2040,10 +2073,8 @@
 
 	.node-row .icon-btn {
 		flex: 0 0 auto;
-		width: auto;
-		height: auto;
-		aspect-ratio: 1 / 1;
-		align-self: stretch;
+		width: var(--yg-hud-btn);
+		height: var(--yg-hud-btn);
 		padding: 0;
 		box-sizing: border-box;
 	}
@@ -2117,6 +2148,11 @@
 		color: var(--yg-fg);
 	}
 
+	.list-item.selected:hover:not(:disabled) {
+		background: color-mix(in srgb, var(--yg-accent) 52%, rgba(255, 255, 255, 0.45));
+		border-color: color-mix(in srgb, var(--yg-accent) 65%, var(--yg-border));
+	}
+
 	label {
 		display: flex;
 		flex-direction: column;
@@ -2146,6 +2182,10 @@
 		padding: 0.35rem 0.5rem;
 		background: var(--yg-chip);
 		color: var(--yg-fg);
+	}
+
+	.selection-sheet textarea {
+		resize: none;
 	}
 
 	select {
@@ -2267,8 +2307,16 @@
 		gap: 0.85rem;
 	}
 
+	.selection-sheet > .selection-actions {
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		margin: 0;
+		padding: 0.15rem 0 0.35rem;
+		background: var(--yg-panel-glass-strong);
+	}
+
 	.selection-sheet > label,
-	.selection-sheet > .selection-actions,
 	.selection-sheet > .pos-stack,
 	.selection-sheet > .incident-edges,
 	.selection-sheet > .hint {
@@ -2279,6 +2327,7 @@
 		margin-top: 0;
 	}
 
+	.pos-stack .section-label,
 	.incident-edges .section-label {
 		margin: 0 0 0.35rem;
 		font-size: 0.8rem;

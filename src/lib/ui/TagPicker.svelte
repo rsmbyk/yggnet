@@ -12,7 +12,9 @@
 	let open = $state(false);
 	let query = $state('');
 	let rootEl = $state<HTMLDivElement | undefined>(undefined);
+	let fieldEl = $state<HTMLDivElement | undefined>(undefined);
 	let searchEl = $state<HTMLInputElement | undefined>(undefined);
+	let dropdownStyle = $state('');
 
 	const selected = $derived(new Set(tags));
 	const q = $derived(query.trim());
@@ -31,14 +33,25 @@
 			!suggestions.some((t) => t.toLowerCase() === qLower)
 	);
 
+	function syncDropdownPosition() {
+		const field = fieldEl;
+		if (!field) return;
+		const rect = field.getBoundingClientRect();
+		dropdownStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px;`;
+	}
+
 	function openDropdown() {
 		open = true;
-		queueMicrotask(() => searchEl?.focus());
+		queueMicrotask(() => {
+			syncDropdownPosition();
+			searchEl?.focus();
+		});
 	}
 
 	function closeDropdown() {
 		open = false;
 		query = '';
+		dropdownStyle = '';
 	}
 
 	function addTag(tag: string) {
@@ -75,13 +88,20 @@
 
 	$effect(() => {
 		if (!open) return;
+		syncDropdownPosition();
 		document.addEventListener('pointerdown', onDocPointerDown, true);
-		return () => document.removeEventListener('pointerdown', onDocPointerDown, true);
+		window.addEventListener('resize', syncDropdownPosition);
+		window.addEventListener('scroll', syncDropdownPosition, true);
+		return () => {
+			document.removeEventListener('pointerdown', onDocPointerDown, true);
+			window.removeEventListener('resize', syncDropdownPosition);
+			window.removeEventListener('scroll', syncDropdownPosition, true);
+		};
 	});
 </script>
 
 <div class="tag-picker" data-testid="node-tags" bind:this={rootEl}>
-	<div class="tag-field" class:open>
+	<div class="tag-field" class:open bind:this={fieldEl}>
 		<button
 			type="button"
 			class="tag-add"
@@ -117,7 +137,12 @@
 	</div>
 
 	{#if open}
-		<div class="tag-dropdown" role="listbox" aria-label="Tag suggestions">
+		<div
+			class="tag-dropdown"
+			role="listbox"
+			aria-label="Tag suggestions"
+			style={dropdownStyle}
+		>
 			<input
 				bind:this={searchEl}
 				class="tag-search"
@@ -164,7 +189,7 @@
 
 	.tag-field {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		gap: 0.35rem;
 		min-height: 2rem;
 		padding: 0.3rem 0.4rem;
@@ -253,11 +278,8 @@
 	}
 
 	.tag-dropdown {
-		position: absolute;
-		z-index: 5;
-		left: 0;
-		right: 0;
-		top: calc(100% + 0.25rem);
+		position: fixed;
+		z-index: 40;
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
@@ -266,6 +288,7 @@
 		border-radius: var(--yg-radius-control);
 		background: var(--yg-panel-glass-strong);
 		box-shadow: 0 8px 20px rgba(15, 22, 32, 0.12);
+		box-sizing: border-box;
 	}
 
 	.tag-search {
