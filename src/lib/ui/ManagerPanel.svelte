@@ -307,7 +307,8 @@
 <aside
 	bind:this={panelEl}
 	class="manager"
-	class:manager--fill={section !== 'selection'}
+	class:manager--fill={true}
+	class:manager--selection={section === 'selection'}
 	style:max-height={maxHeightPx != null ? `${maxHeightPx}px` : undefined}
 	data-testid={section === 'selection' ? selectionTestId : 'yggnet-manager'}
 >
@@ -348,98 +349,102 @@
 						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
 					>
 				</div>
-				<label>
-					Label
-					<input
-						data-testid="node-label"
-						value={selectedNode.label}
-						oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
-					/>
-				</label>
-				<div class="pos-stack" data-testid="node-position">
-					<h3 class="section-label">Position</h3>
+				<div class="selection-sheet-body">
 					<label>
-						X
+						Label
 						<input
-							type="number"
-							step="0.1"
-							class="no-spinner"
-							data-testid="node-pos-x"
-							value={selectedNode.position.x}
-							oninput={(e) =>
-								app.updateNode(selectedNode.id, {
-									position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
-								})}
+							data-testid="node-label"
+							value={selectedNode.label}
+							oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
+						/>
+					</label>
+					<div class="pos-stack" data-testid="node-position">
+						<h3 class="section-label">Position</h3>
+						<div class="pos-axes">
+							<label>
+								X
+								<input
+									type="number"
+									step="0.1"
+									class="no-spinner"
+									data-testid="node-pos-x"
+									value={selectedNode.position.x}
+									oninput={(e) =>
+										app.updateNode(selectedNode.id, {
+											position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
+										})}
+								/>
+							</label>
+							<label>
+								Y
+								<input
+									type="number"
+									step="0.1"
+									class="no-spinner"
+									data-testid="node-pos-y"
+									value={selectedNode.position.y}
+									oninput={(e) =>
+										app.updateNode(selectedNode.id, {
+											position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
+										})}
+								/>
+							</label>
+							<label>
+								Z
+								<input
+									type="number"
+									step="0.1"
+									class="no-spinner"
+									data-testid="node-pos-z"
+									value={selectedNode.position.z}
+									oninput={(e) =>
+										app.updateNode(selectedNode.id, {
+											position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
+										})}
+								/>
+							</label>
+						</div>
+					</div>
+					<label>
+						Tags
+						<TagPicker
+							tags={selectedNode.tags}
+							suggestions={allTags}
+							onChange={(next) => app.setNodeTags(selectedNode.id, next)}
 						/>
 					</label>
 					<label>
-						Y
-						<input
-							type="number"
-							step="0.1"
-							class="no-spinner"
-							data-testid="node-pos-y"
-							value={selectedNode.position.y}
-							oninput={(e) =>
-								app.updateNode(selectedNode.id, {
-									position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
-								})}
-						/>
+						Notes
+						<textarea
+							data-testid="node-notes"
+							rows="4"
+							value={selectedNode.notes ?? ''}
+							oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
+						></textarea>
 					</label>
-					<label>
-						Z
-						<input
-							type="number"
-							step="0.1"
-							class="no-spinner"
-							data-testid="node-pos-z"
-							value={selectedNode.position.z}
-							oninput={(e) =>
-								app.updateNode(selectedNode.id, {
-									position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
-								})}
-						/>
-					</label>
-				</div>
-				<label>
-					Tags
-					<TagPicker
-						tags={selectedNode.tags}
-						suggestions={allTags}
-						onChange={(next) => app.setNodeTags(selectedNode.id, next)}
-					/>
-				</label>
-				<label>
-					Notes
-					<textarea
-						data-testid="node-notes"
-						rows="2"
-						value={selectedNode.notes ?? ''}
-						oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
-					></textarea>
-				</label>
-				<div class="incident-edges" data-testid="node-incident-edges">
-					<h3 class="section-label">Edges ({incidentEdges.length})</h3>
-					{#if incidentEdges.length === 0}
-						<p class="hint muted">No edges</p>
-					{:else}
-						<ul class="list incident-edge-list">
-							{#each incidentEdges as edge (edge.id)}
-								<li class="incident-edge-row">
-									{app.document.nodes[edge.from]?.label ?? '?'}
-									{edge.directed ? '→' : '—'}
-									{app.document.nodes[edge.to]?.label ?? '?'}
-									<span class="muted">w={edge.weight}</span>
-								</li>
-							{/each}
-						</ul>
+					<div class="incident-edges" data-testid="node-incident-edges">
+						<h3 class="section-label">Edges ({incidentEdges.length})</h3>
+						{#if incidentEdges.length === 0}
+							<p class="hint muted">No edges</p>
+						{:else}
+							<ul class="list incident-edge-list">
+								{#each incidentEdges as edge (edge.id)}
+									<li class="incident-edge-row">
+										{app.document.nodes[edge.from]?.label ?? '?'}
+										{edge.directed ? '→' : '—'}
+										{app.document.nodes[edge.to]?.label ?? '?'}
+										<span class="muted">w={edge.weight}</span>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					</div>
+					{#if app.ui.openTool === null}
+						<p class="hint">
+							Drag to move · Alt-click connect · Ctrl+Alt directed · Shift add-select · Del to delete
+						</p>
 					{/if}
 				</div>
-				{#if app.ui.openTool === null}
-					<p class="hint">
-						Drag to move · Alt-click connect · Ctrl+Alt directed · Shift add-select · Del to delete
-					</p>
-				{/if}
 			{:else if selectedCount > 1}
 				<div class="row wrap">
 					<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
@@ -1153,21 +1158,26 @@
 				{/each}
 			</ul>
 			{#if selectedCount > 0}
-				<p class="hint" data-testid="selection-count">{selectedCount} selected</p>
-			{/if}
-			{#if selectedCount > 1}
-				<div class="row wrap">
-					<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
-						>Group {selectedCount}</button
-					>
-					<button
-						type="button"
-						data-testid="clear-selection"
-						onclick={() => app.clearAllSelection()}>Clear selection</button
-					>
-					<button type="button" data-testid="delete-selection" onclick={() => app.deleteSelection()}
-						>Delete</button
-					>
+				<div class="node-selection-controls">
+					<p class="hint" data-testid="selection-count">{selectedCount} selected</p>
+					{#if selectedCount > 1}
+						<div class="row wrap">
+							<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
+								>Group {selectedCount}</button
+							>
+							<button
+								type="button"
+								data-testid="clear-selection"
+								onclick={() => app.clearAllSelection()}>Clear selection</button
+							>
+							<button
+								type="button"
+								class="danger"
+								data-testid="delete-selection"
+								onclick={() => app.deleteSelection()}>Delete</button
+							>
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</section>
@@ -1784,6 +1794,15 @@
 		min-height: 0;
 	}
 
+	.manager--selection {
+		overflow: hidden;
+	}
+
+	.manager--selection > .block.selection-sheet {
+		flex: 1 1 auto;
+		min-height: 0;
+	}
+
 	.manager__header {
 		flex-shrink: 0;
 	}
@@ -2274,19 +2293,33 @@
 	.pos-stack {
 		display: flex;
 		flex-direction: column;
-		gap: 0.55rem;
+		gap: 0.35rem;
 		width: 100%;
 		min-width: 0;
 	}
 
-	.pos-stack label {
-		margin-bottom: 0;
+	.pos-axes {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.35rem;
+		width: 100%;
+		min-width: 0;
 	}
 
-	.pos-stack input {
+	.pos-axes label {
+		margin-bottom: 0;
+		font-size: 0.7rem;
+		font-weight: 500;
+		color: var(--yg-muted);
+		gap: 0.15rem;
+	}
+
+	.pos-axes input {
 		width: 100%;
 		min-width: 0;
 		box-sizing: border-box;
+		font-size: 0.8rem;
+		padding: 0.3rem 0.4rem;
 	}
 
 	input.no-spinner {
@@ -2304,22 +2337,28 @@
 	.selection-sheet {
 		display: flex;
 		flex-direction: column;
-		gap: 0.85rem;
+		gap: 0.55rem;
 	}
 
 	.selection-sheet > .selection-actions {
-		position: sticky;
-		top: 0;
-		z-index: 2;
+		flex: 0 0 auto;
 		margin: 0;
-		padding: 0.15rem 0 0.35rem;
-		background: var(--yg-panel-glass-strong);
 	}
 
-	.selection-sheet > label,
-	.selection-sheet > .pos-stack,
-	.selection-sheet > .incident-edges,
-	.selection-sheet > .hint {
+	.selection-sheet-body {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 0.85rem;
+	}
+
+	.selection-sheet-body > label,
+	.selection-sheet-body > .pos-stack,
+	.selection-sheet-body > .incident-edges,
+	.selection-sheet-body > .hint {
 		margin-bottom: 0;
 	}
 
@@ -2335,6 +2374,25 @@
 		color: var(--yg-fg);
 		letter-spacing: normal;
 		text-transform: none;
+	}
+
+	.node-selection-controls {
+		flex: 0 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.node-selection-controls > .hint {
+		margin: 0;
+	}
+
+	.node-selection-controls .row {
+		gap: 0.3rem;
+	}
+
+	.node-selection-controls button {
+		padding: 0.25rem 0.45rem;
 	}
 
 	.incident-edges .subhead {

@@ -54,6 +54,24 @@
 		dropdownStyle = '';
 	}
 
+	function toggleDropdown() {
+		if (open) closeDropdown();
+		else openDropdown();
+	}
+
+	function onFieldClick(e: MouseEvent) {
+		const t = e.target;
+		if (t instanceof Element && t.closest('.tag-remove')) return;
+		toggleDropdown();
+	}
+
+	function onFieldKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			toggleDropdown();
+		}
+	}
+
 	function addTag(tag: string) {
 		const t = tag.trim();
 		if (!t || selected.has(t)) return;
@@ -101,22 +119,18 @@
 </script>
 
 <div class="tag-picker" data-testid="node-tags" bind:this={rootEl}>
-	<div class="tag-field" class:open bind:this={fieldEl}>
-		<button
-			type="button"
-			class="tag-add"
-			data-testid="node-tags-open"
-			aria-label="Add tag"
-			aria-expanded={open}
-			onclick={() => (open ? closeDropdown() : openDropdown())}
-		>
-			<svg viewBox="0 0 24 24" aria-hidden="true">
-				<path
-					fill="currentColor"
-					d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-				/>
-			</svg>
-		</button>
+	<div
+		class="tag-field"
+		class:open
+		bind:this={fieldEl}
+		role="button"
+		tabindex="0"
+		data-testid="node-tags-open"
+		aria-label="Add tag"
+		aria-expanded={open}
+		onclick={onFieldClick}
+		onkeydown={onFieldKeydown}
+	>
 		<div class="tag-pills">
 			{#each tags as tag (tag)}
 				<span class="tag-pill">
@@ -196,35 +210,16 @@
 		border: 1px solid var(--yg-border);
 		border-radius: var(--yg-radius-control);
 		background: var(--yg-chip);
+		cursor: pointer;
 	}
 
 	.tag-field.open {
 		border-color: color-mix(in srgb, var(--yg-accent) 45%, var(--yg-border));
 	}
 
-	.tag-add {
-		flex: 0 0 auto;
-		display: inline-grid;
-		place-items: center;
-		width: 1.55rem;
-		height: 1.55rem;
-		padding: 0;
-		margin: 0;
-		border: 1px solid var(--yg-border);
-		border-radius: var(--yg-radius-control);
-		background: rgba(255, 255, 255, 0.55);
-		color: var(--yg-muted);
-		cursor: pointer;
-	}
-
-	.tag-add svg {
-		width: 0.95rem;
-		height: 0.95rem;
-	}
-
-	.tag-add:hover {
-		color: var(--yg-fg);
-		background: rgba(255, 255, 255, 0.8);
+	.tag-field:focus-visible {
+		outline: 2px solid color-mix(in srgb, var(--yg-accent) 55%, transparent);
+		outline-offset: 1px;
 	}
 
 	.tag-pills {
@@ -286,7 +281,7 @@
 		padding: 0.4rem;
 		border: 1px solid var(--yg-border);
 		border-radius: var(--yg-radius-control);
-		background: var(--yg-panel-glass-strong);
+		background: rgba(244, 246, 248, 0.96);
 		box-shadow: 0 8px 20px rgba(15, 22, 32, 0.12);
 		box-sizing: border-box;
 	}
