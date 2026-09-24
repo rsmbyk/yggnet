@@ -13,6 +13,10 @@
 		DEPTH_FIELD_HELP,
 		DIMENSION_FIELD_HELP,
 		EXTENT_FIELD_HELP,
+		edgeDirectionOptions,
+		edgeDirectionPatch,
+		edgeDirectionSelectValue,
+		type EdgeDirectionMode,
 		fieldsForKind,
 		generateFieldLimit,
 		generateRequestFromForm,
@@ -159,6 +163,9 @@
 	);
 	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const edges = $derived(Object.values(app.document.edges));
+	const allEdgeTags = $derived(
+		[...new Set(edges.flatMap((e) => e.tags ?? []))].sort((a, b) => a.localeCompare(b))
+	);
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
 	const selectedCount = $derived(app.selection.nodeIds.length);
@@ -169,6 +176,8 @@
 			: []
 	);
 	const selectedEdgeId = $derived(app.selection.edgeIds[0] ?? null);
+	const selectedEdgeIds = $derived(new Set(app.selection.edgeIds));
+	const selectedEdgeCount = $derived(app.selection.edgeIds.length);
 	const selectedEdge = $derived(selectedEdgeId ? app.document.edges[selectedEdgeId] : null);
 	const lastRun = $derived(app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null);
 	const traceLen = $derived(lastRun?.trace.length ?? 0);
@@ -230,16 +239,21 @@
 			? 'world-multi-sheet'
 			: selectedCount === 1
 				? 'world-node-sheet'
-				: 'world-edge-sheet'
+				: selectedEdgeCount > 1
+					? 'world-multi-sheet'
+					: 'world-edge-sheet'
 	);
 	const selectionTitle = $derived(
 		selectedCount > 1
 			? `${selectedCount} nodes`
 			: selectedNode
 				? selectedNode.label
-				: selectedEdge
-					? 'Edge'
-					: 'Selection'
+				: selectedEdgeCount > 1
+					? `${selectedEdgeCount} edges`
+					: selectedEdge
+						? (selectedEdge.label?.trim() ||
+							`${app.document.nodes[selectedEdge.from]?.label ?? '?'} ${selectedEdge.directed ? '→' : '—'} ${app.document.nodes[selectedEdge.to]?.label ?? '?'}`)
+						: 'Selection'
 	);
 
 	const brandTitle = $derived(
@@ -257,8 +271,9 @@
 	);
 
 	const footerHasActions = $derived(
-		(section === 'generate') ||
+		section === 'generate' ||
 			(section === 'nodes' && selectedCount > 0) ||
+			(section === 'edges' && selectedEdgeCount > 0) ||
 			(section === 'selection' &&
 				Boolean(selectedNode && selectedCount === 1 && app.ui.openTool === null))
 	);
@@ -302,7 +317,21 @@
 	}
 
 	function onSelectEdge(id: string, ev: MouseEvent) {
-		app.toggleEdgeSelection(id, ev.ctrlKey || ev.metaKey || ev.shiftKey);
+		const plain = !ev.shiftKey && !ev.ctrlKey && !ev.metaKey;
+		if (plain && app.selection.edgeIds.length === 1 && app.selection.edgeIds[0] === id) {
+			app.clearAllSelection();
+			return;
+		}
+		const multi = app.selection.edgeIds.length > 1;
+		if (ev.shiftKey) app.selectEdgeWithModifiers(id, 'add');
+		else if (ev.ctrlKey || ev.metaKey) app.selectEdgeWithModifiers(id, 'toggle');
+		else app.selectEdgeWithModifiers(id, multi ? 'add' : 'replace');
+	}
+
+	function onEdgeDirectionChange(edgeId: string, mode: EdgeDirectionMode) {
+		const edge = app.document.edges[edgeId];
+		if (!edge) return;
+		app.updateEdge(edgeId, edgeDirectionPatch(edge, mode));
 	}
 
 	function onAddNode() {
@@ -407,7 +436,8 @@
 	{#if section === 'selection'}
 		<section
 			class="block"
-			class:selection-sheet={selectedNode && selectedCount === 1}
+			class:selection-sheet={(selectedNode && selectedCount === 1) ||
+				(selectedEdge && selectedEdgeCount === 1)}
 			aria-label="Selection"
 		>
 			{#if selectedNode && selectedCount === 1}
@@ -529,25 +559,94 @@
 						onclick={() => app.deleteSelection()}>Delete</button
 					>
 				</div>
-			{:else if selectedEdge}
-				<p class="hint">
-					{app.document.nodes[selectedEdge.from]?.label ?? '?'}
-					{selectedEdge.directed ? '→' : '—'}
-					{app.document.nodes[selectedEdge.to]?.label ?? '?'}
-				</p>
-				<div class="row wrap">
-					<button
-						type="button"
-						data-testid="world-toggle-directed"
-						onclick={() => app.updateEdge(selectedEdge.id, { directed: !selectedEdge.directed })}
-						>{selectedEdge.directed ? 'Make undirected' : 'Make directed'}</button
-					>
-					<button
-						type="button"
-						class="danger"
-						data-testid="world-delete-edge"
-						onclick={() => app.removeEdge(selectedEdge.id)}>Delete</button
-					>
+			{:else if selectedEdge && selectedEdgeCount === 1}
+				<div class="selection-sheet-body" data-testid="edge-editor">
+					<label>
+						Label
+						<input
+							data-testid="edge-label"
+							value={selectedEdge.label ?? ''}
+							oninput={(e) => app.updateEdge(selectedEdge.id, { label: e.currentTarget.value })}
+						/>
+					</label>
+					<label>
+						Source
+						<select
+							data-testid="edge-source"
+							value={selectedEdge.from}
+							onchange={(e) =>
+								app.updateEdge(selectedEdge.id, { from: e.currentTarget.value })}
+						>
+							{#each nodes as n (n.id)}
+								<option value={n.id}>{n.label}</option>
+							{/each}
+						</select>
+					</label>
+					<label>
+						Destination
+						<select
+							data-testid="edge-destination"
+							value={selectedEdge.to}
+							onchange={(e) => app.updateEdge(selectedEdge.id, { to: e.currentTarget.value })}
+						>
+							{#each nodes as n (n.id)}
+								<option value={n.id}>{n.label}</option>
+							{/each}
+						</select>
+					</label>
+					<label>
+						Direction
+						{#key `${selectedEdge.from}:${selectedEdge.to}:${selectedEdge.directed}`}
+							<select
+								data-testid="edge-direction"
+								value={edgeDirectionSelectValue(selectedEdge)}
+								onchange={(e) =>
+									onEdgeDirectionChange(
+										selectedEdge.id,
+										e.currentTarget.value as EdgeDirectionMode
+									)}
+							>
+								{#each edgeDirectionOptions(
+									app.document.nodes[selectedEdge.from]?.label ?? '?',
+									app.document.nodes[selectedEdge.to]?.label ?? '?'
+								) as opt (opt.value)}
+									<option value={opt.value}>{opt.label}</option>
+								{/each}
+							</select>
+						{/key}
+					</label>
+					<label>
+						Weight
+						<input
+							type="number"
+							step="0.1"
+							class="no-spinner"
+							data-testid="edge-weight"
+							value={selectedEdge.weight}
+							oninput={(e) =>
+								app.updateEdge(selectedEdge.id, {
+									weight: Number(e.currentTarget.value)
+								})}
+						/>
+					</label>
+					<div class="field">
+						<span class="field-caption">Tags</span>
+						<TagPicker
+							tags={selectedEdge.tags ?? []}
+							suggestions={allEdgeTags}
+							onChange={(next) => app.updateEdge(selectedEdge.id, { tags: next })}
+						/>
+					</div>
+					<label>
+						Notes
+						<textarea
+							data-testid="edge-notes"
+							rows="4"
+							value={selectedEdge.notes ?? ''}
+							oninput={(e) =>
+								app.updateEdge(selectedEdge.id, { notes: e.currentTarget.value })}
+						></textarea>
+					</label>
 				</div>
 			{/if}
 		</section>
@@ -1217,131 +1316,43 @@
 	{/if}
 
 	{#if section === 'edges'}
-		{#if selectedEdge}
-			<section class="block" data-testid="edge-editor">
-				<h2>Edit edge</h2>
-				<p class="hint">
-					{app.document.nodes[selectedEdge.from]?.label ?? '?'}
-					{selectedEdge.directed ? '→' : '—'}
-					{app.document.nodes[selectedEdge.to]?.label ?? '?'}
-				</p>
-				<div class="row wrap inspect-actions">
-					<button
-						type="button"
-						data-testid="edge-toggle-directed"
-						onclick={() => app.updateEdge(selectedEdge.id, { directed: !selectedEdge.directed })}
-						>{selectedEdge.directed ? 'Make undirected' : 'Make directed'}</button
-					>
-					<button
-						type="button"
-						data-testid="delete-edge"
-						onclick={() => app.removeEdge(selectedEdge.id)}>Delete</button
-					>
-				</div>
-				<div class="attachments" data-testid="edge-attachments-section">
-					<h3 class="subhead">Attachments</h3>
-					<ul class="list attachment-list" data-testid="edge-attachment-list">
-						{#each selectedEdge.attachments as att, i (i)}
-							<li class="attachment-row">
-								<span class="attachment-name">{att.name}</span>
-								<span class="muted attachment-preview"
-									>{att.payload.slice(0, 40)}{att.payload.length > 40 ? '…' : ''}</span
-								>
-								<button
-									type="button"
-									data-testid={`remove-edge-attachment-${i}`}
-									aria-label={`Remove attachment ${att.name}`}
-									onclick={() =>
-										removeAttachment('edge', selectedEdge.id, selectedEdge.attachments, i)}
-									>×</button
-								>
-							</li>
-						{/each}
-					</ul>
-					<div class="row wrap">
-						<input
-							data-testid="edge-attachment-name"
-							placeholder="Name"
-							aria-label="Edge attachment name"
-							bind:value={edgeAttachName}
-						/>
-						<input
-							data-testid="edge-attachment-payload"
-							placeholder="Text or data URL"
-							aria-label="Edge attachment payload"
-							bind:value={edgeAttachPayload}
-						/>
-						<button
-							type="button"
-							data-testid="add-edge-attachment"
-							onclick={() =>
-								addAttachment(
-									'edge',
-									selectedEdge.id,
-									selectedEdge.attachments,
-									edgeAttachName,
-									edgeAttachPayload,
-									() => {
-										edgeAttachName = '';
-										edgeAttachPayload = '';
-									}
-								)}>Add</button
-						>
-					</div>
-				</div>
-			</section>
-		{/if}
-
 		<section class="block edge-panel" data-testid="edges-section">
 			<ul class="list edge-list" data-testid="edge-list">
 				{#each edges as edge (edge.id)}
-					<li class="edge-row">
+					<li class="edge-row node-row">
 						<button
 							type="button"
 							class="list-item edge-select"
-							class:selected={app.selection.edgeIds.includes(edge.id)}
+							class:selected={selectedEdgeIds.has(edge.id)}
 							data-testid={`edge-item-${edge.id}`}
 							onclick={(e) => onSelectEdge(edge.id, e)}
 						>
-							{app.document.nodes[edge.from]?.label ?? '?'}
-							{edge.directed ? '→' : '—'}
-							{app.document.nodes[edge.to]?.label ?? '?'}
-							<span class="muted">w={edge.weight}</span>
+							<span class="node-list-label">
+								{app.document.nodes[edge.from]?.label ?? '?'}
+								{edge.directed ? '→' : '—'}
+								{app.document.nodes[edge.to]?.label ?? '?'}
+							</span>
+							{#if edge.weight !== 1}
+								<span class="muted">w={edge.weight}</span>
+							{/if}
 						</button>
 						<button
 							type="button"
-							data-testid={`edit-edge-${edge.id}`}
-							onclick={() => {
-								const w = Number(prompt('Weight', String(edge.weight)));
-								if (!Number.isFinite(w)) return;
-								app.updateEdge(edge.id, { weight: w });
-							}}>W</button
-						>
-						<button
-							type="button"
-							data-testid={`toggle-directed-${edge.id}`}
-							onclick={() => app.updateEdge(edge.id, { directed: !edge.directed })}>Dir</button
-						>
-						<button
-							type="button"
-							data-testid={`edge-notes-${edge.id}`}
-							onclick={() => {
-								const notes = prompt('Notes', edge.notes ?? '') ?? edge.notes;
-								app.updateEdge(edge.id, { notes: notes ?? '' });
-							}}>Notes</button
-						>
-						{#if selectedId && (edge.from === selectedId || edge.to === selectedId)}
-							<button
-								type="button"
-								data-testid={`follow-edge-${edge.id}`}
-								onclick={() => app.followEdge(edge.id)}>Follow</button
-							>
-						{/if}
-						<button
-							type="button"
+							class="icon-btn danger"
 							data-testid={`delete-edge-${edge.id}`}
-							onclick={() => app.removeEdge(edge.id)}>×</button
+							aria-label="Delete edge"
+							onclick={(e) => {
+								e.stopPropagation();
+								app.removeEdge(edge.id);
+							}}
 						>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path
+									fill="currentColor"
+									d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+								/>
+							</svg>
+						</button>
 					</li>
 				{/each}
 			</ul>
@@ -1773,6 +1784,26 @@
 					{/if}
 				</div>
 			{/if}
+			{#if section === 'edges' && selectedEdgeCount > 0}
+				<div class="node-selection-controls">
+					<p class="hint" data-testid="edge-selection-count">{selectedEdgeCount} selected</p>
+					{#if selectedEdgeCount > 1}
+						<div class="row wrap">
+							<button
+								type="button"
+								data-testid="clear-edge-selection"
+								onclick={() => app.clearAllSelection()}>Clear selection</button
+							>
+							<button
+								type="button"
+								class="danger"
+								data-testid="delete-edge-selection"
+								onclick={() => app.deleteSelection()}>Delete</button
+							>
+						</div>
+					{/if}
+				</div>
+			{/if}
 			{#if overflowing}
 				<button
 					type="button"
@@ -1849,7 +1880,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.85rem;
-		padding: var(--yg-hud-panel-inset);
+		padding-block: var(--yg-hud-panel-inset);
+		padding-inline: 0;
 		background: var(--yg-panel-glass-strong);
 		border: 1px solid var(--yg-border);
 		width: min(22rem, 92vw);
@@ -1870,6 +1902,7 @@
 
 	.manager__header {
 		flex: 0 0 auto;
+		padding-inline: var(--yg-hud-panel-inset);
 	}
 
 	.manager__header-row {
@@ -1889,11 +1922,16 @@
 		gap: 0.85rem;
 	}
 
+	.manager__body > .block {
+		padding-inline: var(--yg-hud-panel-inset);
+	}
+
 	.manager__footer {
 		flex: 0 0 auto;
 		display: flex;
 		flex-direction: column;
 		gap: 0.45rem;
+		padding-inline: var(--yg-hud-panel-inset);
 	}
 
 	.manager__expand {
@@ -2187,8 +2225,6 @@
 	.node-list,
 	.edge-list {
 		margin: 0;
-		margin-inline: calc(-1 * var(--yg-hud-panel-inset));
-		padding-inline: var(--yg-hud-panel-inset);
 		overflow: visible;
 	}
 
@@ -2276,8 +2312,9 @@
 		width: 100%;
 		text-align: left;
 		display: flex;
+		align-items: center;
 		justify-content: space-between;
-		gap: 0.5rem;
+		gap: 0.35rem;
 	}
 
 	.list-item.selected {

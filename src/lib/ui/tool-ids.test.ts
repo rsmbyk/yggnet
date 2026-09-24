@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { nextOpenTool, nodesCompanionOpen, selectionPanelOpen, toolLabel } from './tool-ids';
+import {
+	edgesCompanionOpen,
+	nextOpenTool,
+	nodesCompanionOpen,
+	selectionPanelOpen,
+	toolLabel
+} from './tool-ids';
 
 describe('nextOpenTool', () => {
 	it('opens a tool when none is open', () => {
@@ -49,5 +55,18 @@ describe('nodesCompanionOpen', () => {
 		expect(nodesCompanionOpen('nodes', 0)).toBe(false);
 		expect(nodesCompanionOpen('file', 1)).toBe(false);
 		expect(nodesCompanionOpen(null, 1)).toBe(false);
+	});
+});
+
+describe('edgesCompanionOpen', () => {
+	it('opens beside Edges when exactly one edge is selected', () => {
+		expect(edgesCompanionOpen('edges', 1)).toBe(true);
+	});
+
+	it('stays closed for multi-select or other tools', () => {
+		expect(edgesCompanionOpen('edges', 2)).toBe(false);
+		expect(edgesCompanionOpen('edges', 0)).toBe(false);
+		expect(edgesCompanionOpen('nodes', 1)).toBe(false);
+		expect(edgesCompanionOpen(null, 1)).toBe(false);
 	});
 });

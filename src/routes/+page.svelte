@@ -6,7 +6,7 @@
 	import { app } from '$lib/session/app.svelte';
 	import { applyBeforeUnloadGuard } from '$lib/session/work-busy';
 	import { tabTitleFromGraph } from '$lib/session/tab-title';
-	import { nodesCompanionOpen, selectionPanelOpen } from '$lib/ui/tool-ids';
+	import { edgesCompanionOpen, nodesCompanionOpen, selectionPanelOpen } from '$lib/ui/tool-ids';
 	import { forwardWheelEvent, worldCanvas } from '$lib/ui/forward-wheel';
 
 	const slide = { duration: 220, x: -28, opacity: 0 };
@@ -119,7 +119,12 @@
 	const showNodesCompanion = $derived(
 		nodesCompanionOpen(app.ui.openTool, app.selection.nodeIds.length)
 	);
-	const showSelectionSlot = $derived(showSelectionPanel || showNodesCompanion);
+	const showEdgesCompanion = $derived(
+		edgesCompanionOpen(app.ui.openTool, app.selection.edgeIds.length)
+	);
+	const showSelectionSlot = $derived(
+		showSelectionPanel || showNodesCompanion || showEdgesCompanion
+	);
 
 	const tabTitle = $derived(tabTitleFromGraph(app.document.title));
 
@@ -203,7 +208,7 @@
 		<div
 			class="tool-panel-stage"
 			class:fill={app.ui.openTool !== null}
-			class:companion={showNodesCompanion}
+			class:companion={showNodesCompanion || showEdgesCompanion}
 		>
 			{#if app.ui.openTool}
 				<div class="tool-panel-slot" transition:fly={slide}>

@@ -16,6 +16,8 @@ export {
 	toggleNodeInSelection,
 	selectEdge,
 	toggleEdgeInSelection,
+	addEdgeToSelection,
+	removeEdgeFromSelection,
 	clearSelection,
 	isSelected,
 	isEdgeSelected,
@@ -49,6 +51,13 @@ export {
 	type EdgePatch,
 	type AddEdgeInput
 } from './ops/ops';
+export {
+	edgeDirectionMode,
+	edgeDirectionOptions,
+	edgeDirectionPatch,
+	edgeDirectionSelectValue,
+	type EdgeDirectionMode
+} from './ops/edge-direction';
 export {
 	createHistory,
 	execute,

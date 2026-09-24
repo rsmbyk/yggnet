@@ -56,6 +56,7 @@ export function assemble(
 			to: `g${e.to}`,
 			directed: e.directed ?? directedDefault,
 			weight: opts.weighted ? rng.int(1, 9) : 1,
+			tags: [],
 			attachments: [],
 			data: {}
 		};

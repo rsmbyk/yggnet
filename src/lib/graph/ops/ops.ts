@@ -9,6 +9,7 @@ export interface AddEdgeInput {
 	directed?: boolean;
 	weight?: number;
 	label?: string;
+	tags?: string[];
 }
 
 /** Bump `updatedAt` to now. */
@@ -91,7 +92,7 @@ export function removeNode(doc: GraphDocument, id: NodeId): GraphDocument {
 
 /**
  * Add an edge between existing endpoints.
- * Defaults: undirected, weight 1, empty attachments/data.
+ * Defaults: undirected, weight 1, empty tags/attachments/data.
  */
 export function addEdge(
 	doc: GraphDocument,
@@ -106,6 +107,7 @@ export function addEdge(
 		to: input.to,
 		directed: input.directed ?? false,
 		weight: input.weight ?? 1,
+		tags: input.tags ?? [],
 		attachments: [],
 		data: {},
 		...(input.label !== undefined ? { label: input.label } : {})
@@ -133,6 +135,7 @@ export function updateEdge(doc: GraphDocument, id: EdgeId, patch: EdgePatch): Gr
 		id,
 		from,
 		to,
+		tags: patch.tags ?? prev.tags,
 		attachments: patch.attachments ?? prev.attachments,
 		data: patch.data ?? prev.data
 	};

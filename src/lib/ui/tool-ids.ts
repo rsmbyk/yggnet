@@ -48,3 +48,8 @@ export function selectionPanelOpen(
 export function nodesCompanionOpen(openTool: ToolId | null, nodeCount: number): boolean {
 	return openTool === 'nodes' && nodeCount === 1;
 }
+
+/** Edge details companion — sits to the right of the Edges tool when one edge is selected. */
+export function edgesCompanionOpen(openTool: ToolId | null, edgeCount: number): boolean {
+	return openTool === 'edges' && edgeCount === 1;
+}

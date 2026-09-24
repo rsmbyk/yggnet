@@ -10,18 +10,19 @@ test('toggle directed on edge keeps world visible', async ({ page }) => {
 	const edgeList = page.getByTestId('edge-list');
 	await expect(edgeList.locator('[data-testid^="edge-item-"]')).not.toHaveCount(0);
 
-	const edgeTestId = await edgeList
-		.locator('[data-testid^="edge-item-"]')
-		.first()
-		.getAttribute('data-testid');
-	expect(edgeTestId).toMatch(/^edge-item-/);
-	const id = edgeTestId!.slice('edge-item-'.length);
+	await edgeList.locator('[data-testid^="edge-item-"]').first().click();
+	await expect(page.getByTestId('edge-editor')).toBeVisible();
 
-	await page.getByTestId(`toggle-directed-${id}`).click();
-	await expect(page.getByTestId('yggnet-world')).toBeVisible();
-	await expect(page.getByTestId('yggnet-world').locator('canvas')).toBeVisible();
-
-	await page.getByTestId(`toggle-directed-${id}`).click();
+	const direction = page.getByTestId('edge-direction');
+	const source = page.getByTestId('edge-source');
+	const destination = page.getByTestId('edge-destination');
+	await direction.selectOption('forward');
+	const fromId = await source.inputValue();
+	const toId = await destination.inputValue();
+	await direction.selectOption('reverse');
+	await expect(source).toHaveValue(toId);
+	await expect(destination).toHaveValue(fromId);
+	await expect(direction).toHaveValue('forward');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible();
 	await expect(page.getByTestId('yggnet-world').locator('canvas')).toBeVisible();
 });

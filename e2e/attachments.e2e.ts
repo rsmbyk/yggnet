@@ -1,46 +1,31 @@
 import { expect, test } from '@playwright/test';
 import { applyGeneratedGraph, openTool } from './open-tool';
 
-test('add and remove edge attachment via manager', async ({ page }) => {
+test('edge companion edits notes and keeps edge tags separate from node tags', async ({ page }) => {
 	await page.goto('/');
 	await applyGeneratedGraph(page, 'cycle', { nodes: 4 });
 
-	await openTool(page, 'edges');
-	await page.getByTestId('edge-list').locator('button.list-item').first().click();
-	await expect(page.getByTestId('edge-attachments-section')).toBeVisible();
-
-	const list = page.getByTestId('edge-attachment-list');
-	await expect(list.locator('li')).toHaveCount(0);
-
-	await page.getByTestId('edge-attachment-name').fill('readme');
-	await page.getByTestId('edge-attachment-payload').fill('hello world');
-	await page.getByTestId('add-edge-attachment').click();
-
-	await expect(list.locator('li')).toHaveCount(1);
-	await expect(list).toContainText('readme');
-	await expect(list).toContainText('hello world');
-
-	await page.getByTestId('remove-edge-attachment-0').click();
-	await expect(list.locator('li')).toHaveCount(0);
-});
-
-test('edge attachment changes are undoable', async ({ page }) => {
-	await page.goto('/');
-	await applyGeneratedGraph(page, 'cycle', { nodes: 4 });
+	await openTool(page, 'nodes');
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	const nodeSheet = page.getByTestId('world-node-sheet');
+	await expect(nodeSheet).toBeVisible();
+	await nodeSheet.getByLabel('Add tags').click();
+	await nodeSheet.getByPlaceholder('Search or create…').fill('node-only');
+	await page.keyboard.press('Enter');
+	await expect(nodeSheet).toContainText('node-only');
 
 	await openTool(page, 'edges');
 	await page.getByTestId('edge-list').locator('button.list-item').first().click();
+	const edgeSheet = page.getByTestId('world-edge-sheet');
+	await expect(edgeSheet.getByTestId('edge-editor')).toBeVisible();
 
-	await page.getByTestId('edge-attachment-name').fill('note');
-	await page.getByTestId('edge-attachment-payload').fill('payload');
-	await page.getByTestId('add-edge-attachment').click();
+	await page.getByTestId('edge-notes').fill('hello edge');
+	await expect(page.getByTestId('edge-notes')).toHaveValue('hello edge');
 
-	const list = page.getByTestId('edge-attachment-list');
-	await expect(list.locator('li')).toHaveCount(1);
-
-	await page.getByTestId('undo').evaluate((el: HTMLButtonElement) => el.click());
-	await expect(list.locator('li')).toHaveCount(0);
-
-	await page.getByTestId('redo').evaluate((el: HTMLButtonElement) => el.click());
-	await expect(list.locator('li')).toHaveCount(1);
+	await edgeSheet.getByLabel('Add tags').click();
+	await edgeSheet.getByPlaceholder('Search or create…').fill('edge-route');
+	await page.keyboard.press('Enter');
+	await expect(edgeSheet).toContainText('edge-route');
+	// Node tags must not appear as edge pills.
+	await expect(edgeSheet.getByTestId('node-tag-remove-node-only')).toHaveCount(0);
 });

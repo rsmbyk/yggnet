@@ -34,7 +34,10 @@ import {
 	removeNode,
 	addNodeToSelection,
 	removeNodeFromSelection,
+	addEdgeToSelection,
+	removeEdgeFromSelection,
 	selectNode,
+	selectEdge,
 	toggleEdgeInSelection,
 	toggleNodeInSelection,
 	serializeDocument,
@@ -410,6 +413,33 @@ class AppStore {
 		this.setSelection(nodeId);
 	}
 
+	/**
+	 * Edge selection with modifier semantics (clears node selection).
+	 * Same modes as {@link selectNodeWithModifiers}.
+	 */
+	selectEdgeWithModifiers(
+		edgeId: string,
+		mode: 'replace' | 'toggle' | 'add' | 'deselect' = 'replace'
+	): void {
+		if (mode === 'deselect') {
+			this.selection = removeEdgeFromSelection(this.selection, edgeId);
+			if (this.selection.edgeIds.length === 0) this.setMultiSelectMode(false);
+			return;
+		}
+		if (mode === 'toggle') {
+			this.selection = toggleEdgeInSelection(this.selection, edgeId);
+			if (this.selection.edgeIds.length === 0) this.setMultiSelectMode(false);
+			return;
+		}
+		if (mode === 'add') {
+			this.selection = addEdgeToSelection(this.selection, edgeId);
+			this.setMultiSelectMode(true);
+			return;
+		}
+		this.setMultiSelectMode(false);
+		this.selection = selectEdge(this.selection, edgeId);
+	}
+
 	setMultiSelectMode(on: boolean): void {
 		if (this.ui.multiSelectMode === on) return;
 		this.ui = { ...this.ui, multiSelectMode: on };
@@ -417,10 +447,10 @@ class AppStore {
 
 	toggleEdgeSelection(edgeId: string, additive = false): void {
 		if (additive) {
-			this.selection = toggleEdgeInSelection(this.selection, edgeId);
+			this.selectEdgeWithModifiers(edgeId, 'toggle');
 			return;
 		}
-		this.selection = toggleEdgeInSelection(clearSelection(this.selection), edgeId);
+		this.selectEdgeWithModifiers(edgeId, 'replace');
 	}
 
 	clearAllSelection(): void {
@@ -534,6 +564,7 @@ class AppStore {
 			directed: prev.directed,
 			label: prev.label,
 			weight: prev.weight,
+			tags: [...prev.tags],
 			notes: prev.notes,
 			attachments: prev.attachments.map((a) => ({ ...a })),
 			data: { ...prev.data }
