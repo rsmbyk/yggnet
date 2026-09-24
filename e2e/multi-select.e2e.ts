@@ -8,7 +8,7 @@ test('ctrl-click multi-selects nodes in manager', async ({ page }) => {
 	await page.getByTestId('add-node').click();
 	await page.getByTestId('add-node').click();
 
-	const items = page.getByTestId('node-list').locator('li button');
+	const items = page.getByTestId('node-list').locator('button.list-item');
 	const first = items.nth(0);
 	const second = items.nth(1);
 	const firstId = await first.getAttribute('data-testid');

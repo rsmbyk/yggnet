@@ -43,7 +43,7 @@ test('Generate stays above the minimap when a type has more fields', async ({ pa
 	await page.getByTestId('generate-kind').selectOption('communities');
 	const panel = page.getByTestId('yggnet-manager');
 	const camera = page.getByTestId('camera-panel');
-	await expect(panel.getByText('p inside', { exact: true })).toBeVisible();
+	await expect(panel.getByRole('spinbutton', { name: /p inside/i })).toBeVisible();
 	const card = await panel.boundingBox();
 	const cam = await camera.boundingBox();
 	expect(card).toBeTruthy();
@@ -84,9 +84,7 @@ test('switching tools hides the expand control when the new panel fits', async (
 	await page.getByTestId('tools-panel-expand').click();
 	await expect(page.getByTestId('tools-panel-collapse')).toBeVisible();
 	await openTool(page, 'generate');
-	await expect(
-		page.getByTestId('yggnet-manager').getByText('Generate', { exact: true })
-	).toBeVisible();
+	await expect(page.getByTestId('yggnet-manager').locator('.brand')).toHaveText('Generate');
 	await expect(page.getByTestId('tools-panel-expand')).toHaveCount(0);
 	await expect(page.getByTestId('tools-panel-collapse')).toHaveCount(0);
 });

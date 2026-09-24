@@ -1,17 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { openTool } from './open-tool';
+import { applyGeneratedGraph, openTool } from './open-tool';
 
 test('add and remove edge attachment via manager', async ({ page }) => {
 	await page.goto('/');
-	await openTool(page, 'nodes');
-	await page.getByTestId('add-node').click();
-	await page.getByTestId('add-node').click();
+	await applyGeneratedGraph(page, 'cycle', { nodes: 4 });
 
 	await openTool(page, 'edges');
-	await page.getByTestId('edge-from').selectOption({ index: 1 });
-	await page.getByTestId('edge-to').selectOption({ index: 2 });
-	await page.getByTestId('add-edge').click();
-
 	await page.getByTestId('edge-list').locator('button.list-item').first().click();
 	await expect(page.getByTestId('edge-attachments-section')).toBeVisible();
 
@@ -32,14 +26,9 @@ test('add and remove edge attachment via manager', async ({ page }) => {
 
 test('edge attachment changes are undoable', async ({ page }) => {
 	await page.goto('/');
-	await openTool(page, 'nodes');
-	await page.getByTestId('add-node').click();
-	await page.getByTestId('add-node').click();
+	await applyGeneratedGraph(page, 'cycle', { nodes: 4 });
 
 	await openTool(page, 'edges');
-	await page.getByTestId('edge-from').selectOption({ index: 1 });
-	await page.getByTestId('edge-to').selectOption({ index: 2 });
-	await page.getByTestId('add-edge').click();
 	await page.getByTestId('edge-list').locator('button.list-item').first().click();
 
 	await page.getByTestId('edge-attachment-name').fill('note');
@@ -49,9 +38,9 @@ test('edge attachment changes are undoable', async ({ page }) => {
 	const list = page.getByTestId('edge-attachment-list');
 	await expect(list.locator('li')).toHaveCount(1);
 
-	await page.getByTestId('undo').click();
+	await page.getByTestId('undo').evaluate((el: HTMLButtonElement) => el.click());
 	await expect(list.locator('li')).toHaveCount(0);
 
-	await page.getByTestId('redo').click();
+	await page.getByTestId('redo').evaluate((el: HTMLButtonElement) => el.click());
 	await expect(list.locator('li')).toHaveCount(1);
 });

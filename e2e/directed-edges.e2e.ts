@@ -1,28 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { openTool } from './open-tool';
+import { applyGeneratedGraph, openTool } from './open-tool';
 
 test('toggle directed on edge keeps world visible', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
-	await openTool(page, 'nodes');
-
-	const nodeList = page.getByTestId('node-list');
-	const edgeList = page.getByTestId('edge-list');
-
-	const nodeCount = await nodeList.locator('li').count();
-	if (nodeCount < 2) {
-		await page.getByTestId('add-node').click();
-		await page.getByTestId('add-node').click();
-	}
-
-	const nodes = nodeList.locator('li');
-	const fromLabel = (await nodes.nth(0).innerText()).trim();
-	const toLabel = (await nodes.nth(1).innerText()).trim();
+	await applyGeneratedGraph(page, 'cycle', { nodes: 4 });
 
 	await openTool(page, 'edges');
-	await page.getByTestId('edge-from').selectOption({ label: fromLabel });
-	await page.getByTestId('edge-to').selectOption({ label: toLabel });
-	await page.getByTestId('add-edge').click();
+	const edgeList = page.getByTestId('edge-list');
+	await expect(edgeList.locator('[data-testid^="edge-item-"]')).not.toHaveCount(0);
 
 	const edgeTestId = await edgeList
 		.locator('[data-testid^="edge-item-"]')

@@ -42,8 +42,6 @@
 
 	let { section }: { section: PanelSection } = $props();
 
-	let edgeFrom = $state('');
-	let edgeTo = $state('');
 	let filterInput = $state('');
 	let stepNote = $state('');
 	const genFields = $derived(fieldsForKind(app.generateForm.kind));
@@ -67,6 +65,9 @@
 	let edgeAttachPayload = $state('');
 	let saveSlotName = $state('');
 	let panelEl = $state<HTMLElement | undefined>(undefined);
+	let headerEl = $state<HTMLElement | undefined>(undefined);
+	let bodyEl = $state<HTMLElement | undefined>(undefined);
+	let footerEl = $state<HTMLElement | undefined>(undefined);
 	let maxHeightPx = $state<number | null>(null);
 	let overflowing = $state(false);
 
@@ -76,7 +77,9 @@
 
 	$effect(() => {
 		const el = panelEl;
-		if (!el) return;
+		const header = headerEl;
+		const body = bodyEl;
+		if (!el || !header || !body) return;
 		const isSelection = section === 'selection';
 		const expanded = isSelection ? app.ui.selectionPanelExpanded : app.ui.toolsPanelExpanded;
 		void genFields;
@@ -86,6 +89,9 @@
 		void selectedNode?.tags.length;
 		void incidentEdges.length;
 		void selectedNode?.notes;
+		void nodes.length;
+		void edges.length;
+		void selectedCount;
 		const update = () => {
 			const rootSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 			const edge =
@@ -109,29 +115,40 @@
 				edge,
 				expanded
 			});
-			el.style.maxHeight = `${limit}px`;
-			const nested = [
-				...el.querySelectorAll<HTMLElement>('.list, .generate-fields, .selection-sheet-body')
-			];
-			const nestedExtra = nested.reduce(
-				(sum, node) => sum + Math.max(0, node.scrollHeight - node.clientHeight),
-				0
-			);
-			overflowing = toolsPanelOverflows(el.scrollHeight + nestedExtra, collapsedLimit);
-			maxHeightPx = limit;
+			const nextMax = `${limit}px`;
+			if (el.style.maxHeight !== nextMax) el.style.maxHeight = nextMax;
+			const styles = getComputedStyle(el);
+			const gap = Number.parseFloat(styles.rowGap || styles.gap) || 0;
+			const liveFooter = footerEl?.isConnected ? footerEl : undefined;
+			const footerH = liveFooter?.offsetHeight ?? 0;
+			const gaps = footerH > 0 ? 2 : 1;
+			// Body is the scrollport; scrollHeight is the natural content height.
+			const natural = header.offsetHeight + body.scrollHeight + footerH + gap * gaps;
+			const nextOverflow = toolsPanelOverflows(natural, collapsedLimit);
+			if (nextOverflow !== overflowing) {
+				overflowing = nextOverflow;
+				void tick().then(schedule);
+			}
+			if (maxHeightPx !== limit) maxHeightPx = limit;
+		};
+		let raf = 0;
+		const schedule = () => {
+			cancelAnimationFrame(raf);
+			raf = requestAnimationFrame(update);
 		};
 		update();
-		void tick().then(update);
-		const ro = new ResizeObserver(update);
+		void tick().then(schedule);
+		const ro = new ResizeObserver(schedule);
 		ro.observe(el);
+		ro.observe(header);
+		ro.observe(body);
 		const map = document.querySelector('[data-testid="camera-panel"]');
 		if (map) ro.observe(map);
-		const sheetBody = el.querySelector<HTMLElement>('.selection-sheet-body');
-		if (sheetBody) ro.observe(sheetBody);
-		window.addEventListener('resize', update);
+		window.addEventListener('resize', schedule);
 		return () => {
+			cancelAnimationFrame(raf);
 			ro.disconnect();
-			window.removeEventListener('resize', update);
+			window.removeEventListener('resize', schedule);
 			el.style.maxHeight = '';
 		};
 	});
@@ -225,6 +242,27 @@
 					: 'Selection'
 	);
 
+	const brandTitle = $derived(
+		section === 'selection'
+			? selectionTitle
+			: section === 'nodes'
+				? nodes.length > 0
+					? `Nodes (${nodes.length})`
+					: 'Nodes'
+				: section === 'edges'
+					? edges.length > 0
+						? `Edges (${edges.length})`
+						: 'Edges'
+					: toolLabel(section)
+	);
+
+	const footerHasActions = $derived(
+		(section === 'generate') ||
+			(section === 'nodes' && selectedCount > 0) ||
+			(section === 'selection' &&
+				Boolean(selectedNode && selectedCount === 1 && app.ui.openTool === null))
+	);
+
 	/** Collapse the selection sheet when the primary selected node changes. */
 	let lastPrimaryNodeId = $state.raw<string | null | undefined>(undefined);
 	$effect(() => {
@@ -269,13 +307,6 @@
 
 	function onAddNode() {
 		app.addNodeNearView();
-	}
-
-	function onAddEdge() {
-		if (!edgeFrom || !edgeTo) return;
-		app.addEdge(edgeFrom, edgeTo);
-		edgeFrom = '';
-		edgeTo = '';
 	}
 
 	/** Ego-centric incident edge: current node left; direction relative to it. */
@@ -341,8 +372,23 @@
 	style:max-height={maxHeightPx != null ? `${maxHeightPx}px` : undefined}
 	data-testid={section === 'selection' ? selectionTestId : 'yggnet-manager'}
 >
-	<header class="manager__header">
-		<p class="brand">{section === 'selection' ? selectionTitle : toolLabel(section)}</p>
+	<header class="manager__header" bind:this={headerEl}>
+		<div class="manager__header-row">
+			<p class="brand">{brandTitle}</p>
+			{#if section === 'nodes'}
+				<button
+					type="button"
+					class="btn-with-icon"
+					data-testid="add-node"
+					onclick={onAddNode}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path fill="currentColor" d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z" />
+					</svg>
+					Add node
+				</button>
+			{/if}
+		</div>
 		{#if section === 'file'}
 			<label class="title-field">
 				Name
@@ -357,6 +403,7 @@
 		{/if}
 	</header>
 
+	<div class="manager__body" bind:this={bodyEl}>
 	{#if section === 'selection'}
 		<section
 			class="block"
@@ -364,22 +411,6 @@
 			aria-label="Selection"
 		>
 			{#if selectedNode && selectedCount === 1}
-				{#if app.ui.openTool === null}
-					<div class="row wrap selection-actions">
-						<button
-							type="button"
-							data-testid="world-connect"
-							class:active={app.ui.connectFromId === selectedNode.id}
-							onclick={() => app.setConnectFrom(selectedNode.id)}>Connect</button
-						>
-						<button
-							type="button"
-							class="danger"
-							data-testid="world-delete-node"
-							onclick={() => app.removeNode(selectedNode.id)}>Delete</button
-						>
-					</div>
-				{/if}
 				<div class="selection-sheet-body">
 					<label>
 						Label
@@ -606,6 +637,7 @@
 	{#if section === 'generate'}
 		<section class="block generate-block" data-testid="generate" aria-label="Generate">
 			<form
+				id="generate-form"
 				class="generate-form"
 				onsubmit={(e) => {
 					e.preventDefault();
@@ -1143,24 +1175,12 @@
 						>
 					{/if}
 				</div>
-				<button
-					type="submit"
-					class="generate-submit"
-					data-testid="generate-submit"
-					disabled={app.busyKind !== null}>Generate</button
-				>
 			</form>
 		</section>
 	{/if}
 
 	{#if section === 'nodes'}
 		<section class="block node-panel" data-testid="nodes-section">
-			<div class="row between">
-				<h2>Nodes ({nodes.length})</h2>
-				<div class="row wrap">
-					<button type="button" data-testid="add-node" onclick={onAddNode}>Add node</button>
-				</div>
-			</div>
 			<ul class="list node-list" data-testid="node-list">
 				{#each nodes as node (node.id)}
 					<li class="node-row">
@@ -1193,29 +1213,6 @@
 					</li>
 				{/each}
 			</ul>
-			{#if selectedCount > 0}
-				<div class="node-selection-controls">
-					<p class="hint" data-testid="selection-count">{selectedCount} selected</p>
-					{#if selectedCount > 1}
-						<div class="row wrap">
-							<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
-								>Group {selectedCount}</button
-							>
-							<button
-								type="button"
-								data-testid="clear-selection"
-								onclick={() => app.clearAllSelection()}>Clear selection</button
-							>
-							<button
-								type="button"
-								class="danger"
-								data-testid="delete-selection"
-								onclick={() => app.deleteSelection()}>Delete</button
-							>
-						</div>
-					{/if}
-				</div>
-			{/if}
 		</section>
 	{/if}
 
@@ -1295,26 +1292,8 @@
 			</section>
 		{/if}
 
-		<section class="block" data-testid="edges-section">
-			<div class="row between">
-				<h2>Edges ({edges.length})</h2>
-			</div>
-			<div class="row">
-				<select data-testid="edge-from" bind:value={edgeFrom} aria-label="Edge from">
-					<option value="">From</option>
-					{#each nodes as n (n.id)}
-						<option value={n.id}>{n.label}</option>
-					{/each}
-				</select>
-				<select data-testid="edge-to" bind:value={edgeTo} aria-label="Edge to">
-					<option value="">To</option>
-					{#each nodes as n (n.id)}
-						<option value={n.id}>{n.label}</option>
-					{/each}
-				</select>
-				<button type="button" data-testid="add-edge" onclick={onAddEdge}>Add</button>
-			</div>
-			<ul class="list" data-testid="edge-list">
+		<section class="block edge-panel" data-testid="edges-section">
+			<ul class="list edge-list" data-testid="edge-list">
 				{#each edges as edge (edge.id)}
 					<li class="edge-row">
 						<button
@@ -1742,66 +1721,121 @@
 			{/if}
 		</section>
 	{/if}
+	</div>
 
-	{#if overflowing}
-		<button
-			type="button"
-			class="manager__expand"
-			data-testid={
-				section === 'selection'
-					? app.ui.selectionPanelExpanded
-						? 'selection-panel-collapse'
-						: 'selection-panel-expand'
-					: app.ui.toolsPanelExpanded
-						? 'tools-panel-collapse'
-						: 'tools-panel-expand'
-			}
-			aria-label={
-				section === 'selection'
-					? app.ui.selectionPanelExpanded
-						? 'Collapse selection panel'
-						: 'Expand selection panel'
-					: app.ui.toolsPanelExpanded
-						? 'Collapse tools panel'
-						: 'Expand tools panel'
-			}
-			title={
-				section === 'selection'
-					? app.ui.selectionPanelExpanded
-						? 'Collapse'
-						: 'Expand'
-					: app.ui.toolsPanelExpanded
-						? 'Collapse'
-						: 'Expand'
-			}
-			onclick={() =>
-				section === 'selection'
-					? app.setSelectionPanelExpanded(!app.ui.selectionPanelExpanded)
-					: app.setToolsPanelExpanded(!app.ui.toolsPanelExpanded)
-			}
-		>
-			<svg viewBox="0 0 24 24" aria-hidden="true">
-				{#if (section === 'selection' ? app.ui.selectionPanelExpanded : app.ui.toolsPanelExpanded)}
-					<path
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						d="M6 15l6-6 6 6"
-					/>
-				{:else}
-					<path
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						d="M6 9l6 6 6-6"
-					/>
-				{/if}
-			</svg>
-		</button>
+	{#if footerHasActions || overflowing}
+		<footer class="manager__footer" bind:this={footerEl}>
+			{#if section === 'selection' && selectedNode && selectedCount === 1 && app.ui.openTool === null}
+				<div class="row wrap selection-actions">
+					<button
+						type="button"
+						data-testid="world-connect"
+						class:active={app.ui.connectFromId === selectedNode.id}
+						onclick={() => app.setConnectFrom(selectedNode.id)}>Connect</button
+					>
+					<button
+						type="button"
+						class="danger"
+						data-testid="world-delete-node"
+						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
+					>
+				</div>
+			{/if}
+			{#if section === 'generate'}
+				<button
+					type="submit"
+					form="generate-form"
+					class="generate-submit"
+					data-testid="generate-submit"
+					disabled={app.busyKind !== null}>Generate</button
+				>
+			{/if}
+			{#if section === 'nodes' && selectedCount > 0}
+				<div class="node-selection-controls">
+					<p class="hint" data-testid="selection-count">{selectedCount} selected</p>
+					{#if selectedCount > 1}
+						<div class="row wrap">
+							<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
+								>Group {selectedCount}</button
+							>
+							<button
+								type="button"
+								data-testid="clear-selection"
+								onclick={() => app.clearAllSelection()}>Clear selection</button
+							>
+							<button
+								type="button"
+								class="danger"
+								data-testid="delete-selection"
+								onclick={() => app.deleteSelection()}>Delete</button
+							>
+						</div>
+					{/if}
+				</div>
+			{/if}
+			{#if overflowing}
+				<button
+					type="button"
+					class="manager__expand"
+					data-testid={
+						section === 'selection'
+							? app.ui.selectionPanelExpanded
+								? 'selection-panel-collapse'
+								: 'selection-panel-expand'
+							: app.ui.toolsPanelExpanded
+								? 'tools-panel-collapse'
+								: 'tools-panel-expand'
+					}
+					aria-label={
+						section === 'selection'
+							? app.ui.selectionPanelExpanded
+								? 'Collapse selection panel'
+								: 'Expand selection panel'
+							: app.ui.toolsPanelExpanded
+								? 'Collapse tools panel'
+								: 'Expand tools panel'
+					}
+					title={
+						section === 'selection'
+							? app.ui.selectionPanelExpanded
+								? 'Collapse'
+								: 'Expand'
+							: app.ui.toolsPanelExpanded
+								? 'Collapse'
+								: 'Expand'
+					}
+					onclick={() =>
+						section === 'selection'
+							? app.setSelectionPanelExpanded(!app.ui.selectionPanelExpanded)
+							: app.setToolsPanelExpanded(!app.ui.toolsPanelExpanded)
+					}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						{#if (section === 'selection'
+							? app.ui.selectionPanelExpanded
+							: app.ui.toolsPanelExpanded)}
+							<path
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M6 15l6-6 6 6"
+							/>
+						{:else}
+							<path
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M6 9l6 6 6-6"
+							/>
+						{/if}
+					</svg>
+				</button>
+			{/if}
+		</footer>
 	{/if}
 </aside>
 
@@ -1821,7 +1855,7 @@
 		width: min(22rem, 92vw);
 		height: auto;
 		max-height: 100%;
-		overflow: auto;
+		overflow: hidden;
 		box-shadow: 0 10px 32px rgba(28, 36, 46, 0.16);
 		border-radius: var(--yg-radius-modal);
 	}
@@ -1834,13 +1868,32 @@
 		overflow: hidden;
 	}
 
-	.manager--selection > .block.selection-sheet {
-		flex: 1 1 auto;
-		min-height: 0;
+	.manager__header {
+		flex: 0 0 auto;
 	}
 
-	.manager__header {
-		flex-shrink: 0;
+	.manager__header-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+
+	.manager__body {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 0.85rem;
+	}
+
+	.manager__footer {
+		flex: 0 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: 0.45rem;
 	}
 
 	.manager__expand {
@@ -1849,7 +1902,7 @@
 		place-items: center;
 		width: 100%;
 		height: 0.7rem;
-		margin: calc(-1 * 0.85rem) 0 0;
+		margin: 0;
 		padding: 0;
 		line-height: 0;
 		border: none;
@@ -1874,9 +1927,20 @@
 		padding-bottom: 0.05rem;
 	}
 
+	.btn-with-icon {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+	}
+
+	.btn-with-icon svg {
+		width: 0.95rem;
+		height: 0.95rem;
+		flex: 0 0 auto;
+	}
+
 	.file-saves {
-		flex: 1 1 auto;
-		min-height: 0;
+		flex: 0 0 auto;
 		display: flex;
 		flex-direction: column;
 	}
@@ -1885,9 +1949,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.4rem;
-		flex: 1 1 auto;
+		flex: 0 0 auto;
 		min-width: 0;
-		min-height: 0;
 	}
 
 	.generate-form {
@@ -1895,9 +1958,8 @@
 		flex-direction: column;
 		gap: 0.35rem;
 		margin: 0;
-		flex: 1 1 auto;
+		flex: 0 0 auto;
 		min-width: 0;
-		min-height: 0;
 	}
 
 	.generate-form > label {
@@ -1914,11 +1976,7 @@
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		align-items: start;
 		gap: 0.35rem 0.45rem;
-		flex: 1 1 auto;
 		min-width: 0;
-		min-height: 0;
-		overflow-x: hidden;
-		overflow-y: auto;
 	}
 
 	.generate-fields label {
@@ -1974,6 +2032,27 @@
 	}
 
 	.generate-form > button:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+
+	.manager__footer > button.generate-submit {
+		align-self: stretch;
+		padding: 0.55rem 1rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		background: var(--yg-accent);
+		color: #f4f8f9;
+		border-color: color-mix(in srgb, var(--yg-accent) 70%, #062e34);
+	}
+
+	.manager__footer > button.generate-submit:hover:not(:disabled) {
+		background: color-mix(in srgb, var(--yg-accent) 88%, #062e34);
+		border-color: color-mix(in srgb, var(--yg-accent) 55%, #062e34);
+		color: #f4f8f9;
+	}
+
+	.manager__footer > button.generate-submit:disabled {
 		opacity: 0.45;
 		cursor: not-allowed;
 	}
@@ -2092,23 +2171,25 @@
 	}
 
 	.node-panel {
-		flex: 1 1 auto;
-		min-height: 0;
+		flex: 0 0 auto;
 		display: flex;
 		flex-direction: column;
 		gap: 0.4rem;
 	}
 
-	.node-panel > .row.between h2 {
-		margin: 0;
+	.edge-panel {
+		flex: 0 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
 	}
 
-	.node-list {
-		flex: 1 1 auto;
-		min-height: 0;
-		max-height: none;
+	.node-list,
+	.edge-list {
+		margin: 0;
 		margin-inline: calc(-1 * var(--yg-hud-panel-inset));
 		padding-inline: var(--yg-hud-panel-inset);
+		overflow: visible;
 	}
 
 	.node-list-label {
@@ -2182,11 +2263,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.2rem;
-		overflow: auto;
+		overflow: visible;
 	}
 
 	.list.save-slot-list {
-		flex: 1 1 auto;
+		flex: 0 0 auto;
 		min-height: 0;
 		max-height: none;
 	}
@@ -2386,21 +2467,10 @@
 		gap: 0.55rem;
 	}
 
-	.selection-sheet > .selection-actions {
-		flex: 0 0 auto;
-		margin: 0;
-	}
-
 	.selection-sheet-body {
-		flex: 1 1 auto;
-		min-height: 0;
-		overflow-x: hidden;
-		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
 		gap: 0.85rem;
-		margin-inline: calc(-1 * var(--yg-hud-panel-inset));
-		padding-inline: var(--yg-hud-panel-inset);
 	}
 
 	.selection-sheet-body > label,
