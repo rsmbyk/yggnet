@@ -225,6 +225,16 @@
 					: 'Selection'
 	);
 
+	/** Collapse the selection sheet when the primary selected node changes. */
+	let lastPrimaryNodeId = $state.raw<string | null | undefined>(undefined);
+	$effect(() => {
+		const id = selectedId;
+		if (lastPrimaryNodeId !== undefined && lastPrimaryNodeId !== id) {
+			if (app.ui.selectionPanelExpanded) app.setSelectionPanelExpanded(false);
+		}
+		lastPrimaryNodeId = id;
+	});
+
 	const groupIds = $derived([
 		...new Set(
 			nodes.map((n) => n.groupId).filter((g): g is string => typeof g === 'string' && g.length > 0)
@@ -354,20 +364,22 @@
 			aria-label="Selection"
 		>
 			{#if selectedNode && selectedCount === 1}
-				<div class="row wrap selection-actions">
-					<button
-						type="button"
-						data-testid="world-connect"
-						class:active={app.ui.connectFromId === selectedNode.id}
-						onclick={() => app.setConnectFrom(selectedNode.id)}>Connect</button
-					>
-					<button
-						type="button"
-						class="danger"
-						data-testid="world-delete-node"
-						onclick={() => app.removeNode(selectedNode.id)}>Delete</button
-					>
-				</div>
+				{#if app.ui.openTool === null}
+					<div class="row wrap selection-actions">
+						<button
+							type="button"
+							data-testid="world-connect"
+							class:active={app.ui.connectFromId === selectedNode.id}
+							onclick={() => app.setConnectFrom(selectedNode.id)}>Connect</button
+						>
+						<button
+							type="button"
+							class="danger"
+							data-testid="world-delete-node"
+							onclick={() => app.removeNode(selectedNode.id)}>Delete</button
+						>
+					</div>
+				{/if}
 				<div class="selection-sheet-body">
 					<label>
 						Label
