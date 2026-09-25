@@ -63,6 +63,8 @@ Ideas land on the board first. A spec is written **from one or more items**. Boa
 
 Priority is **P0** (highest) … **P3**. **Only the Backlog column is sorted by priority** (P0 first; ties by ID). Speccing / Ready / In progress / In review / Done stay in workflow order.
 
+Board Done ≠ SDD Deprecated. Spec packs using the markdown header keep `- **Status:** Draft | Accepted | Deprecated` (SDD). After Accept, board moves leave that field at **Accepted**; Do not write board vocabulary (`done` / `in_progress`) into it.
+
 Typical `ITEM-000` → spec 000 (scaffold).
 
 ### One PR is complete

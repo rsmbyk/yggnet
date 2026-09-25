@@ -1,6 +1,12 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { posixRel, readBump, patchSpecMeta, stripItemRows } from './board-helpers.mjs';
+import {
+	posixRel,
+	readBump,
+	patchSpecMeta,
+	stripItemRows,
+	setYamlField
+} from './board-helpers.mjs';
 
 describe('board-helpers', () => {
 	it('posixRel normalizes separators', () => {
@@ -41,5 +47,15 @@ describe('board-helpers', () => {
 		expect(stripped).toContain('ITEM-039.md');
 		expect(stripped).toContain('related ITEM-040');
 		expect(stripped).toContain('ITEM-041');
+	});
+
+	it('setYamlField replaces or appends missing keys', () => {
+		const withKey = `---\nstatus: backlog\n---\n\n# Hi\n`;
+		expect(setYamlField(withKey, 'status', 'done')).toContain('status: done');
+
+		const missing = `---\nid: ITEM-001\nstatus: backlog\n---\n\n# Hi\n`;
+		const added = setYamlField(missing, 'branch', 'feat/001-x');
+		expect(added).toMatch(/^branch: feat\/001-x$/m);
+		expect(added).toContain('status: backlog');
 	});
 });

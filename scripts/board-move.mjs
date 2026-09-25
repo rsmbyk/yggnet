@@ -1,7 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { posixRel, readBump, patchSpecMeta, stripItemRows } from './board-helpers.mjs';
+import {
+	posixRel,
+	readBump,
+	patchSpecMeta,
+	stripItemRows,
+	setYamlField
+} from './board-helpers.mjs';
 
 function resolveSpecDir(id) {
 	const padded = String(id).padStart(3, '0');
@@ -68,10 +74,10 @@ function main() {
 	const bump = readBump(specText);
 
 	const status = action === 'done' ? 'done' : action === 'in_review' ? 'in_review' : 'in_progress';
-	item = item.replace(/^status:.*$/m, `status: ${status}`);
-	item = item.replace(/^updated:.*$/m, `updated: ${date}`);
-	if (branch) item = item.replace(/^branch:.*$/m, `branch: ${branch}`);
-	if (pr) item = item.replace(/^pr:.*$/m, `pr: ${pr}`);
+	item = setYamlField(item, 'status', status);
+	item = setYamlField(item, 'updated', date);
+	if (branch) item = setYamlField(item, 'branch', branch);
+	if (pr) item = setYamlField(item, 'pr', pr);
 	fs.writeFileSync(itemPath, item);
 
 	specText = patchSpecMeta(specText, status, date);
@@ -91,19 +97,21 @@ function main() {
 		const header =
 			'| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |\n| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |';
 		const row = `| [ITEM-${id}](items/ITEM-${id}.md) | ${title} | ${sum} | feat | ${pri} | ${eff} | ${specCell} | ${bump} | ${branch} | ${date} |`;
-		map.set('In progress', `${header}\n${row}\n`);
+		const prev = (map.get('In progress') || header).trimEnd();
+		const base = prev.includes('| ID') ? prev : header;
+		map.set('In progress', `${base}\n${row}\n`);
 	} else if (action === 'in_review') {
 		const header =
 			'| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |\n| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |';
 		const row = `| [ITEM-${id}](items/ITEM-${id}.md) | ${title} | ${sum} | feat | ${pri} | ${eff} | ${specCell} | ${bump} | ${pr} | ${date} |`;
-		const prev = stripItemRows(map.get('In review') || header, id).trimEnd();
+		const prev = (map.get('In review') || header).trimEnd();
 		const base = prev.includes('| ID') ? prev : header;
 		map.set('In review', `${base}\n${row}\n`);
 	} else if (action === 'done') {
 		const header =
 			'| ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Merged | Updated |\n| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |';
 		const row = `| [ITEM-${id}](items/ITEM-${id}.md) | ${title} | ${sum} | feat | ${pri} | ${eff} | ${specCell} | ${bump} | ${date} | ${date} |`;
-		const prev = stripItemRows(map.get('Done') || header, id).trimEnd();
+		const prev = (map.get('Done') || header).trimEnd();
 		const base = prev.includes('| ID') ? prev : header;
 		map.set('Done', `${base}\n${row}\n`);
 	}

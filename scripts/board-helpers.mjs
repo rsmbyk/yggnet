@@ -23,8 +23,9 @@ export function readBump(text) {
 /**
  * Update meta fields for board moves.
  * YAML packs keep workflow `status:` (done / in_review / in_progress).
- * Markdown packs use SDD status (`Draft | Accepted | Deprecated`) — map workflow
- * moves to `Accepted` and never write board vocabulary into `**Status:**`.
+ * Markdown packs use SDD status (`Draft | Accepted | Deprecated`). Board Done is
+ * not SDD Deprecated — any execute/review/done move means the Draft was Accepted,
+ * so we always write `Accepted` and never board vocabulary into `**Status:**`.
  * @param {string} text
  * @param {string} boardStatus
  * @param {string} date
@@ -34,7 +35,6 @@ export function patchSpecMeta(text, boardStatus, date) {
 	if (/^status:/m.test(out)) {
 		out = out.replace(/^status:.*$/m, `status: ${boardStatus}`);
 	} else if (/^- \*\*Status:\*\*/m.test(out)) {
-		// Board move implies the Draft was Accepted; do not write done/in_progress here.
 		out = out.replace(/^- \*\*Status:\*\*.*$/m, `- **Status:** Accepted`);
 	}
 	if (/^updated:/m.test(out)) {
@@ -43,6 +43,20 @@ export function patchSpecMeta(text, boardStatus, date) {
 		out = out.replace(/^- \*\*Updated:\*\*.*$/m, `- **Updated:** ${date}`);
 	}
 	return out;
+}
+
+/**
+ * Set a YAML frontmatter field; append before closing `---` if missing.
+ * @param {string} text
+ * @param {string} key
+ * @param {string} value
+ */
+export function setYamlField(text, key, value) {
+	const re = new RegExp(`^${key}:.*$`, 'm');
+	if (re.test(text)) return text.replace(re, `${key}: ${value}`);
+	return text.replace(/^---\r?\n([\s\S]*?)\r?\n---/, (_all, body) => {
+		return `---\n${String(body).trimEnd()}\n${key}: ${value}\n---`;
+	});
 }
 
 /**
