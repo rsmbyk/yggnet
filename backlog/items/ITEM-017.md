@@ -1,15 +1,15 @@
 ---
 id: ITEM-017
 status: archived
-title: "Filters by type/tag"
+title: 'Filters by type/tag'
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-017
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

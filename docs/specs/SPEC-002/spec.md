@@ -5,7 +5,7 @@ type: feat
 feature_area: manager
 bump: minor
 status: done
-title: "Edge weight + directed"
+title: 'Edge weight + directed'
 created: 2026-07-30
 updated: 2026-07-30
 ---

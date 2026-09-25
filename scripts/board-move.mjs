@@ -23,8 +23,7 @@ const bump =
 	(fs.readFileSync(`docs/specs/SPEC-${id}/spec.md`, 'utf8').match(/^bump: (.*)$/m) || [])[1] ||
 	'minor';
 
-const status =
-	action === 'done' ? 'done' : action === 'in_review' ? 'in_review' : 'in_progress';
+const status = action === 'done' ? 'done' : action === 'in_review' ? 'in_review' : 'in_progress';
 item = item.replace(/^status:.*$/m, `status: ${status}`);
 item = item.replace(/^updated:.*$/m, `updated: ${date}`);
 if (branch) item = item.replace(/^branch:.*$/m, `branch: ${branch}`);

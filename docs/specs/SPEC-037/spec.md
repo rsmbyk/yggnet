@@ -5,7 +5,7 @@ type: feat
 feature_area: manager
 bump: minor
 status: done
-title: "Attachments on nodes and edges"
+title: 'Attachments on nodes and edges'
 created: 2026-07-30
 updated: 2026-07-30
 ---

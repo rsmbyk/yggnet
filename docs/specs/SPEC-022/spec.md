@@ -5,7 +5,7 @@ type: feat
 feature_area: persist
 bump: patch
 status: done
-title: "Autosave"
+title: 'Autosave'
 created: 2026-07-30
 updated: 2026-07-30
 ---

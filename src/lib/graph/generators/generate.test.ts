@@ -298,11 +298,20 @@ describe('kind metadata', () => {
 		expect(generateFieldLimit('scaleFree', 'nodes')).toEqual({ min: 3 });
 		expect(generateFieldLimit('wheel', 'nodes')).toEqual({ min: 4 });
 		expect(generateFieldLimit('smallWorld', 'nodes')).toEqual({ min: 4 });
-		expect(generateFieldLimit('smallWorld', 'neighbors', { nodes: 12 })).toEqual({ min: 2, max: 10 });
+		expect(generateFieldLimit('smallWorld', 'neighbors', { nodes: 12 })).toEqual({
+			min: 2,
+			max: 10
+		});
 		expect(generateFieldLimit('knn', 'neighbors', { nodes: 12 })).toEqual({ min: 1, max: 11 });
 		expect(generateFieldLimit('regular', 'degree', { nodes: 12 })).toEqual({ min: 0, max: 11 });
-		expect(generateFieldLimit('scaleFree', 'attachments', { nodes: 4 })).toEqual({ min: 1, max: 3 });
-		expect(generateFieldLimit('scaleFree', 'attachments', { nodes: 40 })).toEqual({ min: 1, max: 5 });
+		expect(generateFieldLimit('scaleFree', 'attachments', { nodes: 4 })).toEqual({
+			min: 1,
+			max: 3
+		});
+		expect(generateFieldLimit('scaleFree', 'attachments', { nodes: 40 })).toEqual({
+			min: 1,
+			max: 5
+		});
 		expect(generateFieldLimit('grid', 'rows')).toEqual({ min: 1 });
 		expect(generateFieldLimit('cubicLattice', 'rows')).toEqual({ min: 1 });
 		expect(generateFieldLimit('cubicLattice', 'layers')).toEqual({ min: 1 });
@@ -447,9 +456,7 @@ describe('solids and extra options', () => {
 		).toBeGreaterThan(1);
 		expect(nodeCount(generateGraph('circulant', { seed: 1, nodes: 10, jumps: [] }))).toBe(10);
 		expect(nodeCount(generateGraph('diamondLattice', { seed: 1, extent: 4 }))).toBe(64);
-		expect(
-			nodeCount(generateGraph('diamondLattice', { seed: 1, extent: 5 }))
-		).toBeGreaterThan(64);
+		expect(nodeCount(generateGraph('diamondLattice', { seed: 1, extent: 5 }))).toBeGreaterThan(64);
 		expect(nodeCount(generateGraph('grid', { seed: 1, rows: 20, columns: 20 }))).toBe(400);
 		expect(nodeCount(generateGraph('hexGrid', { seed: 1, rows: 20, columns: 20 }))).toBe(400);
 		expect(nodeCount(generateGraph('torusGrid', { seed: 1, rings: 20, segments: 20 }))).toBe(400);

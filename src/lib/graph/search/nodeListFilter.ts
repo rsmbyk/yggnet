@@ -16,8 +16,7 @@ export function nodeMatchesListFilter(
 	if (!hasQuery && !hasTags) return true;
 
 	const textMatch =
-		hasQuery &&
-		(node.label.toLowerCase().includes(q) || node.id.toLowerCase().startsWith(q));
+		hasQuery && (node.label.toLowerCase().includes(q) || node.id.toLowerCase().startsWith(q));
 	const tagMatch = hasTags && tags.some((t) => node.tags.includes(t));
 	return Boolean(textMatch || tagMatch);
 }

@@ -5,7 +5,7 @@ type: feat
 feature_area: manager
 bump: minor
 status: done
-title: "Filters by type/tag"
+title: 'Filters by type/tag'
 created: 2026-07-30
 updated: 2026-07-30
 ---

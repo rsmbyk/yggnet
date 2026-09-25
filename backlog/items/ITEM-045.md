@@ -1,7 +1,7 @@
 ---
 id: ITEM-045
 status: done
-title: "Toolbar + tools panel chrome"
+title: 'Toolbar + tools panel chrome'
 type: feat
 priority: P1
 effort: M

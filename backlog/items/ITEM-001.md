@@ -1,15 +1,15 @@
 ---
 id: ITEM-001
 status: archived
-title: "Manager graph CRUD"
+title: 'Manager graph CRUD'
 type: feat
 priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-001
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

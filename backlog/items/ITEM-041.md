@@ -1,7 +1,7 @@
 ---
 id: ITEM-041
 status: done
-title: "Camera chrome + 2D/3D"
+title: 'Camera chrome + 2D/3D'
 type: feat
 priority: P1
 effort: M

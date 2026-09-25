@@ -5,7 +5,7 @@ type: feat
 feature_area: manager
 bump: minor
 status: done
-title: "Save/load named docs + palette find"
+title: 'Save/load named docs + palette find'
 created: 2026-07-30
 updated: 2026-07-30
 ---

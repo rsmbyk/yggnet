@@ -27,7 +27,11 @@ const meta = {
 		bump: 'minor',
 		problem:
 			'Edges lack first-class direction and weight required for many algorithms and org/roadmap semantics.',
-		goals: ['Store directed + weight on edges', 'Edit both in manager', 'Feed weighted/directed algos'],
+		goals: [
+			'Store directed + weight on edges',
+			'Edit both in manager',
+			'Feed weighted/directed algos'
+		],
 		nong: ['UI for algorithm picker (ITEM-009)', 'Pathfinding itself (ITEM-006)'],
 		mode: 'Manager',
 		domain: 'GraphEdge.directed, GraphEdge.weight; defaults documented.',
@@ -39,7 +43,8 @@ const meta = {
 	'003': {
 		area: 'explore',
 		bump: 'minor',
-		problem: "World camera is a static placeholder; Explore needs RTS/SimCity bird's-eye navigation.",
+		problem:
+			"World camera is a static placeholder; Explore needs RTS/SimCity bird's-eye navigation.",
 		goals: ['Pan, zoom, light orbit', 'Overview vs street altitude', "Keep bird's-eye (not FPS)"],
 		nong: ['Directions travel (ITEM-007)', 'Minimap (ITEM-020)'],
 		mode: 'Explore',
@@ -53,8 +58,16 @@ const meta = {
 		area: 'world',
 		bump: 'minor',
 		problem: 'GraphDocument is not rendered as nodes/edges in the Threlte world.',
-		goals: ['Render nodes and edges from document', 'Technical visual language', 'Update on document change'],
-		nong: ['Path highlight overlays (ITEM-006)', 'LOD labels (ITEM-019)', 'Live floating motion (parked)'],
+		goals: [
+			'Render nodes and edges from document',
+			'Technical visual language',
+			'Update on document change'
+		],
+		nong: [
+			'Path highlight overlays (ITEM-006)',
+			'LOD labels (ITEM-019)',
+			'Live floating motion (parked)'
+		],
 		mode: 'Explore world',
 		domain: 'Read GraphDocument positions/labels',
 		algo: 'N/A',
@@ -109,7 +122,10 @@ const meta = {
 		area: 'directions',
 		bump: 'patch',
 		problem: 'No one-hop follow along a single edge.',
-		goals: ['From selected node follow chosen edge to neighbor', 'Same travel language as Directions'],
+		goals: [
+			'From selected node follow chosen edge to neighbor',
+			'Same travel language as Directions'
+		],
 		nong: ['Full A→B pathfinder'],
 		mode: 'Explore/Directions',
 		domain: 'Edge id + endpoints',
@@ -122,7 +138,11 @@ const meta = {
 		area: 'analyze',
 		bump: 'minor',
 		problem: 'No pluggable algorithm registry or extensive shortest-path picker.',
-		goals: ['Algorithm registry with needs metadata', 'Picker UI in Analyze', 'Run via AlgorithmRunner'],
+		goals: [
+			'Algorithm registry with needs metadata',
+			'Picker UI in Analyze',
+			'Run via AlgorithmRunner'
+		],
 		nong: [
 			'Worker thread impl (later)',
 			'Every algorithm on day one — ship registry + BFS/Dijkstra/A* minimum'
@@ -164,7 +184,11 @@ const meta = {
 		area: 'analyze',
 		bump: 'minor',
 		problem: 'Cannot compare two algorithms on the same inputs.',
-		goals: ['Select two algorithms same A/B or action', 'Show both results', 'Hook to compare-runs'],
+		goals: [
+			'Select two algorithms same A/B or action',
+			'Show both results',
+			'Hook to compare-runs'
+		],
 		nong: ['Full dual overlay chrome (ITEM-013)'],
 		mode: 'Analyze',
 		domain: 'two Run records',
@@ -577,10 +601,7 @@ ${risks}
 	} else if (/^spec:/m.test(item)) {
 		item = item.replace(/^spec:.*$/m, `spec: ${specId}`);
 	}
-	item = item.replace(
-		/^- Spec:.*$/m,
-		`- Spec: [${specId}](../../docs/specs/${specId}/spec.md)`
-	);
+	item = item.replace(/^- Spec:.*$/m, `- Spec: [${specId}](../../docs/specs/${specId}/spec.md)`);
 	writeFileSync(itemPath, item);
 
 	boardRows.push({

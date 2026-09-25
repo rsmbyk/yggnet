@@ -1,7 +1,7 @@
 ---
 id: ITEM-039
 status: done
-title: "World-first shell + HUD"
+title: 'World-first shell + HUD'
 type: feat
 priority: P1
 effort: M

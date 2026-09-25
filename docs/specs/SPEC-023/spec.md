@@ -5,7 +5,7 @@ type: feat
 feature_area: persist
 bump: minor
 status: done
-title: "Import / export JSON"
+title: 'Import / export JSON'
 created: 2026-07-30
 updated: 2026-07-30
 ---

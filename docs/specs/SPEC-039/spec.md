@@ -5,7 +5,7 @@ type: feat
 feature_area: world
 bump: minor
 status: done
-title: "World-first shell + HUD"
+title: 'World-first shell + HUD'
 created: 2026-09-25
 updated: 2026-09-25
 ---

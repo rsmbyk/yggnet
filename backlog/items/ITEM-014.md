@@ -1,15 +1,15 @@
 ---
 id: ITEM-014
 status: archived
-title: "Annotate algorithm steps"
+title: 'Annotate algorithm steps'
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-014
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

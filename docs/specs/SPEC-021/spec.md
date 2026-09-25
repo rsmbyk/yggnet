@@ -5,7 +5,7 @@ type: feat
 feature_area: persist
 bump: minor
 status: done
-title: "Save / load graph"
+title: 'Save / load graph'
 created: 2026-07-30
 updated: 2026-07-30
 ---

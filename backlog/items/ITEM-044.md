@@ -1,7 +1,7 @@
 ---
 id: ITEM-044
 status: done
-title: "In-world selection sheet + create"
+title: 'In-world selection sheet + create'
 type: feat
 priority: P1
 effort: M

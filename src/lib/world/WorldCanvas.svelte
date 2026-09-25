@@ -133,13 +133,29 @@
 				}}
 			>
 				{#if app.ui.viewMode === '2d'}
-					<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<svg
+						viewBox="0 0 24 24"
+						aria-hidden="true"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
 						<!-- top-down flat map -->
 						<rect x="4" y="4" width="16" height="16" rx="1.5" />
 						<path d="M4 12h16M12 4v16" opacity="0.55" />
 					</svg>
 				{:else}
-					<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<svg
+						viewBox="0 0 24 24"
+						aria-hidden="true"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
 						<!-- isometric cube -->
 						<path d="M12 3 20 7.5v9L12 21 4 16.5v-9L12 3Z" />
 						<path d="M12 21v-9M20 7.5 12 12 4 7.5" />
@@ -154,7 +170,15 @@
 				title="Reset position (0, 0, 0)"
 				onclick={() => app.resetCameraTarget()}
 			>
-				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<svg
+					viewBox="0 0 24 24"
+					aria-hidden="true"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
 					<!-- crosshair / origin -->
 					<circle cx="11" cy="13" r="3.25" />
 					<path d="M11 7.5v2.25M11 16.25V18.5M5.5 13h2.25M14.25 13H16.5" />
@@ -173,7 +197,15 @@
 				title="Reset camera angle"
 				onclick={() => app.resetCameraOrbit()}
 			>
-				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<svg
+					viewBox="0 0 24 24"
+					aria-hidden="true"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
 					<!-- gimbal / orbit tilt -->
 					<ellipse cx="11" cy="13" rx="7" ry="3.2" />
 					<path d="M11 6.5v13" />
@@ -194,7 +226,15 @@
 				title="Reset zoom"
 				onclick={() => app.resetCameraZoom()}
 			>
-				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<svg
+					viewBox="0 0 24 24"
+					aria-hidden="true"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
 					<!-- magnifier -->
 					<circle cx="10.5" cy="12.5" r="5.25" />
 					<path d="M14.8 16.8 19 21" />
@@ -242,7 +282,15 @@
 			aria-label="Pan {camReadout.pan}°, tilt {camReadout.tilt}°, position {camReadout.x}, {camReadout.y}, {camReadout.z}"
 		>
 			<div class="cam-row" title="Pan">
-				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<svg
+					viewBox="0 0 24 24"
+					aria-hidden="true"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
 					<!-- yaw: turntable around vertical -->
 					<path d="M12 3v8" />
 					<ellipse cx="12" cy="16" rx="8" ry="5" />
@@ -251,7 +299,15 @@
 				<span>{camReadout.pan}°</span>
 			</div>
 			<div class="cam-row" title="Tilt">
-				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<svg
+					viewBox="0 0 24 24"
+					aria-hidden="true"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
 					<!-- pitch: look up/down -->
 					<path d="M5 18a8.5 8.5 0 0 1 14 0" />
 					<path d="M12 18V7" />
@@ -260,7 +316,15 @@
 				<span>{camReadout.tilt}°</span>
 			</div>
 			<div class="cam-row" title="Position">
-				<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<svg
+					viewBox="0 0 24 24"
+					aria-hidden="true"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
 					<!-- xyz triad from origin -->
 					<path d="M12 12V4" />
 					<path d="M12 12l8 4.5" />

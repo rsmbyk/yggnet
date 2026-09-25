@@ -40,7 +40,7 @@ describe('serialize', () => {
 	});
 
 	it('cloneDocument returns a deep copy', () => {
-		let doc = createEmptyDocument();
+		const doc = createEmptyDocument();
 		const { doc: withNode, nodeId } = addNode(doc, { label: 'A', data: { n: 1 } });
 		const clone = cloneDocument(withNode);
 		expect(clone).toEqual(withNode);
@@ -53,9 +53,7 @@ describe('serialize', () => {
 		expect(() => parseDocument('{')).toThrow(/Invalid JSON/i);
 		expect(() => parseDocument('null')).toThrow(/expected object/i);
 		expect(() => parseDocument('[]')).toThrow(/expected object/i);
-		expect(() => parseDocument(JSON.stringify({ schemaVersion: 2 }))).toThrow(
-			/schemaVersion/i
-		);
+		expect(() => parseDocument(JSON.stringify({ schemaVersion: 2 }))).toThrow(/schemaVersion/i);
 		expect(() =>
 			parseDocument(
 				JSON.stringify({

@@ -1,15 +1,15 @@
 ---
 id: ITEM-018
 status: archived
-title: "Diff two nodes"
+title: 'Diff two nodes'
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-018
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

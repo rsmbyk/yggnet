@@ -19,7 +19,10 @@ test('Communities Groups follows node count and explains p inside / p between', 
 	await expect(page.getByTestId('generate-p-inside-help')).toContainText('step 0.01');
 	await expect(page.getByTestId('generate-p-between-help')).toContainText('step 0.01');
 	await expect(page.getByRole('spinbutton', { name: /p inside/i })).toHaveAttribute('step', '0.01');
-	await expect(page.getByRole('spinbutton', { name: /p between/i })).toHaveAttribute('step', '0.01');
+	await expect(page.getByRole('spinbutton', { name: /p between/i })).toHaveAttribute(
+		'step',
+		'0.01'
+	);
 	const nodesBox = await page.getByTestId('generate-nodes').boundingBox();
 	const insideBox = await page.getByRole('spinbutton', { name: /p inside/i }).boundingBox();
 	expect(nodesBox).toBeTruthy();

@@ -1,7 +1,7 @@
 ---
 id: ITEM-032
 status: archived
-title: "Node drag / position edit"
+title: 'Node drag / position edit'
 type: feat
 priority: P1
 effort: M
@@ -9,7 +9,7 @@ created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-032
 branch: feat/SPEC-032-node-drag-position
-pr: 
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.30.0

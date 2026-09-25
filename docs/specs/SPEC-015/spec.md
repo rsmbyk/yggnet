@@ -5,7 +5,7 @@ type: feat
 feature_area: world
 bump: patch
 status: done
-title: "Pin / anchor nodes"
+title: 'Pin / anchor nodes'
 created: 2026-07-30
 updated: 2026-07-30
 ---

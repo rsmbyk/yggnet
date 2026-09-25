@@ -1,15 +1,15 @@
 ---
 id: ITEM-019
 status: archived
-title: "LOD labels"
+title: 'LOD labels'
 type: feat
 priority: P2
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-019
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

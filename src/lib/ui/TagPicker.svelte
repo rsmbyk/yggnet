@@ -29,15 +29,11 @@
 
 	/** Selected tags that match the query — shown muted at the bottom while searching. */
 	const alreadyAdded = $derived(
-		qLower
-			? tags.filter((t) => t.toLowerCase().includes(qLower)).slice(0, 20)
-			: []
+		qLower ? tags.filter((t) => t.toLowerCase().includes(qLower)).slice(0, 20) : []
 	);
 
 	const canCreate = $derived(
-		q.length > 0 &&
-			!selected.has(q) &&
-			!suggestions.some((t) => t.toLowerCase() === qLower)
+		q.length > 0 && !selected.has(q) && !suggestions.some((t) => t.toLowerCase() === qLower)
 	);
 
 	const showEmpty = $derived(filtered.length === 0 && !canCreate && alreadyAdded.length === 0);
@@ -173,12 +169,7 @@
 	</div>
 
 	{#if open}
-		<div
-			class="tag-dropdown"
-			role="listbox"
-			aria-label="Tag suggestions"
-			style={dropdownStyle}
-		>
+		<div class="tag-dropdown" role="listbox" aria-label="Tag suggestions" style={dropdownStyle}>
 			<input
 				bind:this={searchEl}
 				class="tag-search"

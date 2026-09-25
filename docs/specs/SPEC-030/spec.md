@@ -5,7 +5,7 @@ type: feat
 feature_area: world
 bump: minor
 status: done
-title: "Multi-node groups from UI"
+title: 'Multi-node groups from UI'
 created: 2026-07-30
 updated: 2026-07-30
 ---

@@ -5,7 +5,7 @@ type: feat
 feature_area: world
 bump: minor
 status: done
-title: "Solid nodes + pointer intents"
+title: 'Solid nodes + pointer intents'
 created: 2026-09-25
 updated: 2026-09-25
 ---

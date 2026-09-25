@@ -5,7 +5,7 @@ type: feat
 feature_area: persist
 bump: minor
 status: done
-title: "Templates + random graph"
+title: 'Templates + random graph'
 created: 2026-07-30
 updated: 2026-07-30
 ---
