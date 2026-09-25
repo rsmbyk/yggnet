@@ -1,0 +1,612 @@
+<script lang="ts">
+	import { fade } from 'svelte/transition';
+	import { untrack } from 'svelte';
+	import { app } from '$lib/session/app.svelte';
+	import {
+		centeredBannerOverlapsChrome,
+		chromeContentWidth,
+		tooSmallMediaMaxWidth
+	} from './hud-layout';
+
+	const connecting = $derived(app.ui.connectFromId !== null);
+
+	/** Brief toast: clear after a short dwell when the message is still the same. */
+	$effect(() => {
+		const msg = app.statusMessage;
+		if (!msg) return;
+		const handle = setTimeout(() => {
+			if (app.statusMessage === msg) app.statusMessage = '';
+		}, 2400);
+		return () => clearTimeout(handle);
+	});
+
+	function addNearView() {
+		app.addNodeNearView();
+	}
+
+	function cancelConnect() {
+		app.setConnectFrom(null);
+	}
+
+	const toastFade = { duration: 220 };
+
+	let hudEl: HTMLDivElement | undefined = $state();
+	let topRowEl: HTMLDivElement | undefined = $state();
+	let chromeEl: HTMLElement | undefined = $state();
+	let bannerSlotEl: HTMLDivElement | undefined = $state();
+	let bannerUnderChrome = $state(false);
+	let viewportBlocked = $state(false);
+	let tooSmallMaxWidth = $state(0);
+
+	function readHudPaddingX(): number {
+		if (!hudEl) return 24;
+		const style = getComputedStyle(hudEl);
+		return parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+	}
+
+	/** Intrinsic toolbar width from logo + buttons — not the constrained chrome box. */
+	function measureRequiredChromeWidth(chrome: HTMLElement): number {
+		const style = getComputedStyle(chrome);
+		const logo = chrome.querySelector<HTMLElement>('.logo');
+		const tools = chrome.querySelector<HTMLElement>('.tools');
+		const toolsGap = tools ? parseFloat(getComputedStyle(tools).columnGap) || 0 : 0;
+		const toolWidths = tools
+			? Array.from(tools.children, (child) => (child as HTMLElement).getBoundingClientRect().width)
+			: [];
+		const toolsWidth = toolWidths.reduce(
+			(sum, width, i) => sum + width + (i > 0 ? toolsGap : 0),
+			0
+		);
+		return chromeContentWidth({
+			paddingX: parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
+			borderX: parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth),
+			logo: logo?.getBoundingClientRect().width ?? 0,
+			gap: parseFloat(style.columnGap) || 0,
+			tools: toolsWidth
+		});
+	}
+
+	function updateChromeRequirement() {
+		if (!chromeEl) return;
+		const required = measureRequiredChromeWidth(chromeEl);
+		tooSmallMaxWidth = tooSmallMediaMaxWidth(required, readHudPaddingX());
+	}
+
+	function updateBannerPlacement() {
+		if (!connecting || !topRowEl || !chromeEl || !bannerSlotEl) {
+			bannerUnderChrome = false;
+			return;
+		}
+		const chrome = chromeEl.getBoundingClientRect();
+		const row = topRowEl.getBoundingClientRect();
+		bannerUnderChrome = centeredBannerOverlapsChrome({
+			chromeRight: chrome.right,
+			rowLeft: row.left,
+			rowWidth: row.width,
+			bannerWidth: bannerSlotEl.offsetWidth
+		});
+	}
+
+	$effect(() => {
+		if (!connecting) {
+			bannerUnderChrome = false;
+			return;
+		}
+		const chrome = chromeEl;
+		const row = topRowEl;
+		const slot = bannerSlotEl;
+		if (!chrome || !row || !slot) return;
+
+		updateBannerPlacement();
+		const ro = new ResizeObserver(updateBannerPlacement);
+		ro.observe(chrome);
+		ro.observe(row);
+		ro.observe(slot);
+		window.addEventListener('resize', updateBannerPlacement);
+		return () => {
+			ro.disconnect();
+			window.removeEventListener('resize', updateBannerPlacement);
+		};
+	});
+
+	$effect(() => {
+		if (!viewportBlocked) return;
+		app.openPalette(false);
+		app.setOpenTool(null);
+	});
+
+	$effect(() => {
+		const chrome = chromeEl;
+		const hud = hudEl;
+		if (!chrome || !hud) return;
+
+		untrack(() => updateChromeRequirement());
+		const ro = new ResizeObserver(() => updateChromeRequirement());
+		ro.observe(chrome);
+		return () => ro.disconnect();
+	});
+
+	$effect(() => {
+		const max = tooSmallMaxWidth;
+		const id = 'yg-too-small-mq';
+		let el = document.getElementById(id) as HTMLStyleElement | null;
+		if (!el) {
+			el = document.createElement('style');
+			el.id = id;
+			document.head.appendChild(el);
+		}
+		el.textContent =
+			max > 0
+				? `@media (max-width: ${max}px) { [data-testid="viewport-too-small"] { display: grid !important; } [data-testid="world-hud"] { z-index: 100; } }`
+				: '';
+		return () => {
+			el?.remove();
+		};
+	});
+
+	$effect(() => {
+		const max = tooSmallMaxWidth;
+		if (max <= 0) {
+			viewportBlocked = false;
+			return;
+		}
+		const mq = window.matchMedia(`(max-width: ${max}px)`);
+		const apply = () => {
+			viewportBlocked = mq.matches;
+		};
+		apply();
+		mq.addEventListener('change', apply);
+		window.addEventListener('resize', apply);
+		return () => {
+			mq.removeEventListener('change', apply);
+			window.removeEventListener('resize', apply);
+		};
+	});
+</script>
+
+<div class="hud" class:viewport-blocked={viewportBlocked} bind:this={hudEl} data-testid="world-hud">
+	<div class="top-row" bind:this={topRowEl}>
+		<header
+			class="chrome"
+			class:dimmed={app.ui.openTool !== null}
+			bind:this={chromeEl}
+			aria-label="Menubar"
+		>
+			<!-- Brand: swap static/brand/logo.svg (see static/brand/README.md) -->
+			<img
+				class="logo"
+				src="/brand/logo.svg"
+				alt="Yggnet"
+				width="32"
+				height="32"
+				data-testid="brand-logo"
+			/>
+
+			<div class="tools">
+				<button
+					type="button"
+					class="icon-btn"
+					data-testid="undo"
+					aria-label="Undo"
+					title="Undo"
+					disabled={!app.canUndo}
+					onclick={() => app.undo()}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path
+							fill="currentColor"
+							d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+						/>
+					</svg>
+				</button>
+				<button
+					type="button"
+					class="icon-btn"
+					data-testid="redo"
+					aria-label="Redo"
+					title="Redo"
+					disabled={!app.canRedo}
+					onclick={() => app.redo()}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path
+							fill="currentColor"
+							d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
+						/>
+					</svg>
+				</button>
+				<button
+					type="button"
+					class="icon-btn"
+					data-testid="world-add-node"
+					aria-label="Add node"
+					title="Add node"
+					onclick={addNearView}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true"
+						><path fill="currentColor" d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z" /></svg
+					>
+				</button>
+				<button
+					type="button"
+					class="icon-btn"
+					data-testid="palette-trigger"
+					aria-label="Command palette"
+					title="Palette (Ctrl+K)"
+					onclick={() => app.openPalette(true)}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true"
+						><path
+							fill="currentColor"
+							d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+						/></svg
+					>
+				</button>
+			</div>
+		</header>
+
+		{#if connecting && !viewportBlocked}
+			<div
+				class="banner-slot"
+				class:under-chrome={bannerUnderChrome}
+				bind:this={bannerSlotEl}
+				transition:fade={{ duration: 160 }}
+			>
+				<p class="banner" data-testid="connect-banner">
+					<span class="banner-text">
+						{#if app.ui.connectDirectedLocked}
+							Connecting (directed) — click another node · RMB / Esc cancel
+						{:else if app.ui.connectDirected}
+							Connecting (directed) — release Alt for undirected
+						{:else}
+							Connecting — click another node · hold Alt for directed
+						{/if}
+					</span>
+					<button type="button" onclick={cancelConnect}>Cancel</button>
+				</p>
+			</div>
+		{/if}
+	</div>
+
+	<div
+		class="too-small-overlay"
+		data-testid="viewport-too-small"
+		role="alertdialog"
+		aria-modal="true"
+		aria-labelledby="viewport-too-small-title"
+		aria-describedby="viewport-too-small-copy"
+	>
+		<div class="too-small-copy">
+			<h2 id="viewport-too-small-title" class="too-small-title">This screen is too small</h2>
+			<p id="viewport-too-small-copy" data-testid="viewport-too-small-copy">
+				The app can't be used optimally on a small screen. Open it on a larger screen.
+			</p>
+		</div>
+	</div>
+
+	<div class="toast-slot">
+		{#if app.statusMessage}
+			<p
+				class="toast"
+				data-testid="status-message"
+				in:fade={toastFade}
+				out:fade={{ duration: 180 }}
+			>
+				{app.statusMessage}
+			</p>
+		{/if}
+	</div>
+</div>
+
+<style>
+	.hud {
+		pointer-events: none;
+		position: absolute;
+		inset: 0;
+		z-index: 5;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		padding: var(--yg-hud-edge);
+		gap: 0.5rem;
+		min-width: 0;
+		min-height: 0;
+	}
+
+	.hud.viewport-blocked {
+		z-index: 100;
+	}
+
+	.chrome,
+	.banner,
+	.toast,
+	.chrome button,
+	.banner button {
+		pointer-events: auto;
+	}
+
+	/* Shared top band: chrome left, connect banner dead-center — same Y + same height. */
+	.top-row {
+		position: relative;
+		display: flex;
+		align-items: center;
+		width: 100%;
+		height: var(--yg-top-bar-h);
+		min-width: 0;
+		pointer-events: none;
+	}
+
+	.chrome {
+		position: relative;
+		z-index: 2;
+		box-sizing: border-box;
+		height: var(--yg-top-bar-h);
+		width: fit-content;
+		max-width: 100%;
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: center;
+		gap: var(--yg-hud-btn-gap);
+		padding: var(--yg-hud-inset);
+		overflow: visible;
+		border-radius: var(--yg-radius-pill);
+		background: var(--yg-panel-glass-dim);
+		border: 1px solid rgba(28, 36, 46, 0.1);
+		box-shadow: 0 4px 16px rgba(28, 36, 46, 0.04);
+		pointer-events: auto;
+		transition:
+			background var(--yg-motion) var(--yg-ease),
+			border-color var(--yg-motion) var(--yg-ease),
+			box-shadow var(--yg-motion) var(--yg-ease);
+	}
+
+	.chrome:hover,
+	.chrome:focus-within {
+		background: var(--yg-panel-glass);
+		border-color: var(--yg-border);
+		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.12);
+	}
+
+	/* A tool panel is open — keep the unhovered idle look. */
+	.chrome.dimmed:hover,
+	.chrome.dimmed:focus-within {
+		background: var(--yg-panel-glass-dim);
+		border-color: rgba(28, 36, 46, 0.1);
+		box-shadow: 0 4px 16px rgba(28, 36, 46, 0.04);
+	}
+
+	.chrome.dimmed:hover .logo,
+	.chrome.dimmed:focus-within .logo {
+		opacity: var(--yg-hud-idle-opacity);
+	}
+
+	.chrome.dimmed:hover .icon-btn,
+	.chrome.dimmed:focus-within .icon-btn,
+	.chrome.dimmed:hover .icon-btn:hover,
+	.chrome.dimmed:focus-within .icon-btn:hover {
+		opacity: var(--yg-hud-idle-opacity);
+		background: var(--yg-chip-dim);
+		border-color: rgba(28, 36, 46, 0.1);
+		color: var(--yg-fg);
+	}
+
+	.logo {
+		display: block;
+		width: var(--yg-hud-btn);
+		height: var(--yg-hud-btn);
+		border-radius: var(--yg-radius-pill);
+		flex-shrink: 0;
+		object-fit: contain;
+		opacity: var(--yg-hud-idle-opacity);
+		transition: opacity var(--yg-motion) var(--yg-ease);
+	}
+
+	.chrome:hover .logo,
+	.chrome:focus-within .logo {
+		opacity: var(--yg-hud-active-opacity);
+	}
+
+	.tools {
+		display: flex;
+		flex-wrap: nowrap;
+		flex-shrink: 0;
+		gap: var(--yg-hud-btn-gap);
+		align-items: center;
+	}
+
+	.icon-btn {
+		display: inline-grid;
+		place-items: center;
+		width: var(--yg-hud-btn);
+		height: var(--yg-hud-btn);
+		padding: 0;
+		border: 1px solid rgba(28, 36, 46, 0.1);
+		background: var(--yg-chip-dim);
+		color: var(--yg-fg);
+		border-radius: var(--yg-radius-pill);
+		cursor: pointer;
+		opacity: var(--yg-hud-idle-opacity);
+		transition:
+			background var(--yg-motion) var(--yg-ease),
+			border-color var(--yg-motion) var(--yg-ease),
+			color var(--yg-motion) var(--yg-ease),
+			opacity var(--yg-motion) var(--yg-ease);
+	}
+
+	.chrome:hover .icon-btn,
+	.chrome:focus-within .icon-btn {
+		opacity: var(--yg-hud-active-opacity);
+		background: var(--yg-chip);
+		border-color: var(--yg-border);
+	}
+
+	.icon-btn svg {
+		width: 1.05rem;
+		height: 1.05rem;
+		display: block;
+	}
+
+	.chrome:hover .icon-btn:hover,
+	.chrome:focus-within .icon-btn:hover {
+		background: rgba(255, 255, 255, 0.72);
+	}
+
+	.banner button {
+		font: inherit;
+		font-size: 0.78rem;
+		border: 1px solid var(--yg-border);
+		background: var(--yg-chip);
+		color: var(--yg-fg);
+		border-radius: var(--yg-radius-control);
+		padding: 0.32rem 0.65rem;
+		cursor: pointer;
+		text-shadow: var(--yg-text-glow);
+		transition:
+			background var(--yg-motion-fast) var(--yg-ease),
+			border-color var(--yg-motion-fast) var(--yg-ease),
+			color var(--yg-motion-fast) var(--yg-ease);
+	}
+
+	.banner button:hover {
+		background: rgba(255, 255, 255, 0.72);
+	}
+
+	.icon-btn.active,
+	button.active {
+		background: var(--yg-accent-soft);
+		color: var(--yg-accent);
+		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));
+	}
+
+	.chrome.dimmed .icon-btn.active,
+	.chrome.dimmed:hover .icon-btn.active,
+	.chrome.dimmed:focus-within .icon-btn.active {
+		opacity: var(--yg-hud-idle-opacity);
+		background: var(--yg-accent-soft);
+		color: var(--yg-accent);
+		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));
+	}
+
+	button:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	/* Same top + same height as .chrome; horizontally page-centered; width = content. */
+	.banner-slot {
+		position: absolute;
+		left: 50%;
+		top: 0;
+		transform: translateX(-50%);
+		z-index: 1;
+		height: auto;
+		min-height: var(--yg-top-bar-h);
+		width: max-content;
+		max-width: min(100%, calc(100vw - 2 * var(--yg-hud-edge)));
+		pointer-events: none;
+		transition: top var(--yg-motion) var(--yg-ease);
+	}
+
+	.banner-slot.under-chrome {
+		top: calc(var(--yg-top-bar-h) + var(--yg-hud-edge));
+	}
+
+	.banner {
+		pointer-events: auto;
+		box-sizing: border-box;
+		height: auto;
+		min-height: var(--yg-top-bar-h);
+		width: max-content;
+		max-width: 100%;
+		margin: 0;
+		/* Match chrome edge inset; a bit more on the text side so copy isn’t tight to the curve */
+		padding: 0.25rem 0.35rem 0.25rem 0.85rem;
+		border-radius: var(--yg-radius-pill);
+		background: var(--yg-panel-glass);
+		border: 1px solid var(--yg-border);
+		box-shadow: 0 6px 20px rgba(28, 36, 46, 0.12);
+		color: var(--yg-fg);
+		font-size: 0.82rem;
+		font-weight: 600;
+		letter-spacing: 0.01em;
+		line-height: 1.35;
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: center;
+		gap: 0.5rem;
+		text-shadow: var(--yg-text-glow);
+	}
+
+	.banner-text {
+		flex: 1 1 auto;
+		min-width: 0;
+		color: var(--yg-fg);
+		padding-block: 0.2rem;
+		overflow-wrap: break-word;
+	}
+
+	.banner button {
+		font-weight: 600;
+		flex: 0 0 auto;
+		height: auto;
+		padding: 0.32rem 0.75rem;
+		border-radius: var(--yg-radius-pill);
+	}
+
+	.chrome .icon-btn {
+		flex-shrink: 0;
+	}
+
+	.too-small-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 50;
+		display: none;
+		place-items: center;
+		padding: 1.5rem;
+		background: rgba(28, 36, 46, 0.82);
+		pointer-events: auto;
+		text-align: center;
+	}
+
+	.too-small-copy {
+		max-width: 18rem;
+	}
+
+	.too-small-title {
+		margin: 0 0 0.4rem;
+		font-size: 1.05rem;
+		font-weight: 650;
+		color: #e8edf2;
+	}
+
+	.too-small-copy p {
+		margin: 0;
+		font-size: 0.88rem;
+		line-height: 1.45;
+		color: #c5ced8;
+	}
+
+	.toast-slot {
+		position: absolute;
+		left: 50%;
+		bottom: 7.5rem;
+		transform: translateX(-50%);
+		pointer-events: none;
+		z-index: 6;
+	}
+
+	.toast {
+		margin: 0;
+		padding: 0.55rem 1.1rem;
+		border-radius: var(--yg-radius-panel);
+		background: rgba(28, 36, 46, 0.72);
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		color: #e8eef4;
+		font-size: 0.8rem;
+		max-width: min(28rem, 90vw);
+		text-align: center;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+		pointer-events: auto;
+	}
+</style>

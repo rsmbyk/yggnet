@@ -1,4 +1,4 @@
-export { createSession, setMode, type SessionState } from './session';
+export { createSession, type SessionState } from './session';
 export {
 	app,
 	AUTOSAVE_KEY,

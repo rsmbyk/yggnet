@@ -39,6 +39,10 @@ export function parseDocument(json: string): GraphDocument {
 	if (typeof doc.createdAt !== 'string' || typeof doc.updatedAt !== 'string') {
 		throw new Error('Invalid GraphDocument: missing timestamps');
 	}
+	const edges = doc.edges as Record<string, Record<string, unknown>>;
+	for (const edge of Object.values(edges)) {
+		if (!Array.isArray(edge.tags)) edge.tags = [];
+	}
 	return value as GraphDocument;
 }
 

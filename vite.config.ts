@@ -10,6 +10,10 @@ const adapter = process.env.VERCEL
 	: adapterStatic({ fallback: 'index.html' });
 
 export default defineConfig({
+	server: {
+		port: 5174,
+		strictPort: true
+	},
 	plugins: [
 		sveltekit({
 			compilerOptions: {

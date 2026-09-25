@@ -21,6 +21,7 @@ import {
 	findAllSimplePaths,
 	findNodesByQuery as searchNodesByQuery,
 	findShortestPaths,
+	generateGraph,
 	getAlgorithm,
 	getRun,
 	listAlgorithms,
@@ -31,16 +32,23 @@ import {
 	redo as historyRedo,
 	removeEdge,
 	removeNode,
+	addNodeToSelection,
+	removeNodeFromSelection,
+	addEdgeToSelection,
+	removeEdgeFromSelection,
 	selectNode,
+	selectEdge,
 	toggleEdgeInSelection,
 	toggleNodeInSelection,
 	serializeDocument,
 	undo as historyUndo,
 	updateEdge,
 	updateNode,
-	type AppMode,
+	defaultGenerateForm,
 	type EdgePatch,
 	type GraphDocument,
+	type GenerateOptions,
+	type GraphKind,
 	type History,
 	type NodeId,
 	type NodePatch,
@@ -48,7 +56,12 @@ import {
 	type RunStore,
 	type SelectionState
 } from '$lib/graph';
+import { WORLD } from '$lib/world/world-config';
+import { createNodePadding, findFreePosition } from '$lib/world/node-physics';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
+import { nextOpenTool, type ToolId } from '$lib/ui/tool-ids';
+import { listSaveSlotNames, saveSlotExists, saveSlotStorageKey } from './save-slots';
+import { busyHold, waitForBusyOverlayPaint } from './work-busy';
 
 const AUTOSAVE_KEY = 'yggnet.autosave';
 const AUTOSAVE_MS = 600;
@@ -82,12 +95,49 @@ export type FiltersState = {
 export type CameraState = {
 	distance: number;
 	target: { x: number; y: number; z: number };
+	/** Camera eye position in world space. */
+	eye: { x: number; y: number; z: number };
+	/** Azimuth around +Y in degrees (−180…180). */
+	panDeg: number;
+	/** Elevation above the horizon in degrees. */
+	tiltDeg: number;
 };
+
+export type ViewMode = '3d' | '2d';
+
+export type WorkKind = 'load' | 'generate';
 
 export type UiState = {
 	paletteOpen: boolean;
 	diffIds: string[];
 	commandQuery: string;
+	/** Open tool section, or null when the dock shows only the toolbar. */
+	openTool: ToolId | null;
+	/** When set, next node pick completes an edge from this id. */
+	connectFromId: string | null;
+	/**
+	 * Effective directed flag for the in-progress connect (UI + edge create).
+	 * Undirected start: follows Ctrl held. Directed start (Ctrl+Alt): stays locked on.
+	 */
+	connectDirected: boolean;
+	/** True when connect was entered as directed — Alt release cannot unlock. */
+	connectDirectedLocked: boolean;
+	/** Live Alt while connect is active (undirected start can promote to directed). */
+	connectAltHeld: boolean;
+	/**
+	 * Sticky multi-select after Shift+add. Plain LMB toggles; Alt+LMB deselects.
+	 * Cleared on replace-select / clear / connect start.
+	 */
+	multiSelectMode: boolean;
+	/**
+	 * `3d` — free orbit (current world). `2d` — top-down on the grid plane;
+	 * orbit off; pan/move locked to XZ; nodes sit on the floor.
+	 */
+	viewMode: ViewMode;
+	/** Tools panel may grow past the minimap down to the dock bottom. */
+	toolsPanelExpanded: boolean;
+	/** Companion / selection sheet may grow past the minimap down to the dock bottom. */
+	selectionPanelExpanded: boolean;
 };
 
 const runner = new MainThreadRunner();
@@ -124,22 +174,93 @@ class AppStore {
 	document = $state.raw<GraphDocument>(createEmptyDocument('Untitled graph'));
 	history = $state.raw<History>(createHistory());
 	selection = $state.raw<SelectionState>(createSelection());
-	mode = $state<AppMode>('explore');
 	overlay = $state.raw<Overlay>(createEmptyOverlay());
 	runStore = $state.raw<RunStore>(createRunStore());
 	directions = $state.raw<DirectionsState>(emptyDirections());
 	analyze = $state.raw<AnalyzeState>(emptyAnalyze());
 	filters = $state.raw<FiltersState>({ tags: [], hideFiltered: false });
-	camera = $state.raw<CameraState>({ distance: 28, target: { x: 0, y: 0, z: 0 } });
+	camera = $state.raw<CameraState>({
+		distance: WORLD.camera.defaultDistance,
+		target: { ...WORLD.camera.defaultTarget },
+		eye: {
+			x: WORLD.camera.defaultPosition[0],
+			y: WORLD.camera.defaultPosition[1],
+			z: WORLD.camera.defaultPosition[2]
+		},
+		panDeg:
+			(Math.atan2(WORLD.camera.defaultPosition[0], WORLD.camera.defaultPosition[2]) * 180) /
+			Math.PI,
+		tiltDeg:
+			90 -
+			(Math.acos(
+				Math.min(
+					1,
+					Math.max(
+						-1,
+						WORLD.camera.defaultPosition[1] / Math.hypot(...WORLD.camera.defaultPosition)
+					)
+				)
+			) *
+				180) /
+				Math.PI
+	});
+	/** Bumped to tween OrbitControls back to the default view angle. */
+	cameraOrbitEpoch = $state(0);
+	/** Bumped to restore default zoom distance. */
+	cameraZoomEpoch = $state(0);
+	/** Bumped to pan the look-at back to the default target. */
+	cameraTargetEpoch = $state(0);
+	/** Bumped when viewMode toggles so GraphScene can apply the camera pose. */
+	viewModeEpoch = $state(0);
+	/** Bumped when a newly created node should be framed if it sits off-screen. */
+	revealEpoch = $state(0);
+	revealPosition = $state.raw<{ x: number; y: number; z: number } | null>(null);
+	/** Bumped to tween the camera onto the current document's nodes. */
+	frameGraphEpoch = $state(0);
+	/**
+	 * Eye−target offset saved when entering 2D — restored on return to 3D
+	 * (scaled to current zoom; target stays where it is).
+	 */
+	last3dOrbit = $state.raw({
+		offset: {
+			x: WORLD.camera.defaultPosition[0] - WORLD.camera.defaultTarget.x,
+			y: WORLD.camera.defaultPosition[1] - WORLD.camera.defaultTarget.y,
+			z: WORLD.camera.defaultPosition[2] - WORLD.camera.defaultTarget.z
+		}
+	});
 	groupsCollapsed = $state.raw<Set<string>>(new Set());
-	ui = $state.raw<UiState>({ paletteOpen: false, diffIds: [], commandQuery: '' });
+	namedSlots = $state<string[]>([]);
+	/** Last Generate type + options; lives here so the panel remount does not reset it. */
+	generateForm = $state(defaultGenerateForm());
+	ui = $state.raw<UiState>({
+		paletteOpen: false,
+		diffIds: [],
+		commandQuery: '',
+		openTool: null,
+		connectFromId: null,
+		connectDirected: false,
+		connectDirectedLocked: false,
+		connectAltHeld: false,
+		multiSelectMode: false,
+		viewMode: '3d',
+		toolsPanelExpanded: false,
+		selectionPanelExpanded: false
+	});
 	statusMessage = $state<string>('');
+	/** Full-screen overlay while a document is loading or generating. */
+	busyKind = $state<WorkKind | null>(null);
+	private workAbort: AbortController | null = null;
+	private lastReadyDocId: string | null = null;
+	private sceneReadyWait: { docId: string; resolve: () => void } | null = null;
 
 	readonly algorithms = listAlgorithms();
 
 	/** Apply a graph mutation with undo support; marks runs stale. */
 	private mutate(
-		mutateFn: (doc: GraphDocument) => { doc: GraphDocument; undo: (d: GraphDocument) => GraphDocument }
+		mutateFn: (doc: GraphDocument) => {
+			doc: GraphDocument;
+			undo: (d: GraphDocument) => GraphDocument;
+		}
 	): void {
 		const result = execute(this.history, this.document, mutateFn);
 		this.document = result.doc;
@@ -163,6 +284,7 @@ class AppStore {
 	}
 
 	initFromAutosave(): void {
+		this.refreshNamedSlots();
 		if (typeof localStorage === 'undefined') return;
 		const raw = localStorage.getItem(AUTOSAVE_KEY);
 		if (!raw) return;
@@ -174,8 +296,19 @@ class AppStore {
 		}
 	}
 
+	/** Frame the open graph from the default pose (zoom out only if needed). */
+	frameOpenGraph(): void {
+		if (Object.keys(this.document.nodes).length === 0) return;
+		this.requestFrameGraph();
+	}
+
+	refreshNamedSlots(): void {
+		this.namedSlots = typeof localStorage === 'undefined' ? [] : listSaveSlotNames(localStorage);
+	}
+
 	replaceDocument(doc: GraphDocument, clearRuns = true): void {
 		this.document = doc;
+		this.lastReadyDocId = null;
 		this.history = clearHistory(this.history);
 		this.selection = clearSelection(this.selection);
 		if (clearRuns) this.runStore = createRunStore();
@@ -186,13 +319,63 @@ class AppStore {
 		this.scheduleAutosave();
 	}
 
-	setMode(mode: AppMode): void {
-		this.mode = mode;
-		if (mode !== 'directions') {
-			this.directions = { ...this.directions, traveling: false };
+	beginWork(kind: WorkKind): boolean {
+		if (this.busyKind) return false;
+		this.workAbort = new AbortController();
+		this.busyKind = kind;
+		return true;
+	}
+
+	get workSignal(): AbortSignal | undefined {
+		return this.workAbort?.signal;
+	}
+
+	finishWork(): void {
+		this.workAbort?.abort();
+		this.busyKind = null;
+		this.workAbort = null;
+		if (this.sceneReadyWait) {
+			const resolve = this.sceneReadyWait.resolve;
+			this.sceneReadyWait = null;
+			resolve();
 		}
-		if (mode === 'directions') this.refreshPaths();
-		this.rebuildModeOverlay();
+	}
+
+	onSceneReady(docId: string): void {
+		this.lastReadyDocId = docId;
+		if (this.sceneReadyWait?.docId === docId) {
+			const resolve = this.sceneReadyWait.resolve;
+			this.sceneReadyWait = null;
+			resolve();
+		}
+	}
+
+	waitForSceneReady(docId: string, signal?: AbortSignal): Promise<void> {
+		if (this.lastReadyDocId === docId) return Promise.resolve();
+		if (signal?.aborted) return Promise.resolve();
+		return new Promise((resolve) => {
+			this.sceneReadyWait = { docId, resolve };
+			signal?.addEventListener(
+				'abort',
+				() => {
+					if (this.sceneReadyWait?.docId === docId) {
+						this.sceneReadyWait = null;
+						resolve();
+					}
+				},
+				{ once: true }
+			);
+		});
+	}
+
+	setDocumentTitle(title: string): void {
+		if (this.document.title === title) return;
+		this.document = {
+			...this.document,
+			title,
+			updatedAt: new Date().toISOString()
+		};
+		this.scheduleAutosave();
 	}
 
 	setSelection(nodeId: NodeId | null): void {
@@ -200,27 +383,78 @@ class AppStore {
 	}
 
 	/**
-	 * Select a node. When `additive` is true (modifier click), toggle membership
-	 * without clearing other selected nodes.
+	 * Select a node with modifier semantics:
+	 * - `replace` — single selection (exits sticky multi)
+	 * - `toggle` — add or remove
+	 * - `add` — add only; enters sticky multi-select mode
+	 * - `deselect` — remove only (no add)
 	 */
-	selectNodeWithModifiers(nodeId: NodeId, additive = false): void {
-		if (additive) {
-			this.selection = toggleNodeInSelection(this.selection, nodeId);
+	selectNodeWithModifiers(
+		nodeId: NodeId,
+		mode: 'replace' | 'toggle' | 'add' | 'deselect' = 'replace'
+	): void {
+		if (mode === 'deselect') {
+			this.selection = removeNodeFromSelection(this.selection, nodeId);
+			if (this.selection.nodeIds.length === 0) this.setMultiSelectMode(false);
 			return;
 		}
+		if (mode === 'toggle') {
+			this.selection = toggleNodeInSelection(this.selection, nodeId);
+			if (this.selection.nodeIds.length === 0) this.setMultiSelectMode(false);
+			return;
+		}
+		if (mode === 'add') {
+			this.selection = addNodeToSelection(this.selection, nodeId);
+			this.setMultiSelectMode(true);
+			return;
+		}
+		this.setMultiSelectMode(false);
 		this.setSelection(nodeId);
+	}
+
+	/**
+	 * Edge selection with modifier semantics (clears node selection).
+	 * Same modes as {@link selectNodeWithModifiers}.
+	 */
+	selectEdgeWithModifiers(
+		edgeId: string,
+		mode: 'replace' | 'toggle' | 'add' | 'deselect' = 'replace'
+	): void {
+		if (mode === 'deselect') {
+			this.selection = removeEdgeFromSelection(this.selection, edgeId);
+			if (this.selection.edgeIds.length === 0) this.setMultiSelectMode(false);
+			return;
+		}
+		if (mode === 'toggle') {
+			this.selection = toggleEdgeInSelection(this.selection, edgeId);
+			if (this.selection.edgeIds.length === 0) this.setMultiSelectMode(false);
+			return;
+		}
+		if (mode === 'add') {
+			this.selection = addEdgeToSelection(this.selection, edgeId);
+			this.setMultiSelectMode(true);
+			return;
+		}
+		this.setMultiSelectMode(false);
+		this.selection = selectEdge(this.selection, edgeId);
+	}
+
+	setMultiSelectMode(on: boolean): void {
+		if (this.ui.multiSelectMode === on) return;
+		this.ui = { ...this.ui, multiSelectMode: on };
 	}
 
 	toggleEdgeSelection(edgeId: string, additive = false): void {
 		if (additive) {
-			this.selection = toggleEdgeInSelection(this.selection, edgeId);
+			this.selectEdgeWithModifiers(edgeId, 'toggle');
 			return;
 		}
-		this.selection = toggleEdgeInSelection(clearSelection(this.selection), edgeId);
+		this.selectEdgeWithModifiers(edgeId, 'replace');
 	}
 
 	clearAllSelection(): void {
 		this.selection = clearSelection(this.selection);
+		this.setMultiSelectMode(false);
 	}
 
 	canUndo = $derived(this.history.undoStack.length > 0);
@@ -251,19 +485,28 @@ class AppStore {
 		const count = Object.keys(this.document.nodes).length;
 		const angle = count * 0.9;
 		const radius = 3 + count * 0.35;
-		const position =
+		const preferred =
 			partial.position ??
 			({
 				x: Math.cos(angle) * radius,
-				y: 0.5,
+				y: WORLD.defaultNodeY,
 				z: Math.sin(angle) * radius
 			} as const);
+		const blockers = Object.values(this.document.nodes).map((n) => n.position);
+		const position = findFreePosition(
+			preferred,
+			blockers,
+			WORLD.nodeRadius,
+			WORLD.collision.floorY,
+			createNodePadding(WORLD.nodeRadius)
+		);
 		this.mutate((d) => {
 			const { doc, nodeId } = addNode(d, { ...partial, position });
 			created = nodeId;
 			return { doc, undo: (cur) => removeNode(cur, nodeId) };
 		});
 		this.setSelection(created);
+		this.requestRevealPosition(position);
 		return created;
 	}
 
@@ -296,7 +539,11 @@ class AppStore {
 		if (this.selection.nodeIds.includes(id)) this.setSelection(null);
 	}
 
-	addEdge(from: NodeId, to: NodeId, opts: { directed?: boolean; weight?: number; label?: string } = {}): string {
+	addEdge(
+		from: NodeId,
+		to: NodeId,
+		opts: { directed?: boolean; weight?: number; label?: string } = {}
+	): string {
 		let created = '';
 		this.mutate((d) => {
 			const { doc, edgeId } = addEdge(d, { from, to, ...opts });
@@ -315,6 +562,7 @@ class AppStore {
 			directed: prev.directed,
 			label: prev.label,
 			weight: prev.weight,
+			tags: [...prev.tags],
 			notes: prev.notes,
 			attachments: prev.attachments.map((a) => ({ ...a })),
 			data: { ...prev.data }
@@ -424,7 +672,7 @@ class AppStore {
 
 	private syncFilterOverlay(): void {
 		const { tags, hideFiltered } = this.filters;
-		if (tags.length === 0 || this.mode === 'directions' || this.analyze.showSteps) {
+		if (tags.length === 0 || this.overlayLocked() || this.analyze.showSteps) {
 			if (this.overlay.kind === 'filter') this.overlay = createEmptyOverlay();
 			return;
 		}
@@ -461,7 +709,7 @@ class AppStore {
 		const { fromId, toId, pathMode, selectedPathId } = this.directions;
 		if (!fromId || !toId) {
 			this.directions = { ...this.directions, pathList: [], selectedPathId: null };
-			if (this.mode === 'directions') this.overlay = createEmptyOverlay();
+			if (this.overlay.kind === 'path') this.overlay = createEmptyOverlay();
 			return;
 		}
 		const pathList =
@@ -474,7 +722,7 @@ class AppStore {
 		}
 		this.directions = { ...this.directions, pathList, selectedPathId: nextSelected };
 		if (nextSelected) this.selectPath(nextSelected);
-		else if (this.mode === 'directions') this.overlay = createEmptyOverlay();
+		else if (this.overlay.kind === 'path') this.overlay = createEmptyOverlay();
 	}
 
 	selectPath(pathId: string | null): void {
@@ -485,20 +733,18 @@ class AppStore {
 			travelProgress: 0
 		};
 		if (!pathId) {
-			if (this.mode === 'directions') this.overlay = createEmptyOverlay();
+			if (this.overlay.kind === 'path') this.overlay = createEmptyOverlay();
 			return;
 		}
 		const path = this.directions.pathList.find((p, i) => pathIdOf(p, i) === pathId);
 		if (path) {
 			this.overlay = pathOverlay(path.nodeIds, path.edgeIds);
-			this.mode = 'directions';
 		}
 	}
 
 	startTravel(): void {
 		if (!this.directions.selectedPathId) return;
 		this.directions = { ...this.directions, traveling: true, travelProgress: 0 };
-		this.mode = 'directions';
 	}
 
 	setTravelProgress(t: number): void {
@@ -532,7 +778,6 @@ class AppStore {
 			travelProgress: 0
 		};
 		this.overlay = pathOverlay([sel, to], [edgeId]);
-		this.mode = 'directions';
 	}
 
 	setAlgorithm(algorithmId: string): void {
@@ -574,7 +819,6 @@ class AppStore {
 			stepIndex: 0,
 			showSteps: false
 		};
-		this.mode = 'analyze';
 		this.applyRunOverlay(run.id);
 		this.statusMessage = `Ran ${algo.name}`;
 		return run.id;
@@ -631,7 +875,6 @@ class AppStore {
 			compareRunIds: [runIdA, runIdB],
 			lastRunId: runIdA
 		};
-		this.mode = 'analyze';
 		this.rebuildModeOverlay();
 		this.statusMessage = `Comparing ${a.algorithmId} vs ${b.algorithmId}`;
 	}
@@ -681,11 +924,22 @@ class AppStore {
 		}
 	}
 
-	private pathSeriesFromRun(run: ReturnType<typeof getRun>): { nodeIds: string[]; edgeIds: string[] } {
+	private pathSeriesFromRun(run: ReturnType<typeof getRun>): {
+		nodeIds: string[];
+		edgeIds: string[];
+	} {
 		if (run?.result.kind === 'path') {
 			return { nodeIds: run.result.nodeIds, edgeIds: run.result.edgeIds };
 		}
 		return { nodeIds: [], edgeIds: [] };
+	}
+
+	private overlayLocked(): boolean {
+		return (
+			this.overlay.kind === 'path' ||
+			this.overlay.kind === 'algo' ||
+			this.overlay.kind === 'compare'
+		);
 	}
 
 	private rebuildModeOverlay(): void {
@@ -696,11 +950,11 @@ class AppStore {
 			this.overlay = compareOverlay(this.pathSeriesFromRun(a), this.pathSeriesFromRun(b));
 			return;
 		}
-		if (this.mode === 'analyze' && this.analyze.lastRunId) {
+		if (this.overlay.kind === 'algo' && this.analyze.lastRunId) {
 			this.applyRunOverlay(this.analyze.lastRunId);
 			return;
 		}
-		if (this.mode === 'directions' && this.directions.selectedPathId) {
+		if (this.overlay.kind === 'path' && this.directions.selectedPathId) {
 			this.selectPath(this.directions.selectedPathId);
 			return;
 		}
@@ -710,15 +964,72 @@ class AppStore {
 	setCamera(partial: Partial<CameraState>): void {
 		const distance = partial.distance ?? this.camera.distance;
 		const target = partial.target ?? this.camera.target;
+		const eye = partial.eye ?? this.camera.eye;
+		const panDeg = partial.panDeg ?? this.camera.panDeg;
+		const tiltDeg = partial.tiltDeg ?? this.camera.tiltDeg;
 		if (
 			distance === this.camera.distance &&
 			target.x === this.camera.target.x &&
 			target.y === this.camera.target.y &&
-			target.z === this.camera.target.z
+			target.z === this.camera.target.z &&
+			eye.x === this.camera.eye.x &&
+			eye.y === this.camera.eye.y &&
+			eye.z === this.camera.eye.z &&
+			panDeg === this.camera.panDeg &&
+			tiltDeg === this.camera.tiltDeg
 		) {
 			return;
 		}
-		this.camera = { distance, target: { x: target.x, y: target.y, z: target.z } };
+		this.camera = {
+			distance,
+			target: { x: target.x, y: target.y, z: target.z },
+			eye: { x: eye.x, y: eye.y, z: eye.z },
+			panDeg,
+			tiltDeg
+		};
+	}
+
+	/** Pan target back to world origin. */
+	resetCameraTarget(): void {
+		this.cameraTargetEpoch += 1;
+	}
+
+	/** Restore the default isometric viewing angle (keeps target + zoom). */
+	resetCameraOrbit(): void {
+		this.cameraOrbitEpoch += 1;
+	}
+
+	/** Restore default zoom distance. */
+	resetCameraZoom(): void {
+		this.cameraZoomEpoch += 1;
+	}
+
+	/** Ask the scene to zoom out if `position` is outside the current view. */
+	requestRevealPosition(position: { x: number; y: number; z: number }): void {
+		this.revealPosition = { x: position.x, y: position.y, z: position.z };
+		this.revealEpoch += 1;
+	}
+
+	/** Ask the scene to look at the current graph and zoom so every node fits. */
+	requestFrameGraph(): void {
+		this.frameGraphEpoch += 1;
+	}
+
+	/** Toggle top-down 2D ↔ free 3D orbit. Keeps current target + zoom. */
+	toggleViewMode(): void {
+		// Orbit snapshot is captured in GraphScene when a 2D tween actually starts
+		// from a settled Y-up pose (so mid-animation mash doesn't overwrite it).
+		this.ui = { ...this.ui, viewMode: this.ui.viewMode === '3d' ? '2d' : '3d' };
+		this.viewModeEpoch += 1;
+	}
+
+	/** Saved by GraphScene when leaving settled 3D for 2D. */
+	saveLast3dOrbit(offset: { x: number; y: number; z: number }): void {
+		this.last3dOrbit = { offset: { x: offset.x, y: offset.y, z: offset.z } };
+	}
+
+	get isView2d(): boolean {
+		return this.ui.viewMode === '2d';
 	}
 
 	openPalette(open = true): void {
@@ -733,50 +1044,197 @@ class AppStore {
 		this.ui = { ...this.ui, diffIds: ids.slice(0, 2) };
 	}
 
-	saveToSlot(slot = 'default'): void {
+	setOpenTool(id: ToolId | null): void {
+		this.ui = {
+			...this.ui,
+			openTool: id,
+			toolsPanelExpanded: false,
+			selectionPanelExpanded: false
+		};
+		if (id === null) this.clearAllSelection();
+	}
+
+	setToolsPanelExpanded(expanded: boolean): void {
+		this.ui = { ...this.ui, toolsPanelExpanded: expanded };
+	}
+
+	setSelectionPanelExpanded(expanded: boolean): void {
+		this.ui = { ...this.ui, selectionPanelExpanded: expanded };
+	}
+
+	toggleTool(id: ToolId): void {
+		this.setOpenTool(nextOpenTool(this.ui.openTool, id));
+	}
+
+	/** Close the open section panel, or open Nodes. */
+	toggleManager(): void {
+		this.setOpenTool(this.ui.openTool ? null : 'nodes');
+	}
+
+	setManagerOpen(open: boolean): void {
+		this.setOpenTool(open ? (this.ui.openTool ?? 'nodes') : null);
+	}
+
+	setConnectFrom(nodeId: string | null, opts: { directed?: boolean } = {}): void {
+		if (!nodeId) {
+			this.ui = {
+				...this.ui,
+				connectFromId: null,
+				connectDirected: false,
+				connectDirectedLocked: false,
+				connectAltHeld: false
+			};
+			return;
+		}
+		const locked = Boolean(opts.directed);
+		// Connect and node-info are exclusive — close any open sheet first.
+		this.selection = clearSelection(this.selection);
+		this.ui = {
+			...this.ui,
+			connectFromId: nodeId,
+			connectDirectedLocked: locked,
+			connectAltHeld: false,
+			connectDirected: locked,
+			multiSelectMode: false
+		};
+	}
+
+	/** Live Alt while connecting — promotes undirected→directed; never demotes a locked directed start. */
+	setConnectAltHeld(held: boolean): void {
+		if (!this.ui.connectFromId) return;
+		if (this.ui.connectAltHeld === held) return;
+		const directed = this.ui.connectDirectedLocked || held;
+		this.ui = { ...this.ui, connectAltHeld: held, connectDirected: directed };
+	}
+
+	/** Start connect from the primary selected node (or `fallbackId` if none). */
+	beginConnectFromSelection(opts: { directed?: boolean; fallbackId?: string } = {}): boolean {
+		const from = this.selection.nodeIds[0] ?? opts.fallbackId ?? null;
+		if (!from || !this.document.nodes[from]) {
+			this.statusMessage = 'Select a node first, then Ctrl+click to connect';
+			return false;
+		}
+		this.setConnectFrom(from, { directed: opts.directed });
+		return true;
+	}
+
+	/** Place a node at a world position (in-world create). */
+	addNodeAt(position: { x: number; y: number; z: number }, label?: string): string {
+		const count = Object.keys(this.document.nodes).length;
+		return this.addNode({
+			label: label ?? `Node ${count + 1}`,
+			position
+		});
+	}
+
+	/** Place a node near the current camera look-target (HUD / Nodes panel create). */
+	addNodeNearView(label?: string): string {
+		const t = this.camera.target;
+		const n = Object.keys(this.document.nodes).length;
+		const jitter = (n % 5) * 0.4;
+		return this.addNodeAt(
+			{ x: t.x + jitter, y: WORLD.defaultNodeY, z: t.z + jitter },
+			label
+		);
+	}
+
+	/** Remove current selection (nodes and/or edges). */
+	deleteSelection(): void {
+		const nodeIds = [...this.selection.nodeIds];
+		const edgeIds = [...this.selection.edgeIds];
+		for (const id of edgeIds) this.removeEdge(id);
+		for (const id of nodeIds) this.removeNode(id);
+		this.clearAllSelection();
+	}
+
+	tryConnectTo(toId: string, opts: { altHeld?: boolean } = {}): boolean {
+		const from = this.ui.connectFromId;
+		if (!from || from === toId) return false;
+		if (opts.altHeld !== undefined) this.setConnectAltHeld(opts.altHeld);
+		const directed = this.ui.connectDirectedLocked || this.ui.connectAltHeld;
+		this.addEdge(from, toId, { directed });
+		this.setConnectFrom(null);
+		// Destination click completes the edge only — do not select / open node info.
+		this.statusMessage = directed ? 'Connected (directed)' : 'Connected';
+		return true;
+	}
+
+	saveToSlot(slot: string): void {
+		const key = saveSlotStorageKey(slot);
+		if (!key) {
+			this.statusMessage = 'Enter a slot name';
+			return;
+		}
 		if (typeof localStorage === 'undefined') return;
-		localStorage.setItem(`yggnet.save.${slot}`, serializeDocument(this.document));
+		localStorage.setItem(key, serializeDocument(this.document));
+		this.refreshNamedSlots();
 		this.statusMessage = 'Saved';
 	}
 
 	saveNamedSlot(name: string): void {
-		const slot = name.trim();
-		if (!slot) {
+		const key = saveSlotStorageKey(name);
+		if (!key) {
 			this.statusMessage = 'Enter a slot name';
 			return;
 		}
-		this.saveToSlot(slot);
+		if (typeof localStorage === 'undefined') return;
+		if (saveSlotExists(localStorage, name) && !this.confirmOverwriteSlot(name.trim())) return;
+		this.saveToSlot(name);
 	}
 
-	loadFromSlot(slot = 'default'): void {
+	loadFromSlot(slot: string): void {
+		const key = saveSlotStorageKey(slot);
+		if (!key) {
+			this.statusMessage = 'Enter a slot name';
+			return;
+		}
 		if (typeof localStorage === 'undefined') return;
-		const raw = localStorage.getItem(`yggnet.save.${slot}`);
+		const raw = localStorage.getItem(key);
 		if (!raw) {
 			this.statusMessage = 'No save found';
 			return;
 		}
 		try {
-			this.replaceDocument(parseDocument(raw));
-			this.statusMessage = 'Loaded';
+			const doc = parseDocument(raw);
+			void this.applyLoadedDocument(doc, 'Loaded');
 		} catch (e) {
 			this.statusMessage = e instanceof Error ? e.message : 'Load failed';
 		}
 	}
 
 	loadNamedSlot(name: string): void {
-		const slot = name.trim();
-		if (!slot) {
+		const key = saveSlotStorageKey(name);
+		if (!key) {
 			this.statusMessage = 'Enter a slot name';
 			return;
 		}
 		if (typeof localStorage === 'undefined') return;
-		const raw = localStorage.getItem(`yggnet.save.${slot}`);
+		const raw = localStorage.getItem(key);
 		if (!raw) {
 			this.statusMessage = 'No save found';
 			return;
 		}
 		if (!this.confirmReplaceDocument()) return;
-		this.loadFromSlot(slot);
+		this.loadFromSlot(name);
+	}
+
+	deleteNamedSlot(name: string): void {
+		const key = saveSlotStorageKey(name);
+		if (!key || typeof localStorage === 'undefined') return;
+		if (!this.confirmDeleteSlot(name.trim())) return;
+		localStorage.removeItem(key);
+		this.refreshNamedSlots();
+		this.statusMessage = 'Deleted';
+	}
+
+	private confirmOverwriteSlot(name: string): boolean {
+		if (typeof window === 'undefined') return true;
+		return window.confirm(`Replace the saved graph “${name}”?`);
+	}
+
+	private confirmDeleteSlot(name: string): boolean {
+		if (typeof window === 'undefined') return true;
+		return window.confirm(`Delete the saved graph “${name}”?`);
 	}
 
 	private confirmReplaceDocument(): boolean {
@@ -793,7 +1251,6 @@ class AppStore {
 			target: { ...node.position },
 			distance: Math.min(this.camera.distance, 14)
 		});
-		this.setMode('explore');
 	}
 
 	exportJson(): string {
@@ -811,24 +1268,43 @@ class AppStore {
 		URL.revokeObjectURL(url);
 	}
 
-	importJson(json: string): void {
+	async importJson(json: string): Promise<void> {
 		try {
-			this.replaceDocument(parseDocument(json));
-			this.statusMessage = 'Imported';
+			const doc = parseDocument(json);
+			await this.applyLoadedDocument(doc, 'Imported');
 		} catch (e) {
 			this.statusMessage = e instanceof Error ? e.message : 'Import failed';
 			throw e;
 		}
 	}
 
-	loadTemplate(kind: 'blank' | 'org' | 'roadmap' | 'learning'): void {
-		this.replaceDocument(buildTemplate(kind));
-		this.statusMessage = `Template: ${kind}`;
+	async applyGeneratedGraph(kind: GraphKind, options: GenerateOptions = {}): Promise<void> {
+		if (!this.beginWork('generate')) return;
+		const signal = this.workAbort?.signal;
+		try {
+			await waitForBusyOverlayPaint();
+			const doc = generateGraph(kind, { ...options, nodeY: WORLD.defaultNodeY });
+			this.replaceDocument(doc);
+			this.requestFrameGraph();
+			await busyHold(signal);
+			await this.waitForSceneReady(this.document.id, signal);
+			this.statusMessage = 'Generated';
+		} finally {
+			this.finishWork();
+		}
 	}
 
-	randomGraph(n = 12): void {
-		this.replaceDocument(buildRandomGraph(n));
-		this.statusMessage = `Random graph (${n})`;
+	private async applyLoadedDocument(doc: GraphDocument, doneMessage: string): Promise<void> {
+		if (!this.beginWork('load')) return;
+		const signal = this.workAbort?.signal;
+		try {
+			await waitForBusyOverlayPaint();
+			this.replaceDocument(doc);
+			this.statusMessage = doneMessage;
+			await this.waitForSceneReady(this.document.id, signal);
+		} finally {
+			this.finishWork();
+		}
 	}
 
 	findNodeByQuery(query: string): NodeId | null {
@@ -853,9 +1329,11 @@ class AppStore {
 		const path = this.selectedPath();
 		if (!path || path.nodeIds.length === 0) return null;
 		const t = this.directions.travelProgress;
-		const pts = path.nodeIds
-			.map((id) => this.document.nodes[id]?.position)
-			.filter(Boolean) as { x: number; y: number; z: number }[];
+		const pts = path.nodeIds.map((id) => this.document.nodes[id]?.position).filter(Boolean) as {
+			x: number;
+			y: number;
+			z: number;
+		}[];
 		if (pts.length === 0) return null;
 		if (pts.length === 1) return { ...pts[0] };
 		const segCount = pts.length - 1;
@@ -872,107 +1350,7 @@ class AppStore {
 	}
 }
 
-function place(x: number, y: number, z: number) {
-	return { x, y, z };
-}
-
-function buildTemplate(kind: 'blank' | 'org' | 'roadmap' | 'learning'): GraphDocument {
-	if (kind === 'blank') return createEmptyDocument('Blank');
-
-	let doc = createEmptyDocument(kind === 'org' ? 'Org chart' : kind === 'roadmap' ? 'Roadmap' : 'Learning path');
-	const ids: string[] = [];
-
-	const add = (label: string, pos: { x: number; y: number; z: number }, tags: string[] = []) => {
-		const r = addNode(doc, { label, position: pos, tags });
-		doc = r.doc;
-		ids.push(r.nodeId);
-		return r.nodeId;
-	};
-	const link = (from: string, to: string, weight = 1, directed = true) => {
-		doc = addEdge(doc, { from, to, weight, directed }).doc;
-	};
-
-	if (kind === 'org') {
-		const ceo = add('CEO', place(0, 2, 0), ['org', 'lead']);
-		const eng = add('Engineering', place(-4, 0, 2), ['org']);
-		const des = add('Design', place(4, 0, 2), ['org']);
-		const fe = add('Frontend', place(-6, 0, 5), ['org', 'team']);
-		const be = add('Backend', place(-2, 0, 5), ['org', 'team']);
-		const ux = add('UX', place(2, 0, 5), ['org', 'team']);
-		const brand = add('Brand', place(6, 0, 5), ['org', 'team']);
-		link(ceo, eng);
-		link(ceo, des);
-		link(eng, fe);
-		link(eng, be);
-		link(des, ux);
-		link(des, brand);
-	} else if (kind === 'roadmap') {
-		const a = add('Discover', place(-6, 0, 0), ['phase']);
-		const b = add('Prototype', place(-2, 0, 0), ['phase']);
-		const c = add('Build', place(2, 0, 0), ['phase']);
-		const d = add('Launch', place(6, 0, 0), ['phase']);
-		const risk = add('Risk review', place(0, 0, 4), ['gate']);
-		link(a, b, 1);
-		link(b, c, 2);
-		link(c, d, 1);
-		link(b, risk, 1);
-		link(risk, c, 1);
-	} else {
-		const root = add('Fundamentals', place(0, 0, -2), ['topic']);
-		const graphs = add('Graphs', place(-4, 0, 2), ['topic']);
-		const search = add('Search', place(0, 0, 2), ['topic']);
-		const path = add('Shortest paths', place(4, 0, 2), ['topic']);
-		const bfs = add('BFS', place(-2, 0, 5), ['algo']);
-		const dij = add('Dijkstra', place(2, 0, 5), ['algo']);
-		const astar = add('A*', place(5, 0, 5), ['algo']);
-		link(root, graphs);
-		link(root, search);
-		link(root, path);
-		link(search, bfs);
-		link(path, dij);
-		link(path, astar);
-		link(graphs, search, 1, false);
-	}
-
-	return doc;
-}
-
-function buildRandomGraph(n: number): GraphDocument {
-	const count = Math.max(2, Math.min(40, Math.floor(n)));
-	let doc = createEmptyDocument(`Random ${count}`);
-	const ids: string[] = [];
-	for (let i = 0; i < count; i++) {
-		const angle = (i / count) * Math.PI * 2;
-		const radius = 4 + (i % 5);
-		const r = addNode(doc, {
-			label: `N${i + 1}`,
-			position: {
-				x: Math.cos(angle) * radius,
-				y: (i % 3) * 0.4,
-				z: Math.sin(angle) * radius
-			},
-			tags: i % 4 === 0 ? ['hub'] : []
-		});
-		doc = r.doc;
-		ids.push(r.nodeId);
-	}
-	for (let i = 0; i < count; i++) {
-		const to = (i + 1) % count;
-		doc = addEdge(doc, {
-			from: ids[i],
-			to: ids[to],
-			weight: 1 + (i % 3),
-			directed: i % 5 === 0
-		}).doc;
-		if (i % 3 === 0) {
-			const jump = (i + 3) % count;
-			doc = addEdge(doc, { from: ids[i], to: ids[jump], weight: 2, directed: false }).doc;
-		}
-	}
-	return doc;
-}
-
 export const app = new AppStore();
 
-/** Convenience re-exports for templates / tests. */
+/** Convenience re-exports for session / tests. */
 export { AUTOSAVE_KEY, pathIdOf };

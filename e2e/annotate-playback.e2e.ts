@@ -1,21 +1,20 @@
 import { expect, test } from '@playwright/test';
+import { applyGeneratedGraph, openTool } from './open-tool';
 
 test('annotate step readback and trace playback', async ({ page }) => {
 	await page.goto('/');
-	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
-
-	await page.getByTestId('tpl-learning').click();
-	await page.getByTestId('mode-directions').click();
+	await applyGeneratedGraph(page, 'grid', { rows: 3, columns: 3 });
+	await openTool(page, 'pathfinder');
 
 	const fromSelect = page.getByTestId('path-from');
 	const toSelect = page.getByTestId('path-to');
 	const fromValue = await fromSelect.locator('option').nth(1).getAttribute('value');
 	const toValue = await toSelect.locator('option').nth(2).getAttribute('value');
-	if (!fromValue || !toValue) throw new Error('Learning template missing nodes');
+	if (!fromValue || !toValue) throw new Error('Grid graph missing nodes');
 	await fromSelect.selectOption(fromValue);
 	await toSelect.selectOption(toValue);
 
-	await page.getByTestId('mode-analyze').click();
+	await openTool(page, 'analyze');
 	await expect(page.getByTestId('analyze-panel')).toBeVisible();
 	await page.getByTestId('run-algo').click();
 	await expect(page.getByTestId('run-status')).toBeVisible();
@@ -38,9 +37,7 @@ test('annotate step readback and trace playback', async ({ page }) => {
 
 	await page.getByTestId('trace-play').click();
 	await expect(page.getByTestId('trace-play')).toHaveText('Pause');
-	await expect
-		.poll(async () => scrubber.inputValue(), { timeout: 3000 })
-		.not.toBe('0');
+	await expect.poll(async () => scrubber.inputValue(), { timeout: 3000 }).not.toBe('0');
 
 	await page.getByTestId('trace-play').click();
 	await expect(page.getByTestId('trace-play')).toHaveText('Play');

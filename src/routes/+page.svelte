@@ -1,54 +1,86 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
+	import { fade, fly } from 'svelte/transition';
 	import ManagerPanel from '$lib/ui/ManagerPanel.svelte';
+	import Toolbar from '$lib/ui/Toolbar.svelte';
 	import { app } from '$lib/session/app.svelte';
+	import { applyBeforeUnloadGuard } from '$lib/session/work-busy';
+	import { tabTitleFromGraph } from '$lib/session/tab-title';
+	import { edgesCompanionOpen, nodesCompanionOpen, selectionPanelOpen } from '$lib/ui/tool-ids';
+	import { forwardWheelEvent, worldCanvas } from '$lib/ui/forward-wheel';
 
+	const slide = { duration: 220, x: -28, opacity: 0 };
 	let WorldCanvas: typeof import('$lib/world/WorldCanvas.svelte').default | null = $state(null);
 
 	onMount(() => {
-		app.initFromAutosave();
 		let cancelled = false;
-		import('$lib/world/WorldCanvas.svelte').then((m) => {
-			if (!cancelled) WorldCanvas = m.default;
-		});
+		window.__YGGNET_RELAYOUT = () => app.relayout();
+		window.__YGGNET_PIN_NODE = (id: string, pinned = true) => app.pinNode(id, pinned);
+		app.beginWork('load');
+		import('$lib/world/WorldCanvas.svelte')
+			.then(async (m) => {
+				if (cancelled) return;
+				WorldCanvas = m.default;
+				await tick();
+				if (cancelled) return;
+				app.initFromAutosave();
+				await app.waitForSceneReady(app.document.id, app.workSignal);
+				app.frameOpenGraph();
+				if (!cancelled && app.busyKind === 'load') app.finishWork();
+			})
+			.catch(() => {
+				if (!cancelled) app.finishWork();
+			});
 		return () => {
 			cancelled = true;
+			delete window.__YGGNET_RELAYOUT;
+			delete window.__YGGNET_PIN_NODE;
+			if (app.busyKind === 'load') app.finishWork();
 		};
 	});
 
 	function onKeydown(e: KeyboardEvent) {
+		if (app.busyKind) {
+			e.preventDefault();
+			return;
+		}
+		const target = e.target as HTMLElement | null;
+		const typing =
+			target &&
+			(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 		const meta = e.ctrlKey || e.metaKey;
 		if (meta && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
 			app.openPalette(!app.ui.paletteOpen);
 			return;
 		}
-		if (e.key === 'Escape' && app.ui.paletteOpen) {
-			app.openPalette(false);
+		if (e.key === 'Escape') {
+			if (app.ui.paletteOpen) {
+				app.openPalette(false);
+				return;
+			}
+			if (app.ui.connectFromId) {
+				app.setConnectFrom(null);
+				return;
+			}
+			if (app.ui.openTool) {
+				app.setOpenTool(null);
+				return;
+			}
+			app.clearAllSelection();
+			return;
+		}
+		if (typing) return;
+		if (e.key === 'm' || e.key === 'M') {
+			e.preventDefault();
+			app.toggleManager();
+			return;
+		}
+		if (e.key === 'Delete' || e.key === 'Backspace') {
+			e.preventDefault();
+			app.deleteSelection();
 		}
 	}
-
-	const paletteCommands = $derived.by(() => {
-		const q = app.ui.commandQuery.trim().toLowerCase();
-		const items: { id: string; label: string; run: () => void }[] = [
-			{ id: 'mode-explore', label: 'Switch to Explore', run: () => app.setMode('explore') },
-			{ id: 'mode-directions', label: 'Switch to Directions', run: () => app.setMode('directions') },
-			{ id: 'mode-analyze', label: 'Switch to Analyze', run: () => app.setMode('analyze') },
-			{
-				id: 'run-bfs',
-				label: 'Run BFS',
-				run: () => {
-					app.setAlgorithm('bfs');
-					void app.runAlgorithm();
-				}
-			},
-			{ id: 'add-node', label: 'Add node', run: () => app.addNode() },
-			{ id: 'undo', label: 'Undo', run: () => app.undo() },
-			{ id: 'redo', label: 'Redo', run: () => app.redo() }
-		];
-		if (!q) return items;
-		return items.filter((i) => i.label.toLowerCase().includes(q));
-	});
 
 	const paletteFindResults = $derived.by(() => {
 		const q = app.ui.commandQuery.trim();
@@ -62,21 +94,52 @@
 		});
 	});
 
-	function runItem(item: { run: () => void }) {
-		item.run();
-		app.openPalette(false);
-	}
-
 	function jumpToFindResult(nodeId: string) {
 		app.jumpToNode(nodeId);
 		app.openPalette(false);
 	}
+
+	function closePalette() {
+		app.openPalette(false);
+	}
+
+	function onPaletteBackdropClick(e: MouseEvent) {
+		if (e.target === e.currentTarget) closePalette();
+	}
+
+	function onScrimWheel(e: WheelEvent) {
+		const canvas = worldCanvas(document);
+		if (!canvas) return;
+		forwardWheelEvent(e, canvas);
+	}
+
+	const showSelectionPanel = $derived(
+		selectionPanelOpen(app.ui.openTool, app.selection.nodeIds.length, app.selection.edgeIds.length)
+	);
+	const showNodesCompanion = $derived(
+		nodesCompanionOpen(app.ui.openTool, app.selection.nodeIds.length)
+	);
+	const showEdgesCompanion = $derived(
+		edgesCompanionOpen(app.ui.openTool, app.selection.edgeIds.length)
+	);
+	const showSelectionSlot = $derived(
+		showSelectionPanel || showNodesCompanion || showEdgesCompanion
+	);
+
+	const tabTitle = $derived(tabTitleFromGraph(app.document.title));
+
+	function onBeforeUnload(e: BeforeUnloadEvent) {
+		applyBeforeUnloadGuard(app.busyKind !== null, e);
+	}
 </script>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:head>
+	<title>{tabTitle}</title>
+</svelte:head>
+
+<svelte:window onkeydown={onKeydown} onbeforeunload={onBeforeUnload} />
 
 <div id="yggnet-app" class="shell" data-testid="yggnet-shell">
-	<ManagerPanel />
 	<main class="viewport">
 		{#if WorldCanvas}
 			<WorldCanvas />
@@ -85,16 +148,24 @@
 		{/if}
 
 		{#if app.ui.paletteOpen}
-			<div class="palette-backdrop" data-testid="command-palette" role="presentation">
+			<div
+				class="palette-backdrop"
+				data-testid="command-palette"
+				role="presentation"
+				transition:fade={{ duration: 160 }}
+				onclick={onPaletteBackdropClick}
+			>
 				<div
 					class="palette"
 					role="dialog"
 					aria-modal="true"
 					aria-label="Command palette"
+					transition:fly={{ y: -10, duration: 200, opacity: 0 }}
+					onclick={(e) => e.stopPropagation()}
 				>
 					<input
 						data-testid="palette-input"
-						placeholder="Find node, switch mode, run bfs…"
+						placeholder="Find a node…"
 						value={app.ui.commandQuery}
 						oninput={(e) => app.setCommandQuery(e.currentTarget.value)}
 					/>
@@ -112,36 +183,148 @@
 								</li>
 							{/each}
 						</ul>
+					{:else if app.ui.commandQuery.trim()}
+						<p class="hint">No nodes match</p>
 					{/if}
-					<ul>
-						{#each paletteCommands as item (item.id)}
-							<li>
-								<button type="button" data-testid={`palette-item-${item.id}`} onclick={() => runItem(item)}>
-									{item.label}
-								</button>
-							</li>
-						{/each}
-					</ul>
 					<p class="hint">Ctrl+K · Esc to close</p>
 				</div>
 			</div>
 		{/if}
 	</main>
+
+	{#if app.ui.openTool}
+		<button
+			type="button"
+			class="drawer-scrim"
+			aria-label="Close tools panel"
+			data-testid="manager-scrim"
+			transition:fade={{ duration: 180 }}
+			onclick={() => app.setOpenTool(null)}
+			onwheel={onScrimWheel}
+		></button>
+	{/if}
+	<div class="tool-dock">
+		<Toolbar />
+		<div
+			class="tool-panel-stage"
+			class:fill={app.ui.openTool !== null}
+			class:companion={showNodesCompanion || showEdgesCompanion}
+		>
+			{#if app.ui.openTool}
+				<div class="tool-panel-slot" in:fly={slide} out:fade={{ duration: 180 }}>
+					<ManagerPanel section={app.ui.openTool} />
+				</div>
+			{/if}
+			{#if showSelectionSlot}
+				<div class="tool-panel-slot">
+					<ManagerPanel section="selection" />
+				</div>
+			{/if}
+		</div>
+	</div>
+
+	{#if app.busyKind || !WorldCanvas}
+		{@const kind = app.busyKind ?? 'load'}
+		<div
+			class="work-overlay"
+			data-testid="work-overlay"
+			role="alertdialog"
+			aria-modal="true"
+			tabindex="-1"
+			aria-labelledby="work-overlay-title"
+		>
+			<div class="work-overlay-card">
+				<p id="work-overlay-title">
+					{kind === 'generate' ? 'Generating graph…' : 'Loading graph…'}
+				</p>
+			</div>
+		</div>
+	{/if}
 </div>
 
 <style>
 	.shell {
-		display: grid;
-		grid-template-columns: auto 1fr;
+		position: relative;
 		height: 100dvh;
 		min-height: 100vh;
 		background: var(--yg-bg);
+		overflow: hidden;
 	}
 
 	.viewport {
+		width: 100%;
+		height: 100%;
 		min-width: 0;
 		min-height: 0;
 		position: relative;
+	}
+
+	.drawer-scrim {
+		position: absolute;
+		inset: 0;
+		z-index: 15;
+		border: none;
+		padding: 0;
+		margin: 0;
+		background: rgba(28, 36, 46, 0.28);
+		cursor: pointer;
+	}
+
+	.tool-dock {
+		position: absolute;
+		top: calc(var(--yg-top-bar-h) + (2 * var(--yg-hud-edge)));
+		left: var(--yg-hud-edge);
+		bottom: var(--yg-hud-edge);
+		z-index: 16;
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: flex-start;
+		gap: var(--yg-hud-edge);
+		max-width: calc(100% - 1.5rem);
+		pointer-events: none;
+	}
+
+	.tool-panel-stage {
+		position: relative;
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		gap: var(--yg-hud-edge);
+		min-width: 0;
+		max-height: 100%;
+		pointer-events: none;
+	}
+
+	.tool-panel-stage.fill {
+		align-self: flex-start;
+		max-height: 100%;
+		min-height: 0;
+	}
+
+	.tool-panel-slot {
+		display: flex;
+		align-items: flex-start;
+		min-width: 0;
+		min-height: 0;
+		height: auto;
+		max-height: 100%;
+		pointer-events: auto;
+	}
+
+	.tool-dock :global(.toolbar) {
+		align-self: flex-start;
+		pointer-events: auto;
+	}
+
+	.tool-dock :global(.manager) {
+		pointer-events: auto;
+		cursor: default;
+	}
+
+	.tool-dock :global(.manager--fill) {
+		flex: 0 1 auto;
+		min-height: 0;
 	}
 
 	.world-placeholder {
@@ -155,36 +338,38 @@
 	.palette-backdrop {
 		position: absolute;
 		inset: 0;
-		background: color-mix(in srgb, #1c242e 45%, transparent);
+		background: rgba(28, 36, 46, 0.32);
 		display: grid;
 		place-items: start center;
 		padding-top: 12vh;
 		z-index: 20;
+		cursor: pointer;
 	}
 
 	.palette {
 		width: min(28rem, 92vw);
-		background: var(--yg-panel);
+		background: var(--yg-panel-glass-strong);
 		border: 1px solid var(--yg-border);
-		border-radius: 10px;
-		padding: 0.75rem;
-		box-shadow: 0 12px 40px color-mix(in srgb, #1c242e 25%, transparent);
+		border-radius: var(--yg-radius-modal);
+		padding: var(--yg-pad-modal);
+		box-shadow: 0 10px 28px rgba(28, 36, 46, 0.16);
+		cursor: default;
 	}
 
 	.palette input {
 		width: 100%;
 		font: inherit;
-		font-size: 1rem;
-		padding: 0.55rem 0.65rem;
+		font-size: 0.9rem;
+		padding: 0.5rem 0.6rem;
 		border: 1px solid var(--yg-border);
-		border-radius: 8px;
-		background: #fff;
+		border-radius: var(--yg-radius-control);
+		background: var(--yg-chip);
 		color: var(--yg-fg);
 	}
 
 	.palette ul {
 		list-style: none;
-		margin: 0.5rem 0 0;
+		margin: 0.55rem 0 0;
 		padding: 0;
 		max-height: 16rem;
 		overflow: auto;
@@ -195,12 +380,13 @@
 		text-align: left;
 		font: inherit;
 		font-size: 0.9rem;
-		padding: 0.45rem 0.55rem;
+		padding: 0.5rem 0.6rem;
 		border: none;
 		background: transparent;
-		border-radius: 6px;
+		border-radius: var(--yg-radius-control);
 		cursor: pointer;
 		color: var(--yg-fg);
+		transition: background var(--yg-motion-fast) var(--yg-ease);
 	}
 
 	.palette li button:hover {
@@ -209,7 +395,38 @@
 
 	.hint {
 		margin: 0.5rem 0 0;
-		font-size: 0.75rem;
+		font-size: 0.9rem;
 		color: var(--yg-muted);
+	}
+
+	.work-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 1000;
+		display: grid;
+		place-items: center;
+		background: rgba(28, 36, 46, 0.72);
+		pointer-events: auto;
+		cursor: default;
+	}
+
+	.work-overlay-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.85rem;
+		padding: 1.15rem 1.4rem;
+		border-radius: var(--yg-radius-modal);
+		background: var(--yg-panel-glass-strong);
+		border: 1px solid var(--yg-border);
+		box-shadow: 0 10px 28px rgba(28, 36, 46, 0.2);
+		pointer-events: auto;
+	}
+
+	.work-overlay-card p {
+		margin: 0;
+		font-size: 0.95rem;
+		font-weight: 650;
+		color: var(--yg-fg);
 	}
 </style>

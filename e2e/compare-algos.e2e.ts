@@ -1,21 +1,20 @@
 import { expect, test } from '@playwright/test';
+import { applyGeneratedGraph, openTool } from './open-tool';
 
 test('compare two algorithms shows dual summary and dismisses', async ({ page }) => {
 	await page.goto('/');
-	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
-
-	await page.getByTestId('tpl-learning').click();
-	await page.getByTestId('mode-directions').click();
+	await applyGeneratedGraph(page, 'grid', { rows: 3, columns: 3 });
+	await openTool(page, 'pathfinder');
 
 	const fromSelect = page.getByTestId('path-from');
 	const toSelect = page.getByTestId('path-to');
 	const fromValue = await fromSelect.locator('option').nth(1).getAttribute('value');
 	const toValue = await toSelect.locator('option').nth(2).getAttribute('value');
-	if (!fromValue || !toValue) throw new Error('Learning template missing nodes');
+	if (!fromValue || !toValue) throw new Error('Grid graph missing nodes');
 	await fromSelect.selectOption(fromValue);
 	await toSelect.selectOption(toValue);
 
-	await page.getByTestId('mode-analyze').click();
+	await openTool(page, 'analyze');
 	await expect(page.getByTestId('analyze-panel')).toBeVisible();
 
 	await page.getByTestId('algo-picker').selectOption('bfs');

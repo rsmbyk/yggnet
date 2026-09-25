@@ -29,6 +29,7 @@ export interface GraphEdge {
 	directed: boolean;
 	label?: string;
 	weight: number;
+	tags: string[];
 	notes?: string;
 	attachments: GraphAttachment[];
 	data: Record<string, unknown>;
@@ -43,5 +44,3 @@ export interface GraphDocument {
 	createdAt: string;
 	updatedAt: string;
 }
-
-export type AppMode = 'explore' | 'directions' | 'analyze';

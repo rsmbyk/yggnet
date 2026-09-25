@@ -111,6 +111,7 @@ describe('ops', () => {
 			to: b.nodeId,
 			directed: false,
 			weight: 1,
+			tags: [],
 			attachments: [],
 			data: {}
 		});
@@ -136,6 +137,22 @@ describe('ops', () => {
 			weight: 3.5,
 			label: 'link'
 		});
+	});
+
+	it('addEdge accepts tags', () => {
+		let doc = createEmptyDocument();
+		const a = addNode(doc);
+		doc = a.doc;
+		const b = addNode(doc);
+		doc = b.doc;
+		const { doc: withEdge, edgeId } = addEdge(doc, {
+			from: a.nodeId,
+			to: b.nodeId,
+			tags: ['route']
+		});
+		expect(withEdge.edges[edgeId].tags).toEqual(['route']);
+		doc = updateEdge(withEdge, edgeId, { tags: ['route', 'hot'] });
+		expect(doc.edges[edgeId].tags).toEqual(['route', 'hot']);
 	});
 
 	it('updateEdge and removeEdge', () => {

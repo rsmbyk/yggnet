@@ -17,7 +17,7 @@ playwright-report
 !.env.test
 backlog
 docs
-scripts
+scripts/*
 e2e
 *.log
 .DS_Store

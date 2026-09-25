@@ -4,8 +4,7 @@ export type {
 	GraphEdge,
 	GraphAttachment,
 	NodeId,
-	EdgeId,
-	AppMode
+	EdgeId
 } from './model/types';
 export { createEmptyDocument, nodeCount, edgeCount } from './model/document';
 export {
@@ -17,6 +16,8 @@ export {
 	toggleNodeInSelection,
 	selectEdge,
 	toggleEdgeInSelection,
+	addEdgeToSelection,
+	removeEdgeFromSelection,
 	clearSelection,
 	isSelected,
 	isEdgeSelected,
@@ -50,6 +51,13 @@ export {
 	type EdgePatch,
 	type AddEdgeInput
 } from './ops/ops';
+export {
+	edgeDirectionMode,
+	edgeDirectionOptions,
+	edgeDirectionPatch,
+	edgeDirectionSelectValue,
+	type EdgeDirectionMode
+} from './ops/edge-direction';
 export {
 	createHistory,
 	execute,
@@ -88,3 +96,56 @@ export {
 } from './release/semver';
 export { layoutUnpinned, type LayoutOptions } from './layout/layout';
 export { findNodeByQuery, findNodesByQuery } from './search/findNodes';
+export { nodeMatchesListFilter } from './search/nodeListFilter';
+export { edgeMatchesListFilter } from './search/edgeListFilter';
+export {
+	generateGraph,
+	fingerprint,
+	randomSeed,
+	GRAPH_KINDS,
+	GRAPH_KIND_GROUPS,
+	NAMED_GRAPHS,
+	NAMED_GRAPH_LABELS,
+	PLATONIC_SOLIDS,
+	PLATONIC_LABELS,
+	ARCHIMEDEAN_SOLIDS,
+	ARCHIMEDEAN_LABELS,
+	PALEY_ORDERS,
+	GENERATE_MIN_DISTANCE,
+	defaultGenerateForm,
+	fieldsForKind,
+	generateFieldLimit,
+	generateOptionsFromForm,
+	generateRequestFromForm,
+	isNamedGraphId,
+	JUMPS_FIELD_HELP,
+	kindAllowsDirected,
+	kindAllowsPlanar,
+	kindAllowsWeighted,
+	kindHelp,
+	COMMUNITY_P_BETWEEN_HELP,
+	COMMUNITY_P_INSIDE_HELP,
+	DENSITY_FIELD_HELP,
+	ATTACHMENTS_FIELD_HELP,
+	DEGREE_FIELD_HELP,
+	NEIGHBORS_FIELD_HELP,
+	RUNGS_FIELD_HELP,
+	DIMENSION_FIELD_HELP,
+	BRANCHING_FIELD_HELP,
+	DEPTH_FIELD_HELP,
+	EXTENT_FIELD_HELP,
+	TURNS_FIELD_HELP,
+	CHORD_FIELD_HELP,
+	RINGS_FIELD_HELP,
+	SEGMENTS_FIELD_HELP,
+	PROBABILITY_RANGE_HELP,
+	REWIRE_FIELD_HELP,
+	type GraphKind,
+	type GenerateFormState,
+	type GenerateOptions,
+	type GeneratePickerId,
+	type NamedGraphId,
+	type PlatonicSolid,
+	type ArchimedeanSolid,
+	type KindField
+} from './generators/generate';
