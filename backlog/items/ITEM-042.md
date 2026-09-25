@@ -1,6 +1,6 @@
 ---
 id: ITEM-042
-status: in_review
+status: done
 title: "Solid nodes + pointer intents"
 type: feat
 priority: P1

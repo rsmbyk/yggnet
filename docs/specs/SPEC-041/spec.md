@@ -4,7 +4,7 @@ item: ITEM-041
 type: feat
 feature_area: world
 bump: minor
-status: in_review
+status: done
 title: "Camera chrome + 2D/3D"
 created: 2026-09-25
 updated: 2026-09-25

@@ -1,6 +1,6 @@
 ---
 id: ITEM-040
-status: in_review
+status: done
 title: "Canonical world config"
 type: feat
 priority: P1

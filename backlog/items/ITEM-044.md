@@ -1,6 +1,6 @@
 ---
 id: ITEM-044
-status: in_review
+status: done
 title: "In-world selection sheet + create"
 type: feat
 priority: P1

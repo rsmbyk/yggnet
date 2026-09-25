@@ -4,7 +4,7 @@ item: ITEM-039
 type: feat
 feature_area: world
 bump: minor
-status: in_review
+status: done
 title: "World-first shell + HUD"
 created: 2026-09-25
 updated: 2026-09-25

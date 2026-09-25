@@ -1,6 +1,6 @@
 ---
 id: ITEM-046
-status: in_review
+status: done
 title: "Manager Nodes/Edges list UX"
 type: feat
 priority: P1

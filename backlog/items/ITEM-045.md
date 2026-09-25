@@ -1,6 +1,6 @@
 ---
 id: ITEM-045
-status: in_review
+status: done
 title: "Toolbar + tools panel chrome"
 type: feat
 priority: P1
