@@ -54,6 +54,6 @@ jobs:
               on agent commits, backlog/board.md + ITEM frontmatter updated on status
               changes, no personal names (roles only), no secrets, no force-push.
 
-            Output: start the comment by mentioning @cursoragent so it is notified,
+            Output: start the comment by mentioning @cursor so it picks up the review,
             then concise findings grouped as Must-fix / Should-fix / Nit, with
             file:line references. If the PR is clean, say so explicitly.
