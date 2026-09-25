@@ -1,64 +1,61 @@
-# Vibe session notes — 2026-07-30 (updated 2026-08-03)
+# Vibe session notes — 2026-07-30 (updated 2026-09-25)
 
 **Branch:** `vibe/session-20260730` (off `develop`, tip before vibe was `c6cdd5c`)  
-**Status:** Paused for machine migration — work committed on vibe branch; **not merged to `develop`**.  
-**Dev:** `npm run dev` → usually `http://localhost:5174/` (Vite picks port if 5173 busy).
+**Status:** **Concluded / formalizing** — SPECs ITEM/SPEC-039…046; draft PR #16 to `develop`.  
+**Dev:** `npm run dev` → `http://localhost:5174/` (`strictPort`).
 
 ---
 
-## Pick up on a new machine
+## Formalization
 
-```bash
-git fetch origin
-git checkout vibe/session-20260730
-npm install
-npm run dev
-```
+Vibe exploration is frozen into normal process packs:
 
-Read this file + skim `src/lib/world/world-config.ts` and `GraphScene.svelte` for camera/input.  
-World Tune panel (HUD) edits live; **Save** writes `world-config.ts` via dev middleware `POST /__yggnet/world-config` (`scripts/vite-world-config-writer.ts`, wired in `vite.config.ts`).
+| SPEC | Concern |
+| --- | --- |
+| SPEC-039 | World-first shell + HUD |
+| SPEC-040 | Canonical world config (no World Tune; `textureSize` 250) |
+| SPEC-041 | Camera chrome + 2D/3D |
+| SPEC-042 | Solid nodes + pointer intents |
+| SPEC-043 | Labels, colors, edge geometry |
+| SPEC-044 | In-world selection sheet + create |
+| SPEC-045 | Toolbar + tools panel chrome |
+| SPEC-046 | Manager Nodes/Edges list UX |
 
-When vibe session truly ends: split into Backlog ITEMs on clean `develop`, keep this branch as reference until ITEMs are Done, then SPEC execute (same behavior, with tests).
+**World config:** edit [`src/lib/world/world-config.ts`](src/lib/world/world-config.ts) and keep [`docs/world-scale.md`](docs/world-scale.md) in sync. There is **no** live World Tune panel or `/__yggnet/world-config` writer.
 
----
-
-## Distinct features to split into ITEMs later
-
-1. **World-first shell** — Full-bleed 3D world as primary UI; remove permanent admin sidebar.
-2. **World HUD menubar** — Floating top bar: brand, undo/redo, add node, palette, World tune.
-3. **In-world selection sheet** — Bottom-left inspector for selected node/edge (label, connect, pin, delete).
-4. **In-world create/connect/delete** — Add node; Connect mode; Del/Backspace; Esc cancels.
-5. **Toolbar** — Vertical icon rail for tools; each icon opens that section only (`Toolbar.svelte` + `ManagerPanel.svelte`).
-6. **Glass panels + calm motion** — Translucent panels; fade/fly ~160–220ms; `prefers-reduced-motion`.
-7. **World Tune → config file** — All `WORLD` knobs live; Save writes `src/lib/world/world-config.ts`.
-8. **Solid nodes** — Kinematic collision (`node-physics.ts`); no gravity; floor clamp; `findFreePosition` on add.
-9. **Node click / connect intents** — `node-click.ts` + sticky multi-select, Ctrl connect, Alt directed.
-10. **Labels** — Billboard, screen-up offset, LOD by `labelDistance` (eye→node), depthTest off, pass through edges.
-11. **Node colors** — Idle / selected / hover in World Tune; connect source uses selected color.
-12. **Camera chrome** — Reset target / orbit / zoom; minimap; readout (pan, tilt, eye xyz).
-13. **2D / 3D view toggle** — Map chrome first button; see below.
-14. **Cursor** — Grab on empty space; default arrow on nodes; grabbing while pan/orbit/drag.
+Characterization tests lock shipped behavior; product code stays as on the vibe tip except SPEC-040 intentional deltas.
 
 ---
 
-## 2D / 3D view (latest behavior)
+## Distinct features (mapped to SPECs)
+
+1. **World-first shell** — SPEC-039
+2. **World HUD menubar** — SPEC-039
+3. **In-world selection sheet** — SPEC-044
+4. **In-world create/connect/delete** — SPEC-042 / SPEC-044
+5. **Toolbar** — SPEC-045
+6. **Glass panels + calm motion** — SPEC-045
+7. **World config file** — SPEC-040 (was Tune → Save; now file-only)
+8. **Solid nodes** — SPEC-042
+9. **Node click / connect intents** — SPEC-042
+10. **Labels** — SPEC-043
+11. **Node colors** — SPEC-043
+12. **Camera chrome** — SPEC-041
+13. **2D / 3D view toggle** — SPEC-041
+14. **Cursor** — SPEC-041
+
+---
+
+## 2D / 3D view (behavior)
 
 | Mode | Behavior |
 |------|----------|
 | **3D** | Free LMB orbit; RMB pan (XZ default; Ctrl XY; Shift YZ); wheel zoom. |
 | **2D** | True top-down on XZ plane: eye on +Y above target, `up = (0,0,-1)` so screen X = world +X, screen vertical ≈ world −Z. Orbit disabled. Pan + node move **XZ only**. Nodes on floor (`defaultNodeY`). |
-| **Toggle** | `app.toggleViewMode()` — saves `last3dOrbit.offset` (eye−target) when entering 2D from settled Y-up 3D; restores offset scaled to current zoom when leaving 2D; **keeps current zoom**. |
-| **Tween** | `viewModeTransitionMs` in World Tune; quaternion + position tween on render loop (`useTask`); `prefers-reduced-motion` → instant. |
+| **Toggle** | `app.toggleViewMode()` — saves `last3dOrbit.offset` when entering 2D from settled Y-up 3D; restores offset scaled to current zoom when leaving 2D; **keeps current zoom**. |
+| **Tween** | `viewModeTransitionMs` in `WORLD.controls`; quaternion + position tween on render loop; `prefers-reduced-motion` → instant. |
 
-**Key code:** `app.svelte.ts` (`ui.viewMode`, `last3dOrbit`, `viewModeEpoch`), `GraphScene.svelte` (`enforce2dCamera`, `animateViewModeTransition`), `WorldCanvas.svelte` (toggle button).
-
-**Polish / verify on new machine:** 2D transition feel; rapid toggle mash; 3D restore matches pre-2D view; label readability in 2D.
-
----
-
-## Session rule — World Tune
-
-Any tunable value → **World Tune** + `WORLD` / `world-config.ts`. Canonical scale doc: `docs/world-scale.md`.
+**Key code:** `app.svelte.ts` (`ui.viewMode`, `last3dOrbit`, `viewModeEpoch`), `GraphScene.svelte`, `WorldCanvas.svelte`.
 
 ---
 
@@ -88,7 +85,7 @@ Any tunable value → **World Tune** + `WORLD` / `world-config.ts`. Canonical sc
 |---|---|
 | **LMB drag** node | Move: XZ / Ctrl→XY / Shift→YZ |
 | **Alt** while moving | Snap (`collision.snapStep`) |
-| **RMB** while moving | Cancel move (window capture + `buttons` bit) |
+| **RMB** while moving | Cancel move |
 | Collision | No overlap other nodes; floor clamp |
 
 ### Connect
@@ -109,18 +106,8 @@ Any tunable value → **World Tune** + `WORLD` / `world-config.ts`. Canonical sc
 | App / camera / view mode | `src/lib/session/app.svelte.ts` |
 | World scene + input | `src/lib/world/GraphScene.svelte` |
 | HUD + minimap + cam chrome | `src/lib/world/WorldHud.svelte`, `WorldCanvas.svelte` |
-| World Tune UI | `src/lib/world/WorldTunePanel.svelte`, `world-tune.svelte.ts` |
 | Canonical config | `src/lib/world/world-config.ts` |
 | Node collision | `src/lib/world/node-physics.ts` |
 | Click intents | `src/lib/world/node-click.ts` |
 | Shell route | `src/routes/+page.svelte` |
 | Manager drawer | `src/lib/ui/ManagerPanel.svelte` |
-
----
-
-## Vibe session rules (for continuity)
-
-- Code immediately for HMR; **tests skipped** during vibe (one `node-click.test.ts` exists but not part of vibe gate).
-- **No merge to `develop`** until ITEMs + SPEC execute.
-- Commit on vibe branch OK for handoff (this snapshot).
-- End of session → backlog ITEMs on `develop`, vibe branch stays as reference.
