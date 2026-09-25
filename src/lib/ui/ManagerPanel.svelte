@@ -701,28 +701,37 @@
 								onkeydown={onListSearchKeydown}
 							/>
 							<ul class="list-search-results">
-								{#each edgeNodeSuggestions as n (n.id)}
-									<li>
-										<button
-											type="button"
-											class="list-search-option"
-											role="option"
-											data-testid={`edges-search-node-${n.id}`}
-											onclick={() => addEdgeSearchNode(n.id)}>{n.label}</button
-										>
-									</li>
-								{/each}
-								{#each listSearchTagSuggestions as tag (tag)}
-									<li>
-										<button
-											type="button"
-											class="list-search-option"
-											role="option"
-											data-testid={`list-search-tag-${tag}`}
-											onclick={() => addListSearchTag(tag)}>{tag}</button
-										>
-									</li>
-								{/each}
+								{#if edgeNodeSuggestions.length > 0}
+									<li class="list-search-section" role="presentation">Nodes</li>
+									{#each edgeNodeSuggestions as n (n.id)}
+										<li>
+											<button
+												type="button"
+												class="list-search-option"
+												role="option"
+												data-testid={`edges-search-node-${n.id}`}
+												onclick={() => addEdgeSearchNode(n.id)}>{n.label}</button
+											>
+										</li>
+									{/each}
+								{/if}
+								{#if listSearchTagSuggestions.length > 0}
+									<li class="list-search-section" role="presentation">Tags</li>
+									{#each listSearchTagSuggestions as tag (tag)}
+										<li>
+											<button
+												type="button"
+												class="list-search-option list-search-option--tag"
+												role="option"
+												data-testid={`list-search-tag-${tag}`}
+												onclick={() => addListSearchTag(tag)}
+											>
+												<span class="list-search-option-label">{tag}</span>
+												<span class="list-search-tag-badge">Tag</span>
+											</button>
+										</li>
+									{/each}
+								{/if}
 							</ul>
 						</div>
 					{/if}
@@ -2449,6 +2458,42 @@
 		background: rgba(255, 255, 255, 0.55);
 	}
 
+	.list-search-section {
+		padding: 0.35rem 0.45rem 0.15rem;
+		font-size: 0.65rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--yg-muted);
+	}
+
+	.list-search-option--tag {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+
+	.list-search-option-label {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.list-search-tag-badge {
+		flex: 0 0 auto;
+		font-size: 0.65rem;
+		font-weight: 600;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+		color: var(--yg-muted);
+		padding: 0.1rem 0.35rem;
+		border-radius: var(--yg-radius-pill);
+		border: 1px solid var(--yg-border);
+		background: color-mix(in srgb, var(--yg-chip) 80%, transparent);
+	}
+
 	.manager__body {
 		flex: 1 1 auto;
 		min-height: 0;
@@ -2774,6 +2819,30 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		min-width: 0;
+		flex: 1 1 auto;
+	}
+
+	.edge-weight-pill {
+		flex: 0 0 auto;
+		align-self: center;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.12rem 0.45rem;
+		border-radius: var(--yg-radius-pill);
+		border: 1px solid var(--yg-border);
+		background: rgba(255, 255, 255, 0.55);
+		color: var(--yg-fg);
+		font-size: 0.75rem;
+		font-weight: 500;
+		line-height: 1;
+		box-sizing: border-box;
+	}
+
+	.list-item.selected .edge-weight-pill {
+		background: rgba(255, 255, 255, 0.45);
+		border-color: color-mix(in srgb, var(--yg-accent) 35%, var(--yg-border));
 	}
 
 	.node-row {
