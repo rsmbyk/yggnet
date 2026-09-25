@@ -3,7 +3,6 @@ import { playwright } from '@vitest/browser-playwright';
 import adapterVercel from '@sveltejs/adapter-vercel';
 import adapterStatic from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { yggnetWorldConfigWriter } from './scripts/vite-world-config-writer';
 
 /** Vercel sets VERCEL=1; use adapter-vercel there. Local Windows uses static (no symlink). */
 const adapter = process.env.VERCEL
@@ -16,7 +15,6 @@ export default defineConfig({
 		strictPort: true
 	},
 	plugins: [
-		yggnetWorldConfigWriter(),
 		sveltekit({
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.

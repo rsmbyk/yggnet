@@ -4,20 +4,20 @@ Canonical values for the 3D world live in:
 
 **[`src/lib/world/world-config.ts`](../src/lib/world/world-config.ts)** (`WORLD`)
 
-Change that module when tuning — then update **this doc** so the tables stay accurate. Every key under `WORLD` should appear below.
+Change that module when tuning — then update **this doc** so the tables stay accurate. Every key under `WORLD` should appear below. There is no live in-app editor; edit the file (and this doc) directly.
 
 Units are abstract Three.js **world units** unless noted (the fine grid is 1×1, so treat **1 unit ≈ one minor cell**). Grid stroke widths are an exception: they are **canvas pixels**.
 
 ## Ground & grid cells
 
-| Constant     | Value    | Meaning                                                                                                          |
-| ------------ | -------- | ---------------------------------------------------------------------------------------------------------------- |
-| `groundSize` | **1000** | Square ground plane edge (`1000×1000`). Mesh follows the look target; texture offset keeps the grid world-locked |
-| `gridMinor`  | **1**    | Fine grid cell (1×1)                                                                                             |
-| `gridMajor`  | **10**   | Mid grid cell (10×10)                                                                                            |
-| `gridMega`   | **100**  | Large grid cell (100×100). One canvas texture tile = one mega cell                                               |
+| Constant     | Value     | Meaning                                                                                                            |
+| ------------ | --------- | ------------------------------------------------------------------------------------------------------------------ |
+| `groundSize` | **10000** | Square ground plane edge (`10000×10000`). Mesh follows the look target; texture offset keeps the grid world-locked |
+| `gridMinor`  | **1**     | Fine grid cell (1×1)                                                                                               |
+| `gridMajor`  | **10**    | Mid grid cell (10×10)                                                                                              |
+| `gridMega`   | **100**   | Large grid cell (100×100). One canvas texture tile = one mega cell                                                 |
 
-Tiles across one ground edge: `groundSize / gridMega` = **10**.
+Tiles across one ground edge: `groundSize / gridMega` = **100**.
 
 ## Grid appearance (`WORLD.grid`)
 
@@ -25,7 +25,7 @@ Drawn in `GraphScene` (`createGridTexture`). One tile covers one mega cell.
 
 | Constant               | Value         | Meaning                                     |
 | ---------------------- | ------------- | ------------------------------------------- |
-| `grid.textureSize`     | **500**       | Pixel resolution of one mega-cell tile      |
+| `grid.textureSize`     | **250**       | Pixel resolution of one mega-cell tile      |
 | `grid.fill`            | **`#2b3340`** | Ground fill under the lines (near scene bg) |
 | `grid.minor.color`     | **`#2e3642`** | 1×1 line color                              |
 | `grid.minor.lineWidth` | **1**         | 1×1 stroke width (**px** on the tile)       |
@@ -54,27 +54,46 @@ Drawn in `GraphScene` (`createGridTexture`). One tile covers one mega cell.
 
 ## Camera (`WORLD.camera`)
 
-| Constant                 | Value                         | Meaning                                                                                                                     |
-| ------------------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `camera.defaultDistance` | **50**                        | Orbit distance at startup / zoom-reset                                                                                      |
-| `camera.minDistance`     | **2.5** (effective ≈ **4.8**) | Closest zoom. Scene raises this so max pitch still clears `minHeight`. The camera cannot zoom through the floor             |
-| `camera.maxDistance`     | **Infinity**                  | No zoom-out cap                                                                                                             |
-| `camera.near`            | **0.5**                       | Perspective near clip plane                                                                                                 |
-| `camera.far`             | **500**                       | Perspective far-clip floor. Runtime far is `max(far, orbitDistance × 2 + 50)` so zoom-out does not clip the graph           |
-| `camera.fov`             | **50°**                       | Vertical field of view                                                                                                      |
-| `camera.defaultPosition` | **≈ (27.08, 32.14, 27.08)**   | Startup eye; **40°** above horizon / **50°** from top-down, isometric XZ; length = `defaultDistance`                        |
-| `camera.defaultTarget`   | **(0, 0, 0)**                 | Startup / reset look-at. Pan keeps **target.y = 0** (ground-plane pan, XZ only)                                             |
-| `camera.minPolarAngle`   | **0.15 rad**                  | Most top-down allowed (polar from +Y). **Fixed** at runtime                                                                 |
-| `camera.maxPolarAngle`   | **π/2 − 0.18**                | Most edge-on allowed (~10° above horizon). **Fixed** at runtime                                                             |
-| `camera.minHeight`       | **0.85**                      | Design height floor for the eye; enforced via raised minDistance + fixed polar caps — not by rewriting `maxPolarAngle` live |
+| Constant                  | Value                         | Meaning                                                                                                                     |
+| ------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `camera.defaultDistance`  | **50**                        | Orbit distance at startup / zoom-reset                                                                                      |
+| `camera.minDistance`      | **2.5** (effective ≈ **4.8**) | Closest zoom. Scene raises this so max pitch still clears `minHeight`. The camera cannot zoom through the floor             |
+| `camera.maxDistance`      | **Infinity**                  | No zoom-out cap                                                                                                             |
+| `camera.near`             | **0.5**                       | Perspective near clip plane                                                                                                 |
+| `camera.far`              | **500**                       | Perspective far-clip floor. Runtime far is `max(far, orbitDistance × 2 + 50)` so zoom-out does not clip the graph           |
+| `camera.fov`              | **50°**                       | Vertical field of view                                                                                                      |
+| `camera.viewElevationDeg` | **50**                        | Polar elevation from +Y (degrees); used with `defaultDistance` for isometric XZ startup eye                                 |
+| `camera.defaultPosition`  | **≈ (27.08, 32.14, 27.08)**   | Startup eye; **40°** above horizon / **50°** from top-down, isometric XZ; length = `defaultDistance`                        |
+| `camera.defaultTarget`    | **(0, 0, 0)**                 | Startup / reset look-at. Pan keeps **target.y = 0** (ground-plane pan, XZ only)                                             |
+| `camera.minPolarAngle`    | **0.15 rad**                  | Most top-down allowed (polar from +Y). **Fixed** at runtime                                                                 |
+| `camera.maxPolarAngle`    | **π/2 − 0.18**                | Most edge-on allowed (~10° above horizon). **Fixed** at runtime                                                             |
+| `camera.minHeight`        | **0.85**                      | Design height floor for the eye; enforced via raised minDistance + fixed polar caps — not by rewriting `maxPolarAngle` live |
+| `camera.minEyeY`          | **1.25**                      | Runtime eye Y floor used by orbit/pan clamps                                                                                |
 
 **Controls mapping:** pan = orbit **target** on the ground plane (**XZ only**, `y` stays 0); tilt = spherical **polar** from +Y; zoom = orbit **distance**.
 
+## Controls (`WORLD.controls`)
+
+| Constant                      | Value   | Meaning                                              |
+| ----------------------------- | ------- | ---------------------------------------------------- |
+| `controls.panSensitivity`     | **0.85** | Pan: fraction of raycast delta (1 = 1:1 with cursor) |
+| `controls.rotateSensitivity`  | **0.55** | Orbit rotateSpeed                                    |
+| `controls.dampingFactor`      | **0.12** | OrbitControls damping factor                         |
+| `controls.viewModeTransitionMs` | **400** | 2D ↔ 3D and camera-reset tween duration (ms)       |
+
 ## Labels
 
-| Constant        | Value  | Meaning                                                                                                   |
-| --------------- | ------ | --------------------------------------------------------------------------------------------------------- |
-| `labelDistance` | **22** | Show a node’s floating label when camera eye is within this world range of the node (World Tune → Camera) |
+| Constant        | Value  | Meaning                                                                                      |
+| --------------- | ------ | -------------------------------------------------------------------------------------------- |
+| `labelDistance` | **50** | Show a node’s floating label when camera eye is within this world range of the node |
+
+## Collision (`WORLD.collision`)
+
+| Constant             | Value | Meaning                                                         |
+| -------------------- | ----- | --------------------------------------------------------------- |
+| `collision.floorY`   | **0** | Ground plane Y; sphere centers rest at `floorY + nodeRadius`    |
+| `collision.padding`  | **0** | Extra gap between node spheres (0 = touch at 2× radius)         |
+| `collision.snapStep` | **1** | Alt while moving snaps free axes to this world-unit grid        |
 
 ## Edges (`WORLD.edges`)
 
@@ -83,9 +102,9 @@ Shaft and directed-arrow geometry (world units).
 | Constant                   | Value         | Meaning                                                                  |
 | -------------------------- | ------------- | ------------------------------------------------------------------------ |
 | `edges.shaftRadius`        | **0.1**       | Cylinder radius of a committed edge                                      |
-| `edges.previewShaftRadius` | **0.2**       | Cylinder radius of the connect-mode preview edge                         |
-| `edges.arrowHeight`        | **5**         | Cone height of the direction arrow                                       |
-| `edges.arrowRadius`        | **0.5**       | Radius of the cone’s wide end (arrow base), world units                  |
+| `edges.previewShaftRadius` | **0.05**      | Cylinder radius of the connect-mode preview edge                         |
+| `edges.arrowHeight`        | **1**         | Cone height of the direction arrow                                       |
+| `edges.arrowRadius`        | **0.3**       | Radius of the cone’s wide end (arrow base), world units                  |
 | `edges.arrowGapFraction`   | **0.2** (20%) | Arrow center sits this fraction of edge length back from the destination |
 
 ## Related

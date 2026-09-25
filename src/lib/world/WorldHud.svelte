@@ -2,13 +2,11 @@
 	import { fade } from 'svelte/transition';
 	import { untrack } from 'svelte';
 	import { app } from '$lib/session/app.svelte';
-	import { worldTune } from '$lib/world/world-tune.svelte';
 	import {
 		centeredBannerOverlapsChrome,
 		chromeContentWidth,
 		tooSmallMediaMaxWidth
 	} from './hud-layout';
-	import WorldTunePanel from './WorldTunePanel.svelte';
 
 	const connecting = $derived(app.ui.connectFromId !== null);
 
@@ -115,7 +113,6 @@
 		if (!viewportBlocked) return;
 		app.openPalette(false);
 		app.setOpenTool(null);
-		worldTune.open = false;
 	});
 
 	$effect(() => {
@@ -245,26 +242,8 @@
 						/></svg
 					>
 				</button>
-				<button
-					type="button"
-					class="icon-btn"
-					data-testid="world-tune-toggle"
-					aria-label="World tune"
-					title="World tune (live sizes)"
-					class:active={worldTune.open}
-					onclick={() => worldTune.toggle()}
-				>
-					<svg viewBox="0 0 24 24" aria-hidden="true"
-						><path
-							fill="currentColor"
-							d="M7 3v6H5v2h2v10h2V11h2V9H9V3H7zm8 0v10h-2v2h2v6h2v-6h2v-2h-2V3h-2z"
-						/></svg
-					>
-				</button>
 			</div>
 		</header>
-
-		<WorldTunePanel />
 
 		{#if connecting && !viewportBlocked}
 			<div

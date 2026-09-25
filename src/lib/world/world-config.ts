@@ -3,7 +3,6 @@
  *
  * Human-readable tables: `docs/world-scale.md`.
  * Keep that doc in sync whenever you change a value here.
- * Live edits: World Tune panel → Save to config (dev server only).
  */
 export const WORLD = {
 	/**
@@ -11,7 +10,7 @@ export const WORLD = {
 	 * The mesh follows the orbit look-target; the grid texture offset keeps lines
 	 * locked in world space so the floor feels infinite.
 	 */
-	groundSize: 1000,
+	groundSize: 10000,
 
 	/** Fine grid cell size in world units (1×1). */
 	gridMinor: 1,
@@ -73,9 +72,9 @@ export const WORLD = {
 	camera: {
 		/** Orbit distance at startup and on zoom-reset. */
 		defaultDistance: 50,
-		/** Closest allowed orbit distance. Zoom-in still cannot pass this (floor stop). */
+		/** Closest allowed orbit distance. */
 		minDistance: 2.5,
-		/** Farthest allowed orbit distance. `Infinity` = no zoom-out cap. */
+		/** Farthest allowed orbit distance. */
 		maxDistance: Infinity,
 		/** Perspective near clip plane. */
 		near: 0.5,
@@ -160,3 +159,17 @@ export const WORLD = {
 } as const;
 
 export type WorldConfig = typeof WORLD;
+
+/**
+ * Startup / reset eye direction: length = `camera.defaultDistance`, isometric XZ
+ * from `camera.viewElevationDeg`.
+ */
+export function defaultCameraPosition(
+	distance: number = WORLD.camera.defaultDistance,
+	viewElevationDeg: number = WORLD.camera.viewElevationDeg
+): [number, number, number] {
+	const elev = (viewElevationDeg * Math.PI) / 180;
+	const xz = (distance * Math.sin(elev)) / Math.SQRT2;
+	const y = distance * Math.cos(elev);
+	return [xz, y, xz];
+}

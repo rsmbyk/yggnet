@@ -7,7 +7,7 @@
 	import { MOUSE } from 'three';
 	import type { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 	import type { GraphNode } from '$lib/graph';
-	import { defaultPositionFromTune, worldTune } from './world-tune.svelte';
+	import { WORLD, defaultCameraPosition } from './world-config';
 	import { clampToFloor, resolveMoveAgainstNodes, snapToGrid } from './node-physics';
 	import {
 		farPlaneForOrbitDistance,
@@ -29,53 +29,45 @@
 
 	const { camera, renderer, scene } = useThrelte();
 
-	/** Live-tunable WORLD overrides (see World tune panel). */
-	const tune = $derived(worldTune.values);
-	const GROUND_SIZE = $derived(tune.groundSize);
-	const GRID_MINOR = $derived(tune.gridMinor);
-	const GRID_MAJOR = $derived(tune.gridMajor);
-	const GRID_MEGA = $derived(tune.gridMega);
-	const NODE_RADIUS = $derived(tune.nodeRadius);
+	/** Canonical WORLD values (see world-config.ts / docs/world-scale.md). */
+	const GROUND_SIZE = WORLD.groundSize;
+	const GRID_MINOR = WORLD.gridMinor;
+	const GRID_MAJOR = WORLD.gridMajor;
+	const GRID_MEGA = WORLD.gridMega;
+	const NODE_RADIUS = WORLD.nodeRadius;
 	const nodeSphereGeometry = createNodeSphereGeometry();
-	const nodeSphereScale = $derived<[number, number, number]>([
-		NODE_RADIUS,
-		NODE_RADIUS,
-		NODE_RADIUS
-	]);
-	const NODE_COLOR = $derived(tune.nodeColor);
-	const NODE_SELECTED_COLOR = $derived(tune.nodeSelectedColor);
-	const NODE_HOVER_COLOR = $derived(tune.nodeHoverColor);
-	const LABEL_DISTANCE = $derived(tune.labelDistance);
-	const ARROW_HEIGHT = $derived(tune.arrowHeight);
-	const ARROW_RADIUS = $derived(tune.arrowRadius);
-	const ARROW_GAP_FRACTION = $derived(tune.arrowGapFraction);
-	const EDGE_SHAFT_RADIUS = $derived(tune.shaftRadius);
-	const EDGE_PREVIEW_SHAFT_RADIUS = $derived(tune.previewShaftRadius);
-	const MAX_POLAR = $derived(tune.maxPolarAngle);
-	const MIN_POLAR = $derived(tune.minPolarAngle);
-	/** OrbitControls breaks at phi≈0 — never allow a tuned min polar of 0. */
-	const SAFE_MIN_POLAR = $derived(Math.max(0.12, MIN_POLAR));
-	const MIN_EYE_Y = $derived(tune.minEyeY);
-	const MIN_DISTANCE_FLOOR = $derived(tune.minDistance);
-	const CAM_MAX_DISTANCE = $derived(tune.maxDistance);
-	const CAM_FOV = $derived(tune.fov);
-	const CAM_NEAR = $derived(tune.near);
-	const CAM_FAR = $derived(tune.far);
-	let liveFar = $state(worldTune.values.far);
-	const SCENE_BG = $derived(tune.background);
-	const DEFAULT_VIEW_DIR = $derived(
-		new THREE.Vector3(...defaultPositionFromTune(tune)).normalize()
-	);
-	/** Mount-only eye — must not track tune, or every slider write snaps the camera back. */
-	const initialCameraPosition = defaultPositionFromTune(worldTune.values);
+	const nodeSphereScale: [number, number, number] = [NODE_RADIUS, NODE_RADIUS, NODE_RADIUS];
+	const NODE_COLOR = WORLD.nodeColor;
+	const NODE_SELECTED_COLOR = WORLD.nodeSelectedColor;
+	const NODE_HOVER_COLOR = WORLD.nodeHoverColor;
+	const LABEL_DISTANCE = WORLD.labelDistance;
+	const ARROW_HEIGHT = WORLD.edges.arrowHeight;
+	const ARROW_RADIUS = WORLD.edges.arrowRadius;
+	const ARROW_GAP_FRACTION = WORLD.edges.arrowGapFraction;
+	const EDGE_SHAFT_RADIUS = WORLD.edges.shaftRadius;
+	const EDGE_PREVIEW_SHAFT_RADIUS = WORLD.edges.previewShaftRadius;
+	const MAX_POLAR = WORLD.camera.maxPolarAngle;
+	const MIN_POLAR = WORLD.camera.minPolarAngle;
+	/** OrbitControls breaks at phi≈0 — never allow a min polar of 0. */
+	const SAFE_MIN_POLAR = Math.max(0.12, MIN_POLAR);
+	const MIN_EYE_Y = WORLD.camera.minEyeY;
+	const MIN_DISTANCE_FLOOR = WORLD.camera.minDistance;
+	const CAM_MAX_DISTANCE = WORLD.camera.maxDistance;
+	const CAM_FOV = WORLD.camera.fov;
+	const CAM_NEAR = WORLD.camera.near;
+	const CAM_FAR = WORLD.camera.far;
+	let liveFar = $state<number>(WORLD.camera.far);
+	const SCENE_BG = WORLD.background;
+	const DEFAULT_VIEW_DIR = new THREE.Vector3(...defaultCameraPosition()).normalize();
+	const initialCameraPosition = defaultCameraPosition();
 	const DRAG_THRESHOLD_PX = 5;
-	const COLLISION_FLOOR_Y = $derived(tune.collisionFloorY);
-	const COLLISION_PADDING = $derived(tune.collisionPadding);
-	const COLLISION_SNAP_STEP = $derived(tune.collisionSnapStep);
-	const PAN_SENSITIVITY = $derived(tune.panSensitivity);
-	const ROTATE_SENSITIVITY = $derived(tune.rotateSensitivity);
-	const DAMPING_FACTOR = $derived(tune.dampingFactor);
-	const VIEW_MODE_MS = $derived(tune.viewModeTransitionMs);
+	const COLLISION_FLOOR_Y = WORLD.collision.floorY;
+	const COLLISION_PADDING = WORLD.collision.padding;
+	const COLLISION_SNAP_STEP = WORLD.collision.snapStep;
+	const PAN_SENSITIVITY = WORLD.controls.panSensitivity;
+	const ROTATE_SENSITIVITY = WORLD.controls.rotateSensitivity;
+	const DAMPING_FACTOR = WORLD.controls.dampingFactor;
+	const VIEW_MODE_MS = WORLD.controls.viewModeTransitionMs;
 
 	const dragPlane = new THREE.Plane();
 	const connectPlane = new THREE.Plane();
@@ -108,22 +100,21 @@
 	const _edgeMat = new THREE.Matrix4();
 	const _edgeCol = new THREE.Color();
 
-	/** One texture tile = one mega cell, with major/minor subdivisions from live tune. */
+	/** One texture tile = one mega cell, with major/minor subdivisions from WORLD. */
 	function createGridTexture(): THREE.CanvasTexture {
-		const v = worldTune.values;
-		const size = Math.max(64, Math.floor(v.gridTextureSize));
-		const minorCount = Math.max(1, Math.round(v.gridMega / v.gridMinor));
-		const majorEvery = Math.max(1, Math.round(v.gridMajor / v.gridMinor));
+		const size = Math.max(64, Math.floor(WORLD.grid.textureSize));
+		const minorCount = Math.max(1, Math.round(WORLD.gridMega / WORLD.gridMinor));
+		const majorEvery = Math.max(1, Math.round(WORLD.gridMajor / WORLD.gridMinor));
 		const step = size / minorCount;
 		const canvas = document.createElement('canvas');
 		canvas.width = size;
 		canvas.height = size;
 		const ctx = canvas.getContext('2d')!;
-		ctx.fillStyle = v.gridFill;
+		ctx.fillStyle = WORLD.grid.fill;
 		ctx.fillRect(0, 0, size, size);
 
-		ctx.strokeStyle = v.gridMinorColor;
-		ctx.lineWidth = v.gridMinorLineWidth;
+		ctx.strokeStyle = WORLD.grid.minor.color;
+		ctx.lineWidth = WORLD.grid.minor.lineWidth;
 		ctx.beginPath();
 		for (let i = 1; i < minorCount; i++) {
 			if (i % majorEvery === 0) continue;
@@ -135,8 +126,8 @@
 		}
 		ctx.stroke();
 
-		ctx.strokeStyle = v.gridMajorColor;
-		ctx.lineWidth = v.gridMajorLineWidth;
+		ctx.strokeStyle = WORLD.grid.major.color;
+		ctx.lineWidth = WORLD.grid.major.lineWidth;
 		ctx.beginPath();
 		for (let i = majorEvery; i < minorCount; i += majorEvery) {
 			const p = i * step + 0.5;
@@ -147,8 +138,8 @@
 		}
 		ctx.stroke();
 
-		ctx.strokeStyle = v.gridMegaColor;
-		ctx.lineWidth = v.gridMegaLineWidth;
+		ctx.strokeStyle = WORLD.grid.mega.color;
+		ctx.lineWidth = WORLD.grid.mega.lineWidth;
 		ctx.beginPath();
 		ctx.moveTo(0.5, 0);
 		ctx.lineTo(0.5, size);
@@ -163,52 +154,23 @@
 		tex.anisotropy = 8;
 		tex.magFilter = THREE.LinearFilter;
 		tex.minFilter = THREE.LinearMipmapLinearFilter;
-		const tiles = v.groundSize / v.gridMega;
+		const tiles = WORLD.groundSize / WORLD.gridMega;
 		tex.repeat.set(tiles, tiles);
 		tex.needsUpdate = true;
 		return tex;
 	}
 
-	const gridTiles = $derived(GROUND_SIZE / GRID_MEGA);
-	/** Live refs — recreated when tune grid values change. */
-	let gridTexture = createGridTexture();
-	let groundMaterial = new THREE.MeshBasicMaterial({
+	const gridTiles = GROUND_SIZE / GRID_MEGA;
+	const gridTexture = createGridTexture();
+	const groundMaterial = new THREE.MeshBasicMaterial({
 		map: gridTexture,
 		toneMapped: false
 	});
 
 	function attachGround(mesh: THREE.Mesh) {
 		ground = mesh;
-		rebuildGroundTexture();
 		mesh.material = groundMaterial;
 	}
-
-	function rebuildGroundTexture() {
-		const next = createGridTexture();
-		gridTexture.dispose();
-		gridTexture = next;
-		groundMaterial.map = next;
-		groundMaterial.needsUpdate = true;
-		if (ground) ground.material = groundMaterial;
-	}
-
-	$effect(() => {
-		// Rebuild grid when any grid/ground tune field changes.
-		const v = worldTune.values;
-		void v.groundSize;
-		void v.gridMinor;
-		void v.gridMajor;
-		void v.gridMega;
-		void v.gridTextureSize;
-		void v.gridFill;
-		void v.gridMinorColor;
-		void v.gridMinorLineWidth;
-		void v.gridMajorColor;
-		void v.gridMajorLineWidth;
-		void v.gridMegaColor;
-		void v.gridMegaLineWidth;
-		rebuildGroundTexture();
-	});
 
 	$effect(() => {
 		const bg = SCENE_BG;
@@ -1716,7 +1678,7 @@
 	function animateResetZoom() {
 		if (!controls) return;
 		captureFromPose();
-		const d = clampViewDistance(worldTune.values.defaultDistance);
+		const d = clampViewDistance(WORLD.camera.defaultDistance);
 		const t = controls.target;
 		if (app.ui.viewMode === '2d') {
 			_toTarget.set(t.x, 0, t.z);
@@ -1740,8 +1702,8 @@
 	function animateResetTarget() {
 		if (!controls) return;
 		captureFromPose();
-		const v = worldTune.values;
-		_toTarget.set(v.defaultTargetX, v.defaultTargetY, v.defaultTargetZ);
+		const t = WORLD.camera.defaultTarget;
+		_toTarget.set(t.x, t.y, t.z);
 		if (app.ui.viewMode === '2d') {
 			const d = clampViewDistance();
 			_toTarget.y = 0;
@@ -1811,11 +1773,11 @@
 		const el = renderer.domElement;
 		const aspect = el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 16 / 9;
 		captureFromPose();
-		const v = worldTune.values;
+		const t = WORLD.camera.defaultTarget;
 		const is2d = app.ui.viewMode === '2d';
-		const defaultD = clampViewDistance(v.defaultDistance);
+		const defaultD = clampViewDistance(WORLD.camera.defaultDistance);
 		if (is2d) {
-			_toTarget.set(v.defaultTargetX, 0, v.defaultTargetZ);
+			_toTarget.set(t.x, 0, t.z);
 			_toUp.copy(VIEW2D_UP);
 			const fitted = orbitDistanceToFitPointsOutOnly({
 				target: { x: _toTarget.x, y: _toTarget.y, z: _toTarget.z },
@@ -1830,7 +1792,7 @@
 			});
 			_toEye.set(_toTarget.x, fitted, _toTarget.z);
 		} else {
-			_toTarget.set(v.defaultTargetX, v.defaultTargetY, v.defaultTargetZ);
+			_toTarget.set(t.x, t.y, t.z);
 			_toUp.set(0, 1, 0);
 			const dir = DEFAULT_VIEW_DIR;
 			const look = { x: _toTarget.x, y: _toTarget.y, z: _toTarget.z };

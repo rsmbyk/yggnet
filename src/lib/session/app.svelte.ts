@@ -58,7 +58,6 @@ import {
 } from '$lib/graph';
 import { WORLD } from '$lib/world/world-config';
 import { createNodePadding, findFreePosition } from '$lib/world/node-physics';
-import { worldTune } from '$lib/world/world-tune.svelte';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
 import { nextOpenTool, type ToolId } from '$lib/ui/tool-ids';
 import { listSaveSlotNames, saveSlotExists, saveSlotStorageKey } from './save-slots';
@@ -486,21 +485,20 @@ class AppStore {
 		const count = Object.keys(this.document.nodes).length;
 		const angle = count * 0.9;
 		const radius = 3 + count * 0.35;
-		const tune = worldTune.values;
 		const preferred =
 			partial.position ??
 			({
 				x: Math.cos(angle) * radius,
-				y: tune.defaultNodeY,
+				y: WORLD.defaultNodeY,
 				z: Math.sin(angle) * radius
 			} as const);
 		const blockers = Object.values(this.document.nodes).map((n) => n.position);
 		const position = findFreePosition(
 			preferred,
 			blockers,
-			tune.nodeRadius,
-			tune.collisionFloorY,
-			createNodePadding(tune.nodeRadius)
+			WORLD.nodeRadius,
+			WORLD.collision.floorY,
+			createNodePadding(WORLD.nodeRadius)
 		);
 		this.mutate((d) => {
 			const { doc, nodeId } = addNode(d, { ...partial, position });
@@ -1135,7 +1133,7 @@ class AppStore {
 		const n = Object.keys(this.document.nodes).length;
 		const jitter = (n % 5) * 0.4;
 		return this.addNodeAt(
-			{ x: t.x + jitter, y: worldTune.values.defaultNodeY, z: t.z + jitter },
+			{ x: t.x + jitter, y: WORLD.defaultNodeY, z: t.z + jitter },
 			label
 		);
 	}
@@ -1285,7 +1283,7 @@ class AppStore {
 		const signal = this.workAbort?.signal;
 		try {
 			await waitForBusyOverlayPaint();
-			const doc = generateGraph(kind, { ...options, nodeY: worldTune.values.defaultNodeY });
+			const doc = generateGraph(kind, { ...options, nodeY: WORLD.defaultNodeY });
 			this.replaceDocument(doc);
 			this.requestFrameGraph();
 			await busyHold(signal);

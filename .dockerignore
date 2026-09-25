@@ -18,7 +18,6 @@ playwright-report
 backlog
 docs
 scripts/*
-!scripts/vite-world-config-writer.ts
 e2e
 *.log
 .DS_Store
