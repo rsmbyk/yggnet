@@ -2459,12 +2459,20 @@
 	}
 
 	.list-search-section {
-		padding: 0.35rem 0.45rem 0.15rem;
+		padding: 0.15rem 0.45rem 0.05rem;
 		font-size: 0.65rem;
 		font-weight: 600;
-		letter-spacing: 0.04em;
+		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		color: var(--yg-muted);
+		line-height: 1.2;
+		pointer-events: none;
+	}
+
+	.list-search-results > li + .list-search-section {
+		margin-top: 0.4rem;
+		padding-top: 0.45rem;
+		border-top: 1px solid color-mix(in srgb, var(--yg-border) 85%, transparent);
 	}
 
 	.list-search-option--tag {
