@@ -4,7 +4,7 @@ item: ITEM-043
 type: feat
 feature_area: world
 bump: minor
-status: in_review
+status: done
 title: "Labels, colors, edge geometry"
 created: 2026-09-25
 updated: 2026-09-25

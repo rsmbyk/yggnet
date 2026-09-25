@@ -4,7 +4,7 @@ item: ITEM-044
 type: feat
 feature_area: world
 bump: minor
-status: in_review
+status: done
 title: "In-world selection sheet + create"
 created: 2026-09-25
 updated: 2026-09-25

@@ -4,7 +4,7 @@ item: ITEM-045
 type: feat
 feature_area: manager
 bump: minor
-status: in_review
+status: done
 title: "Toolbar + tools panel chrome"
 created: 2026-09-25
 updated: 2026-09-25

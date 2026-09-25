@@ -4,7 +4,7 @@ item: ITEM-042
 type: feat
 feature_area: world
 bump: minor
-status: in_review
+status: done
 title: "Solid nodes + pointer intents"
 created: 2026-09-25
 updated: 2026-09-25

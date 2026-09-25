@@ -1,6 +1,6 @@
 ---
 id: ITEM-039
-status: in_review
+status: done
 title: "World-first shell + HUD"
 type: feat
 priority: P1

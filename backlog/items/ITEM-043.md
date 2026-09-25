@@ -1,6 +1,6 @@
 ---
 id: ITEM-043
-status: in_review
+status: done
 title: "Labels, colors, edge geometry"
 type: feat
 priority: P1

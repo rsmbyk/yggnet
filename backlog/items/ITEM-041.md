@@ -1,6 +1,6 @@
 ---
 id: ITEM-041
-status: in_review
+status: done
 title: "Camera chrome + 2D/3D"
 type: feat
 priority: P1
