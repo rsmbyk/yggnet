@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-09-25
 updated: 2026-09-25
-spec: SPEC-040
+spec: specs/040-canonical-world-config
 branch: vibe/session-20260730
 pr: 16
 archived_at:
@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-040](../../docs/specs/SPEC-040/spec.md)
+- Spec: [040-canonical-world-config](../../specs/040-canonical-world-config/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

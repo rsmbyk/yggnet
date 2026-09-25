@@ -7,7 +7,7 @@ priority: P2
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-026
+spec: specs/026-notes-and-attachments
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Related: ITEM-001, ITEM-018.
 
 ## Links
 
-- Spec: [SPEC-026](../../docs/specs/SPEC-026/spec.md)
+- Spec: [026-notes-and-attachments](../../specs/026-notes-and-attachments/spec.md)
 - Related items: ITEM-001, ITEM-018.

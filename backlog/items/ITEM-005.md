@@ -7,7 +7,7 @@ priority: P0
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-005
+spec: specs/005-selection-sync
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Domain logic under src/lib/graph; UI only calls it. Related: ITEM-001, ITEM-004,
 
 ## Links
 
-- Spec: [SPEC-005](../../docs/specs/SPEC-005/spec.md)
+- Spec: [005-selection-sync](../../specs/005-selection-sync/spec.md)
 - Related items: ITEM-001, ITEM-004, ITEM-025.

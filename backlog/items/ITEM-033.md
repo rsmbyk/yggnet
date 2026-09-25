@@ -7,7 +7,7 @@ priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-033
+spec: specs/033-pin-respected-by-layout
 branch: feat/SPEC-033-pin-layout
 pr:
 archived_at: 2026-07-30
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Pin chec
 
 ## Links
 
-- Spec: [SPEC-033](../../docs/specs/SPEC-033/spec.md)
+- Spec: [033-pin-respected-by-layout](../../specs/033-pin-respected-by-layout/spec.md)
 - Related items: ITEM-015, ITEM-032
-- Prior SPEC: [SPEC-015](../../docs/specs/SPEC-015/spec.md)
+- Prior SPEC: [015-pin-anchor-nodes](../../specs/015-pin-anchor-nodes/spec.md)

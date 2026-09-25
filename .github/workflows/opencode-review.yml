@@ -41,9 +41,9 @@ jobs:
             Read-only: comment findings, do not push commits.
 
             Check against:
-            - AGENTS.md + docs/vision.md + relevant docs/adr/* + linked SPEC pack
-              (docs/specs/SPEC-XXX/{spec,plan,tasks}.md). Flag scope invented
-              beyond SPEC acceptance criteria.
+            - AGENTS.md + docs/vision.md + relevant docs/adr/* + linked spec pack
+              (specs/NNN-slug/{plan,spec,tasks}.md). Flag scope invented
+              beyond spec acceptance criteria.
             - Correctness, edge cases, potential bugs.
             - TDD evidence: unit tests for behavior, `src/lib/graph/**` coverage
               >=90%, Playwright coverage for user-visible flows.

@@ -7,7 +7,7 @@ priority: P1
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-031
+spec: specs/031-directed-edge-visuals-in-world
 branch: feat/SPEC-031-directed-edge-visuals
 pr:
 archived_at: 2026-07-30
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Model an
 
 ## Links
 
-- Spec: [SPEC-031](../../docs/specs/SPEC-031/spec.md)
+- Spec: [031-directed-edge-visuals-in-world](../../specs/031-directed-edge-visuals-in-world/spec.md)
 - Related items: ITEM-002, ITEM-004
-- Prior SPECs: [SPEC-002](../../docs/specs/SPEC-002/spec.md), [SPEC-004](../../docs/specs/SPEC-004/spec.md)
+- Prior SPECs: [SPEC-002](../../specs/002-edge-weight-directed/spec.md), [SPEC-004](../../specs/004-world-graph-render/spec.md)

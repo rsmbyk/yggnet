@@ -7,7 +7,7 @@ priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-034
+spec: specs/034-compare-algorithms-dual-view
 branch: feat/SPEC-034-compare-algorithms-dual
 pr:
 archived_at: 2026-07-30
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Compare 
 
 ## Links
 
-- Spec: [SPEC-034](../../docs/specs/SPEC-034/spec.md)
+- Spec: [034-compare-algorithms-dual-view](../../specs/034-compare-algorithms-dual-view/spec.md)
 - Related items: ITEM-012, ITEM-035
-- Prior SPEC: [SPEC-012](../../docs/specs/SPEC-012/spec.md)
+- Prior SPEC: [012-algo-compare](../../specs/012-algo-compare/spec.md)

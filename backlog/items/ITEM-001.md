@@ -7,7 +7,7 @@ priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-001
+spec: specs/001-manager-graph-crud
 branch:
 pr:
 archived_at: 2026-07-30
@@ -34,5 +34,5 @@ Dual UI outer controller. World stays present while structure is edited here. Re
 
 ## Links
 
-- Spec: [SPEC-001](../../docs/specs/SPEC-001/spec.md)
+- Spec: [001-manager-graph-crud](../../specs/001-manager-graph-crud/spec.md)
 - Related items: ITEM-002, ITEM-004, ITEM-005, ITEM-024.

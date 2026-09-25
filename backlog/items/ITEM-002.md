@@ -7,7 +7,7 @@ priority: P0
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-002
+spec: specs/002-edge-weight-directed
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Required for Dijkstra/A* and directed trees/orgs. Related: ITEM-001, ITEM-006, I
 
 ## Links
 
-- Spec: [SPEC-002](../../docs/specs/SPEC-002/spec.md)
+- Spec: [002-edge-weight-directed](../../specs/002-edge-weight-directed/spec.md)
 - Related items: ITEM-001, ITEM-006, ITEM-009.

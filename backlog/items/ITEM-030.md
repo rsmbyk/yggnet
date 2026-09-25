@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-030
+spec: specs/030-multi-node-groups-from-ui
 branch: feat/SPEC-030-multi-node-groups
 pr:
 archived_at: 2026-07-30
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Collapse
 
 ## Links
 
-- Spec: [SPEC-030](../../docs/specs/SPEC-030/spec.md)
+- Spec: [030-multi-node-groups-from-ui](../../specs/030-multi-node-groups-from-ui/spec.md)
 - Related items: ITEM-016, ITEM-029
-- Prior SPEC: [SPEC-016](../../docs/specs/SPEC-016/spec.md)
+- Prior SPEC: [016-groups-containers](../../specs/016-groups-containers/spec.md)

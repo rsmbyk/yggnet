@@ -7,7 +7,7 @@ priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-024
+spec: specs/024-undo-redo
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Related: ITEM-001, ITEM-011.
 
 ## Links
 
-- Spec: [SPEC-024](../../docs/specs/SPEC-024/spec.md)
+- Spec: [024-undo-redo](../../specs/024-undo-redo/spec.md)
 - Related items: ITEM-001, ITEM-011.

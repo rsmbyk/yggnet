@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-09-25
 updated: 2026-09-25
-spec: SPEC-046
+spec: specs/046-manager-nodes-edges-list-ux
 branch: vibe/session-20260730
 pr: 16
 archived_at:
@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-046](../../docs/specs/SPEC-046/spec.md)
+- Spec: [046-manager-nodes-edges-list-ux](../../specs/046-manager-nodes-edges-list-ux/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

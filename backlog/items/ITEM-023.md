@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-023
+spec: specs/023-import-export-json
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Related: ITEM-021; size limits later in SECURITY SPECs.
 
 ## Links
 
-- Spec: [SPEC-023](../../docs/specs/SPEC-023/spec.md)
+- Spec: [023-import-export-json](../../specs/023-import-export-json/spec.md)
 - Related items: ITEM-021; size limits later in SECURITY SPECs.

@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-09-25
 updated: 2026-09-25
-spec: SPEC-045
+spec: specs/045-toolbar-tools-panel-chrome
 branch: vibe/session-20260730
 pr: 16
 archived_at:
@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-045](../../docs/specs/SPEC-045/spec.md)
+- Spec: [045-toolbar-tools-panel-chrome](../../specs/045-toolbar-tools-panel-chrome/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16
