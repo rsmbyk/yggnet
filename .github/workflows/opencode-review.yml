@@ -2,7 +2,8 @@ name: opencode-review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    # Once per PR: first non-draft moment only (no re-run on push/reopen).
+    types: [opened, ready_for_review]
 
 concurrency:
   group: opencode-review-${{ github.event.pull_request.number }}
@@ -12,7 +13,11 @@ jobs:
   review:
     # Fork PRs get no secrets under `pull_request` (not `pull_request_target`),
     # so the review job would red-X. Skip forks; document as unsupported.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # Draft `opened` is skipped; `ready_for_review` runs the one review.
+    if: >
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.draft == false
+
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
