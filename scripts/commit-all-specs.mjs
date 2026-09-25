@@ -106,6 +106,10 @@ function sh(cmd) {
 	execSync(cmd, { stdio: 'inherit', shell: true });
 }
 
+function posixRel(p) {
+	return p.split(/[/\\]/).join('/');
+}
+
 function resolveSpecDir(id) {
 	const padded = String(id).padStart(3, '0');
 	const entries = readdirSync('specs').filter((n) => n.startsWith(`${padded}-`));
@@ -117,7 +121,16 @@ function resolveSpecDir(id) {
 
 function specLink(id) {
 	const dir = resolveSpecDir(id);
-	return `[${basename(dir)}](../${dir}/spec.md)`;
+	return `[${basename(dir)}](../${posixRel(dir)}/spec.md)`;
+}
+
+function patchSpecMeta(text, status, when) {
+	let out = text;
+	if (/^status:/m.test(out)) out = out.replace(/^status:.*$/m, `status: ${status}`);
+	else if (/^- \*\*Status:\*\*/m.test(out)) out = out.replace(/^- \*\*Status:\*\*.*$/m, `- **Status:** ${status}`);
+	if (/^updated:/m.test(out)) out = out.replace(/^updated:.*$/m, `updated: ${when}`);
+	else if (/^- \*\*Updated:\*\*/m.test(out)) out = out.replace(/^- \*\*Updated:\*\*.*$/m, `- **Updated:** ${when}`);
+	return out;
 }
 
 function markItemDone(id) {
@@ -128,8 +141,7 @@ function markItemDone(id) {
 	writeFileSync(path, t);
 	const specPath = `${resolveSpecDir(id)}/spec.md`;
 	let s = readFileSync(specPath, 'utf8');
-	s = s.replace(/^status:.*$/m, 'status: done');
-	s = s.replace(/^updated:.*$/m, `updated: ${date}`);
+	s = patchSpecMeta(s, 'done', date);
 	writeFileSync(specPath, s);
 }
 

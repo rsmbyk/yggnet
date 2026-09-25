@@ -7,20 +7,34 @@ import { basename, join } from 'node:path';
 
 const date = '2026-07-30';
 
-function resolveSpecDir(id) {
+function slugify(s) {
+	return s
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 48)
+		.replace(/-+$/g, '');
+}
+
+function posixRel(p) {
+	return p.split(/[/\\]/).join('/');
+}
+
+function resolveSpecDir(id, title) {
 	const padded = String(id).padStart(3, '0');
 	try {
 		const entries = readdirSync('specs').filter((n) => n.startsWith(`${padded}-`));
 		if (entries.length === 1) return join('specs', entries[0]);
 	} catch {
-		// Historical run predates specs/NNN-slug/ layout; fall through to placeholder.
+		// Creating before specs/ exists.
 	}
+	if (title) return join('specs', `${padded}-${slugify(title)}`);
 	return join('specs', `${padded}-<slug>`);
 }
 
-function specLink(id) {
-	const dir = resolveSpecDir(id);
-	return `[${basename(dir)}](../${dir}/spec.md)`;
+function specLink(id, title) {
+	const dir = resolveSpecDir(id, title);
+	return `[${basename(dir)}](../${posixRel(dir)}/spec.md)`;
 }
 
 /** @type {Record<string, { area: string; bump: string; problem: string; goals: string[]; nong: string[]; mode: string; domain: string; algo: string; persist: string; risks: string[]; related: string }>} */
@@ -445,7 +459,7 @@ for (const id of Object.keys(meta).sort()) {
 	const acs = [...acSection.matchAll(/^- (.+)$/gm)].map((m) => m[1]);
 	const m = meta[id];
 	const specId = `SPEC-${id}`;
-	const dir = join('docs/specs', specId);
+	const dir = resolveSpecDir(id, title);
 	mkdirSync(dir, { recursive: true });
 
 	const acMd = (acs.length ? acs : ['Meet ITEM acceptance sketch'])
@@ -616,12 +630,13 @@ ${risks}
 	item = item.replace(/^status: backlog/m, 'status: ready');
 	item = item.replace(/^status: ready/m, 'status: ready');
 	item = item.replace(/^updated: .+$/m, `updated: ${date}`);
+	const rel = posixRel(dir);
 	if (/^spec:\s*$/m.test(item)) {
-		item = item.replace(/^spec:\s*$/m, `spec: ${specId}`);
+		item = item.replace(/^spec:\s*$/m, `spec: ${rel}`);
 	} else if (/^spec:/m.test(item)) {
-		item = item.replace(/^spec:.*$/m, `spec: ${specId}`);
+		item = item.replace(/^spec:.*$/m, `spec: ${rel}`);
 	}
-	item = item.replace(/^- Spec:.*$/m, `- Spec: [${specId}](../../specs/${specId}/spec.md)`);
+	item = item.replace(/^- Spec:.*$/m, `- Spec: [${basename(dir)}](../../${rel}/spec.md)`);
 	writeFileSync(itemPath, item);
 
 	boardRows.push({
@@ -641,7 +656,7 @@ boardRows.sort((a, b) => priOrder[a.priority] - priOrder[b.priority] || a.id.loc
 const table = boardRows
 	.map(
 		(r) =>
-			`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | ${specLink(r.id)} | ${r.bump} | ${date} |`
+			`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | ${specLink(r.id, r.title)} | ${r.bump} | ${date} |`
 	)
 	.join('\n');
 
