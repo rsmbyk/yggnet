@@ -10,16 +10,16 @@
 
 Vibe exploration is frozen into normal process packs:
 
-| SPEC     | Concern                                                   |
-| -------- | --------------------------------------------------------- |
-| 039-world-first-shell-hud | World-first shell + HUD                                   |
-| 040-canonical-world-config | Canonical world config (no World Tune; `textureSize` 250) |
-| 041-camera-chrome-2d-3d | Camera chrome + 2D/3D                                     |
-| 042-solid-nodes-pointer-intents | Solid nodes + pointer intents                             |
-| 043-labels-colors-edge-geometry | Labels, colors, edge geometry                             |
+| SPEC                                | Concern                                                   |
+| ----------------------------------- | --------------------------------------------------------- |
+| 039-world-first-shell-hud           | World-first shell + HUD                                   |
+| 040-canonical-world-config          | Canonical world config (no World Tune; `textureSize` 250) |
+| 041-camera-chrome-2d-3d             | Camera chrome + 2D/3D                                     |
+| 042-solid-nodes-pointer-intents     | Solid nodes + pointer intents                             |
+| 043-labels-colors-edge-geometry     | Labels, colors, edge geometry                             |
 | 044-in-world-selection-sheet-create | In-world selection sheet + create                         |
-| 045-toolbar-tools-panel-chrome | Toolbar + tools panel chrome                              |
-| 046-manager-nodes-edges-list-ux | Manager Nodes/Edges list UX                               |
+| 045-toolbar-tools-panel-chrome      | Toolbar + tools panel chrome                              |
+| 046-manager-nodes-edges-list-ux     | Manager Nodes/Edges list UX                               |
 
 **World config:** edit [`src/lib/world/world-config.ts`](src/lib/world/world-config.ts) and keep [`docs/world-scale.md`](docs/world-scale.md) in sync. There is **no** live World Tune panel or `/__yggnet/world-config` writer.
 

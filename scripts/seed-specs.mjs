@@ -1,9 +1,27 @@
 // NOTE: Historical helper. Spec dirs are now specs/NNN-slug/ (see resolve in board-move.mjs).
-throw new Error('Historical one-shot — do not re-run. Specs live under specs/NNN-slug/.');
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+if (!process.env.ALLOW_HISTORICAL_SCRIPTS) {
+	throw new Error('Historical one-shot — do not re-run. Specs live under specs/NNN-slug/.');
+}
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
+import { basename, join } from 'node:path';
 
 const date = '2026-07-30';
+
+function resolveSpecDir(id) {
+	const padded = String(id).padStart(3, '0');
+	try {
+		const entries = readdirSync('specs').filter((n) => n.startsWith(`${padded}-`));
+		if (entries.length === 1) return join('specs', entries[0]);
+	} catch {
+		// Historical run predates specs/NNN-slug/ layout; fall through to placeholder.
+	}
+	return join('specs', `${padded}-<slug>`);
+}
+
+function specLink(id) {
+	const dir = resolveSpecDir(id);
+	return `[${basename(dir)}](../${dir}/spec.md)`;
+}
 
 /** @type {Record<string, { area: string; bump: string; problem: string; goals: string[]; nong: string[]; mode: string; domain: string; algo: string; persist: string; risks: string[]; related: string }>} */
 const meta = {
@@ -623,7 +641,7 @@ boardRows.sort((a, b) => priOrder[a.priority] - priOrder[b.priority] || a.id.loc
 const table = boardRows
 	.map(
 		(r) =>
-			`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | [SPEC-${r.id}](../specs/TODO-SPEC-${r.id}/spec.md) | ${r.bump} | ${date} |`
+			`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | ${specLink(r.id)} | ${r.bump} | ${date} |`
 	)
 	.join('\n');
 

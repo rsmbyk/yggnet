@@ -10,7 +10,6 @@ function resolveSpecDir(id) {
 	return path.join('specs', entries[0]);
 }
 
-
 const date = process.argv[2] || new Date().toISOString().slice(0, 10);
 const id = process.argv[3];
 const action = process.argv[4];
@@ -32,8 +31,7 @@ const pri = (item.match(/^priority: (.*)$/m) || [])[1] || 'P2';
 const eff = (item.match(/^effort: (.*)$/m) || [])[1] || 'M';
 const specDir = resolveSpecDir(id);
 const bump =
-	(fs.readFileSync(`${specDir}/spec.md`, 'utf8').match(/^bump: (.*)$/m) || [])[1] ||
-	'minor';
+	(fs.readFileSync(`${specDir}/spec.md`, 'utf8').match(/^bump: (.*)$/m) || [])[1] || 'minor';
 
 const status = action === 'done' ? 'done' : action === 'in_review' ? 'in_review' : 'in_progress';
 item = item.replace(/^status:.*$/m, `status: ${status}`);

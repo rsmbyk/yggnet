@@ -20,3 +20,5 @@ Yggnet already used Spec-Driven Development, an ITEM board, Git Flow, and SemVer
 ## Consequences
 
 Agents and humans follow PROCESS + SDD-GATE. Later keep-up uses ADOPT sync (owner-triggered only). First behavior change after adopt still Draft → Accept → implement.
+
+Adopt bootstraps canonical `VERSION` from `package.json` (`0.30.0`) without a SemVer bump; process-only work is otherwise `bump: none` with no `VERSION` change.

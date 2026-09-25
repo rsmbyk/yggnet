@@ -10,17 +10,17 @@ vexbook is not a runtime dependency. Do not add it as a package or submodule. Th
 
 Copy these from a **chosen vexbook tag / release / commit** (owner names the source). Overwrite process docs; do **not** wipe product docs.
 
-| Path | Notes |
-| --- | --- |
-| `docs/PROCESS.md` | Locked way of working |
-| `docs/KICKOFF.md` | Greenfield start (kept so future agents know the spawn path) |
-| `docs/ADOPT.md` | This file |
-| `docs/rules/SDD-GATE.md` | Canonical SDD gate |
-| `backlog/items/_template.md` | Reusable ITEM stub |
-| `specs/_template/` | Reusable plan/spec/tasks stubs |
-| `docs/adr/_template.md` | Reusable ADR stub |
-| `.github/PULL_REQUEST_TEMPLATE.md` | If present in the source |
-| `AGENTS.md` | Align **process / kickoff / adopt** sections with vexbook; **keep** (or create) the product-specific section |
+| Path                               | Notes                                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `docs/PROCESS.md`                  | Locked way of working                                                                                        |
+| `docs/KICKOFF.md`                  | Greenfield start (kept so future agents know the spawn path)                                                 |
+| `docs/ADOPT.md`                    | This file                                                                                                    |
+| `docs/rules/SDD-GATE.md`           | Canonical SDD gate                                                                                           |
+| `backlog/items/_template.md`       | Reusable ITEM stub                                                                                           |
+| `specs/_template/`                 | Reusable plan/spec/tasks stubs                                                                               |
+| `docs/adr/_template.md`            | Reusable ADR stub                                                                                            |
+| `.github/PULL_REQUEST_TEMPLATE.md` | If present in the source                                                                                     |
+| `AGENTS.md`                        | Align **process / kickoff / adopt** sections with vexbook; **keep** (or create) the product-specific section |
 
 **Do not copy** into an existing product:
 

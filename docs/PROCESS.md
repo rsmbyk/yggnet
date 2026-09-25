@@ -13,8 +13,8 @@ Humans and AIs follow this file. Do not invent a second process.
 
 Agents and humans that implement here must apply these docs (re-read when working):
 
-| Doc | Role |
-| --- | --- |
+| Doc                                             | Role                     |
+| ----------------------------------------------- | ------------------------ |
 | [`docs/rules/SDD-GATE.md`](./rules/SDD-GATE.md) | Hard SDD permission gate |
 
 When a future always-on process doc is added, append it to this table. See [Vendor project rules](#vendor-project-rules).
@@ -69,12 +69,12 @@ Typical `ITEM-000` → spec 000 (scaffold).
 
 Vexbook and spawned projects share this — vexbook is the live example, not an exception. Extra commits on the branch are fine. A PR must not merge until it already has:
 
-| Git | Already in that PR |
-| --- | --- |
-| Draft or ready PR open | ITEM **In review**, `pr:` set, draft-PR task checked |
-| About to merge | ITEM **Done**; tasks that this merge completes are checked |
-| `bump` is not `none` | `VERSION` bumped, changelog `## [X.Y.Z]`, `release_version` set |
-| `bump` is `none` | `VERSION` unchanged; no tag |
+| Git                    | Already in that PR                                              |
+| ---------------------- | --------------------------------------------------------------- |
+| Draft or ready PR open | ITEM **In review**, `pr:` set, draft-PR task checked            |
+| About to merge         | ITEM **Done**; tasks that this merge completes are checked      |
+| `bump` is not `none`   | `VERSION` bumped, changelog `## [X.Y.Z]`, `release_version` set |
+| `bump` is `none`       | `VERSION` unchanged; no tag                                     |
 
 After merge, if the slice versions: annotated tag `vX.Y.Z` and GitHub Release in the **same session** (a tag is not a commit). Do not open a follow-up PR to move the ITEM, check boxes, or bump the version.
 
@@ -128,7 +128,7 @@ Three records, one number:
 
 - **Canonical published version:** annotated git tag `vX.Y.Z` on `main`
 - **In-tree current version:** repo-root [`VERSION`](../VERSION) — one line `X.Y.Z` (no `v`)
-- **History:** [`CHANGELOG.md`](../CHANGELOG.md) in Keep a Changelog shape (`## [Unreleased]`, then `## [X.Y.Z] - YYYY-MM-DD`). Spawned projects start from [`templates/changelog.md`](../templates/changelog.md) (copy over `CHANGELOG.md` at kickoff; then remove the entire `templates/` directory).
+- **History:** [`CHANGELOG.md`](../CHANGELOG.md) in Keep a Changelog shape (`## [Unreleased]`, then `## [X.Y.Z] - YYYY-MM-DD`). Spawned projects start from [`templates/changelog.md`](../templates/changelog.md) (copy over `CHANGELOG.md` at kickoff; then remove the entire `templates/` directory). Yggnet note: `templates/` is vexbook-spawn only and intentionally absent here per [ADOPT.md](./ADOPT.md).
 - **Traceability:** ITEM `bump` (intent for this slice) and `release_version` (filled when the item is in a tagged release)
 
 A child Spec 000 may **mirror** `VERSION` into language tooling (`package.json`, and so on). That mirror is not a second source of truth. Record those paths in the child [`ARCHITECTURE.md`](./ARCHITECTURE.md).

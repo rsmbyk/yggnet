@@ -1,7 +1,10 @@
 // NOTE: Historical helper. Spec dirs are now specs/NNN-slug/ (see resolve in board-move.mjs).
-throw new Error('Historical one-shot — do not re-run. Specs live under specs/NNN-slug/.');
-import { readFileSync, writeFileSync } from 'node:fs';
+if (!process.env.ALLOW_HISTORICAL_SCRIPTS) {
+	throw new Error('Historical one-shot — do not re-run. Specs live under specs/NNN-slug/.');
+}
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { basename, join } from 'node:path';
 
 const date = '2026-07-30';
 
@@ -103,13 +106,27 @@ function sh(cmd) {
 	execSync(cmd, { stdio: 'inherit', shell: true });
 }
 
+function resolveSpecDir(id) {
+	const padded = String(id).padStart(3, '0');
+	const entries = readdirSync('specs').filter((n) => n.startsWith(`${padded}-`));
+	if (entries.length !== 1) {
+		throw new Error(`Expected one specs/${padded}-* dir, found: ${entries.join(', ') || '(none)'}`);
+	}
+	return join('specs', entries[0]);
+}
+
+function specLink(id) {
+	const dir = resolveSpecDir(id);
+	return `[${basename(dir)}](../${dir}/spec.md)`;
+}
+
 function markItemDone(id) {
 	const path = `backlog/items/ITEM-${id}.md`;
 	let t = readFileSync(path, 'utf8');
 	t = t.replace(/^status:.*$/m, 'status: done');
 	t = t.replace(/^updated:.*$/m, `updated: ${date}`);
 	writeFileSync(path, t);
-	const specPath = `specs/${id}/spec.md`;
+	const specPath = `${resolveSpecDir(id)}/spec.md`;
 	let s = readFileSync(specPath, 'utf8');
 	s = s.replace(/^status:.*$/m, 'status: done');
 	s = s.replace(/^updated:.*$/m, `updated: ${date}`);
@@ -141,9 +158,9 @@ function rebuildBoard(doneIds) {
 	);
 
 	const fmtReady = (r) =>
-		`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | [SPEC-${r.id}](../specs/${r.id}/spec.md) | ${r.bump} | ${date} |`;
+		`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | ${specLink(r.id)} | ${r.bump} | ${date} |`;
 	const fmtDone = (r) =>
-		`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | [SPEC-${r.id}](../specs/${r.id}/spec.md) | ${r.bump} | ${date} | ${date} |`;
+		`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | ${specLink(r.id)} | ${r.bump} | ${date} | ${date} |`;
 
 	const board = `# Backlog board
 
@@ -233,7 +250,7 @@ for (const id of ORDER.slice(1)) {
 	markItemDone(id);
 	doneSoFar.push(id);
 	rebuildBoard(doneSoFar);
-	sh(`git add backlog/board.md backlog/items/ITEM-${id}.md specs/${id}/spec.md`);
+	sh(`git add backlog/board.md backlog/items/ITEM-${id}.md ${resolveSpecDir(id)}/spec.md`);
 	const msg = `feat(SPEC-${id}): ${TITLES[id]}
 
 Complete SPEC-${id} on develop (MVP behavior in the shared app shell).

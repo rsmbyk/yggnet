@@ -9,13 +9,13 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft → Accept �
 
 ### Column meanings
 
-| Column      | Meaning                                          |
-| ----------- | ------------------------------------------------ |
-| Backlog     | Captured — no complete spec yet                  |
-| Speccing    | Spec pack in progress                            |
-| Ready       | DoR met + owner Accept — may execute             |
-| In progress | Execution started — feature/hotfix branch        |
-| In review   | PR open — awaiting approval                      |
+| Column      | Meaning                                             |
+| ----------- | --------------------------------------------------- |
+| Backlog     | Captured — no complete spec yet                     |
+| Speccing    | Spec pack in progress                               |
+| Ready       | DoR met + owner Accept — may execute                |
+| In progress | Execution started — feature/hotfix branch           |
+| In review   | PR open — awaiting approval                         |
 | Done        | Merged; versioned slices tag when owner cuts `main` |
 
 ### Field guide
@@ -56,13 +56,13 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft → Accept �
 
 ## Done
 
-| ID       | Title                             | Summary                                        | Type | Priority | Effort | Spec     | Bump  | Merged     | Updated    |
-| -------- | --------------------------------- | ---------------------------------------------- | ---- | -------- | ------ | -------- | ----- | ---------- | ---------- |
-| ITEM-039 | World-first shell + HUD           | Full-bleed world + floating HUD; no World Tune | feat | P1       | M      | 039-world-first-shell-hud | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-040 | Canonical world config            | Frozen WORLD + synced world-scale; file-only   | feat | P1       | M      | 040-canonical-world-config | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-041 | Camera chrome + 2D/3D             | Map chrome, 2D/3D toggle, cursor rules         | feat | P1       | M      | 041-camera-chrome-2d-3d | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-042 | Solid nodes + pointer intents     | Collision, select/multi/move/connect           | feat | P1       | M      | 042-solid-nodes-pointer-intents | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-043 | Labels, colors, edge geometry     | LOD labels, palette, WORLD.edges               | feat | P1       | M      | 043-labels-colors-edge-geometry | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-044 | In-world selection sheet + create | Inspector, HUD create, delete/connect          | feat | P1       | M      | 044-in-world-selection-sheet-create | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-045 | Toolbar + tools panel chrome      | Icon rail, sticky glass tools panel            | feat | P1       | M      | 045-toolbar-tools-panel-chrome | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-046 | Manager Nodes/Edges list UX       | Search, Edges filter, companion sheet          | feat | P1       | M      | 046-manager-nodes-edges-list-ux | minor | 2026-09-25 | 2026-09-25 |
+| ID       | Title                             | Summary                                        | Type | Priority | Effort | Spec                                                                                        | Bump  | Merged     | Updated    |
+| -------- | --------------------------------- | ---------------------------------------------- | ---- | -------- | ------ | ------------------------------------------------------------------------------------------- | ----- | ---------- | ---------- |
+| ITEM-039 | World-first shell + HUD           | Full-bleed world + floating HUD; no World Tune | feat | P1       | M      | [039-world-first-shell-hud](../specs/039-world-first-shell-hud/spec.md)                     | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-040 | Canonical world config            | Frozen WORLD + synced world-scale; file-only   | feat | P1       | M      | [040-canonical-world-config](../specs/040-canonical-world-config/spec.md)                   | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-041 | Camera chrome + 2D/3D             | Map chrome, 2D/3D toggle, cursor rules         | feat | P1       | M      | [041-camera-chrome-2d-3d](../specs/041-camera-chrome-2d-3d/spec.md)                         | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-042 | Solid nodes + pointer intents     | Collision, select/multi/move/connect           | feat | P1       | M      | [042-solid-nodes-pointer-intents](../specs/042-solid-nodes-pointer-intents/spec.md)         | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-043 | Labels, colors, edge geometry     | LOD labels, palette, WORLD.edges               | feat | P1       | M      | [043-labels-colors-edge-geometry](../specs/043-labels-colors-edge-geometry/spec.md)         | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-044 | In-world selection sheet + create | Inspector, HUD create, delete/connect          | feat | P1       | M      | [044-in-world-selection-sheet-create](../specs/044-in-world-selection-sheet-create/spec.md) | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-045 | Toolbar + tools panel chrome      | Icon rail, sticky glass tools panel            | feat | P1       | M      | [045-toolbar-tools-panel-chrome](../specs/045-toolbar-tools-panel-chrome/spec.md)           | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-046 | Manager Nodes/Edges list UX       | Search, Edges filter, companion sheet          | feat | P1       | M      | [046-manager-nodes-edges-list-ux](../specs/046-manager-nodes-edges-list-ux/spec.md)         | minor | 2026-09-25 | 2026-09-25 |
