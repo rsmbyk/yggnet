@@ -329,8 +329,7 @@
 		section === 'generate' ||
 			(section === 'nodes' && selectedCount > 1) ||
 			(section === 'edges' && selectedEdgeCount > 1) ||
-			(section === 'selection' &&
-				Boolean(selectedNode && selectedCount === 1 && app.ui.openTool === null))
+			(section === 'selection' && Boolean(selectedNode && selectedCount === 1))
 	);
 
 	/** Collapse the selection sheet when the primary selected node changes. */
@@ -1130,6 +1129,7 @@
 									min={fieldLimit('density')?.min}
 									max={fieldLimit('density')?.max}
 									step="0.01"
+									data-testid="generate-density"
 									aria-describedby="generate-density-help"
 									bind:value={app.generateForm.density}
 								/>
@@ -1269,6 +1269,7 @@
 									min={fieldLimit('rewire')?.min}
 									max={fieldLimit('rewire')?.max}
 									step="0.01"
+									data-testid="generate-rewire"
 									aria-describedby="generate-rewire-help"
 									bind:value={app.generateForm.rewire}
 								/>
@@ -2065,7 +2066,7 @@
 
 	{#if footerHasActions || overflowing}
 		<footer class="manager__footer" bind:this={footerEl}>
-			{#if section === 'selection' && selectedNode && selectedCount === 1 && app.ui.openTool === null}
+			{#if section === 'selection' && selectedNode && selectedCount === 1}
 				<div class="row wrap selection-actions">
 					<button
 						type="button"
