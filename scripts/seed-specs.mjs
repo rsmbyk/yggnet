@@ -1,3 +1,5 @@
+// NOTE: Historical helper. Spec dirs are now specs/NNN-slug/ (see resolve in board-move.mjs).
+throw new Error('Historical one-shot — do not re-run. Specs live under specs/NNN-slug/.');
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -601,7 +603,7 @@ ${risks}
 	} else if (/^spec:/m.test(item)) {
 		item = item.replace(/^spec:.*$/m, `spec: ${specId}`);
 	}
-	item = item.replace(/^- Spec:.*$/m, `- Spec: [${specId}](../../docs/specs/${specId}/spec.md)`);
+	item = item.replace(/^- Spec:.*$/m, `- Spec: [${specId}](../../specs/${specId}/spec.md)`);
 	writeFileSync(itemPath, item);
 
 	boardRows.push({
@@ -621,7 +623,7 @@ boardRows.sort((a, b) => priOrder[a.priority] - priOrder[b.priority] || a.id.loc
 const table = boardRows
 	.map(
 		(r) =>
-			`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | [SPEC-${r.id}](../docs/specs/SPEC-${r.id}/spec.md) | ${r.bump} | ${date} |`
+			`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | [SPEC-${r.id}](../specs/TODO-SPEC-${r.id}/spec.md) | ${r.bump} | ${date} |`
 	)
 	.join('\n');
 

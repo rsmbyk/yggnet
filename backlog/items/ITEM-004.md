@@ -7,7 +7,7 @@ priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-004
+spec: specs/004-world-graph-render
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Technical path look; cartographic/sci-fi skins parked. Related: ITEM-001, ITEM-0
 
 ## Links
 
-- Spec: [SPEC-004](../../docs/specs/SPEC-004/spec.md)
+- Spec: [SPEC-004](../../specs/004-world-graph-render/spec.md)
 - Related items: ITEM-001, ITEM-003, ITEM-005, ITEM-006.

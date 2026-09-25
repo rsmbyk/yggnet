@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-013
+spec: specs/013-compare-runs
 branch:
 pr:
 archived_at: 2026-07-30
@@ -32,5 +32,5 @@ Related: ITEM-010, ITEM-012.
 
 ## Links
 
-- Spec: [SPEC-013](../../docs/specs/SPEC-013/spec.md)
+- Spec: [SPEC-013](../../specs/013-compare-runs/spec.md)
 - Related items: ITEM-010, ITEM-012.

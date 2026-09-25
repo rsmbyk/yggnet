@@ -7,7 +7,7 @@ priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-027
+spec: specs/027-templates-random-graph
 branch:
 pr:
 archived_at: 2026-07-30
@@ -32,5 +32,5 @@ Related: ITEM-001, ITEM-021.
 
 ## Links
 
-- Spec: [SPEC-027](../../docs/specs/SPEC-027/spec.md)
+- Spec: [SPEC-027](../../specs/027-templates-random-graph/spec.md)
 - Related items: ITEM-001, ITEM-021.

@@ -7,7 +7,7 @@ priority: P2
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-019
+spec: specs/019-lod-labels
 branch:
 pr:
 archived_at: 2026-07-30
@@ -32,5 +32,5 @@ Related: ITEM-003, ITEM-004.
 
 ## Links
 
-- Spec: [SPEC-019](../../docs/specs/SPEC-019/spec.md)
+- Spec: [SPEC-019](../../specs/019-lod-labels/spec.md)
 - Related items: ITEM-003, ITEM-004.

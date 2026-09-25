@@ -13,8 +13,9 @@
 | **Selection**     | Selected node/edge ids (domain API)                                    |
 | **World unit**    | Abstract Three.js length; fine grid is 1×1 — see `docs/world-scale.md` |
 | **ITEM-XXX**      | Backlog card                                                           |
-| **SPEC-XXX**      | Spec pack (spec + plan + tasks)                                        |
+| **spec NNN**      | Spec pack at `specs/NNN-slug/{plan,spec,tasks}.md`                     |
 | **Type**          | Shared enum: feat, fix, hotfix, chore, docs, refactor, test, idea      |
-| **Bump**          | major \| minor \| patch \| none (release math)                         |
-| **Done**          | Merged to `develop`, not yet production-released                       |
+| **Bump**          | major \| minor \| patch \| none (ITEM/spec field; drives `VERSION`)    |
+| **VERSION**       | Repo-root SemVer; mirrored in `package.json`                           |
+| **Done**          | Merged; versioned slices tag when owner cuts `main`                    |
 | **Archive**       | Left the active board (`backlog/archives.md`)                          |

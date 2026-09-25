@@ -63,9 +63,9 @@ jobs:
 
             Mandatory project rules (see AGENTS.md):
             - Read AGENTS.md, docs/vision.md, relevant docs/adr/*, and the active
-              docs/specs/SPEC-XXX/{spec,plan,tasks}.md before coding.
-            - Do NOT invent scope. Follow SPEC acceptance criteria and tasks only.
-            - Git Flow: feature branches from `develop` as `feat/SPEC-XXX-slug`
+              specs/NNN-slug/{plan,spec,tasks}.md before coding.
+            - Do NOT invent scope. Follow spec acceptance criteria and tasks only.
+            - Git Flow: feature branches from `develop` as `feat/NNN-slug`
               (hotfixes from `main`); PR target is `develop` unless release/hotfix.
               Never push directly to `main` or `develop`.
             - TDD for behavior. Keep `src/lib/graph/**` at >=90% lines/branches/

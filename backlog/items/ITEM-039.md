@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-09-25
 updated: 2026-09-25
-spec: SPEC-039
+spec: specs/039-world-first-shell-hud
 branch: vibe/session-20260730
 pr: 16
 archived_at:
@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-039](../../docs/specs/SPEC-039/spec.md)
+- Spec: [SPEC-039](../../specs/039-world-first-shell-hud/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

@@ -17,6 +17,6 @@ SvelteKit + Threlte + TypeScript · custom `src/lib/graph` · plain CSS variable
 
 ## Process (summary)
 
-Spec-driven `SPEC-XXX` · TDD · Git Flow · Kanban in `backlog/` · SemVer on release (sequential bumps in merge-to-develop order; `none` allowed)
+Follow [`PROCESS.md`](./PROCESS.md) (vexbook adopt). Spec packs live under `specs/NNN-slug/`. TDD · Git Flow · Kanban in `backlog/` · SemVer (`VERSION`; spec PR is the release when `bump` ≠ `none`).
 
-Full feature inventory lives on the [backlog board](../backlog/board.md) (`ITEM-001`…). Process detail: CONTRIBUTING, ADRs, and backlog templates.
+Full feature inventory lives on the [backlog board](../backlog/board.md) (`ITEM-001`…). Product detail: [`PRODUCT.md`](./PRODUCT.md) → this vision. Architecture: [`ARCHITECTURE.md`](./ARCHITECTURE.md) + ADRs.

@@ -1,22 +1,22 @@
 # Backlog board
 
-In-repo Kanban. Each card is an `ITEM-XXX`. Details live in the item (and SPEC) files.
-Status moves follow project process (DoR → Ready → execute → PR review → Done → archive on release or drop).
+In-repo Kanban. Each card is an `ITEM-XXX`. Details live in the item and `specs/NNN-slug/` pack.
+Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft → Accept → execute → PR → Done).
 
-**Approvals:** only an authorized project owner/reviewer promotes to Ready, authorizes `execute SPEC-XXX`, approves merge PRs, and calls `release`.
+**Approvals:** only an authorized project owner/reviewer promotes to Ready, Accepts Drafts, authorizes execute, approves merge PRs, and cuts `main` / tags when needed.
 
-**Archive:** [`archives.md`](./archives.md) (not a column). Done = on `develop`, not yet in a production release.
+**Archive:** [`archives.md`](./archives.md) (not a column). Done = merged; versioned slices tag on the `main` cut per PROCESS.
 
 ### Column meanings
 
 | Column      | Meaning                                          |
 | ----------- | ------------------------------------------------ |
-| Backlog     | Captured — no complete SPEC yet                  |
-| Speccing    | SPEC pack in progress                            |
-| Ready       | DoR met + owner OK — may execute                 |
+| Backlog     | Captured — no complete spec yet                  |
+| Speccing    | Spec pack in progress                            |
+| Ready       | DoR met + owner Accept — may execute             |
 | In progress | Execution started — feature/hotfix branch        |
 | In review   | PR open — awaiting approval                      |
-| Done        | Merged to `develop`, awaiting production release |
+| Done        | Merged; versioned slices tag when owner cuts `main` |
 
 ### Field guide
 
@@ -25,7 +25,7 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 | Type     | Shared enum: `feat`, `fix`, `hotfix`, `chore`, `docs`, `refactor`, `test`, `idea` |
 | Priority | `P0` highest … `P3` lowest                                                        |
 | Effort   | `S` / `M` / `L`                                                                   |
-| Bump     | Expected SemVer bump for the SPEC: `major` / `minor` / `patch` / `none`           |
+| Bump     | SemVer bump for the slice: `major` / `minor` / `patch` / `none`                   |
 
 ---
 
@@ -58,11 +58,11 @@ Status moves follow project process (DoR → Ready → execute → PR review →
 
 | ID       | Title                             | Summary                                        | Type | Priority | Effort | Spec     | Bump  | Merged     | Updated    |
 | -------- | --------------------------------- | ---------------------------------------------- | ---- | -------- | ------ | -------- | ----- | ---------- | ---------- |
-| ITEM-039 | World-first shell + HUD           | Full-bleed world + floating HUD; no World Tune | feat | P1       | M      | SPEC-039 | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-040 | Canonical world config            | Frozen WORLD + synced world-scale; file-only   | feat | P1       | M      | SPEC-040 | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-041 | Camera chrome + 2D/3D             | Map chrome, 2D/3D toggle, cursor rules         | feat | P1       | M      | SPEC-041 | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-042 | Solid nodes + pointer intents     | Collision, select/multi/move/connect           | feat | P1       | M      | SPEC-042 | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-043 | Labels, colors, edge geometry     | LOD labels, palette, WORLD.edges               | feat | P1       | M      | SPEC-043 | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-044 | In-world selection sheet + create | Inspector, HUD create, delete/connect          | feat | P1       | M      | SPEC-044 | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-045 | Toolbar + tools panel chrome      | Icon rail, sticky glass tools panel            | feat | P1       | M      | SPEC-045 | minor | 2026-09-25 | 2026-09-25 |
-| ITEM-046 | Manager Nodes/Edges list UX       | Search, Edges filter, companion sheet          | feat | P1       | M      | SPEC-046 | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-039 | World-first shell + HUD           | Full-bleed world + floating HUD; no World Tune | feat | P1       | M      | 039-world-first-shell-hud | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-040 | Canonical world config            | Frozen WORLD + synced world-scale; file-only   | feat | P1       | M      | 040-canonical-world-config | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-041 | Camera chrome + 2D/3D             | Map chrome, 2D/3D toggle, cursor rules         | feat | P1       | M      | 041-camera-chrome-2d-3d | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-042 | Solid nodes + pointer intents     | Collision, select/multi/move/connect           | feat | P1       | M      | 042-solid-nodes-pointer-intents | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-043 | Labels, colors, edge geometry     | LOD labels, palette, WORLD.edges               | feat | P1       | M      | 043-labels-colors-edge-geometry | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-044 | In-world selection sheet + create | Inspector, HUD create, delete/connect          | feat | P1       | M      | 044-in-world-selection-sheet-create | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-045 | Toolbar + tools panel chrome      | Icon rail, sticky glass tools panel            | feat | P1       | M      | 045-toolbar-tools-panel-chrome | minor | 2026-09-25 | 2026-09-25 |
+| ITEM-046 | Manager Nodes/Edges list UX       | Search, Edges filter, companion sheet          | feat | P1       | M      | 046-manager-nodes-edges-list-ux | minor | 2026-09-25 | 2026-09-25 |

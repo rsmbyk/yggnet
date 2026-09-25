@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-017
+spec: specs/017-filters-by-type-tag
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Related: ITEM-004, ITEM-016, ITEM-025.
 
 ## Links
 
-- Spec: [SPEC-017](../../docs/specs/SPEC-017/spec.md)
+- Spec: [SPEC-017](../../specs/017-filters-by-type-tag/spec.md)
 - Related items: ITEM-004, ITEM-016, ITEM-025.

@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-09-25
 updated: 2026-09-25
-spec: SPEC-041
+spec: specs/041-camera-chrome-2d-3d
 branch: vibe/session-20260730
 pr: 16
 archived_at:
@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-041](../../docs/specs/SPEC-041/spec.md)
+- Spec: [SPEC-041](../../specs/041-camera-chrome-2d-3d/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-021
+spec: specs/021-save-load-graph
 branch:
 pr:
 archived_at: 2026-07-30
@@ -32,5 +32,5 @@ Related: ITEM-022, ITEM-023.
 
 ## Links
 
-- Spec: [SPEC-021](../../docs/specs/SPEC-021/spec.md)
+- Spec: [SPEC-021](../../specs/021-save-load-graph/spec.md)
 - Related items: ITEM-022, ITEM-023.

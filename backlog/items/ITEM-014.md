@@ -7,7 +7,7 @@ priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-014
+spec: specs/014-annotate-algorithm-steps
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Related: ITEM-010.
 
 ## Links
 
-- Spec: [SPEC-014](../../docs/specs/SPEC-014/spec.md)
+- Spec: [SPEC-014](../../specs/014-annotate-algorithm-steps/spec.md)
 - Related items: ITEM-010.

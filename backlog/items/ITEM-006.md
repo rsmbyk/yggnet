@@ -7,7 +7,7 @@ priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-006
+spec: specs/006-pathfinder-a-to-b
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Candidates faint, selected bright; dim context. Related: ITEM-002, ITEM-007, ITE
 
 ## Links
 
-- Spec: [SPEC-006](../../docs/specs/SPEC-006/spec.md)
+- Spec: [SPEC-006](../../specs/006-pathfinder-a-to-b/spec.md)
 - Related items: ITEM-002, ITEM-007, ITEM-009, ITEM-010.

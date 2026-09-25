@@ -7,7 +7,7 @@ priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-038
+spec: specs/038-save-load-named-docs-palette-find
 branch:
 pr:
 archived_at: 2026-07-30
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Save/loa
 
 ## Links
 
-- Spec: [SPEC-038](../../docs/specs/SPEC-038/spec.md)
+- Spec: [SPEC-038](../../specs/038-save-load-named-docs-palette-find/spec.md)
 - Related items: ITEM-021, ITEM-025
-- Prior SPECs: [SPEC-021](../../docs/specs/SPEC-021/spec.md), [SPEC-025](../../docs/specs/SPEC-025/spec.md)
+- Prior SPECs: [SPEC-021](../../specs/021-save-load-graph/spec.md), [SPEC-025](../../specs/025-command-palette/spec.md)

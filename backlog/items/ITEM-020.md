@@ -7,7 +7,7 @@ priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-020
+spec: specs/020-minimap
 branch:
 pr:
 archived_at: 2026-07-30
@@ -32,5 +32,5 @@ Related: ITEM-003, ITEM-004.
 
 ## Links
 
-- Spec: [SPEC-020](../../docs/specs/SPEC-020/spec.md)
+- Spec: [SPEC-020](../../specs/020-minimap/spec.md)
 - Related items: ITEM-003, ITEM-004.

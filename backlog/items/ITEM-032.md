@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-032
+spec: specs/032-node-drag-position-edit
 branch: feat/SPEC-032-node-drag-position
 pr:
 archived_at: 2026-07-30
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Nodes ar
 
 ## Links
 
-- Spec: [SPEC-032](../../docs/specs/SPEC-032/spec.md)
+- Spec: [SPEC-032](../../specs/032-node-drag-position-edit/spec.md)
 - Related items: ITEM-004, ITEM-015, ITEM-033
-- Prior SPEC: [SPEC-004](../../docs/specs/SPEC-004/spec.md)
+- Prior SPEC: [SPEC-004](../../specs/004-world-graph-render/spec.md)

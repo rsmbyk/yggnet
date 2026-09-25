@@ -1,4 +1,15 @@
 import fs from 'fs';
+import path from 'path';
+
+function resolveSpecDir(id) {
+	const padded = String(id).padStart(3, '0');
+	const entries = fs.readdirSync('specs').filter((n) => n.startsWith(`${padded}-`));
+	if (entries.length !== 1) {
+		throw new Error(`Expected one specs/${padded}-* dir, found: ${entries.join(', ') || '(none)'}`);
+	}
+	return path.join('specs', entries[0]);
+}
+
 
 const date = process.argv[2] || new Date().toISOString().slice(0, 10);
 const id = process.argv[3];
@@ -19,8 +30,9 @@ const sum =
 	title;
 const pri = (item.match(/^priority: (.*)$/m) || [])[1] || 'P2';
 const eff = (item.match(/^effort: (.*)$/m) || [])[1] || 'M';
+const specDir = resolveSpecDir(id);
 const bump =
-	(fs.readFileSync(`docs/specs/SPEC-${id}/spec.md`, 'utf8').match(/^bump: (.*)$/m) || [])[1] ||
+	(fs.readFileSync(`${specDir}/spec.md`, 'utf8').match(/^bump: (.*)$/m) || [])[1] ||
 	'minor';
 
 const status = action === 'done' ? 'done' : action === 'in_review' ? 'in_review' : 'in_progress';
@@ -30,10 +42,10 @@ if (branch) item = item.replace(/^branch:.*$/m, `branch: ${branch}`);
 if (pr) item = item.replace(/^pr:.*$/m, `pr: ${pr}`);
 fs.writeFileSync(itemPath, item);
 
-let spec = fs.readFileSync(`docs/specs/SPEC-${id}/spec.md`, 'utf8');
+let spec = fs.readFileSync(`${specDir}/spec.md`, 'utf8');
 spec = spec.replace(/^status:.*$/m, `status: ${status}`);
 spec = spec.replace(/^updated:.*$/m, `updated: ${date}`);
-fs.writeFileSync(`docs/specs/SPEC-${id}/spec.md`, spec);
+fs.writeFileSync(`${specDir}/spec.md`, spec);
 
 function stripItemRows(text) {
 	return text
@@ -78,19 +90,19 @@ for (const name of order) {
 if (action === 'in_progress') {
 	const header =
 		'| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |\n| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |';
-	const row = `| [ITEM-${id}](items/ITEM-${id}.md) | ${title} | ${sum} | feat | ${pri} | ${eff} | [SPEC-${id}](../docs/specs/SPEC-${id}/spec.md) | ${bump} | ${branch} | ${date} |`;
+	const row = `| [ITEM-${id}](items/ITEM-${id}.md) | ${title} | ${sum} | feat | ${pri} | ${eff} | [${path.basename(specDir)}](../${specDir}/spec.md) | ${bump} | ${branch} | ${date} |`;
 	map.set('In progress', `${header}\n${row}\n`);
 } else if (action === 'in_review') {
 	const header =
 		'| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |\n| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |';
-	const row = `| [ITEM-${id}](items/ITEM-${id}.md) | ${title} | ${sum} | feat | ${pri} | ${eff} | [SPEC-${id}](../docs/specs/SPEC-${id}/spec.md) | ${bump} | ${pr} | ${date} |`;
+	const row = `| [ITEM-${id}](items/ITEM-${id}.md) | ${title} | ${sum} | feat | ${pri} | ${eff} | [${path.basename(specDir)}](../${specDir}/spec.md) | ${bump} | ${pr} | ${date} |`;
 	const prev = stripItemRows(map.get('In review') || header).trimEnd();
 	const base = prev.includes('| ID') ? prev : header;
 	map.set('In review', `${base}\n${row}\n`);
 } else if (action === 'done') {
 	const header =
 		'| ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Merged | Updated |\n| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |';
-	const row = `| [ITEM-${id}](items/ITEM-${id}.md) | ${title} | ${sum} | feat | ${pri} | ${eff} | [SPEC-${id}](../docs/specs/SPEC-${id}/spec.md) | ${bump} | ${date} | ${date} |`;
+	const row = `| [ITEM-${id}](items/ITEM-${id}.md) | ${title} | ${sum} | feat | ${pri} | ${eff} | [${path.basename(specDir)}](../${specDir}/spec.md) | ${bump} | ${date} | ${date} |`;
 	const prev = stripItemRows(map.get('Done') || header).trimEnd();
 	const base = prev.includes('| ID') ? prev : header;
 	map.set('Done', `${base}\n${row}\n`);

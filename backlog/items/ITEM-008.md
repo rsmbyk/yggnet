@@ -7,7 +7,7 @@ priority: P1
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-008
+spec: specs/008-follow-edge
 branch:
 pr:
 archived_at: 2026-07-30
@@ -32,5 +32,5 @@ Same visual language as Directions. Related: ITEM-005, ITEM-007.
 
 ## Links
 
-- Spec: [SPEC-008](../../docs/specs/SPEC-008/spec.md)
+- Spec: [SPEC-008](../../specs/008-follow-edge/spec.md)
 - Related items: ITEM-005, ITEM-007.

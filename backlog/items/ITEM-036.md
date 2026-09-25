@@ -7,7 +7,7 @@ priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-036
+spec: specs/036-step-annotations-readback-playback
 branch:
 pr:
 archived_at: 2026-07-30
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Annotate
 
 ## Links
 
-- Spec: [SPEC-036](../../docs/specs/SPEC-036/spec.md)
+- Spec: [SPEC-036](../../specs/036-step-annotations-readback-playback/spec.md)
 - Related items: ITEM-010, ITEM-014
-- Prior SPECs: [SPEC-010](../../docs/specs/SPEC-010/spec.md), [SPEC-014](../../docs/specs/SPEC-014/spec.md)
+- Prior SPECs: [SPEC-010](../../specs/010-cached-traces-step-replay/spec.md), [SPEC-014](../../specs/014-annotate-algorithm-steps/spec.md)

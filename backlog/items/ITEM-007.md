@@ -7,7 +7,7 @@ priority: P0
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-007
+spec: specs/007-directions-guided-travel
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Separate from step-replay of algorithms. Related: ITEM-003, ITEM-006, ITEM-008.
 
 ## Links
 
-- Spec: [SPEC-007](../../docs/specs/SPEC-007/spec.md)
+- Spec: [SPEC-007](../../specs/007-directions-guided-travel/spec.md)
 - Related items: ITEM-003, ITEM-006, ITEM-008.

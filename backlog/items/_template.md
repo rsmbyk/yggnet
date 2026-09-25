@@ -12,6 +12,7 @@ branch:
 pr:
 archived_at:
 archive_reason:
+bump:
 release_version:
 ---
 

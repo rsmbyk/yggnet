@@ -1,3 +1,5 @@
+// NOTE: Historical helper. Spec dirs are now specs/NNN-slug/ (see resolve in board-move.mjs).
+throw new Error('Historical one-shot — do not re-run. Specs live under specs/NNN-slug/.');
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
@@ -107,7 +109,7 @@ function markItemDone(id) {
 	t = t.replace(/^status:.*$/m, 'status: done');
 	t = t.replace(/^updated:.*$/m, `updated: ${date}`);
 	writeFileSync(path, t);
-	const specPath = `docs/specs/SPEC-${id}/spec.md`;
+	const specPath = `specs/${id}/spec.md`;
 	let s = readFileSync(specPath, 'utf8');
 	s = s.replace(/^status:.*$/m, 'status: done');
 	s = s.replace(/^updated:.*$/m, `updated: ${date}`);
@@ -139,9 +141,9 @@ function rebuildBoard(doneIds) {
 	);
 
 	const fmtReady = (r) =>
-		`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | [SPEC-${r.id}](../docs/specs/SPEC-${r.id}/spec.md) | ${r.bump} | ${date} |`;
+		`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | [SPEC-${r.id}](../specs/${r.id}/spec.md) | ${r.bump} | ${date} |`;
 	const fmtDone = (r) =>
-		`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | [SPEC-${r.id}](../docs/specs/SPEC-${r.id}/spec.md) | ${r.bump} | ${date} | ${date} |`;
+		`| [ITEM-${r.id}](items/ITEM-${r.id}.md) | ${r.title} | ${r.summary} | feat | ${r.priority} | ${r.effort} | [SPEC-${r.id}](../specs/${r.id}/spec.md) | ${r.bump} | ${date} | ${date} |`;
 
 	const board = `# Backlog board
 
@@ -231,7 +233,7 @@ for (const id of ORDER.slice(1)) {
 	markItemDone(id);
 	doneSoFar.push(id);
 	rebuildBoard(doneSoFar);
-	sh(`git add backlog/board.md backlog/items/ITEM-${id}.md docs/specs/SPEC-${id}/spec.md`);
+	sh(`git add backlog/board.md backlog/items/ITEM-${id}.md specs/${id}/spec.md`);
 	const msg = `feat(SPEC-${id}): ${TITLES[id]}
 
 Complete SPEC-${id} on develop (MVP behavior in the shared app shell).

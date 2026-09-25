@@ -1,0 +1,13 @@
+---
+description: Spec-Driven Development permission gate (must-apply)
+alwaysApply: true
+---
+
+# SDD gate
+
+Before implementing any behavior, CSS, or copy change, follow the shared gate:
+
+- Read and apply [`docs/rules/SDD-GATE.md`](../../docs/rules/SDD-GATE.md)
+- Also apply every other must-apply shared doc listed in [`docs/PROCESS.md`](../../docs/PROCESS.md)
+
+Do not invent process here — only wire the vendor loader to those docs.

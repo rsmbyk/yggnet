@@ -7,7 +7,7 @@ priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-018
+spec: specs/018-diff-two-nodes
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Related: ITEM-006, ITEM-005.
 
 ## Links
 
-- Spec: [SPEC-018](../../docs/specs/SPEC-018/spec.md)
+- Spec: [SPEC-018](../../specs/018-diff-two-nodes/spec.md)
 - Related items: ITEM-006, ITEM-005.

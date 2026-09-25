@@ -7,7 +7,7 @@ priority: P1
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-010
+spec: specs/010-cached-traces-step-replay
 branch:
 pr:
 archived_at: 2026-07-30
@@ -33,5 +33,5 @@ Trace-first ADR. Related: ITEM-009, ITEM-011, ITEM-014.
 
 ## Links
 
-- Spec: [SPEC-010](../../docs/specs/SPEC-010/spec.md)
+- Spec: [SPEC-010](../../specs/010-cached-traces-step-replay/spec.md)
 - Related items: ITEM-009, ITEM-011, ITEM-014.
