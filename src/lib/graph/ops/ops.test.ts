@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyDocument } from '../model/document';
-import {
-	addEdge,
-	addNode,
-	removeEdge,
-	removeNode,
-	touch,
-	updateEdge,
-	updateNode
-} from './ops';
+import { addEdge, addNode, removeEdge, removeNode, touch, updateEdge, updateNode } from './ops';
 
 describe('ops', () => {
 	it('addNode applies defaults', () => {
@@ -52,7 +44,9 @@ describe('ops', () => {
 	});
 
 	it('updateNode replaces attachments array', () => {
-		let { doc, nodeId } = addNode(createEmptyDocument(), { label: 'A' });
+		const added = addNode(createEmptyDocument(), { label: 'A' });
+		let doc = added.doc;
+		const nodeId = added.nodeId;
 		const attachments = [
 			{ name: 'note', payload: 'hello' },
 			{ name: 'link', payload: 'data:text/plain,world' }
@@ -77,7 +71,9 @@ describe('ops', () => {
 	});
 
 	it('updateNode merges patch and throws for missing id', () => {
-		let { doc, nodeId } = addNode(createEmptyDocument(), { label: 'A' });
+		const added = addNode(createEmptyDocument(), { label: 'A' });
+		let doc = added.doc;
+		const nodeId = added.nodeId;
 		doc = updateNode(doc, nodeId, { label: 'B', position: { x: 9, y: 0, z: 0 } });
 		expect(doc.nodes[nodeId].label).toBe('B');
 		expect(doc.nodes[nodeId].position).toEqual({ x: 9, y: 0, z: 0 });

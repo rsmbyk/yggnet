@@ -5,7 +5,7 @@ type: feat
 feature_area: world
 bump: minor
 status: done
-title: "Canonical world config"
+title: 'Canonical world config'
 created: 2026-09-25
 updated: 2026-09-25
 ---

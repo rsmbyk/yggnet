@@ -5,7 +5,7 @@ type: feat
 feature_area: world
 bump: minor
 status: done
-title: "Node drag / position edit"
+title: 'Node drag / position edit'
 created: 2026-07-30
 updated: 2026-07-30
 ---

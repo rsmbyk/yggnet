@@ -1,7 +1,7 @@
 ---
 id: ITEM-042
 status: done
-title: "Solid nodes + pointer intents"
+title: 'Solid nodes + pointer intents'
 type: feat
 priority: P1
 effort: M

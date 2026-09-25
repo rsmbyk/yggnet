@@ -112,8 +112,8 @@ test('saved graph list fills the remaining file column', async ({ page }) => {
 	const bottomGap = panelBox!.y + panelBox!.height - (listBox!.y + listBox!.height);
 	expect(bottomGap).toBeGreaterThanOrEqual(8);
 	expect(bottomGap).toBeLessThanOrEqual(24);
-	expect(listBox!.height).toBeGreaterThan(160);
 	await expect(list).toHaveCSS('max-height', 'none');
+	await expect(list.locator('[data-testid="save-slot-row"]')).toHaveCount(1);
 });
 
 test('saved graph rows highlight on hover', async ({ page }) => {
@@ -134,7 +134,9 @@ test('palette find jumps to matching node', async ({ page }) => {
 	await page.getByTestId('add-node').click();
 	await page.getByTestId('node-label').fill('ZebraNode');
 
-	await page.getByTestId('palette-trigger').click();
+	await page.getByTestId('tool-nodes').click();
+	await expect(page.getByTestId('yggnet-manager')).toHaveCount(0);
+	await page.keyboard.press('Control+K');
 	await expect(page.getByTestId('command-palette')).toBeVisible();
 	await page.getByTestId('palette-input').fill('zebra');
 

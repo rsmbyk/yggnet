@@ -22,9 +22,7 @@ describe('toolsPanelMaxHeight', () => {
 	});
 
 	it('never exceeds the dock bottom', () => {
-		expect(
-			toolsPanelMaxHeight({ ...base, minimapTop: 900, expanded: false })
-		).toBe(716);
+		expect(toolsPanelMaxHeight({ ...base, minimapTop: 900, expanded: false })).toBe(716);
 	});
 });
 

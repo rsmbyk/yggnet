@@ -1,7 +1,7 @@
 ---
 id: ITEM-029
 status: archived
-title: "Multi-select nodes (and edges)"
+title: 'Multi-select nodes (and edges)'
 type: feat
 priority: P1
 effort: M
@@ -9,7 +9,7 @@ created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-029
 branch: feat/SPEC-029-multi-select
-pr: 
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.30.0

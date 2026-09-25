@@ -1,7 +1,7 @@
 ---
 id: ITEM-040
 status: done
-title: "Canonical world config"
+title: 'Canonical world config'
 type: feat
 priority: P1
 effort: M

@@ -5,7 +5,7 @@ type: feat
 feature_area: world
 bump: minor
 status: done
-title: "In-world selection sheet + create"
+title: 'In-world selection sheet + create'
 created: 2026-09-25
 updated: 2026-09-25
 ---

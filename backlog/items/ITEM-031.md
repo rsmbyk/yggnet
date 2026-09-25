@@ -1,7 +1,7 @@
 ---
 id: ITEM-031
 status: archived
-title: "Directed edge visuals in world"
+title: 'Directed edge visuals in world'
 type: feat
 priority: P1
 effort: S
@@ -9,7 +9,7 @@ created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-031
 branch: feat/SPEC-031-directed-edge-visuals
-pr: 
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.30.0

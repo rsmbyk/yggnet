@@ -1,15 +1,15 @@
 ---
 id: ITEM-038
 status: archived
-title: "Save/load named docs + palette find"
+title: 'Save/load named docs + palette find'
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-038
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.30.0

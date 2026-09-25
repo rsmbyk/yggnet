@@ -25,7 +25,9 @@ function diamond(): { doc: GraphDocument; a: string; b: string; c: string; d: st
 
 describe('algorithm registry', () => {
 	it('lists built-in bfs, dijkstra, astar', () => {
-		const ids = listAlgorithms().map((a) => a.id).sort();
+		const ids = listAlgorithms()
+			.map((a) => a.id)
+			.sort();
 		expect(ids).toEqual(['astar', 'bfs', 'dijkstra']);
 		expect(getAlgorithm('bfs')?.name).toBe('BFS');
 		expect(getAlgorithm('missing')).toBeUndefined();

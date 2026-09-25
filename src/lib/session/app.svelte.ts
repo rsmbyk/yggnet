@@ -60,6 +60,7 @@ import { WORLD } from '$lib/world/world-config';
 import { createNodePadding, findFreePosition } from '$lib/world/node-physics';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
 import { nextOpenTool, type ToolId } from '$lib/ui/tool-ids';
+import { SvelteSet } from 'svelte/reactivity';
 import { listSaveSlotNames, saveSlotExists, saveSlotStorageKey } from './save-slots';
 import { busyHold, waitForBusyOverlayPaint } from './work-busy';
 
@@ -228,7 +229,7 @@ class AppStore {
 			z: WORLD.camera.defaultPosition[2] - WORLD.camera.defaultTarget.z
 		}
 	});
-	groupsCollapsed = $state.raw<Set<string>>(new Set());
+	groupsCollapsed = new SvelteSet<string>();
 	namedSlots = $state<string[]>([]);
 	/** Last Generate type + options; lives here so the panel remount does not reset it. */
 	generateForm = $state(defaultGenerateForm());
@@ -314,7 +315,7 @@ class AppStore {
 		if (clearRuns) this.runStore = createRunStore();
 		this.directions = emptyDirections();
 		this.overlay = createEmptyOverlay();
-		this.groupsCollapsed = new Set();
+		this.groupsCollapsed.clear();
 		this.analyze = { ...emptyAnalyze(), algorithmId: this.analyze.algorithmId };
 		this.scheduleAutosave();
 	}
@@ -640,16 +641,12 @@ class AppStore {
 			}
 			return { doc: next, undo: () => cloneDocument(before) };
 		});
-		const nextCollapsed = new Set(this.groupsCollapsed);
-		nextCollapsed.delete(groupId);
-		this.groupsCollapsed = nextCollapsed;
+		this.groupsCollapsed.delete(groupId);
 	}
 
 	toggleCollapseGroup(groupId: string): void {
-		const next = new Set(this.groupsCollapsed);
-		if (next.has(groupId)) next.delete(groupId);
-		else next.add(groupId);
-		this.groupsCollapsed = next;
+		if (this.groupsCollapsed.has(groupId)) this.groupsCollapsed.delete(groupId);
+		else this.groupsCollapsed.add(groupId);
 	}
 
 	setFilterTags(tags: string[]): void {
@@ -1132,10 +1129,7 @@ class AppStore {
 		const t = this.camera.target;
 		const n = Object.keys(this.document.nodes).length;
 		const jitter = (n % 5) * 0.4;
-		return this.addNodeAt(
-			{ x: t.x + jitter, y: WORLD.defaultNodeY, z: t.z + jitter },
-			label
-		);
+		return this.addNodeAt({ x: t.x + jitter, y: WORLD.defaultNodeY, z: t.z + jitter }, label);
 	}
 
 	/** Remove current selection (nodes and/or edges). */

@@ -1,7 +1,7 @@
 ---
 id: ITEM-043
 status: done
-title: "Labels, colors, edge geometry"
+title: 'Labels, colors, edge geometry'
 type: feat
 priority: P1
 effort: M

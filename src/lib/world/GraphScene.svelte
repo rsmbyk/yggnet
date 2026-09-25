@@ -31,8 +31,6 @@
 
 	/** Canonical WORLD values (see world-config.ts / docs/world-scale.md). */
 	const GROUND_SIZE = WORLD.groundSize;
-	const GRID_MINOR = WORLD.gridMinor;
-	const GRID_MAJOR = WORLD.gridMajor;
 	const GRID_MEGA = WORLD.gridMega;
 	const NODE_RADIUS = WORLD.nodeRadius;
 	const nodeSphereGeometry = createNodeSphereGeometry();
@@ -81,8 +79,6 @@
 	let travelRaf = 0;
 	/** Free end of the in-progress connect rubber-band (world space). */
 	let connectCursor = $state<{ x: number; y: number; z: number } | null>(null);
-	/** Node under the rubber-band tip (for Alt-drag release → complete). */
-	let connectHoverNodeId = $state<string | null>(null);
 	/**
 	 * Keyboard modifier latch — Threlte/pointer events often omit altKey on Windows.
 	 * Updated from window keydown/keyup so Alt+press-down is reliable.
@@ -316,17 +312,17 @@
 	});
 
 	const groupProxies = $derived.by(() => {
-		const map = new Map<string, { id: string; x: number; y: number; z: number; count: number }>();
+		const map: Record<string, { id: string; x: number; y: number; z: number; count: number }> = {};
 		for (const n of nodes) {
 			if (!n.groupId || !collapsedGroups.has(n.groupId)) continue;
-			const cur = map.get(n.groupId) ?? { id: n.groupId, x: 0, y: 0, z: 0, count: 0 };
+			const cur = map[n.groupId] ?? { id: n.groupId, x: 0, y: 0, z: 0, count: 0 };
 			cur.x += n.position.x;
 			cur.y += n.position.y;
 			cur.z += n.position.z;
 			cur.count += 1;
-			map.set(n.groupId, cur);
+			map[n.groupId] = cur;
 		}
-		return [...map.values()].map((g) => ({
+		return Object.values(map).map((g) => ({
 			id: g.id,
 			x: g.x / g.count,
 			y: g.y / g.count,
@@ -520,13 +516,11 @@
 		const fromId = app.ui.connectFromId;
 		if (!fromId || !camera.current) {
 			connectCursor = null;
-			connectHoverNodeId = null;
 			return;
 		}
 		const source = app.document.nodes[fromId];
 		if (!source) {
 			connectCursor = null;
-			connectHoverNodeId = null;
 			return;
 		}
 		const canvas = renderer.domElement;
@@ -541,7 +535,7 @@
 
 		const snapR = NODE_RADIUS * 1.85;
 		const snapR2 = snapR * snapR;
-		let bestSnap: { id: string; x: number; y: number; z: number } | null = null;
+		let bestSnap: { x: number; y: number; z: number } | null = null;
 		let bestD = snapR2;
 		for (const n of Object.values(app.document.nodes)) {
 			if (n.id === fromId) continue;
@@ -549,16 +543,14 @@
 			const d = raycaster.ray.distanceSqToPoint(_snapPoint);
 			if (d <= bestD) {
 				bestD = d;
-				bestSnap = { id: n.id, x: n.position.x, y: n.position.y, z: n.position.z };
+				bestSnap = { x: n.position.x, y: n.position.y, z: n.position.z };
 			}
 		}
 		if (bestSnap) {
-			connectHoverNodeId = bestSnap.id;
 			connectCursor = { x: bestSnap.x, y: bestSnap.y, z: bestSnap.z };
 			return;
 		}
 
-		connectHoverNodeId = null;
 		_connectNormal.copy(camera.current.position).sub(_connectSource);
 		if (_connectNormal.lengthSq() < 1e-8) _connectNormal.set(0, 1, 0);
 		else _connectNormal.normalize();
@@ -1279,13 +1271,11 @@
 		if (!app.ui.connectFromId) return;
 		app.setConnectFrom(null);
 		connectCursor = null;
-		connectHoverNodeId = null;
 	}
 
 	$effect(() => {
 		if (!app.ui.connectFromId) {
 			connectCursor = null;
-			connectHoverNodeId = null;
 		}
 	});
 

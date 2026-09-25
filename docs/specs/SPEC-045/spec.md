@@ -5,7 +5,7 @@ type: feat
 feature_area: manager
 bump: minor
 status: done
-title: "Toolbar + tools panel chrome"
+title: 'Toolbar + tools panel chrome'
 created: 2026-09-25
 updated: 2026-09-25
 ---

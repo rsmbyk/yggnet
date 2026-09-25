@@ -1,7 +1,7 @@
 ---
 id: ITEM-034
 status: archived
-title: "Compare algorithms dual view"
+title: 'Compare algorithms dual view'
 type: feat
 priority: P2
 effort: M
@@ -9,7 +9,7 @@ created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-034
 branch: feat/SPEC-034-compare-algorithms-dual
-pr: 
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.30.0

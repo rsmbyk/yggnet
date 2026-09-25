@@ -1,7 +1,7 @@
 ---
 id: ITEM-046
 status: done
-title: "Manager Nodes/Edges list UX"
+title: 'Manager Nodes/Edges list UX'
 type: feat
 priority: P1
 effort: M

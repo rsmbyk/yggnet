@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { edgeMatchesListFilter } from './edgeListFilter';
 
-const edge = (partial: {
-	from?: string;
-	to?: string;
-	tags?: string[];
-}) => ({
+const edge = (partial: { from?: string; to?: string; tags?: string[] }) => ({
 	from: partial.from ?? 'a',
 	to: partial.to ?? 'b',
 	tags: partial.tags ?? []

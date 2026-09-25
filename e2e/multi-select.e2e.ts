@@ -17,7 +17,7 @@ test('ctrl-click multi-selects nodes in manager', async ({ page }) => {
 	expect(secondId).toBeTruthy();
 
 	await first.click();
-	await expect(page.getByTestId('selection-count')).toHaveText(/1 selected/);
+	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
 
 	await second.click({ modifiers: ['ControlOrMeta'] });
 	await expect(page.getByTestId('selection-count')).toHaveText(/2 selected/);

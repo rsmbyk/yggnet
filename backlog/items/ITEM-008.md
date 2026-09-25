@@ -1,15 +1,15 @@
 ---
 id: ITEM-008
 status: archived
-title: "Follow edge"
+title: 'Follow edge'
 type: feat
 priority: P1
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-008
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

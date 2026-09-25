@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const date = '2026-07-30';
@@ -133,10 +133,9 @@ function rebuildBoard(doneIds) {
 	rows.sort((a, b) => pri[a.priority] - pri[b.priority] || a.id.localeCompare(b.id));
 
 	const ready = rows.filter((r) => !doneSet.has(r.id));
-	const done = rows.filter((r) => doneSet.has(r.id));
 	// Done list: execution order (most recent last conceptually — show in ORDER of completion)
-	const doneOrdered = ORDER.filter((id) => doneSet.has(id)).map(
-		(id) => rows.find((r) => r.id === id)
+	const doneOrdered = ORDER.filter((id) => doneSet.has(id)).map((id) =>
+		rows.find((r) => r.id === id)
 	);
 
 	const fmtReady = (r) =>
@@ -232,9 +231,7 @@ for (const id of ORDER.slice(1)) {
 	markItemDone(id);
 	doneSoFar.push(id);
 	rebuildBoard(doneSoFar);
-	sh(
-		`git add backlog/board.md backlog/items/ITEM-${id}.md docs/specs/SPEC-${id}/spec.md`
-	);
+	sh(`git add backlog/board.md backlog/items/ITEM-${id}.md docs/specs/SPEC-${id}/spec.md`);
 	const msg = `feat(SPEC-${id}): ${TITLES[id]}
 
 Complete SPEC-${id} on develop (MVP behavior in the shared app shell).

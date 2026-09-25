@@ -5,7 +5,7 @@ type: feat
 feature_area: directions
 bump: minor
 status: done
-title: "Directions guided travel"
+title: 'Directions guided travel'
 created: 2026-07-30
 updated: 2026-07-30
 ---

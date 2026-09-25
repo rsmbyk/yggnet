@@ -1,15 +1,15 @@
 ---
 id: ITEM-022
 status: archived
-title: "Autosave"
+title: 'Autosave'
 type: feat
 priority: P1
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-022
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

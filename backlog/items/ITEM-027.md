@@ -1,15 +1,15 @@
 ---
 id: ITEM-027
 status: archived
-title: "Templates + random graph"
+title: 'Templates + random graph'
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-027
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

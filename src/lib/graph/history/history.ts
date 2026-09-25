@@ -91,6 +91,6 @@ export function redo(
 	};
 }
 
-export function clear(history: History): History {
+export function clear(_history: History): History {
 	return { undoStack: [], redoStack: [] };
 }

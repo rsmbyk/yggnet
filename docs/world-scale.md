@@ -74,26 +74,26 @@ Drawn in `GraphScene` (`createGridTexture`). One tile covers one mega cell.
 
 ## Controls (`WORLD.controls`)
 
-| Constant                      | Value   | Meaning                                              |
-| ----------------------------- | ------- | ---------------------------------------------------- |
-| `controls.panSensitivity`     | **0.85** | Pan: fraction of raycast delta (1 = 1:1 with cursor) |
-| `controls.rotateSensitivity`  | **0.55** | Orbit rotateSpeed                                    |
-| `controls.dampingFactor`      | **0.12** | OrbitControls damping factor                         |
-| `controls.viewModeTransitionMs` | **400** | 2D ↔ 3D and camera-reset tween duration (ms)       |
+| Constant                        | Value    | Meaning                                              |
+| ------------------------------- | -------- | ---------------------------------------------------- |
+| `controls.panSensitivity`       | **0.85** | Pan: fraction of raycast delta (1 = 1:1 with cursor) |
+| `controls.rotateSensitivity`    | **0.55** | Orbit rotateSpeed                                    |
+| `controls.dampingFactor`        | **0.12** | OrbitControls damping factor                         |
+| `controls.viewModeTransitionMs` | **400**  | 2D ↔ 3D and camera-reset tween duration (ms)         |
 
 ## Labels
 
-| Constant        | Value  | Meaning                                                                                      |
-| --------------- | ------ | -------------------------------------------------------------------------------------------- |
+| Constant        | Value  | Meaning                                                                             |
+| --------------- | ------ | ----------------------------------------------------------------------------------- |
 | `labelDistance` | **50** | Show a node’s floating label when camera eye is within this world range of the node |
 
 ## Collision (`WORLD.collision`)
 
-| Constant             | Value | Meaning                                                         |
-| -------------------- | ----- | --------------------------------------------------------------- |
-| `collision.floorY`   | **0** | Ground plane Y; sphere centers rest at `floorY + nodeRadius`    |
-| `collision.padding`  | **0** | Extra gap between node spheres (0 = touch at 2× radius)         |
-| `collision.snapStep` | **1** | Alt while moving snaps free axes to this world-unit grid        |
+| Constant             | Value | Meaning                                                      |
+| -------------------- | ----- | ------------------------------------------------------------ |
+| `collision.floorY`   | **0** | Ground plane Y; sphere centers rest at `floorY + nodeRadius` |
+| `collision.padding`  | **0** | Extra gap between node spheres (0 = touch at 2× radius)      |
+| `collision.snapStep` | **1** | Alt while moving snaps free axes to this world-unit grid     |
 
 ## Edges (`WORLD.edges`)
 

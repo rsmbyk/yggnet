@@ -5,7 +5,7 @@ type: feat
 feature_area: analyze
 bump: patch
 status: done
-title: "Annotate algorithm steps"
+title: 'Annotate algorithm steps'
 created: 2026-07-30
 updated: 2026-07-30
 ---

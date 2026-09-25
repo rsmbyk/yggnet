@@ -5,7 +5,7 @@ type: feat
 feature_area: analyze
 bump: minor
 status: done
-title: "Algorithm registry + picker"
+title: 'Algorithm registry + picker'
 created: 2026-07-30
 updated: 2026-07-30
 ---

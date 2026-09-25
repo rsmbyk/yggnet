@@ -1,15 +1,15 @@
 ---
 id: ITEM-025
 status: archived
-title: "Command palette"
+title: 'Command palette'
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-025
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

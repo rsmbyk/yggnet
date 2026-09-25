@@ -5,7 +5,7 @@ type: feat
 feature_area: directions
 bump: patch
 status: done
-title: "Follow edge"
+title: 'Follow edge'
 created: 2026-07-30
 updated: 2026-07-30
 ---

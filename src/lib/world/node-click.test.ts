@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	interactionModeFromState,
-	nodeClickActionFromMods,
-	resolveNodeClick
-} from './node-click';
+import { interactionModeFromState, nodeClickActionFromMods, resolveNodeClick } from './node-click';
 
 describe('nodeClickActionFromMods', () => {
 	it('plain click replaces selection', () => {

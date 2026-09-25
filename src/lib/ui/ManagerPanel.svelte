@@ -40,7 +40,7 @@
 		nodeMatchesListFilter,
 		edgeMatchesListFilter
 	} from '$lib/graph';
-	import type { GraphAttachment, KindField } from '$lib/graph';
+	import type { KindField } from '$lib/graph';
 	import { tick } from 'svelte';
 	import { toolLabel, type PanelSection } from './tool-ids';
 	import { cssLengthToPx, toolsPanelMaxHeight, toolsPanelOverflows } from './tools-panel-limit';
@@ -78,8 +78,6 @@
 	let compareAlgo = $state('dijkstra');
 	let compareRunIdA = $state('');
 	let compareRunIdB = $state('');
-	let edgeAttachName = $state('');
-	let edgeAttachPayload = $state('');
 	let saveSlotName = $state('');
 	let panelEl = $state<HTMLElement | undefined>(undefined);
 	let headerEl = $state<HTMLElement | undefined>(undefined);
@@ -230,9 +228,7 @@
 	const selectedCount = $derived(app.selection.nodeIds.length);
 	const selectedNode = $derived(selectedId ? app.document.nodes[selectedId] : null);
 	const incidentEdges = $derived(
-		selectedId
-			? edges.filter((e) => e.from === selectedId || e.to === selectedId)
-			: []
+		selectedId ? edges.filter((e) => e.from === selectedId || e.to === selectedId) : []
 	);
 	const selectedEdgeId = $derived(app.selection.edgeIds[0] ?? null);
 	const selectedEdgeIds = $derived(new Set(app.selection.edgeIds));
@@ -310,8 +306,8 @@
 				: selectedEdgeCount > 1
 					? `${selectedEdgeCount} edges`
 					: selectedEdge
-						? (selectedEdge.label?.trim() ||
-							`${app.document.nodes[selectedEdge.from]?.label ?? '?'} ${selectedEdge.directed ? '→' : '—'} ${app.document.nodes[selectedEdge.to]?.label ?? '?'}`)
+						? selectedEdge.label?.trim() ||
+							`${app.document.nodes[selectedEdge.from]?.label ?? '?'} ${selectedEdge.directed ? '→' : '—'} ${app.document.nodes[selectedEdge.to]?.label ?? '?'}`
 						: 'Selection'
 	);
 
@@ -333,8 +329,7 @@
 		section === 'generate' ||
 			(section === 'nodes' && selectedCount > 1) ||
 			(section === 'edges' && selectedEdgeCount > 1) ||
-			(section === 'selection' &&
-				Boolean(selectedNode && selectedCount === 1 && app.ui.openTool === null))
+			(section === 'selection' && Boolean(selectedNode && selectedCount === 1))
 	);
 
 	/** Collapse the selection sheet when the primary selected node changes. */
@@ -574,33 +569,6 @@
 		cur.push(id);
 		app.setDiffIds(cur);
 	}
-
-	function addAttachment(
-		kind: 'node' | 'edge',
-		id: string,
-		current: GraphAttachment[],
-		name: string,
-		payload: string,
-		clear: () => void
-	) {
-		const trimmed = name.trim();
-		if (!trimmed) return;
-		const next = [...current, { name: trimmed, payload }];
-		if (kind === 'node') app.updateNode(id, { attachments: next });
-		else app.updateEdge(id, { attachments: next });
-		clear();
-	}
-
-	function removeAttachment(
-		kind: 'node' | 'edge',
-		id: string,
-		current: GraphAttachment[],
-		index: number
-	) {
-		const next = current.filter((_, i) => i !== index);
-		if (kind === 'node') app.updateNode(id, { attachments: next });
-		else app.updateEdge(id, { attachments: next });
-	}
 </script>
 
 <aside
@@ -615,12 +583,7 @@
 		<div class="manager__header-row">
 			<p class="brand">{brandTitle}</p>
 			{#if section === 'nodes'}
-				<button
-					type="button"
-					class="btn-with-icon"
-					data-testid="add-node"
-					onclick={onAddNode}
-				>
+				<button type="button" class="btn-with-icon" data-testid="add-node" onclick={onAddNode}>
 					<svg viewBox="0 0 24 24" aria-hidden="true">
 						<path fill="currentColor" d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z" />
 					</svg>
@@ -647,9 +610,7 @@
 						<div class="list-search-pills">
 							{#each edgeSearchNodeIds as id (id)}
 								<span class="list-search-chip">
-									<span class="list-search-chip-label"
-										>{app.document.nodes[id]?.label ?? id}</span
-									>
+									<span class="list-search-chip-label">{app.document.nodes[id]?.label ?? id}</span>
 									<button
 										type="button"
 										class="list-search-chip-remove"
@@ -803,1297 +764,1309 @@
 	</header>
 
 	<div class="manager__body" bind:this={bodyEl}>
-	{#if section === 'selection'}
-		<section
-			class="block"
-			class:selection-sheet={(selectedNode && selectedCount === 1) ||
-				(selectedEdge && selectedEdgeCount === 1)}
-			aria-label="Selection"
-		>
-			{#if selectedNode && selectedCount === 1}
-				<div class="selection-sheet-body">
-					<label>
-						Label
-						<input
-							data-testid="node-label"
-							value={selectedNode.label}
-							oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
-						/>
-					</label>
-					<div class="pos-stack" data-testid="node-position">
-						<h3 class="section-label">Position</h3>
-						<div class="pos-axes">
-							<label>
-								X
-								<input
-									type="number"
-									step="0.1"
-									class="no-spinner"
-									data-testid="node-pos-x"
-									value={selectedNode.position.x}
-									oninput={(e) =>
-										app.updateNode(selectedNode.id, {
-											position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
-										})}
-								/>
-							</label>
-							<label>
-								Y
-								<input
-									type="number"
-									step="0.1"
-									class="no-spinner"
-									data-testid="node-pos-y"
-									value={selectedNode.position.y}
-									oninput={(e) =>
-										app.updateNode(selectedNode.id, {
-											position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
-										})}
-								/>
-							</label>
-							<label>
-								Z
-								<input
-									type="number"
-									step="0.1"
-									class="no-spinner"
-									data-testid="node-pos-z"
-									value={selectedNode.position.z}
-									oninput={(e) =>
-										app.updateNode(selectedNode.id, {
-											position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
-										})}
-								/>
-							</label>
-						</div>
-					</div>
-					<div class="field">
-						<span class="field-caption">Tags</span>
-						<TagPicker
-							tags={selectedNode.tags}
-							suggestions={allTags}
-							onChange={(next) => app.setNodeTags(selectedNode.id, next)}
-						/>
-					</div>
-					<label>
-						Notes
-						<textarea
-							data-testid="node-notes"
-							rows="4"
-							value={selectedNode.notes ?? ''}
-							oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
-						></textarea>
-					</label>
-					<div class="incident-edges" data-testid="node-incident-edges">
-						<h3 class="section-label">Edges ({incidentEdges.length})</h3>
-						{#if incidentEdges.length === 0}
-							<p class="hint muted">No edges</p>
-						{:else}
-							<ul class="list incident-edge-list">
-								{#each incidentEdges as edge (edge.id)}
-									{@const parts = incidentEdgeParts(edge, selectedNode.id)}
-									<li class="incident-edge-row">
-										<span class="incident-edge-text"
-											>{parts.egoLabel} {parts.connector} {parts.otherLabel}</span
-										>
-										{#if edge.weight !== 1}
-											<span class="muted" aria-label={`weight ${edge.weight}`}
-												>{edge.weight}</span
-											>
-										{/if}
-									</li>
-								{/each}
-							</ul>
-						{/if}
-					</div>
-					{#if app.ui.openTool === null}
-						<p class="hint">
-							Drag to move · Alt-click connect · Ctrl+Alt directed · Shift add-select · Del to delete
-						</p>
-					{/if}
-				</div>
-			{:else if selectedCount > 1}
-				<div class="row wrap">
-					<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
-						>Group</button
-					>
-					<button
-						type="button"
-						data-testid="clear-selection"
-						onclick={() => app.clearAllSelection()}>Clear</button
-					>
-					<button
-						type="button"
-						class="danger"
-						data-testid="world-delete-selection"
-						onclick={() => app.deleteSelection()}>Delete</button
-					>
-				</div>
-			{:else if selectedEdge && selectedEdgeCount === 1}
-				<div class="selection-sheet-body" data-testid="edge-editor">
-					<label>
-						Source
-						<NodeSearchSelect
-							nodes={nodePickerOptions}
-							value={selectedEdge.from}
-							testid="edge-source"
-							ariaLabel="Source"
-							onChange={(id) => app.updateEdge(selectedEdge.id, { from: id })}
-						/>
-					</label>
-					<label>
-						Destination
-						<NodeSearchSelect
-							nodes={nodePickerOptions}
-							value={selectedEdge.to}
-							testid="edge-destination"
-							ariaLabel="Destination"
-							onChange={(id) => app.updateEdge(selectedEdge.id, { to: id })}
-						/>
-					</label>
-					<label>
-						Direction
-						{#key `${selectedEdge.from}:${selectedEdge.to}:${selectedEdge.directed}`}
-							<select
-								data-testid="edge-direction"
-								value={edgeDirectionSelectValue(selectedEdge)}
-								onchange={(e) =>
-									onEdgeDirectionChange(
-										selectedEdge.id,
-										e.currentTarget.value as EdgeDirectionMode
-									)}
-							>
-								{#each edgeDirectionOptions(
-									app.document.nodes[selectedEdge.from]?.label ?? '?',
-									app.document.nodes[selectedEdge.to]?.label ?? '?'
-								) as opt (opt.value)}
-									<option value={opt.value}>{opt.label}</option>
-								{/each}
-							</select>
-						{/key}
-					</label>
-					<label>
-						Weight
-						<input
-							type="number"
-							step="0.1"
-							class="no-spinner"
-							data-testid="edge-weight"
-							value={selectedEdge.weight}
-							oninput={(e) =>
-								app.updateEdge(selectedEdge.id, {
-									weight: Number(e.currentTarget.value)
-								})}
-						/>
-					</label>
-					<div class="field">
-						<span class="field-caption">Tags</span>
-						<TagPicker
-							tags={selectedEdge.tags ?? []}
-							suggestions={allEdgeTags}
-							onChange={(next) => app.updateEdge(selectedEdge.id, { tags: next })}
-						/>
-					</div>
-					<label>
-						Notes
-						<textarea
-							data-testid="edge-notes"
-							rows="4"
-							value={selectedEdge.notes ?? ''}
-							oninput={(e) =>
-								app.updateEdge(selectedEdge.id, { notes: e.currentTarget.value })}
-						></textarea>
-					</label>
-				</div>
-			{/if}
-		</section>
-	{/if}
-
-	{#if section === 'file'}
-		<section class="block file-saves" data-testid="file-saves" aria-label="Saved graphs">
-			<h2>Saved graphs</h2>
-			<form
-				class="row slot-save-row"
-				onsubmit={(e) => {
-					e.preventDefault();
-					if (!saveSlotName.trim()) return;
-					app.saveNamedSlot(saveSlotName);
-				}}
+		{#if section === 'selection'}
+			<section
+				class="block"
+				class:selection-sheet={(selectedNode && selectedCount === 1) ||
+					(selectedEdge && selectedEdgeCount === 1)}
+				aria-label="Selection"
 			>
-				<input
-					class="slot-name-input"
-					type="text"
-					placeholder="Slot name"
-					data-testid="save-slot-name"
-					bind:value={saveSlotName}
-					aria-label="Named save slot"
-				/>
-				<button
-					type="submit"
-					class="icon-btn"
-					data-testid="save-named"
-					disabled={!saveSlotName.trim()}
-					aria-label="Save"
-					title="Save"
-				>
-					<svg viewBox="0 0 24 24" aria-hidden="true">
-						<path
-							fill="currentColor"
-							d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"
-						/>
-					</svg>
-				</button>
-			</form>
-			{#if app.namedSlots.length === 0}
-				<p class="hint">No saved graphs yet.</p>
-			{:else}
-				<ul class="list save-slot-list" data-testid="save-slot-list">
-					{#each app.namedSlots as name (name)}
-						<li class="row between slot-row" data-testid="save-slot-row" data-slot={name}>
-							<span class="slot-label">{name}</span>
-							<div class="row">
-								<button
-									type="button"
-									class="icon-btn"
-									data-testid="slot-load"
-									aria-label="Load"
-									title="Load"
-									onclick={() => app.loadNamedSlot(name)}
-								>
-									<svg viewBox="0 0 24 24" aria-hidden="true">
-										<path
-											fill="currentColor"
-											d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"
-										/>
-									</svg>
-								</button>
-								<button
-									type="button"
-									class="icon-btn danger"
-									data-testid="slot-delete"
-									aria-label="Delete"
-									title="Delete"
-									onclick={() => app.deleteNamedSlot(name)}
-								>
-									<svg viewBox="0 0 24 24" aria-hidden="true">
-										<path
-											fill="currentColor"
-											d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-										/>
-									</svg>
-								</button>
+				{#if selectedNode && selectedCount === 1}
+					<div class="selection-sheet-body">
+						<label>
+							Label
+							<input
+								data-testid="node-label"
+								value={selectedNode.label}
+								oninput={(e) => app.updateNode(selectedNode.id, { label: e.currentTarget.value })}
+							/>
+						</label>
+						<div class="pos-stack" data-testid="node-position">
+							<h3 class="section-label">Position</h3>
+							<div class="pos-axes">
+								<label>
+									X
+									<input
+										type="number"
+										step="0.1"
+										class="no-spinner"
+										data-testid="node-pos-x"
+										value={selectedNode.position.x}
+										oninput={(e) =>
+											app.updateNode(selectedNode.id, {
+												position: { ...selectedNode.position, x: Number(e.currentTarget.value) }
+											})}
+									/>
+								</label>
+								<label>
+									Y
+									<input
+										type="number"
+										step="0.1"
+										class="no-spinner"
+										data-testid="node-pos-y"
+										value={selectedNode.position.y}
+										oninput={(e) =>
+											app.updateNode(selectedNode.id, {
+												position: { ...selectedNode.position, y: Number(e.currentTarget.value) }
+											})}
+									/>
+								</label>
+								<label>
+									Z
+									<input
+										type="number"
+										step="0.1"
+										class="no-spinner"
+										data-testid="node-pos-z"
+										value={selectedNode.position.z}
+										oninput={(e) =>
+											app.updateNode(selectedNode.id, {
+												position: { ...selectedNode.position, z: Number(e.currentTarget.value) }
+											})}
+									/>
+								</label>
 							</div>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		</section>
-	{/if}
-
-	{#if section === 'generate'}
-		<section class="block generate-block" data-testid="generate" aria-label="Generate">
-			<form
-				id="generate-form"
-				class="generate-form"
-				onsubmit={(e) => {
-					e.preventDefault();
-					onGenerate();
-				}}
-			>
-				<label>
-					Type
-					<select
-						class="slot-name-input"
-						data-testid="generate-kind"
-						aria-describedby="generate-kind-help"
-						bind:value={app.generateForm.kind}
-					>
-						{#each GRAPH_KIND_GROUPS as group (group.label)}
-							<optgroup label={group.label}>
-								{#each group.kinds as item (item.id)}
-									<option value={item.id}>{item.label}</option>
-								{/each}
-							</optgroup>
-						{/each}
-					</select>
-					<p
-						class="hint generate-kind-help"
-						id="generate-kind-help"
-						data-testid="generate-kind-help"
-					>
-						{kindHelp(app.generateForm.kind)}
-					</p>
-				</label>
-				<div class="generate-fields" data-testid="generate-fields">
-					{#if genFields.includes('paleyQ')}
-						<label>
-							Order q
-							<select
-								class="slot-name-input"
-								data-testid="generate-paley-q"
-								bind:value={app.generateForm.paleyQ}
-							>
-								{#each PALEY_ORDERS as q (q)}
-									<option value={q}>{q}</option>
-								{/each}
-							</select>
-						</label>
-					{/if}
-					{#if genFields.includes('sierpinskiDepth')}
-						<label>
-							Depth
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('sierpinskiDepth')?.min}
-								max={fieldLimit('sierpinskiDepth')?.max}
-								bind:value={app.generateForm.sierpinskiDepth}
+						</div>
+						<div class="field">
+							<span class="field-caption">Tags</span>
+							<TagPicker
+								tags={selectedNode.tags}
+								suggestions={allTags}
+								onChange={(next) => app.setNodeTags(selectedNode.id, next)}
 							/>
-						</label>
-					{/if}
-					{#if genFields.includes('nodes')}
+						</div>
 						<label>
-							Nodes
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('nodes')?.min}
-								data-testid="generate-nodes"
-								bind:value={app.generateForm.nodes}
-							/>
+							Notes
+							<textarea
+								data-testid="node-notes"
+								rows="4"
+								value={selectedNode.notes ?? ''}
+								oninput={(e) => app.updateNode(selectedNode.id, { notes: e.currentTarget.value })}
+							></textarea>
 						</label>
-					{/if}
-					{#if genFields.includes('density')}
-						<label>
-							Density
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('density')?.min}
-								max={fieldLimit('density')?.max}
-								step="0.01"
-								aria-describedby="generate-density-help"
-								bind:value={app.generateForm.density}
-							/>
-							<p class="hint" id="generate-density-help" data-testid="generate-density-help">
-								{DENSITY_FIELD_HELP}
-							</p>
-						</label>
-					{/if}
-					{#if genFields.includes('extraEdges')}
-						<label>
-							Edges
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('extraEdges')?.min}
-								max={fieldLimit('extraEdges')?.max}
-								bind:value={app.generateForm.extraEdges}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('degree')}
-						<label>
-							Degree
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('degree')?.min}
-								max={fieldLimit('degree')?.max}
-								aria-describedby="generate-degree-help"
-								bind:value={app.generateForm.degree}
-							/>
-							<p class="hint" id="generate-degree-help" data-testid="generate-degree-help">
-								{DEGREE_FIELD_HELP}
-							</p>
-						</label>
-					{/if}
-					{#if genFields.includes('depth')}
-						<label>
-							Depth
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('depth')?.min}
-								max={fieldLimit('depth')?.max}
-								aria-describedby="generate-depth-help"
-								bind:value={app.generateForm.depth}
-							/>
-							<p class="hint" id="generate-depth-help">{DEPTH_FIELD_HELP}</p>
-						</label>
-					{/if}
-					{#if genFields.includes('branching') && !app.generateForm.binary}
-						<label>
-							Branching
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('branching')?.min}
-								max={fieldLimit('branching')?.max}
-								aria-describedby="generate-branching-help"
-								bind:value={app.generateForm.branching}
-							/>
-							<p class="hint" id="generate-branching-help">{BRANCHING_FIELD_HELP}</p>
-						</label>
-					{/if}
-					{#if genFields.includes('left')}
-						<label>
-							Left
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('left')?.min}
-								bind:value={app.generateForm.left}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('right')}
-						<label>
-							Right
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('right')?.min}
-								bind:value={app.generateForm.right}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('attachments')}
-						<label>
-							Attachments
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('attachments')?.min}
-								max={fieldLimit('attachments')?.max}
-								aria-describedby="generate-attachments-help"
-								bind:value={app.generateForm.attachments}
-							/>
-							<p class="hint" id="generate-attachments-help" data-testid="generate-attachments-help">
-								{ATTACHMENTS_FIELD_HELP}
-							</p>
-						</label>
-					{/if}
-					{#if genFields.includes('neighbors')}
-						<label>
-							Neighbors
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('neighbors')?.min}
-								max={fieldLimit('neighbors')?.max}
-								aria-describedby={app.generateForm.kind === 'smallWorld'
-									? 'generate-neighbors-help'
-									: undefined}
-								bind:value={app.generateForm.neighbors}
-							/>
-							{#if app.generateForm.kind === 'smallWorld'}
-								<p class="hint" id="generate-neighbors-help" data-testid="generate-neighbors-help">
-									{NEIGHBORS_FIELD_HELP}
-								</p>
+						<div class="incident-edges" data-testid="node-incident-edges">
+							<h3 class="section-label">Edges ({incidentEdges.length})</h3>
+							{#if incidentEdges.length === 0}
+								<p class="hint muted">No edges</p>
+							{:else}
+								<ul class="list incident-edge-list">
+									{#each incidentEdges as edge (edge.id)}
+										{@const parts = incidentEdgeParts(edge, selectedNode.id)}
+										<li class="incident-edge-row">
+											<span class="incident-edge-text"
+												>{parts.egoLabel} {parts.connector} {parts.otherLabel}</span
+											>
+											{#if edge.weight !== 1}
+												<span class="muted" aria-label={`weight ${edge.weight}`}>{edge.weight}</span
+												>
+											{/if}
+										</li>
+									{/each}
+								</ul>
 							{/if}
-						</label>
-					{/if}
-					{#if genFields.includes('rewire')}
-						<label>
-							Rewire
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('rewire')?.min}
-								max={fieldLimit('rewire')?.max}
-								step="0.01"
-								aria-describedby="generate-rewire-help"
-								bind:value={app.generateForm.rewire}
-							/>
-							<p class="hint" id="generate-rewire-help" data-testid="generate-rewire-help">
-								{REWIRE_FIELD_HELP}
+						</div>
+						{#if app.ui.openTool === null}
+							<p class="hint">
+								Drag to move · Alt-click connect · Ctrl+Alt directed · Shift add-select · Del to
+								delete
 							</p>
-						</label>
-					{/if}
-					{#if genFields.includes('jumps')}
-						<label>
-							Jumps
-							<input
-								class="slot-name-input"
-								bind:value={app.generateForm.jumps}
-								aria-label="Circulant jumps"
-								aria-describedby="generate-jumps-help"
-							/>
-							<p class="hint" id="generate-jumps-help">{JUMPS_FIELD_HELP}</p>
-						</label>
-					{/if}
-					{#if genFields.includes('rungs')}
-						<label>
-							Rungs
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('rungs')?.min}
-								max={fieldLimit('rungs')?.max}
-								aria-describedby="generate-rungs-help"
-								bind:value={app.generateForm.rungs}
-							/>
-							<p class="hint" id="generate-rungs-help" data-testid="generate-rungs-help">
-								{RUNGS_FIELD_HELP}
-							</p>
-						</label>
-					{/if}
-					{#if genFields.includes('rows')}
-						<label>
-							Rows
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('rows')?.min}
-								max={fieldLimit('rows')?.max}
-								data-testid="generate-rows"
-								bind:value={app.generateForm.rows}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('columns')}
-						<label>
-							Columns
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('columns')?.min}
-								max={fieldLimit('columns')?.max}
-								data-testid="generate-columns"
-								bind:value={app.generateForm.columns}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('layers')}
-						<label>
-							Layers
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('layers')?.min}
-								max={fieldLimit('layers')?.max}
-								bind:value={app.generateForm.layers}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('radius')}
-						<label>
-							Radius
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('radius')?.min}
-								step="0.2"
-								bind:value={app.generateForm.radius}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('groups')}
-						<label>
-							Groups
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('groups')?.min}
-								max={fieldLimit('groups')?.max}
-								data-testid="generate-groups"
-								bind:value={app.generateForm.groups}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('pInside')}
-						<label>
-							p inside
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('pInside')?.min}
-								max={fieldLimit('pInside')?.max}
-								step="0.01"
-								aria-describedby="generate-p-inside-help"
-								bind:value={app.generateForm.pInside}
-							/>
-							<p
-								class="hint generate-kind-help"
-								id="generate-p-inside-help"
-								data-testid="generate-p-inside-help"
-							>
-								{COMMUNITY_P_INSIDE_HELP}
-							</p>
-						</label>
-					{/if}
-					{#if genFields.includes('pBetween')}
-						<label>
-							p between
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('pBetween')?.min}
-								max={fieldLimit('pBetween')?.max}
-								step="0.01"
-								aria-describedby="generate-p-between-help"
-								bind:value={app.generateForm.pBetween}
-							/>
-							<p
-								class="hint generate-kind-help"
-								id="generate-p-between-help"
-								data-testid="generate-p-between-help"
-							>
-								{COMMUNITY_P_BETWEEN_HELP}
-							</p>
-						</label>
-					{/if}
-					{#if genFields.includes('nGons')}
-						<label>
-							Sides
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('nGons')?.min}
-								max={fieldLimit('nGons')?.max}
-								bind:value={app.generateForm.nGons}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('dimension')}
-						<label>
-							Dimension
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('dimension')?.min}
-								max={fieldLimit('dimension')?.max}
-								aria-describedby="generate-dimension-help"
-								bind:value={app.generateForm.dimension}
-							/>
-							<p class="hint" id="generate-dimension-help">{DIMENSION_FIELD_HELP}</p>
-						</label>
-					{/if}
-					{#if genFields.includes('platonic')}
-						<label>
-							Solid
-							<select class="slot-name-input" bind:value={app.generateForm.platonic}>
-								{#each PLATONIC_SOLIDS as id (id)}
-									<option value={id}>{PLATONIC_LABELS[id]}</option>
-								{/each}
-							</select>
-						</label>
-					{/if}
-					{#if genFields.includes('archimedean')}
-						<label>
-							Solid
-							<select class="slot-name-input" bind:value={app.generateForm.archimedean}>
-								{#each ARCHIMEDEAN_SOLIDS as id (id)}
-									<option value={id}>{ARCHIMEDEAN_LABELS[id]}</option>
-								{/each}
-							</select>
-						</label>
-					{/if}
-					{#if genFields.includes('extent')}
-						<label>
-							Extent
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('extent')?.min}
-								max={fieldLimit('extent')?.max}
-								aria-describedby="generate-extent-help"
-								bind:value={app.generateForm.extent}
-							/>
-							<p class="hint" id="generate-extent-help">{EXTENT_FIELD_HELP}</p>
-						</label>
-					{/if}
-					{#if genFields.includes('turns')}
-						<label>
-							Turns
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('turns')?.min}
-								step="0.5"
-								aria-describedby="generate-turns-help"
-								bind:value={app.generateForm.turns}
-							/>
-							<p class="hint" id="generate-turns-help">{TURNS_FIELD_HELP}</p>
-						</label>
-					{/if}
-					{#if genFields.includes('chord')}
-						<label>
-							Chord
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('chord')?.min}
-								max={fieldLimit('chord')?.max}
-								aria-describedby="generate-chord-help"
-								bind:value={app.generateForm.chord}
-							/>
-							<p class="hint" id="generate-chord-help">{CHORD_FIELD_HELP}</p>
-						</label>
-					{/if}
-					{#if genFields.includes('rings')}
-						<label>
-							Rings
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('rings')?.min}
-								max={fieldLimit('rings')?.max}
-								aria-describedby="generate-rings-help"
-								bind:value={app.generateForm.rings}
-							/>
-							<p class="hint" id="generate-rings-help">{RINGS_FIELD_HELP}</p>
-						</label>
-					{/if}
-					{#if genFields.includes('segments')}
-						<label>
-							Segments
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('segments')?.min}
-								max={fieldLimit('segments')?.max}
-								aria-describedby="generate-segments-help"
-								bind:value={app.generateForm.segments}
-							/>
-							<p class="hint" id="generate-segments-help">{SEGMENTS_FIELD_HELP}</p>
-						</label>
-					{/if}
-					{#if genFields.includes('petersenN')}
-						<label>
-							n
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('petersenN')?.min}
-								max={fieldLimit('petersenN')?.max}
-								bind:value={app.generateForm.petersenN}
-							/>
-						</label>
-					{/if}
-					{#if genFields.includes('petersenK')}
-						<label>
-							k
-							<input
-								class="slot-name-input"
-								type="number"
-								min={fieldLimit('petersenK')?.min}
-								max={fieldLimit('petersenK')?.max}
-								bind:value={app.generateForm.petersenK}
-							/>
-						</label>
-					{/if}
-				</div>
-				<div class="generate-checks">
-					{#if genFields.includes('loops')}
-						<label class="check"
-							><input type="checkbox" bind:checked={app.generateForm.loops} /> Loops</label
-						>
-					{/if}
-					{#if genFields.includes('transitive')}
-						<label class="check"
-							><input type="checkbox" bind:checked={app.generateForm.transitive} /> Transitive</label
-						>
-					{/if}
-					{#if genFields.includes('binary')}
-						<label class="check"
-							><input type="checkbox" bind:checked={app.generateForm.binary} /> Binary</label
-						>
-					{/if}
-					{#if genFields.includes('fan')}
-						<label class="check"
-							><input type="checkbox" bind:checked={app.generateForm.fan} /> Fan</label
-						>
-					{/if}
-					{#if genFields.includes('diagonals')}
-						<label class="check"
-							><input type="checkbox" bind:checked={app.generateForm.diagonals} /> Diagonals</label
-						>
-					{/if}
-					{#if kindAllowsDirected(app.generateForm.kind)}
-						<label class="check"
-							><input type="checkbox" bind:checked={app.generateForm.directed} /> Directed</label
-						>
-					{/if}
-					{#if kindAllowsWeighted(app.generateForm.kind)}
-						<label class="check"
-							><input type="checkbox" bind:checked={app.generateForm.weighted} /> Weighted</label
-						>
-					{/if}
-					{#if kindAllowsPlanar(app.generateForm.kind)}
-						<label class="check"
-							><input
-								type="checkbox"
-								data-testid="generate-planar"
-								bind:checked={app.generateForm.planar}
-							/> 2D</label
-						>
-					{/if}
-				</div>
-			</form>
-		</section>
-	{/if}
-
-	{#if section === 'nodes'}
-		<section class="block node-panel" data-testid="nodes-section">
-			<ul class="list node-list" data-testid="node-list">
-				{#each filteredNodes as node (node.id)}
-					<li class="node-row">
-						<button
-							type="button"
-							class="list-item"
-							class:selected={selectedIds.has(node.id)}
-							data-testid={`node-item-${node.id}`}
-							onclick={(e) => onSelectNode(node.id, e)}
-						>
-							<span class="node-list-label">{node.label}</span>
-						</button>
-						<button
-							type="button"
-							class="icon-btn danger"
-							data-testid={`delete-node-row-${node.id}`}
-							aria-label={`Delete ${node.label}`}
-							onclick={(e) => {
-								e.stopPropagation();
-								app.removeNode(node.id);
-							}}
-						>
-							<svg viewBox="0 0 24 24" aria-hidden="true">
-								<path
-									fill="currentColor"
-									d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-								/>
-							</svg>
-						</button>
-					</li>
-				{/each}
-			</ul>
-		</section>
-	{/if}
-
-	{#if section === 'edges'}
-		<section class="block edge-panel" data-testid="edges-section">
-			<ul class="list edge-list" data-testid="edge-list">
-				{#each filteredEdges as edge (edge.id)}
-					<li class="node-row">
-						<button
-							type="button"
-							class="list-item edge-select"
-							class:selected={selectedEdgeIds.has(edge.id)}
-							data-testid={`edge-item-${edge.id}`}
-							onclick={(e) => onSelectEdge(edge.id, e)}
-						>
-							<span class="node-list-label">
-								{app.document.nodes[edge.from]?.label ?? '?'}
-								{edge.directed ? '→' : '—'}
-								{app.document.nodes[edge.to]?.label ?? '?'}
-							</span>
-							{#if edge.weight !== 1}
-								<span class="edge-weight-pill">{edge.weight}</span>
-							{/if}
-						</button>
-						<button
-							type="button"
-							class="icon-btn danger"
-							data-testid={`delete-edge-${edge.id}`}
-							aria-label="Delete edge"
-							onclick={(e) => {
-								e.stopPropagation();
-								app.removeEdge(edge.id);
-							}}
-						>
-							<svg viewBox="0 0 24 24" aria-hidden="true">
-								<path
-									fill="currentColor"
-									d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-								/>
-							</svg>
-						</button>
-					</li>
-				{/each}
-			</ul>
-		</section>
-	{/if}
-
-	{#if section === 'filters'}
-		<section class="block" data-testid="filters-section">
-			<h2>Filters</h2>
-			<div class="row">
-				<input
-					data-testid="filter-tags"
-					placeholder="tag1, tag2"
-					bind:value={filterInput}
-					aria-label="Filter tags"
-				/>
-				<button type="button" data-testid="apply-filter" onclick={applyFilter}>Apply</button>
-			</div>
-			<label class="check">
-				<input
-					type="checkbox"
-					data-testid="hide-filtered"
-					checked={app.filters.hideFiltered}
-					onchange={(e) => app.setHideFiltered(e.currentTarget.checked)}
-				/>
-				Hide / dim non-matches
-			</label>
-		</section>
-	{/if}
-
-	{#if section === 'groups'}
-		<section class="block" data-testid="groups-section">
-			<h2>Groups</h2>
-			{#if groupIds.length}
-				{#each groupIds as gid (gid)}
-					<div class="row" data-testid={`group-row-${gid}`}>
-						<span class="muted">{gid.slice(0, 8)}…</span>
-						{#if app.groupsCollapsed.has(gid)}
-							<button
-								type="button"
-								data-testid={`expand-group-${gid}`}
-								onclick={() => app.toggleCollapseGroup(gid)}>Expand</button
-							>
-						{:else}
-							<button
-								type="button"
-								data-testid={`collapse-group-${gid}`}
-								onclick={() => app.toggleCollapseGroup(gid)}>Collapse</button
-							>
 						{/if}
-						<button type="button" data-testid={`ungroup-${gid}`} onclick={() => app.ungroup(gid)}
-							>Ungroup</button
-						>
 					</div>
-				{/each}
-			{:else}
-				<p class="hint">No groups yet.</p>
-			{/if}
-		</section>
-	{/if}
-
-	{#if section === 'pathfinder'}
-		<section class="block" data-testid="directions-panel">
-			<h2>Pathfinder</h2>
-			<div class="row">
-				<select
-					data-testid="path-from"
-					aria-label="Path from"
-					value={app.directions.fromId ?? ''}
-					onchange={(e) =>
-						app.setDirectionsEndpoints(e.currentTarget.value || null, app.directions.toId)}
-				>
-					<option value="">From A</option>
-					{#each nodes as n (n.id)}
-						<option value={n.id}>{n.label}</option>
-					{/each}
-				</select>
-				<select
-					data-testid="path-to"
-					aria-label="Path to"
-					value={app.directions.toId ?? ''}
-					onchange={(e) =>
-						app.setDirectionsEndpoints(app.directions.fromId, e.currentTarget.value || null)}
-				>
-					<option value="">To B</option>
-					{#each nodes as n (n.id)}
-						<option value={n.id}>{n.label}</option>
-					{/each}
-				</select>
-			</div>
-			<div class="row">
-				<button
-					type="button"
-					data-testid="path-mode-all"
-					class:active={app.directions.pathMode === 'all'}
-					onclick={() => app.setPathMode('all')}>All</button
-				>
-				<button
-					type="button"
-					data-testid="path-mode-shortest"
-					class:active={app.directions.pathMode === 'shortest'}
-					onclick={() => app.setPathMode('shortest')}>Shortest</button
-				>
-				<button type="button" data-testid="refresh-paths" onclick={() => app.refreshPaths()}
-					>Refresh</button
-				>
-			</div>
-			<ul class="list" data-testid="path-list">
-				{#each app.directions.pathList as path, i (app.pathKey(path, i))}
-					<li>
-						<button
-							type="button"
-							class="list-item"
-							class:selected={app.directions.selectedPathId === app.pathKey(path, i)}
-							data-testid={`path-${i}`}
-							onclick={() => app.selectPath(app.pathKey(path, i))}
-						>
-							{path.nodeIds.map((id) => app.document.nodes[id]?.label ?? '?').join(' → ')}
-						</button>
-					</li>
-				{/each}
-			</ul>
-			{#if app.directions.selectedPathId}
-				<div class="row">
-					<button type="button" data-testid="start-travel" onclick={() => app.startTravel()}
-						>Travel</button
-					>
-					<button type="button" data-testid="stop-travel" onclick={() => app.stopTravel()}
-						>Stop</button
-					>
-				</div>
-				<label>
-					Progress
-					<input
-						type="range"
-						min="0"
-						max="1"
-						step="0.01"
-						data-testid="travel-progress"
-						aria-describedby="travel-progress-help"
-						value={app.directions.travelProgress}
-						oninput={(e) => app.setTravelProgress(Number(e.currentTarget.value))}
-					/>
-					<p class="hint" id="travel-progress-help" data-testid="travel-progress-help">
-						{PROBABILITY_RANGE_HELP}
-					</p>
-				</label>
-			{/if}
-		</section>
-	{/if}
-
-	{#if section === 'analyze'}
-		<section class="block" data-testid="analyze-panel">
-			<h2>Analyze</h2>
-			<label>
-				Algorithm
-				<select
-					data-testid="algo-picker"
-					value={app.analyze.algorithmId}
-					onchange={(e) => app.setAlgorithm(e.currentTarget.value)}
-				>
-					{#each app.algorithms as algo (algo.id)}
-						<option value={algo.id}>{algo.name}</option>
-					{/each}
-				</select>
-			</label>
-			<p class="hint">
-				{app.algorithms.find((a) => a.id === app.analyze.algorithmId)?.description}
-			</p>
-			<div class="row wrap">
-				<button type="button" data-testid="run-algo" onclick={() => app.runAlgorithm()}>Run</button>
-				<select data-testid="compare-algo" bind:value={compareAlgo} aria-label="Compare algorithm">
-					{#each app.algorithms as algo (algo.id)}
-						<option value={algo.id}>{algo.name}</option>
-					{/each}
-				</select>
-				<button
-					type="button"
-					data-testid="compare-algos"
-					onclick={() => app.compareAlgorithms(compareAlgo)}>Compare</button
-				>
-			</div>
-			{#if compareRunA && compareRunB}
-				<section class="compare-panel" data-testid="compare-panel">
-					<h3>Compare</h3>
-					<div class="diff">
-						<div data-testid="compare-series-a">
-							<strong class="series-a">{compareRunA.algorithmId}</strong>
-							{#if compareRunA.stale}<span class="tag">stale</span>{/if}
-							<p class="muted">
-								{compareMetrics(compareRunA).nodes} nodes · {compareMetrics(compareRunA).hops} hops ·
-								cost
-								{compareMetrics(compareRunA).cost}
-							</p>
-						</div>
-						<div data-testid="compare-series-b">
-							<strong class="series-b">{compareRunB.algorithmId}</strong>
-							{#if compareRunB.stale}<span class="tag">stale</span>{/if}
-							<p class="muted">
-								{compareMetrics(compareRunB).nodes} nodes · {compareMetrics(compareRunB).hops} hops ·
-								cost
-								{compareMetrics(compareRunB).cost}
-							</p>
-						</div>
-					</div>
-					<button type="button" data-testid="clear-compare" onclick={() => app.clearCompare()}
-						>Dismiss compare</button
-					>
-				</section>
-			{/if}
-			{#if lastRun}
-				<p class="hint" data-testid="run-status">
-					Run {lastRun.id.slice(0, 8)}… {lastRun.stale ? '(stale)' : ''}
-					— {lastRun.result.kind}
-				</p>
-				<label class="check">
-					<input
-						type="checkbox"
-						data-testid="show-steps"
-						checked={app.analyze.showSteps}
-						onchange={(e) => app.setShowSteps(e.currentTarget.checked)}
-					/>
-					Show steps
-				</label>
-				{#if app.analyze.showSteps}
+				{:else if selectedCount > 1}
 					<div class="row wrap">
+						<button type="button" data-testid="group-multi" onclick={() => app.groupSelected()}
+							>Group</button
+						>
 						<button
 							type="button"
-							data-testid="trace-play"
-							disabled={traceLen < 2}
-							onclick={() => app.togglePlayback()}
+							data-testid="clear-selection"
+							onclick={() => app.clearAllSelection()}>Clear</button
 						>
-							{app.analyze.playback ? 'Pause' : 'Play'}
-						</button>
+						<button
+							type="button"
+							class="danger"
+							data-testid="world-delete-selection"
+							onclick={() => app.deleteSelection()}>Delete</button
+						>
+					</div>
+				{:else if selectedEdge && selectedEdgeCount === 1}
+					<div class="selection-sheet-body" data-testid="edge-editor">
 						<label>
-							Step {app.analyze.stepIndex}/{Math.max(0, traceLen - 1)}
-							<input
-								type="range"
-								min="0"
-								max={Math.max(0, traceLen - 1)}
-								data-testid="step-scrubber"
-								value={app.analyze.stepIndex}
-								oninput={(e) => {
-									app.setPlayback(false);
-									app.setStepIndex(Number(e.currentTarget.value));
-								}}
+							Source
+							<NodeSearchSelect
+								nodes={nodePickerOptions}
+								value={selectedEdge.from}
+								testid="edge-source"
+								ariaLabel="Source"
+								onChange={(id) => app.updateEdge(selectedEdge.id, { from: id })}
 							/>
 						</label>
-					</div>
-					<p class="hint" data-testid="step-annotation-display">
-						{#if currentStepAnnotation}
-							{currentStepAnnotation}
-						{:else}
-							<span class="muted">No note for this step</span>
-						{/if}
-					</p>
-					<div class="row">
-						<input data-testid="step-note" placeholder="Annotate step" bind:value={stepNote} />
-						<button
-							type="button"
-							data-testid="annotate-step"
-							onclick={() => {
-								app.annotateCurrentStep(stepNote);
-								stepNote = '';
-							}}>Note</button
-						>
+						<label>
+							Destination
+							<NodeSearchSelect
+								nodes={nodePickerOptions}
+								value={selectedEdge.to}
+								testid="edge-destination"
+								ariaLabel="Destination"
+								onChange={(id) => app.updateEdge(selectedEdge.id, { to: id })}
+							/>
+						</label>
+						<label>
+							Direction
+							{#key `${selectedEdge.from}:${selectedEdge.to}:${selectedEdge.directed}`}
+								<select
+									data-testid="edge-direction"
+									value={edgeDirectionSelectValue(selectedEdge)}
+									onchange={(e) =>
+										onEdgeDirectionChange(
+											selectedEdge.id,
+											e.currentTarget.value as EdgeDirectionMode
+										)}
+								>
+									{#each edgeDirectionOptions(app.document.nodes[selectedEdge.from]?.label ?? '?', app.document.nodes[selectedEdge.to]?.label ?? '?') as opt (opt.value)}
+										<option value={opt.value}>{opt.label}</option>
+									{/each}
+								</select>
+							{/key}
+						</label>
+						<label>
+							Weight
+							<input
+								type="number"
+								step="0.1"
+								class="no-spinner"
+								data-testid="edge-weight"
+								value={selectedEdge.weight}
+								oninput={(e) =>
+									app.updateEdge(selectedEdge.id, {
+										weight: Number(e.currentTarget.value)
+									})}
+							/>
+						</label>
+						<div class="field">
+							<span class="field-caption">Tags</span>
+							<TagPicker
+								tags={selectedEdge.tags ?? []}
+								suggestions={allEdgeTags}
+								onChange={(next) => app.updateEdge(selectedEdge.id, { tags: next })}
+							/>
+						</div>
+						<label>
+							Notes
+							<textarea
+								data-testid="edge-notes"
+								rows="4"
+								value={selectedEdge.notes ?? ''}
+								oninput={(e) => app.updateEdge(selectedEdge.id, { notes: e.currentTarget.value })}
+							></textarea>
+						</label>
 					</div>
 				{/if}
-			{/if}
-			{#if storedRuns.length >= 1}
-				<div class="compare-runs" data-testid="compare-runs-section">
-					<h3 class="subhead">Compare stored runs</h3>
-					<div class="row wrap">
-						<label>
-							Run A
-							<select
-								data-testid="compare-run-a"
-								bind:value={compareRunIdA}
-								aria-label="Compare run A"
-							>
-								{#each storedRuns as run (run.id)}
-									<option value={run.id}>{runLabel(run)}</option>
-								{/each}
-							</select>
-						</label>
-						<label>
-							Run B
-							<select
-								data-testid="compare-run-b"
-								bind:value={compareRunIdB}
-								aria-label="Compare run B"
-							>
-								{#each storedRuns as run (run.id)}
-									<option value={run.id}>{runLabel(run)}</option>
-								{/each}
-							</select>
-						</label>
-						<button
-							type="button"
-							data-testid="compare-runs"
-							disabled={storedRuns.length < 2 || compareRunIdA === compareRunIdB}
-							onclick={() => app.compareRuns(compareRunIdA, compareRunIdB)}>Compare runs</button
-						>
-					</div>
-				</div>
-				<details>
-					<summary>Run history ({storedRuns.length})</summary>
-					<ul class="list">
-						{#each storedRuns as run (run.id)}
-							<li class="muted" class:stale-run={run.stale}>
-								{run.algorithmId}
-								{#if run.stale}<span class="tag stale-tag">stale</span>{:else}<span
-										class="tag ok-tag">current</span
-									>{/if}
-								<button
-									type="button"
-									data-testid="set-compare-run-a"
-									onclick={() => {
-										compareRunIdA = run.id;
-										if (compareRunIdB === run.id && storedRuns.length > 1) {
-											compareRunIdB = storedRuns.find((r) => r.id !== run.id)?.id ?? run.id;
-										}
-									}}>A</button
-								>
-								<button
-									type="button"
-									data-testid="set-compare-run-b"
-									onclick={() => {
-										compareRunIdB = run.id;
-										if (compareRunIdA === run.id && storedRuns.length > 1) {
-											compareRunIdA = storedRuns.find((r) => r.id !== run.id)?.id ?? run.id;
-										}
-									}}>B</button
-								>
+			</section>
+		{/if}
+
+		{#if section === 'file'}
+			<section class="block file-saves" data-testid="file-saves" aria-label="Saved graphs">
+				<h2>Saved graphs</h2>
+				<form
+					class="row slot-save-row"
+					onsubmit={(e) => {
+						e.preventDefault();
+						if (!saveSlotName.trim()) return;
+						app.saveNamedSlot(saveSlotName);
+					}}
+				>
+					<input
+						class="slot-name-input"
+						type="text"
+						placeholder="Slot name"
+						data-testid="save-slot-name"
+						bind:value={saveSlotName}
+						aria-label="Named save slot"
+					/>
+					<button
+						type="submit"
+						class="icon-btn"
+						data-testid="save-named"
+						disabled={!saveSlotName.trim()}
+						aria-label="Save"
+						title="Save"
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path
+								fill="currentColor"
+								d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"
+							/>
+						</svg>
+					</button>
+				</form>
+				{#if app.namedSlots.length === 0}
+					<p class="hint">No saved graphs yet.</p>
+				{:else}
+					<ul class="list save-slot-list" data-testid="save-slot-list">
+						{#each app.namedSlots as name (name)}
+							<li class="row between slot-row" data-testid="save-slot-row" data-slot={name}>
+								<span class="slot-label">{name}</span>
+								<div class="row">
+									<button
+										type="button"
+										class="icon-btn"
+										data-testid="slot-load"
+										aria-label="Load"
+										title="Load"
+										onclick={() => app.loadNamedSlot(name)}
+									>
+										<svg viewBox="0 0 24 24" aria-hidden="true">
+											<path
+												fill="currentColor"
+												d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"
+											/>
+										</svg>
+									</button>
+									<button
+										type="button"
+										class="icon-btn danger"
+										data-testid="slot-delete"
+										aria-label="Delete"
+										title="Delete"
+										onclick={() => app.deleteNamedSlot(name)}
+									>
+										<svg viewBox="0 0 24 24" aria-hidden="true">
+											<path
+												fill="currentColor"
+												d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+											/>
+										</svg>
+									</button>
+								</div>
 							</li>
 						{/each}
 					</ul>
-				</details>
-			{/if}
-		</section>
-	{/if}
+				{/if}
+			</section>
+		{/if}
 
-	{#if section === 'diff'}
-		<section class="block" data-testid="diff-panel">
-			<h2>Diff</h2>
-			{#if diffA && diffB}
-				<div class="diff">
-					<div>
-						<strong>{diffA.label}</strong>
-						<p class="muted">{diffA.notes ?? '—'}</p>
-						<p class="muted">{diffA.tags.join(', ') || 'no tags'}</p>
+		{#if section === 'generate'}
+			<section class="block generate-block" data-testid="generate" aria-label="Generate">
+				<form
+					id="generate-form"
+					class="generate-form"
+					onsubmit={(e) => {
+						e.preventDefault();
+						onGenerate();
+					}}
+				>
+					<label>
+						Type
+						<select
+							class="slot-name-input"
+							data-testid="generate-kind"
+							aria-describedby="generate-kind-help"
+							bind:value={app.generateForm.kind}
+						>
+							{#each GRAPH_KIND_GROUPS as group (group.label)}
+								<optgroup label={group.label}>
+									{#each group.kinds as item (item.id)}
+										<option value={item.id}>{item.label}</option>
+									{/each}
+								</optgroup>
+							{/each}
+						</select>
+						<p
+							class="hint generate-kind-help"
+							id="generate-kind-help"
+							data-testid="generate-kind-help"
+						>
+							{kindHelp(app.generateForm.kind)}
+						</p>
+					</label>
+					<div class="generate-fields" data-testid="generate-fields">
+						{#if genFields.includes('paleyQ')}
+							<label>
+								Order q
+								<select
+									class="slot-name-input"
+									data-testid="generate-paley-q"
+									bind:value={app.generateForm.paleyQ}
+								>
+									{#each PALEY_ORDERS as q (q)}
+										<option value={q}>{q}</option>
+									{/each}
+								</select>
+							</label>
+						{/if}
+						{#if genFields.includes('sierpinskiDepth')}
+							<label>
+								Depth
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('sierpinskiDepth')?.min}
+									max={fieldLimit('sierpinskiDepth')?.max}
+									bind:value={app.generateForm.sierpinskiDepth}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('nodes')}
+							<label>
+								Nodes
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('nodes')?.min}
+									data-testid="generate-nodes"
+									bind:value={app.generateForm.nodes}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('density')}
+							<label>
+								Density
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('density')?.min}
+									max={fieldLimit('density')?.max}
+									step="0.01"
+									data-testid="generate-density"
+									aria-describedby="generate-density-help"
+									bind:value={app.generateForm.density}
+								/>
+								<p class="hint" id="generate-density-help" data-testid="generate-density-help">
+									{DENSITY_FIELD_HELP}
+								</p>
+							</label>
+						{/if}
+						{#if genFields.includes('extraEdges')}
+							<label>
+								Edges
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('extraEdges')?.min}
+									max={fieldLimit('extraEdges')?.max}
+									bind:value={app.generateForm.extraEdges}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('degree')}
+							<label>
+								Degree
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('degree')?.min}
+									max={fieldLimit('degree')?.max}
+									aria-describedby="generate-degree-help"
+									bind:value={app.generateForm.degree}
+								/>
+								<p class="hint" id="generate-degree-help" data-testid="generate-degree-help">
+									{DEGREE_FIELD_HELP}
+								</p>
+							</label>
+						{/if}
+						{#if genFields.includes('depth')}
+							<label>
+								Depth
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('depth')?.min}
+									max={fieldLimit('depth')?.max}
+									aria-describedby="generate-depth-help"
+									bind:value={app.generateForm.depth}
+								/>
+								<p class="hint" id="generate-depth-help">{DEPTH_FIELD_HELP}</p>
+							</label>
+						{/if}
+						{#if genFields.includes('branching') && !app.generateForm.binary}
+							<label>
+								Branching
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('branching')?.min}
+									max={fieldLimit('branching')?.max}
+									aria-describedby="generate-branching-help"
+									bind:value={app.generateForm.branching}
+								/>
+								<p class="hint" id="generate-branching-help">{BRANCHING_FIELD_HELP}</p>
+							</label>
+						{/if}
+						{#if genFields.includes('left')}
+							<label>
+								Left
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('left')?.min}
+									bind:value={app.generateForm.left}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('right')}
+							<label>
+								Right
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('right')?.min}
+									bind:value={app.generateForm.right}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('attachments')}
+							<label>
+								Attachments
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('attachments')?.min}
+									max={fieldLimit('attachments')?.max}
+									aria-describedby="generate-attachments-help"
+									bind:value={app.generateForm.attachments}
+								/>
+								<p
+									class="hint"
+									id="generate-attachments-help"
+									data-testid="generate-attachments-help"
+								>
+									{ATTACHMENTS_FIELD_HELP}
+								</p>
+							</label>
+						{/if}
+						{#if genFields.includes('neighbors')}
+							<label>
+								Neighbors
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('neighbors')?.min}
+									max={fieldLimit('neighbors')?.max}
+									aria-describedby={app.generateForm.kind === 'smallWorld'
+										? 'generate-neighbors-help'
+										: undefined}
+									bind:value={app.generateForm.neighbors}
+								/>
+								{#if app.generateForm.kind === 'smallWorld'}
+									<p
+										class="hint"
+										id="generate-neighbors-help"
+										data-testid="generate-neighbors-help"
+									>
+										{NEIGHBORS_FIELD_HELP}
+									</p>
+								{/if}
+							</label>
+						{/if}
+						{#if genFields.includes('rewire')}
+							<label>
+								Rewire
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('rewire')?.min}
+									max={fieldLimit('rewire')?.max}
+									step="0.01"
+									data-testid="generate-rewire"
+									aria-describedby="generate-rewire-help"
+									bind:value={app.generateForm.rewire}
+								/>
+								<p class="hint" id="generate-rewire-help" data-testid="generate-rewire-help">
+									{REWIRE_FIELD_HELP}
+								</p>
+							</label>
+						{/if}
+						{#if genFields.includes('jumps')}
+							<label>
+								Jumps
+								<input
+									class="slot-name-input"
+									bind:value={app.generateForm.jumps}
+									aria-label="Circulant jumps"
+									aria-describedby="generate-jumps-help"
+								/>
+								<p class="hint" id="generate-jumps-help">{JUMPS_FIELD_HELP}</p>
+							</label>
+						{/if}
+						{#if genFields.includes('rungs')}
+							<label>
+								Rungs
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('rungs')?.min}
+									max={fieldLimit('rungs')?.max}
+									aria-describedby="generate-rungs-help"
+									bind:value={app.generateForm.rungs}
+								/>
+								<p class="hint" id="generate-rungs-help" data-testid="generate-rungs-help">
+									{RUNGS_FIELD_HELP}
+								</p>
+							</label>
+						{/if}
+						{#if genFields.includes('rows')}
+							<label>
+								Rows
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('rows')?.min}
+									max={fieldLimit('rows')?.max}
+									data-testid="generate-rows"
+									bind:value={app.generateForm.rows}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('columns')}
+							<label>
+								Columns
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('columns')?.min}
+									max={fieldLimit('columns')?.max}
+									data-testid="generate-columns"
+									bind:value={app.generateForm.columns}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('layers')}
+							<label>
+								Layers
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('layers')?.min}
+									max={fieldLimit('layers')?.max}
+									bind:value={app.generateForm.layers}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('radius')}
+							<label>
+								Radius
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('radius')?.min}
+									step="0.2"
+									bind:value={app.generateForm.radius}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('groups')}
+							<label>
+								Groups
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('groups')?.min}
+									max={fieldLimit('groups')?.max}
+									data-testid="generate-groups"
+									bind:value={app.generateForm.groups}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('pInside')}
+							<label>
+								p inside
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('pInside')?.min}
+									max={fieldLimit('pInside')?.max}
+									step="0.01"
+									aria-describedby="generate-p-inside-help"
+									bind:value={app.generateForm.pInside}
+								/>
+								<p
+									class="hint generate-kind-help"
+									id="generate-p-inside-help"
+									data-testid="generate-p-inside-help"
+								>
+									{COMMUNITY_P_INSIDE_HELP}
+								</p>
+							</label>
+						{/if}
+						{#if genFields.includes('pBetween')}
+							<label>
+								p between
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('pBetween')?.min}
+									max={fieldLimit('pBetween')?.max}
+									step="0.01"
+									aria-describedby="generate-p-between-help"
+									bind:value={app.generateForm.pBetween}
+								/>
+								<p
+									class="hint generate-kind-help"
+									id="generate-p-between-help"
+									data-testid="generate-p-between-help"
+								>
+									{COMMUNITY_P_BETWEEN_HELP}
+								</p>
+							</label>
+						{/if}
+						{#if genFields.includes('nGons')}
+							<label>
+								Sides
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('nGons')?.min}
+									max={fieldLimit('nGons')?.max}
+									bind:value={app.generateForm.nGons}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('dimension')}
+							<label>
+								Dimension
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('dimension')?.min}
+									max={fieldLimit('dimension')?.max}
+									aria-describedby="generate-dimension-help"
+									bind:value={app.generateForm.dimension}
+								/>
+								<p class="hint" id="generate-dimension-help">{DIMENSION_FIELD_HELP}</p>
+							</label>
+						{/if}
+						{#if genFields.includes('platonic')}
+							<label>
+								Solid
+								<select class="slot-name-input" bind:value={app.generateForm.platonic}>
+									{#each PLATONIC_SOLIDS as id (id)}
+										<option value={id}>{PLATONIC_LABELS[id]}</option>
+									{/each}
+								</select>
+							</label>
+						{/if}
+						{#if genFields.includes('archimedean')}
+							<label>
+								Solid
+								<select class="slot-name-input" bind:value={app.generateForm.archimedean}>
+									{#each ARCHIMEDEAN_SOLIDS as id (id)}
+										<option value={id}>{ARCHIMEDEAN_LABELS[id]}</option>
+									{/each}
+								</select>
+							</label>
+						{/if}
+						{#if genFields.includes('extent')}
+							<label>
+								Extent
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('extent')?.min}
+									max={fieldLimit('extent')?.max}
+									aria-describedby="generate-extent-help"
+									bind:value={app.generateForm.extent}
+								/>
+								<p class="hint" id="generate-extent-help">{EXTENT_FIELD_HELP}</p>
+							</label>
+						{/if}
+						{#if genFields.includes('turns')}
+							<label>
+								Turns
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('turns')?.min}
+									step="0.5"
+									aria-describedby="generate-turns-help"
+									bind:value={app.generateForm.turns}
+								/>
+								<p class="hint" id="generate-turns-help">{TURNS_FIELD_HELP}</p>
+							</label>
+						{/if}
+						{#if genFields.includes('chord')}
+							<label>
+								Chord
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('chord')?.min}
+									max={fieldLimit('chord')?.max}
+									aria-describedby="generate-chord-help"
+									bind:value={app.generateForm.chord}
+								/>
+								<p class="hint" id="generate-chord-help">{CHORD_FIELD_HELP}</p>
+							</label>
+						{/if}
+						{#if genFields.includes('rings')}
+							<label>
+								Rings
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('rings')?.min}
+									max={fieldLimit('rings')?.max}
+									aria-describedby="generate-rings-help"
+									bind:value={app.generateForm.rings}
+								/>
+								<p class="hint" id="generate-rings-help">{RINGS_FIELD_HELP}</p>
+							</label>
+						{/if}
+						{#if genFields.includes('segments')}
+							<label>
+								Segments
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('segments')?.min}
+									max={fieldLimit('segments')?.max}
+									aria-describedby="generate-segments-help"
+									bind:value={app.generateForm.segments}
+								/>
+								<p class="hint" id="generate-segments-help">{SEGMENTS_FIELD_HELP}</p>
+							</label>
+						{/if}
+						{#if genFields.includes('petersenN')}
+							<label>
+								n
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('petersenN')?.min}
+									max={fieldLimit('petersenN')?.max}
+									bind:value={app.generateForm.petersenN}
+								/>
+							</label>
+						{/if}
+						{#if genFields.includes('petersenK')}
+							<label>
+								k
+								<input
+									class="slot-name-input"
+									type="number"
+									min={fieldLimit('petersenK')?.min}
+									max={fieldLimit('petersenK')?.max}
+									bind:value={app.generateForm.petersenK}
+								/>
+							</label>
+						{/if}
 					</div>
-					<div>
-						<strong>{diffB.label}</strong>
-						<p class="muted">{diffB.notes ?? '—'}</p>
-						<p class="muted">{diffB.tags.join(', ') || 'no tags'}</p>
+					<div class="generate-checks">
+						{#if genFields.includes('loops')}
+							<label class="check"
+								><input type="checkbox" bind:checked={app.generateForm.loops} /> Loops</label
+							>
+						{/if}
+						{#if genFields.includes('transitive')}
+							<label class="check"
+								><input type="checkbox" bind:checked={app.generateForm.transitive} /> Transitive</label
+							>
+						{/if}
+						{#if genFields.includes('binary')}
+							<label class="check"
+								><input type="checkbox" bind:checked={app.generateForm.binary} /> Binary</label
+							>
+						{/if}
+						{#if genFields.includes('fan')}
+							<label class="check"
+								><input type="checkbox" bind:checked={app.generateForm.fan} /> Fan</label
+							>
+						{/if}
+						{#if genFields.includes('diagonals')}
+							<label class="check"
+								><input type="checkbox" bind:checked={app.generateForm.diagonals} /> Diagonals</label
+							>
+						{/if}
+						{#if kindAllowsDirected(app.generateForm.kind)}
+							<label class="check"
+								><input type="checkbox" bind:checked={app.generateForm.directed} /> Directed</label
+							>
+						{/if}
+						{#if kindAllowsWeighted(app.generateForm.kind)}
+							<label class="check"
+								><input type="checkbox" bind:checked={app.generateForm.weighted} /> Weighted</label
+							>
+						{/if}
+						{#if kindAllowsPlanar(app.generateForm.kind)}
+							<label class="check"
+								><input
+									type="checkbox"
+									data-testid="generate-planar"
+									bind:checked={app.generateForm.planar}
+								/> 2D</label
+							>
+						{/if}
 					</div>
+				</form>
+			</section>
+		{/if}
+
+		{#if section === 'nodes'}
+			<section class="block node-panel" data-testid="nodes-section">
+				<ul class="list node-list" data-testid="node-list">
+					{#each filteredNodes as node (node.id)}
+						<li class="node-row">
+							<button
+								type="button"
+								class="list-item"
+								class:selected={selectedIds.has(node.id)}
+								data-testid={`node-item-${node.id}`}
+								onclick={(e) => onSelectNode(node.id, e)}
+							>
+								<span class="node-list-label">{node.label}</span>
+							</button>
+							<button
+								type="button"
+								class="icon-btn danger"
+								data-testid={`delete-node-row-${node.id}`}
+								aria-label={`Delete ${node.label}`}
+								onclick={(e) => {
+									e.stopPropagation();
+									app.removeNode(node.id);
+								}}
+							>
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path
+										fill="currentColor"
+										d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+									/>
+								</svg>
+							</button>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
+
+		{#if section === 'edges'}
+			<section class="block edge-panel" data-testid="edges-section">
+				<ul class="list edge-list" data-testid="edge-list">
+					{#each filteredEdges as edge (edge.id)}
+						<li class="node-row">
+							<button
+								type="button"
+								class="list-item edge-select"
+								class:selected={selectedEdgeIds.has(edge.id)}
+								data-testid={`edge-item-${edge.id}`}
+								onclick={(e) => onSelectEdge(edge.id, e)}
+							>
+								<span class="node-list-label">
+									{app.document.nodes[edge.from]?.label ?? '?'}
+									{edge.directed ? '→' : '—'}
+									{app.document.nodes[edge.to]?.label ?? '?'}
+								</span>
+								{#if edge.weight !== 1}
+									<span class="edge-weight-pill">{edge.weight}</span>
+								{/if}
+							</button>
+							<button
+								type="button"
+								class="icon-btn danger"
+								data-testid={`delete-edge-${edge.id}`}
+								aria-label="Delete edge"
+								onclick={(e) => {
+									e.stopPropagation();
+									app.removeEdge(edge.id);
+								}}
+							>
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path
+										fill="currentColor"
+										d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+									/>
+								</svg>
+							</button>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
+
+		{#if section === 'filters'}
+			<section class="block" data-testid="filters-section">
+				<h2>Filters</h2>
+				<div class="row">
+					<input
+						data-testid="filter-tags"
+						placeholder="tag1, tag2"
+						bind:value={filterInput}
+						aria-label="Filter tags"
+					/>
+					<button type="button" data-testid="apply-filter" onclick={applyFilter}>Apply</button>
 				</div>
-				<button
-					type="button"
-					data-testid="diff-path"
-					onclick={() => {
-						app.setDirectionsEndpoints(diffA.id, diffB.id);
-					}}>Path between</button
-				>
-				<button type="button" onclick={() => app.setDiffIds([])}>Clear</button>
-			{:else}
-				<p class="hint">Select up to two nodes, then add them here.</p>
-				<button
-					type="button"
-					data-testid="diff-add-selection"
-					disabled={app.selection.nodeIds.length === 0}
-					onclick={() => {
-						for (const id of app.selection.nodeIds.slice(0, 2)) pushDiff(id);
-					}}>Add selection</button
-				>
-			{/if}
-		</section>
-	{/if}
+				<label class="check">
+					<input
+						type="checkbox"
+						data-testid="hide-filtered"
+						checked={app.filters.hideFiltered}
+						onchange={(e) => app.setHideFiltered(e.currentTarget.checked)}
+					/>
+					Hide / dim non-matches
+				</label>
+			</section>
+		{/if}
+
+		{#if section === 'groups'}
+			<section class="block" data-testid="groups-section">
+				<h2>Groups</h2>
+				{#if groupIds.length}
+					{#each groupIds as gid (gid)}
+						<div class="row" data-testid={`group-row-${gid}`}>
+							<span class="muted">{gid.slice(0, 8)}…</span>
+							{#if app.groupsCollapsed.has(gid)}
+								<button
+									type="button"
+									data-testid={`expand-group-${gid}`}
+									onclick={() => app.toggleCollapseGroup(gid)}>Expand</button
+								>
+							{:else}
+								<button
+									type="button"
+									data-testid={`collapse-group-${gid}`}
+									onclick={() => app.toggleCollapseGroup(gid)}>Collapse</button
+								>
+							{/if}
+							<button type="button" data-testid={`ungroup-${gid}`} onclick={() => app.ungroup(gid)}
+								>Ungroup</button
+							>
+						</div>
+					{/each}
+				{:else}
+					<p class="hint">No groups yet.</p>
+				{/if}
+			</section>
+		{/if}
+
+		{#if section === 'pathfinder'}
+			<section class="block" data-testid="directions-panel">
+				<h2>Pathfinder</h2>
+				<div class="row">
+					<select
+						data-testid="path-from"
+						aria-label="Path from"
+						value={app.directions.fromId ?? ''}
+						onchange={(e) =>
+							app.setDirectionsEndpoints(e.currentTarget.value || null, app.directions.toId)}
+					>
+						<option value="">From A</option>
+						{#each nodes as n (n.id)}
+							<option value={n.id}>{n.label}</option>
+						{/each}
+					</select>
+					<select
+						data-testid="path-to"
+						aria-label="Path to"
+						value={app.directions.toId ?? ''}
+						onchange={(e) =>
+							app.setDirectionsEndpoints(app.directions.fromId, e.currentTarget.value || null)}
+					>
+						<option value="">To B</option>
+						{#each nodes as n (n.id)}
+							<option value={n.id}>{n.label}</option>
+						{/each}
+					</select>
+				</div>
+				<div class="row">
+					<button
+						type="button"
+						data-testid="path-mode-all"
+						class:active={app.directions.pathMode === 'all'}
+						onclick={() => app.setPathMode('all')}>All</button
+					>
+					<button
+						type="button"
+						data-testid="path-mode-shortest"
+						class:active={app.directions.pathMode === 'shortest'}
+						onclick={() => app.setPathMode('shortest')}>Shortest</button
+					>
+					<button type="button" data-testid="refresh-paths" onclick={() => app.refreshPaths()}
+						>Refresh</button
+					>
+				</div>
+				<ul class="list" data-testid="path-list">
+					{#each app.directions.pathList as path, i (app.pathKey(path, i))}
+						<li>
+							<button
+								type="button"
+								class="list-item"
+								class:selected={app.directions.selectedPathId === app.pathKey(path, i)}
+								data-testid={`path-${i}`}
+								onclick={() => app.selectPath(app.pathKey(path, i))}
+							>
+								{path.nodeIds.map((id) => app.document.nodes[id]?.label ?? '?').join(' → ')}
+							</button>
+						</li>
+					{/each}
+				</ul>
+				{#if app.directions.selectedPathId}
+					<div class="row">
+						<button type="button" data-testid="start-travel" onclick={() => app.startTravel()}
+							>Travel</button
+						>
+						<button type="button" data-testid="stop-travel" onclick={() => app.stopTravel()}
+							>Stop</button
+						>
+					</div>
+					<label>
+						Progress
+						<input
+							type="range"
+							min="0"
+							max="1"
+							step="0.01"
+							data-testid="travel-progress"
+							aria-describedby="travel-progress-help"
+							value={app.directions.travelProgress}
+							oninput={(e) => app.setTravelProgress(Number(e.currentTarget.value))}
+						/>
+						<p class="hint" id="travel-progress-help" data-testid="travel-progress-help">
+							{PROBABILITY_RANGE_HELP}
+						</p>
+					</label>
+				{/if}
+			</section>
+		{/if}
+
+		{#if section === 'analyze'}
+			<section class="block" data-testid="analyze-panel">
+				<h2>Analyze</h2>
+				<label>
+					Algorithm
+					<select
+						data-testid="algo-picker"
+						value={app.analyze.algorithmId}
+						onchange={(e) => app.setAlgorithm(e.currentTarget.value)}
+					>
+						{#each app.algorithms as algo (algo.id)}
+							<option value={algo.id}>{algo.name}</option>
+						{/each}
+					</select>
+				</label>
+				<p class="hint">
+					{app.algorithms.find((a) => a.id === app.analyze.algorithmId)?.description}
+				</p>
+				<div class="row wrap">
+					<button type="button" data-testid="run-algo" onclick={() => app.runAlgorithm()}
+						>Run</button
+					>
+					<select
+						data-testid="compare-algo"
+						bind:value={compareAlgo}
+						aria-label="Compare algorithm"
+					>
+						{#each app.algorithms as algo (algo.id)}
+							<option value={algo.id}>{algo.name}</option>
+						{/each}
+					</select>
+					<button
+						type="button"
+						data-testid="compare-algos"
+						onclick={() => app.compareAlgorithms(compareAlgo)}>Compare</button
+					>
+				</div>
+				{#if compareRunA && compareRunB}
+					<section class="compare-panel" data-testid="compare-panel">
+						<h3>Compare</h3>
+						<div class="diff">
+							<div data-testid="compare-series-a">
+								<strong class="series-a">{compareRunA.algorithmId}</strong>
+								{#if compareRunA.stale}<span class="tag">stale</span>{/if}
+								<p class="muted">
+									{compareMetrics(compareRunA).nodes} nodes · {compareMetrics(compareRunA).hops} hops
+									· cost
+									{compareMetrics(compareRunA).cost}
+								</p>
+							</div>
+							<div data-testid="compare-series-b">
+								<strong class="series-b">{compareRunB.algorithmId}</strong>
+								{#if compareRunB.stale}<span class="tag">stale</span>{/if}
+								<p class="muted">
+									{compareMetrics(compareRunB).nodes} nodes · {compareMetrics(compareRunB).hops} hops
+									· cost
+									{compareMetrics(compareRunB).cost}
+								</p>
+							</div>
+						</div>
+						<button type="button" data-testid="clear-compare" onclick={() => app.clearCompare()}
+							>Dismiss compare</button
+						>
+					</section>
+				{/if}
+				{#if lastRun}
+					<p class="hint" data-testid="run-status">
+						Run {lastRun.id.slice(0, 8)}… {lastRun.stale ? '(stale)' : ''}
+						— {lastRun.result.kind}
+					</p>
+					<label class="check">
+						<input
+							type="checkbox"
+							data-testid="show-steps"
+							checked={app.analyze.showSteps}
+							onchange={(e) => app.setShowSteps(e.currentTarget.checked)}
+						/>
+						Show steps
+					</label>
+					{#if app.analyze.showSteps}
+						<div class="row wrap">
+							<button
+								type="button"
+								data-testid="trace-play"
+								disabled={traceLen < 2}
+								onclick={() => app.togglePlayback()}
+							>
+								{app.analyze.playback ? 'Pause' : 'Play'}
+							</button>
+							<label>
+								Step {app.analyze.stepIndex}/{Math.max(0, traceLen - 1)}
+								<input
+									type="range"
+									min="0"
+									max={Math.max(0, traceLen - 1)}
+									data-testid="step-scrubber"
+									value={app.analyze.stepIndex}
+									oninput={(e) => {
+										app.setPlayback(false);
+										app.setStepIndex(Number(e.currentTarget.value));
+									}}
+								/>
+							</label>
+						</div>
+						<p class="hint" data-testid="step-annotation-display">
+							{#if currentStepAnnotation}
+								{currentStepAnnotation}
+							{:else}
+								<span class="muted">No note for this step</span>
+							{/if}
+						</p>
+						<div class="row">
+							<input data-testid="step-note" placeholder="Annotate step" bind:value={stepNote} />
+							<button
+								type="button"
+								data-testid="annotate-step"
+								onclick={() => {
+									app.annotateCurrentStep(stepNote);
+									stepNote = '';
+								}}>Note</button
+							>
+						</div>
+					{/if}
+				{/if}
+				{#if storedRuns.length >= 1}
+					<div class="compare-runs" data-testid="compare-runs-section">
+						<h3 class="subhead">Compare stored runs</h3>
+						<div class="row wrap">
+							<label>
+								Run A
+								<select
+									data-testid="compare-run-a"
+									bind:value={compareRunIdA}
+									aria-label="Compare run A"
+								>
+									{#each storedRuns as run (run.id)}
+										<option value={run.id}>{runLabel(run)}</option>
+									{/each}
+								</select>
+							</label>
+							<label>
+								Run B
+								<select
+									data-testid="compare-run-b"
+									bind:value={compareRunIdB}
+									aria-label="Compare run B"
+								>
+									{#each storedRuns as run (run.id)}
+										<option value={run.id}>{runLabel(run)}</option>
+									{/each}
+								</select>
+							</label>
+							<button
+								type="button"
+								data-testid="compare-runs"
+								disabled={storedRuns.length < 2 || compareRunIdA === compareRunIdB}
+								onclick={() => app.compareRuns(compareRunIdA, compareRunIdB)}>Compare runs</button
+							>
+						</div>
+					</div>
+					<details>
+						<summary>Run history ({storedRuns.length})</summary>
+						<ul class="list">
+							{#each storedRuns as run (run.id)}
+								<li class="muted" class:stale-run={run.stale}>
+									{run.algorithmId}
+									{#if run.stale}<span class="tag stale-tag">stale</span>{:else}<span
+											class="tag ok-tag">current</span
+										>{/if}
+									<button
+										type="button"
+										data-testid="set-compare-run-a"
+										onclick={() => {
+											compareRunIdA = run.id;
+											if (compareRunIdB === run.id && storedRuns.length > 1) {
+												compareRunIdB = storedRuns.find((r) => r.id !== run.id)?.id ?? run.id;
+											}
+										}}>A</button
+									>
+									<button
+										type="button"
+										data-testid="set-compare-run-b"
+										onclick={() => {
+											compareRunIdB = run.id;
+											if (compareRunIdA === run.id && storedRuns.length > 1) {
+												compareRunIdA = storedRuns.find((r) => r.id !== run.id)?.id ?? run.id;
+											}
+										}}>B</button
+									>
+								</li>
+							{/each}
+						</ul>
+					</details>
+				{/if}
+			</section>
+		{/if}
+
+		{#if section === 'diff'}
+			<section class="block" data-testid="diff-panel">
+				<h2>Diff</h2>
+				{#if diffA && diffB}
+					<div class="diff">
+						<div>
+							<strong>{diffA.label}</strong>
+							<p class="muted">{diffA.notes ?? '—'}</p>
+							<p class="muted">{diffA.tags.join(', ') || 'no tags'}</p>
+						</div>
+						<div>
+							<strong>{diffB.label}</strong>
+							<p class="muted">{diffB.notes ?? '—'}</p>
+							<p class="muted">{diffB.tags.join(', ') || 'no tags'}</p>
+						</div>
+					</div>
+					<button
+						type="button"
+						data-testid="diff-path"
+						onclick={() => {
+							app.setDirectionsEndpoints(diffA.id, diffB.id);
+						}}>Path between</button
+					>
+					<button type="button" onclick={() => app.setDiffIds([])}>Clear</button>
+				{:else}
+					<p class="hint">Select up to two nodes, then add them here.</p>
+					<button
+						type="button"
+						data-testid="diff-add-selection"
+						disabled={app.selection.nodeIds.length === 0}
+						onclick={() => {
+							for (const id of app.selection.nodeIds.slice(0, 2)) pushDiff(id);
+						}}>Add selection</button
+					>
+				{/if}
+			</section>
+		{/if}
 	</div>
 
 	{#if footerHasActions || overflowing}
 		<footer class="manager__footer" bind:this={footerEl}>
-			{#if section === 'selection' && selectedNode && selectedCount === 1 && app.ui.openTool === null}
+			{#if section === 'selection' && selectedNode && selectedCount === 1}
 				<div class="row wrap selection-actions">
 					<button
 						type="button"
@@ -2161,43 +2134,34 @@
 				<button
 					type="button"
 					class="manager__expand"
-					data-testid={
-						section === 'selection'
-							? app.ui.selectionPanelExpanded
-								? 'selection-panel-collapse'
-								: 'selection-panel-expand'
-							: app.ui.toolsPanelExpanded
-								? 'tools-panel-collapse'
-								: 'tools-panel-expand'
-					}
-					aria-label={
-						section === 'selection'
-							? app.ui.selectionPanelExpanded
-								? 'Collapse selection panel'
-								: 'Expand selection panel'
-							: app.ui.toolsPanelExpanded
-								? 'Collapse tools panel'
-								: 'Expand tools panel'
-					}
-					title={
-						section === 'selection'
-							? app.ui.selectionPanelExpanded
-								? 'Collapse'
-								: 'Expand'
-							: app.ui.toolsPanelExpanded
-								? 'Collapse'
-								: 'Expand'
-					}
+					data-testid={section === 'selection'
+						? app.ui.selectionPanelExpanded
+							? 'selection-panel-collapse'
+							: 'selection-panel-expand'
+						: app.ui.toolsPanelExpanded
+							? 'tools-panel-collapse'
+							: 'tools-panel-expand'}
+					aria-label={section === 'selection'
+						? app.ui.selectionPanelExpanded
+							? 'Collapse selection panel'
+							: 'Expand selection panel'
+						: app.ui.toolsPanelExpanded
+							? 'Collapse tools panel'
+							: 'Expand tools panel'}
+					title={section === 'selection'
+						? app.ui.selectionPanelExpanded
+							? 'Collapse'
+							: 'Expand'
+						: app.ui.toolsPanelExpanded
+							? 'Collapse'
+							: 'Expand'}
 					onclick={() =>
 						section === 'selection'
 							? app.setSelectionPanelExpanded(!app.ui.selectionPanelExpanded)
-							: app.setToolsPanelExpanded(!app.ui.toolsPanelExpanded)
-					}
+							: app.setToolsPanelExpanded(!app.ui.toolsPanelExpanded)}
 				>
 					<svg viewBox="0 0 24 24" aria-hidden="true">
-						{#if (section === 'selection'
-							? app.ui.selectionPanelExpanded
-							: app.ui.toolsPanelExpanded)}
+						{#if section === 'selection' ? app.ui.selectionPanelExpanded : app.ui.toolsPanelExpanded}
 							<path
 								fill="none"
 								stroke="currentColor"

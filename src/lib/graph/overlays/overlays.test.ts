@@ -35,8 +35,9 @@ describe('overlays', () => {
 		expect(o.seriesA).toEqual({ nodeIds: ['a', 'b'], edgeIds: ['e1'] });
 		expect(o.seriesB).toEqual({ nodeIds: ['b', 'c'], edgeIds: ['e2'] });
 		o.seriesA?.nodeIds.push('z');
-		expect(compareOverlay({ nodeIds: ['a'], edgeIds: [] }, { nodeIds: ['c'], edgeIds: [] }).seriesA)
-			.toEqual({ nodeIds: ['a'], edgeIds: [] });
+		expect(
+			compareOverlay({ nodeIds: ['a'], edgeIds: [] }, { nodeIds: ['c'], edgeIds: [] }).seriesA
+		).toEqual({ nodeIds: ['a'], edgeIds: [] });
 	});
 
 	it('pathSeriesMetrics sums hops and edge weights', () => {

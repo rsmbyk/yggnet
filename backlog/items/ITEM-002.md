@@ -1,15 +1,15 @@
 ---
 id: ITEM-002
 status: archived
-title: "Edge weight + directed"
+title: 'Edge weight + directed'
 type: feat
 priority: P0
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
 spec: SPEC-002
-branch: 
-pr: 
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1

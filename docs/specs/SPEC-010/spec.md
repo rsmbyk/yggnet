@@ -5,7 +5,7 @@ type: feat
 feature_area: analyze
 bump: minor
 status: done
-title: "Cached traces + step replay"
+title: 'Cached traces + step replay'
 created: 2026-07-30
 updated: 2026-07-30
 ---

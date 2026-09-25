@@ -20,7 +20,6 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 - SemVer from sequential SPEC bumps in merge-to-develop order (start `0.21.1` to `0.30.0`).
 
-
 ## [0.21.1] - 2026-07-30
 
 ### Added
@@ -32,5 +31,3 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 - SemVer from sequential SPEC bumps in merge-to-develop order (start `0.0.1` to `0.21.1`).
 - Docker: `docker compose up --build -d` then open http://localhost:8080
-
-

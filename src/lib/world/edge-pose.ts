@@ -27,12 +27,14 @@ export function edgePose(from: Vec3, to: Vec3): EdgePose {
 	const axis = { x: dx / len, y: dy / len, z: dz / len };
 	const yAxis = { x: 0, y: 1, z: 0 };
 	const dot = yAxis.x * axis.x + yAxis.y * axis.y + yAxis.z * axis.z;
-	let qx = 0;
-	let qy = 0;
-	let qz = 0;
-	let qw = 1;
+	let qx: number;
+	let qy: number;
+	let qz: number;
+	let qw: number;
 	if (dot < -0.999) {
 		qx = 1;
+		qy = 0;
+		qz = 0;
 		qw = 0;
 	} else {
 		const cx = yAxis.y * axis.z - yAxis.z * axis.y;
