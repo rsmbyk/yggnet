@@ -73,4 +73,13 @@ describe('layoutUnpinned', () => {
 		const dist = Math.hypot(p.x - 100, p.z - -50);
 		expect(dist).toBeCloseTo(8, 5);
 	});
+
+	it('uses default radius when options omit radius', () => {
+		let doc = createEmptyDocument();
+		const free = addNode(doc, { pinned: false, position: { x: 0, y: 0, z: 0 } });
+		doc = free.doc;
+		const laid = layoutUnpinned(doc);
+		const p = pos(laid, free.nodeId);
+		expect(Math.hypot(p.x, p.z)).toBeGreaterThan(0);
+	});
 });
