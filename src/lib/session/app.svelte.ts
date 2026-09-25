@@ -45,6 +45,10 @@ import {
 	updateEdge,
 	updateNode,
 	defaultGenerateForm,
+	deleteTag,
+	entityPassesFocus,
+	normalizeTags,
+	renameTag,
 	type EdgePatch,
 	type GraphDocument,
 	type GenerateOptions,
@@ -88,9 +92,9 @@ export type AnalyzeState = {
 	lastRunId: string | null;
 };
 
+/** Session focus list for the Tags tool (world emphasize/dim). */
 export type FiltersState = {
 	tags: string[];
-	hideFiltered: boolean;
 };
 
 export type CameraState = {
@@ -139,6 +143,8 @@ export type UiState = {
 	toolsPanelExpanded: boolean;
 	/** Companion / selection sheet may grow past the minimap down to the dock bottom. */
 	selectionPanelExpanded: boolean;
+	/** Tag being renamed in the Tags companion sheet, or null. */
+	editingTag: string | null;
 };
 
 const runner = new MainThreadRunner();
@@ -179,7 +185,7 @@ class AppStore {
 	runStore = $state.raw<RunStore>(createRunStore());
 	directions = $state.raw<DirectionsState>(emptyDirections());
 	analyze = $state.raw<AnalyzeState>(emptyAnalyze());
-	filters = $state.raw<FiltersState>({ tags: [], hideFiltered: false });
+	filters = $state.raw<FiltersState>({ tags: [] });
 	camera = $state.raw<CameraState>({
 		distance: WORLD.camera.defaultDistance,
 		target: { ...WORLD.camera.defaultTarget },
@@ -245,7 +251,8 @@ class AppStore {
 		multiSelectMode: false,
 		viewMode: '3d',
 		toolsPanelExpanded: false,
-		selectionPanelExpanded: false
+		selectionPanelExpanded: false,
+		editingTag: null
 	});
 	statusMessage = $state<string>('');
 	/** Full-screen overlay while a document is loading or generating. */
@@ -607,7 +614,7 @@ class AppStore {
 	}
 
 	setNodeTags(id: NodeId, tags: string[]): void {
-		this.updateNode(id, { tags });
+		this.updateNode(id, { tags: normalizeTags(tags) });
 	}
 
 	groupSelected(groupId?: string): string | null {
@@ -649,39 +656,93 @@ class AppStore {
 		else this.groupsCollapsed.add(groupId);
 	}
 
-	setFilterTags(tags: string[]): void {
-		this.filters = { ...this.filters, tags };
+	setFocusTags(tags: string[]): void {
+		this.filters = { tags: [...tags] };
 		this.syncFilterOverlay();
 	}
 
-	setHideFiltered(hide: boolean): void {
-		this.filters = { ...this.filters, hideFiltered: hide };
-		this.syncFilterOverlay();
+	clearFocusTags(): void {
+		this.setFocusTags([]);
+	}
+
+	toggleFocusTag(tag: string): void {
+		const cur = this.filters.tags;
+		this.setFocusTags(cur.includes(tag) ? cur.filter((t) => t !== tag) : [...cur, tag]);
+	}
+
+	showOnlyFocusTag(tag: string): void {
+		this.setFocusTags([tag]);
+	}
+
+	setEditingTag(tag: string | null): void {
+		this.ui = { ...this.ui, editingTag: tag };
+	}
+
+	toggleEditingTag(tag: string): void {
+		this.setEditingTag(this.ui.editingTag === tag ? null : tag);
 	}
 
 	nodePassesFilter(id: NodeId): boolean {
-		const { tags } = this.filters;
-		if (tags.length === 0) return true;
 		const node = this.document.nodes[id];
 		if (!node) return false;
-		return tags.some((t) => node.tags.includes(t));
+		return entityPassesFocus(node.tags, this.filters.tags);
+	}
+
+	edgePassesFilter(id: string): boolean {
+		const edge = this.document.edges[id];
+		if (!edge) return false;
+		return entityPassesFocus(edge.tags, this.filters.tags);
+	}
+
+	renameDocumentTag(from: string, to: string): boolean {
+		const next = to.trim();
+		if (!next || next === from) {
+			this.setEditingTag(null);
+			return true;
+		}
+		const before = cloneDocument(this.document);
+		try {
+			renameTag(this.document, from, next); // validate first
+		} catch (err) {
+			this.statusMessage = err instanceof Error ? err.message : 'Rename failed';
+			return false;
+		}
+		this.mutate((d) => ({
+			doc: renameTag(d, from, next),
+			undo: () => cloneDocument(before)
+		}));
+		this.setFocusTags(this.filters.tags.map((t) => (t === from ? next : t)));
+		this.setEditingTag(null);
+		this.statusMessage = `Renamed tag ${from} → ${next}`;
+		return true;
+	}
+
+	deleteDocumentTag(tag: string): void {
+		const before = cloneDocument(this.document);
+		this.mutate((d) => ({
+			doc: deleteTag(d, tag),
+			undo: () => cloneDocument(before)
+		}));
+		this.setFocusTags(this.filters.tags.filter((t) => t !== tag));
+		if (this.ui.editingTag === tag) this.setEditingTag(null);
+		this.statusMessage = `Deleted tag ${tag}`;
 	}
 
 	private syncFilterOverlay(): void {
-		const { tags, hideFiltered } = this.filters;
+		const { tags } = this.filters;
 		if (tags.length === 0 || this.overlayLocked() || this.analyze.showSteps) {
 			if (this.overlay.kind === 'filter') this.overlay = createEmptyOverlay();
 			return;
 		}
 		const nodeIds = Object.keys(this.document.nodes).filter((id) => this.nodePassesFilter(id));
 		const edgeIds = Object.values(this.document.edges)
-			.filter((e) => nodeIds.includes(e.from) && nodeIds.includes(e.to))
+			.filter((e) => this.edgePassesFilter(e.id))
 			.map((e) => e.id);
 		this.overlay = {
 			kind: 'filter',
 			nodeIds,
 			edgeIds,
-			dimOthers: hideFiltered
+			dimOthers: true
 		};
 	}
 
@@ -1046,7 +1107,8 @@ class AppStore {
 			...this.ui,
 			openTool: id,
 			toolsPanelExpanded: false,
-			selectionPanelExpanded: false
+			selectionPanelExpanded: false,
+			editingTag: id === 'tags' ? this.ui.editingTag : null
 		};
 		if (id === null) this.clearAllSelection();
 	}

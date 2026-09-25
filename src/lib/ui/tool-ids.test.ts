@@ -4,6 +4,7 @@ import {
 	nextOpenTool,
 	nodesCompanionOpen,
 	selectionPanelOpen,
+	tagsCompanionOpen,
 	toolLabel
 } from './tool-ids';
 
@@ -24,6 +25,7 @@ describe('nextOpenTool', () => {
 describe('toolLabel', () => {
 	it('returns the section title', () => {
 		expect(toolLabel('pathfinder')).toBe('Pathfinder');
+		expect(toolLabel('tags')).toBe('Tags');
 	});
 });
 
@@ -68,5 +70,17 @@ describe('edgesCompanionOpen', () => {
 		expect(edgesCompanionOpen('edges', 0)).toBe(false);
 		expect(edgesCompanionOpen('nodes', 1)).toBe(false);
 		expect(edgesCompanionOpen(null, 1)).toBe(false);
+	});
+});
+
+describe('tagsCompanionOpen', () => {
+	it('opens beside Tags when a tag is being edited', () => {
+		expect(tagsCompanionOpen('tags', 'alpha')).toBe(true);
+	});
+
+	it('stays closed without an editing tag or other tools', () => {
+		expect(tagsCompanionOpen('tags', null)).toBe(false);
+		expect(tagsCompanionOpen('nodes', 'alpha')).toBe(false);
+		expect(tagsCompanionOpen(null, 'alpha')).toBe(false);
 	});
 });

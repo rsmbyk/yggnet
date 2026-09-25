@@ -99,6 +99,17 @@ export { findNodeByQuery, findNodesByQuery } from './search/findNodes';
 export { nodeMatchesListFilter } from './search/nodeListFilter';
 export { edgeMatchesListFilter } from './search/edgeListFilter';
 export {
+	TAG_PATTERN,
+	isValidTag,
+	normalizeTags,
+	collectDocumentTags,
+	collectTagUsage,
+	renameTag,
+	deleteTag,
+	entityPassesFocus,
+	type TagUsage
+} from './tags';
+export {
 	generateGraph,
 	fingerprint,
 	randomSeed,

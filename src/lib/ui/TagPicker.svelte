@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { isValidTag, normalizeTags } from '$lib/graph';
+
 	let {
 		tags,
 		suggestions,
@@ -33,10 +35,22 @@
 	);
 
 	const canCreate = $derived(
-		q.length > 0 && !selected.has(q) && !suggestions.some((t) => t.toLowerCase() === qLower)
+		q.length > 0 &&
+			isValidTag(q) &&
+			!selected.has(q) &&
+			!suggestions.some((t) => t.toLowerCase() === qLower)
 	);
 
 	const showEmpty = $derived(filtered.length === 0 && !canCreate && alreadyAdded.length === 0);
+	const emptyCopy = $derived(
+		suggestions.length === 0
+			? 'No tags yet'
+			: suggestions.every((t) => selected.has(t)) && !qLower
+				? 'All tags added'
+				: qLower
+					? 'No tags match'
+					: 'All tags added'
+	);
 
 	function syncDropdownPosition() {
 		const field = fieldEl;
@@ -80,15 +94,15 @@
 
 	function addTag(tag: string) {
 		const t = tag.trim();
-		if (!t || selected.has(t)) return;
-		onChange([...tags, t]);
+		if (!t || !isValidTag(t) || selected.has(t)) return;
+		onChange(normalizeTags([...tags, t]));
 		query = '';
 		queueMicrotask(() => searchEl?.focus());
 	}
 
 	function removeTag(tag: string, e?: MouseEvent) {
 		e?.stopPropagation();
-		onChange(tags.filter((t) => t !== tag));
+		onChange(normalizeTags(tags.filter((t) => t !== tag)));
 	}
 
 	function onRemovePointerDown(e: PointerEvent) {
@@ -213,7 +227,7 @@
 					</li>
 				{/each}
 				{#if showEmpty}
-					<li class="tag-none muted">No matching tags</li>
+					<li class="tag-none" data-testid="tag-picker-empty">{emptyCopy}</li>
 				{/if}
 			</ul>
 		</div>
@@ -422,8 +436,12 @@
 	}
 
 	.tag-none {
-		font-size: 0.8rem;
+		font-size: 0.72rem;
+		font-weight: 400;
 		padding: 0.35rem 0.45rem;
+		color: color-mix(in srgb, var(--yg-muted) 55%, transparent);
+		pointer-events: none;
+		user-select: none;
 	}
 
 	.muted {

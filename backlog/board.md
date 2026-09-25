@@ -46,8 +46,9 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
+| ID       | Title                   | Summary                                                         | Type | Priority | Effort | Spec                                                | Bump  | Branch               | Updated    |
+| -------- | ----------------------- | --------------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------- | ----- | -------------------- | ---------- |
+| ITEM-047 | Shared tags + Tags tool | Shared vocabulary, charset strip, Tags tool focus/rename/delete | feat | P1       | L      | [047-shared-tags](../specs/047-shared-tags/spec.md) | minor | feat/047-shared-tags | 2026-09-26 |
 
 ## In review
 
