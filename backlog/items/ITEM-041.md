@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-041](../../specs/041-camera-chrome-2d-3d/spec.md)
+- Spec: [041-camera-chrome-2d-3d](../../specs/041-camera-chrome-2d-3d/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

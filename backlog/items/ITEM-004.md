@@ -33,5 +33,5 @@ Technical path look; cartographic/sci-fi skins parked. Related: ITEM-001, ITEM-0
 
 ## Links
 
-- Spec: [SPEC-004](../../specs/004-world-graph-render/spec.md)
+- Spec: [004-world-graph-render](../../specs/004-world-graph-render/spec.md)
 - Related items: ITEM-001, ITEM-003, ITEM-005, ITEM-006.

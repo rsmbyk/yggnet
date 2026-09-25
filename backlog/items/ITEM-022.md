@@ -32,5 +32,5 @@ Related: ITEM-021.
 
 ## Links
 
-- Spec: [SPEC-022](../../specs/022-autosave/spec.md)
+- Spec: [022-autosave](../../specs/022-autosave/spec.md)
 - Related items: ITEM-021.

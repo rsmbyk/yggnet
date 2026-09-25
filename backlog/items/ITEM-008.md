@@ -32,5 +32,5 @@ Same visual language as Directions. Related: ITEM-005, ITEM-007.
 
 ## Links
 
-- Spec: [SPEC-008](../../specs/008-follow-edge/spec.md)
+- Spec: [008-follow-edge](../../specs/008-follow-edge/spec.md)
 - Related items: ITEM-005, ITEM-007.

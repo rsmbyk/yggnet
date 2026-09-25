@@ -33,5 +33,5 @@ Candidates faint, selected bright; dim context. Related: ITEM-002, ITEM-007, ITE
 
 ## Links
 
-- Spec: [SPEC-006](../../specs/006-pathfinder-a-to-b/spec.md)
+- Spec: [006-pathfinder-a-to-b](../../specs/006-pathfinder-a-to-b/spec.md)
 - Related items: ITEM-002, ITEM-007, ITEM-009, ITEM-010.

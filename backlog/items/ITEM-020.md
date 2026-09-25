@@ -32,5 +32,5 @@ Related: ITEM-003, ITEM-004.
 
 ## Links
 
-- Spec: [SPEC-020](../../specs/020-minimap/spec.md)
+- Spec: [020-minimap](../../specs/020-minimap/spec.md)
 - Related items: ITEM-003, ITEM-004.

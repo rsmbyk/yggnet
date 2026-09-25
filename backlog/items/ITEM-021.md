@@ -32,5 +32,5 @@ Related: ITEM-022, ITEM-023.
 
 ## Links
 
-- Spec: [SPEC-021](../../specs/021-save-load-graph/spec.md)
+- Spec: [021-save-load-graph](../../specs/021-save-load-graph/spec.md)
 - Related items: ITEM-022, ITEM-023.

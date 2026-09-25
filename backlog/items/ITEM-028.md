@@ -33,5 +33,5 @@ UI/UX lock: simple, clean, modern. Related: ITEM-001, ITEM-007, ITEM-009.
 
 ## Links
 
-- Spec: [SPEC-028](../../specs/028-simple-clean-modern-chrome/spec.md)
+- Spec: [028-simple-clean-modern-chrome](../../specs/028-simple-clean-modern-chrome/spec.md)
 - Related items: ITEM-001, ITEM-007, ITEM-009.

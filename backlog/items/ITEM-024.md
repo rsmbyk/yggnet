@@ -33,5 +33,5 @@ Related: ITEM-001, ITEM-011.
 
 ## Links
 
-- Spec: [SPEC-024](../../specs/024-undo-redo/spec.md)
+- Spec: [024-undo-redo](../../specs/024-undo-redo/spec.md)
 - Related items: ITEM-001, ITEM-011.

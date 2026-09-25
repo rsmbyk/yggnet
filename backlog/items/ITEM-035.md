@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. `setComp
 
 ## Links
 
-- Spec: [SPEC-035](../../specs/035-compare-stored-runs-dual-view/spec.md)
+- Spec: [035-compare-stored-runs-dual-view](../../specs/035-compare-stored-runs-dual-view/spec.md)
 - Related items: ITEM-013, ITEM-034
-- Prior SPEC: [SPEC-013](../../specs/013-compare-runs/spec.md)
+- Prior SPEC: [013-compare-runs](../../specs/013-compare-runs/spec.md)

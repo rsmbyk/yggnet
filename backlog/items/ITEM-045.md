@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-045](../../specs/045-toolbar-tools-panel-chrome/spec.md)
+- Spec: [045-toolbar-tools-panel-chrome](../../specs/045-toolbar-tools-panel-chrome/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

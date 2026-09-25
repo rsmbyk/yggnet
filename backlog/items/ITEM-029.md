@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Selectio
 
 ## Links
 
-- Spec: [SPEC-029](../../specs/029-multi-select-nodes-and-edges/spec.md)
+- Spec: [029-multi-select-nodes-and-edges](../../specs/029-multi-select-nodes-and-edges/spec.md)
 - Related items: ITEM-005, ITEM-030
-- Prior SPEC: [SPEC-005](../../specs/005-selection-sync/spec.md)
+- Prior SPEC: [005-selection-sync](../../specs/005-selection-sync/spec.md)

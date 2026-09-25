@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-040](../../specs/040-canonical-world-config/spec.md)
+- Spec: [040-canonical-world-config](../../specs/040-canonical-world-config/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

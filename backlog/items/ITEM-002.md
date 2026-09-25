@@ -33,5 +33,5 @@ Required for Dijkstra/A* and directed trees/orgs. Related: ITEM-001, ITEM-006, I
 
 ## Links
 
-- Spec: [SPEC-002](../../specs/002-edge-weight-directed/spec.md)
+- Spec: [002-edge-weight-directed](../../specs/002-edge-weight-directed/spec.md)
 - Related items: ITEM-001, ITEM-006, ITEM-009.

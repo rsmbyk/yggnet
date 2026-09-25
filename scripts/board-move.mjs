@@ -17,28 +17,35 @@ function posixRel(p) {
 
 /**
  * Read bump from YAML frontmatter (`bump:`) or vexbook markdown header (`- **Bump:**`).
+ * Template placeholders like `major | minor | patch | none` are treated as unset.
  * @param {string} text
  */
 function readBump(text) {
-	return (
-		text.match(/^bump:\s*(.+)$/m)?.[1]?.trim() ||
-		text.match(/^- \*\*Bump:\*\*\s*(.+)$/m)?.[1]?.trim()?.split(/\s*\|\s*/)[0] ||
-		'minor'
-	);
+	const yaml = text.match(/^bump:\s*(.+)$/m)?.[1]?.trim();
+	if (yaml && !yaml.includes('|')) return yaml;
+
+	const md = text.match(/^- \*\*Bump:\*\*\s*(.+)$/m)?.[1]?.trim();
+	if (md && !md.includes('|')) return md;
+
+	return 'minor';
 }
 
 /**
- * Update status/updated in either YAML frontmatter or markdown header fields.
+ * Update meta fields for board moves.
+ * YAML packs keep workflow `status:` (done / in_review / in_progress).
+ * Markdown packs use SDD status (`Draft | Accepted | Deprecated`) — map workflow
+ * moves to `Accepted` and never write board vocabulary into `**Status:**`.
  * @param {string} text
- * @param {string} status
+ * @param {string} boardStatus
  * @param {string} date
  */
-function patchSpecMeta(text, status, date) {
+function patchSpecMeta(text, boardStatus, date) {
 	let out = text;
 	if (/^status:/m.test(out)) {
-		out = out.replace(/^status:.*$/m, `status: ${status}`);
+		out = out.replace(/^status:.*$/m, `status: ${boardStatus}`);
 	} else if (/^- \*\*Status:\*\*/m.test(out)) {
-		out = out.replace(/^- \*\*Status:\*\*.*$/m, `- **Status:** ${status}`);
+		// Board move implies the Draft was Accepted; do not write done/in_progress here.
+		out = out.replace(/^- \*\*Status:\*\*.*$/m, `- **Status:** Accepted`);
 	}
 	if (/^updated:/m.test(out)) {
 		out = out.replace(/^updated:.*$/m, `updated: ${date}`);
@@ -89,7 +96,7 @@ fs.writeFileSync(path.join(specDir, 'spec.md'), specText);
 function stripItemRows(text) {
 	return text
 		.split('\n')
-		.filter((line) => !line.includes(`ITEM-${id}`))
+		.filter((line) => !line.includes(`ITEM-${id}.md`) && !line.includes(`| ITEM-${id} |`))
 		.join('\n');
 }
 

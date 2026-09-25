@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Nodes ar
 
 ## Links
 
-- Spec: [SPEC-032](../../specs/032-node-drag-position-edit/spec.md)
+- Spec: [032-node-drag-position-edit](../../specs/032-node-drag-position-edit/spec.md)
 - Related items: ITEM-004, ITEM-015, ITEM-033
-- Prior SPEC: [SPEC-004](../../specs/004-world-graph-render/spec.md)
+- Prior SPEC: [004-world-graph-render](../../specs/004-world-graph-render/spec.md)

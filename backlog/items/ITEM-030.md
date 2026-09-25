@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Collapse
 
 ## Links
 
-- Spec: [SPEC-030](../../specs/030-multi-node-groups-from-ui/spec.md)
+- Spec: [030-multi-node-groups-from-ui](../../specs/030-multi-node-groups-from-ui/spec.md)
 - Related items: ITEM-016, ITEM-029
-- Prior SPEC: [SPEC-016](../../specs/016-groups-containers/spec.md)
+- Prior SPEC: [016-groups-containers](../../specs/016-groups-containers/spec.md)

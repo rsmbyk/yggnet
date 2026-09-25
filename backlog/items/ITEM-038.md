@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Save/loa
 
 ## Links
 
-- Spec: [SPEC-038](../../specs/038-save-load-named-docs-palette-find/spec.md)
+- Spec: [038-save-load-named-docs-palette-find](../../specs/038-save-load-named-docs-palette-find/spec.md)
 - Related items: ITEM-021, ITEM-025
 - Prior SPECs: [SPEC-021](../../specs/021-save-load-graph/spec.md), [SPEC-025](../../specs/025-command-palette/spec.md)

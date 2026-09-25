@@ -34,5 +34,5 @@ Dual UI outer controller. World stays present while structure is edited here. Re
 
 ## Links
 
-- Spec: [SPEC-001](../../specs/001-manager-graph-crud/spec.md)
+- Spec: [001-manager-graph-crud](../../specs/001-manager-graph-crud/spec.md)
 - Related items: ITEM-002, ITEM-004, ITEM-005, ITEM-024.

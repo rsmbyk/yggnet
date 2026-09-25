@@ -32,5 +32,5 @@ Related: ITEM-004, ITEM-001.
 
 ## Links
 
-- Spec: [SPEC-015](../../specs/015-pin-anchor-nodes/spec.md)
+- Spec: [015-pin-anchor-nodes](../../specs/015-pin-anchor-nodes/spec.md)
 - Related items: ITEM-004, ITEM-001.

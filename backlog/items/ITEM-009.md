@@ -33,5 +33,5 @@ Worker-ready via AlgorithmRunner. Related: ITEM-006, ITEM-010, ITEM-012.
 
 ## Links
 
-- Spec: [SPEC-009](../../specs/009-algorithm-registry-picker/spec.md)
+- Spec: [009-algorithm-registry-picker](../../specs/009-algorithm-registry-picker/spec.md)
 - Related items: ITEM-006, ITEM-010, ITEM-012.

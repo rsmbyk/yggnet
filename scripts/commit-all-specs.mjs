@@ -1,10 +1,11 @@
 // NOTE: Historical helper. Spec dirs are now specs/NNN-slug/ (see resolve in board-move.mjs).
-if (!process.env.ALLOW_HISTORICAL_SCRIPTS) {
-	throw new Error('Historical one-shot — do not re-run. Specs live under specs/NNN-slug/.');
-}
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { basename, join } from 'node:path';
+
+if (!process.env.ALLOW_HISTORICAL_SCRIPTS) {
+	throw new Error('Historical one-shot — do not re-run. Specs live under specs/NNN-slug/.');
+}
 
 const date = '2026-07-30';
 
@@ -124,12 +125,14 @@ function specLink(id) {
 	return `[${basename(dir)}](../${posixRel(dir)}/spec.md)`;
 }
 
-function patchSpecMeta(text, status, when) {
+function patchSpecMeta(text, boardStatus, when) {
 	let out = text;
-	if (/^status:/m.test(out)) out = out.replace(/^status:.*$/m, `status: ${status}`);
-	else if (/^- \*\*Status:\*\*/m.test(out)) out = out.replace(/^- \*\*Status:\*\*.*$/m, `- **Status:** ${status}`);
+	if (/^status:/m.test(out)) out = out.replace(/^status:.*$/m, `status: ${boardStatus}`);
+	else if (/^- \*\*Status:\*\*/m.test(out))
+		out = out.replace(/^- \*\*Status:\*\*.*$/m, `- **Status:** Accepted`);
 	if (/^updated:/m.test(out)) out = out.replace(/^updated:.*$/m, `updated: ${when}`);
-	else if (/^- \*\*Updated:\*\*/m.test(out)) out = out.replace(/^- \*\*Updated:\*\*.*$/m, `- **Updated:** ${when}`);
+	else if (/^- \*\*Updated:\*\*/m.test(out))
+		out = out.replace(/^- \*\*Updated:\*\*.*$/m, `- **Updated:** ${when}`);
 	return out;
 }
 

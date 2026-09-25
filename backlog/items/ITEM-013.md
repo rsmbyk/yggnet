@@ -32,5 +32,5 @@ Related: ITEM-010, ITEM-012.
 
 ## Links
 
-- Spec: [SPEC-013](../../specs/013-compare-runs/spec.md)
+- Spec: [013-compare-runs](../../specs/013-compare-runs/spec.md)
 - Related items: ITEM-010, ITEM-012.

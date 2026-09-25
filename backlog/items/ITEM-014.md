@@ -33,5 +33,5 @@ Related: ITEM-010.
 
 ## Links
 
-- Spec: [SPEC-014](../../specs/014-annotate-algorithm-steps/spec.md)
+- Spec: [014-annotate-algorithm-steps](../../specs/014-annotate-algorithm-steps/spec.md)
 - Related items: ITEM-010.

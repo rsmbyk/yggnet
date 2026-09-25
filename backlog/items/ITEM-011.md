@@ -33,5 +33,5 @@ Related: ITEM-010, ITEM-001, ITEM-024.
 
 ## Links
 
-- Spec: [SPEC-011](../../specs/011-stale-run-invalidation/spec.md)
+- Spec: [011-stale-run-invalidation](../../specs/011-stale-run-invalidation/spec.md)
 - Related items: ITEM-010, ITEM-001, ITEM-024.

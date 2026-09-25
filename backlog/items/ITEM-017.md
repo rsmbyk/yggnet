@@ -33,5 +33,5 @@ Related: ITEM-004, ITEM-016, ITEM-025.
 
 ## Links
 
-- Spec: [SPEC-017](../../specs/017-filters-by-type-tag/spec.md)
+- Spec: [017-filters-by-type-tag](../../specs/017-filters-by-type-tag/spec.md)
 - Related items: ITEM-004, ITEM-016, ITEM-025.

@@ -33,5 +33,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-043](../../specs/043-labels-colors-edge-geometry/spec.md)
+- Spec: [043-labels-colors-edge-geometry](../../specs/043-labels-colors-edge-geometry/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

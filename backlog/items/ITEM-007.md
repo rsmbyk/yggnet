@@ -33,5 +33,5 @@ Separate from step-replay of algorithms. Related: ITEM-003, ITEM-006, ITEM-008.
 
 ## Links
 
-- Spec: [SPEC-007](../../specs/007-directions-guided-travel/spec.md)
+- Spec: [007-directions-guided-travel](../../specs/007-directions-guided-travel/spec.md)
 - Related items: ITEM-003, ITEM-006, ITEM-008.

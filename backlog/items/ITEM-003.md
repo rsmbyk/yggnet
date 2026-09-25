@@ -33,5 +33,5 @@ Not FPS/cockpit. Overview vs street is the same camera at different height. Rela
 
 ## Links
 
-- Spec: [SPEC-003](../../specs/003-explore-bird-s-eye-camera/spec.md)
+- Spec: [003-explore-bird-s-eye-camera](../../specs/003-explore-bird-s-eye-camera/spec.md)
 - Related items: ITEM-004, ITEM-007, ITEM-019, ITEM-020.

@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Model an
 
 ## Links
 
-- Spec: [SPEC-031](../../specs/031-directed-edge-visuals-in-world/spec.md)
+- Spec: [031-directed-edge-visuals-in-world](../../specs/031-directed-edge-visuals-in-world/spec.md)
 - Related items: ITEM-002, ITEM-004
 - Prior SPECs: [SPEC-002](../../specs/002-edge-weight-directed/spec.md), [SPEC-004](../../specs/004-world-graph-render/spec.md)

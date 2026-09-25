@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-039](../../specs/039-world-first-shell-hud/spec.md)
+- Spec: [039-world-first-shell-hud](../../specs/039-world-first-shell-hud/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

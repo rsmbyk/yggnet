@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-046](../../specs/046-manager-nodes-edges-list-ux/spec.md)
+- Spec: [046-manager-nodes-edges-list-ux](../../specs/046-manager-nodes-edges-list-ux/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

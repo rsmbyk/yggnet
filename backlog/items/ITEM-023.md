@@ -33,5 +33,5 @@ Related: ITEM-021; size limits later in SECURITY SPECs.
 
 ## Links
 
-- Spec: [SPEC-023](../../specs/023-import-export-json/spec.md)
+- Spec: [023-import-export-json](../../specs/023-import-export-json/spec.md)
 - Related items: ITEM-021; size limits later in SECURITY SPECs.

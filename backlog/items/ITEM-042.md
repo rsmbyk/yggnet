@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-042](../../specs/042-solid-nodes-pointer-intents/spec.md)
+- Spec: [042-solid-nodes-pointer-intents](../../specs/042-solid-nodes-pointer-intents/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

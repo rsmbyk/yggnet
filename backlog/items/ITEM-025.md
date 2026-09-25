@@ -33,5 +33,5 @@ Related: ITEM-005, ITEM-006, ITEM-009.
 
 ## Links
 
-- Spec: [SPEC-025](../../specs/025-command-palette/spec.md)
+- Spec: [025-command-palette](../../specs/025-command-palette/spec.md)
 - Related items: ITEM-005, ITEM-006, ITEM-009.

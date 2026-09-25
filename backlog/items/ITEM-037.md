@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Model ha
 
 ## Links
 
-- Spec: [SPEC-037](../../specs/037-attachments-on-nodes-and-edges/spec.md)
+- Spec: [037-attachments-on-nodes-and-edges](../../specs/037-attachments-on-nodes-and-edges/spec.md)
 - Related items: ITEM-026
-- Prior SPEC: [SPEC-026](../../specs/026-notes-and-attachments/spec.md)
+- Prior SPEC: [026-notes-and-attachments](../../specs/026-notes-and-attachments/spec.md)

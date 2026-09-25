@@ -1,9 +1,10 @@
 // NOTE: Historical helper. Spec dirs are now specs/NNN-slug/ (see resolve in board-move.mjs).
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
+import { basename, join } from 'node:path';
+
 if (!process.env.ALLOW_HISTORICAL_SCRIPTS) {
 	throw new Error('Historical one-shot — do not re-run. Specs live under specs/NNN-slug/.');
 }
-import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
-import { basename, join } from 'node:path';
 
 const date = '2026-07-30';
 

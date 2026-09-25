@@ -33,5 +33,5 @@ Related: ITEM-004, ITEM-017.
 
 ## Links
 
-- Spec: [SPEC-016](../../specs/016-groups-containers/spec.md)
+- Spec: [016-groups-containers](../../specs/016-groups-containers/spec.md)
 - Related items: ITEM-004, ITEM-017.

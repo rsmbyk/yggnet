@@ -33,5 +33,5 @@ Trace-first ADR. Related: ITEM-009, ITEM-011, ITEM-014.
 
 ## Links
 
-- Spec: [SPEC-010](../../specs/010-cached-traces-step-replay/spec.md)
+- Spec: [010-cached-traces-step-replay](../../specs/010-cached-traces-step-replay/spec.md)
 - Related items: ITEM-009, ITEM-011, ITEM-014.

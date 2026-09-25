@@ -32,5 +32,5 @@ Related: ITEM-001, ITEM-021.
 
 ## Links
 
-- Spec: [SPEC-027](../../specs/027-templates-random-graph/spec.md)
+- Spec: [027-templates-random-graph](../../specs/027-templates-random-graph/spec.md)
 - Related items: ITEM-001, ITEM-021.

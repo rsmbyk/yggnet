@@ -32,5 +32,5 @@ Related: ITEM-003, ITEM-004.
 
 ## Links
 
-- Spec: [SPEC-019](../../specs/019-lod-labels/spec.md)
+- Spec: [019-lod-labels](../../specs/019-lod-labels/spec.md)
 - Related items: ITEM-003, ITEM-004.

@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Compare 
 
 ## Links
 
-- Spec: [SPEC-034](../../specs/034-compare-algorithms-dual-view/spec.md)
+- Spec: [034-compare-algorithms-dual-view](../../specs/034-compare-algorithms-dual-view/spec.md)
 - Related items: ITEM-012, ITEM-035
-- Prior SPEC: [SPEC-012](../../specs/012-algo-compare/spec.md)
+- Prior SPEC: [012-algo-compare](../../specs/012-algo-compare/spec.md)

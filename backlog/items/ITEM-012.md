@@ -33,5 +33,5 @@ Related: ITEM-009, ITEM-013.
 
 ## Links
 
-- Spec: [SPEC-012](../../specs/012-algo-compare/spec.md)
+- Spec: [012-algo-compare](../../specs/012-algo-compare/spec.md)
 - Related items: ITEM-009, ITEM-013.

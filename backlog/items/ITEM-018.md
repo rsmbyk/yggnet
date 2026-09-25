@@ -33,5 +33,5 @@ Related: ITEM-006, ITEM-005.
 
 ## Links
 
-- Spec: [SPEC-018](../../specs/018-diff-two-nodes/spec.md)
+- Spec: [018-diff-two-nodes](../../specs/018-diff-two-nodes/spec.md)
 - Related items: ITEM-006, ITEM-005.

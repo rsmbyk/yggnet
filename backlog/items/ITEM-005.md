@@ -33,5 +33,5 @@ Domain logic under src/lib/graph; UI only calls it. Related: ITEM-001, ITEM-004,
 
 ## Links
 
-- Spec: [SPEC-005](../../specs/005-selection-sync/spec.md)
+- Spec: [005-selection-sync](../../specs/005-selection-sync/spec.md)
 - Related items: ITEM-001, ITEM-004, ITEM-025.

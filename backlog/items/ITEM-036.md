@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Annotate
 
 ## Links
 
-- Spec: [SPEC-036](../../specs/036-step-annotations-readback-playback/spec.md)
+- Spec: [036-step-annotations-readback-playback](../../specs/036-step-annotations-readback-playback/spec.md)
 - Related items: ITEM-010, ITEM-014
 - Prior SPECs: [SPEC-010](../../specs/010-cached-traces-step-replay/spec.md), [SPEC-014](../../specs/014-annotate-algorithm-steps/spec.md)

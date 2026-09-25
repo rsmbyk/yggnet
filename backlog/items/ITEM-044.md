@@ -34,5 +34,5 @@ Reference implementation lives on `vibe/session-20260730`. Characterization test
 
 ## Links
 
-- Spec: [SPEC-044](../../specs/044-in-world-selection-sheet-create/spec.md)
+- Spec: [044-in-world-selection-sheet-create](../../specs/044-in-world-selection-sheet-create/spec.md)
 - Related: vibe formalization ITEM-039…046; draft PR 16

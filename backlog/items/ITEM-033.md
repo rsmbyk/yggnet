@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Pin chec
 
 ## Links
 
-- Spec: [SPEC-033](../../specs/033-pin-respected-by-layout/spec.md)
+- Spec: [033-pin-respected-by-layout](../../specs/033-pin-respected-by-layout/spec.md)
 - Related items: ITEM-015, ITEM-032
-- Prior SPEC: [SPEC-015](../../specs/015-pin-anchor-nodes/spec.md)
+- Prior SPEC: [015-pin-anchor-nodes](../../specs/015-pin-anchor-nodes/spec.md)

@@ -33,5 +33,5 @@ Related: ITEM-001, ITEM-018.
 
 ## Links
 
-- Spec: [SPEC-026](../../specs/026-notes-and-attachments/spec.md)
+- Spec: [026-notes-and-attachments](../../specs/026-notes-and-attachments/spec.md)
 - Related items: ITEM-001, ITEM-018.
