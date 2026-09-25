@@ -9,7 +9,7 @@ created: 2026-09-26
 updated: 2026-09-26
 spec: specs/047-shared-tags
 branch: feat/047-shared-tags
-pr:
+pr: 22
 archived_at:
 archive_reason:
 bump: minor

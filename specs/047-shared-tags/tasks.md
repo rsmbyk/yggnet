@@ -15,11 +15,11 @@
 - [x] Fill Traceability in `./spec.md`
 - [x] Set `bump` on the ITEM and spec header (`minor`)
 - [x] If bump is not `none`: `VERSION`, changelog `## [X.Y.Z]`, and `release_version` in **this PR**
-- [ ] Update ITEM + [`backlog/board.md`](../../backlog/board.md) in **this PR** (In review while open)
-- [ ] Conventional Commit + draft PR linking `./spec.md`
+- [x] Update ITEM + [`backlog/board.md`](../../backlog/board.md) in **this PR** (In review while open)
+- [x] Conventional Commit + draft PR linking `./spec.md`
 
 ## Done when
 
 - [x] All acceptance scenarios in spec.md hold
 - [x] Tests named above are green
-- [ ] Board, tasks, and version (if any) are complete in this PR
+- [x] Board, tasks, and version (if any) are complete in this PR
