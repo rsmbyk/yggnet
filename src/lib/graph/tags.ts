@@ -77,17 +77,22 @@ export function renameTag(doc: GraphDocument, from: string, to: string): GraphDo
 	}
 	const rewrite = (tags: string[]) => normalizeTags(tags.map((t) => (t === from ? to : t)));
 
+	let changed = false;
 	const nodes = { ...doc.nodes };
 	for (const [id, node] of Object.entries(nodes)) {
-		if (!node.tags.includes(from)) continue;
-		nodes[id] = { ...node, tags: rewrite(node.tags) };
+		const tags = node.tags ?? [];
+		if (!tags.includes(from)) continue;
+		nodes[id] = { ...node, tags: rewrite(tags) };
+		changed = true;
 	}
 	const edges = { ...doc.edges };
 	for (const [id, edge] of Object.entries(edges)) {
 		const tags = edge.tags ?? [];
 		if (!tags.includes(from)) continue;
 		edges[id] = { ...edge, tags: rewrite(tags) };
+		changed = true;
 	}
+	if (!changed) return doc;
 	return {
 		...doc,
 		nodes,
@@ -103,8 +108,9 @@ export function deleteTag(doc: GraphDocument, tag: string): GraphDocument {
 	let changed = false;
 	const nodes = { ...doc.nodes };
 	for (const [id, node] of Object.entries(nodes)) {
-		if (!node.tags.includes(tag)) continue;
-		nodes[id] = { ...node, tags: strip(node.tags) };
+		const tags = node.tags ?? [];
+		if (!tags.includes(tag)) continue;
+		nodes[id] = { ...node, tags: strip(tags) };
 		changed = true;
 	}
 	const edges = { ...doc.edges };
