@@ -63,6 +63,15 @@ test('Nodes list search shows Nodes and Tags optgroups', async ({ page }) => {
 
 	await page.getByTestId('nodes-search-open').click();
 	await expect(page.getByTestId('nodes-search')).toBeVisible();
+	// Spec: with suggestions shown, both the Nodes and Tags sections appear.
+	await expect(page.getByTestId('nodes-search-group-nodes')).toBeVisible();
+	await expect(page.getByTestId('nodes-search-group-tags')).toBeVisible();
+	await expect(
+		page.locator('.list-search-results .list-search-option:not(.list-search-option--tag)').first()
+	).toBeVisible();
+	await expect(page.getByTestId('list-search-tag-shared')).toContainText('Tag');
+
+	// Typing narrows to matching suggestions; the shared tag stays reachable.
 	await page.getByTestId('nodes-search').fill('shared');
 	await expect(page.getByTestId('list-search-tag-shared')).toBeVisible();
 	await expect(page.getByTestId('list-search-tag-shared')).toContainText('Tag');
