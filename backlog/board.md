@@ -36,8 +36,8 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## Speccing
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
+| ID       | Title                         | Summary                                              | Type | Priority | Effort | Spec                                                                                                | Bump  | Updated    |
+| -------- | ----------------------------- | ---------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------------------------------- | ----- | ---------- |
 
 ## Ready
 
@@ -46,8 +46,12 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
+| ID       | Title                            | Summary                                                    | Type | Priority | Effort | Spec                                                                                    | Bump  | Branch                    | Updated    |
+| -------- | -------------------------------- | ---------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------------------- | ----- | ------------------------- | ---------- |
+| ITEM-050 | Tags tool interaction and polish | Rename guidance, card target, editor header, header search | fix  | P2       | S      | [050-tags-tool-interaction-and-polish](../specs/050-tag-rename-helper-guidance/spec.md) | patch | feat/050-tags-tool-polish | 2026-09-25 |
+| ITEM-051 | Expand Tags row click target     | Make all non-action card area open tag editor              | fix  | P2       | S      | [050-tags-tool-interaction-and-polish](../specs/050-tag-rename-helper-guidance/spec.md) | patch | feat/050-tags-tool-polish | 2026-09-25 |
+| ITEM-052 | Show tag label in editor header  | Identify the tag in its rename panel header                | fix  | P2       | S      | [050-tags-tool-interaction-and-polish](../specs/050-tag-rename-helper-guidance/spec.md) | patch | feat/050-tags-tool-polish | 2026-09-25 |
+| ITEM-053 | Move Tags search into header     | Put a properly styled Tags search field in the header      | fix  | P2       | S      | [050-tags-tool-interaction-and-polish](../specs/050-tag-rename-helper-guidance/spec.md) | patch | feat/050-tags-tool-polish | 2026-09-25 |
 
 ## In review
 

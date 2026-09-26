@@ -10,6 +10,12 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.31.1] - 2026-09-25
+
+### Fixed
+
+- Tags tool interactions and polish: tag syntax helper, full-row editor target, tag-specific editor header, and header search field.
+
 ## [0.31.0] - 2026-09-26
 
 ### Added

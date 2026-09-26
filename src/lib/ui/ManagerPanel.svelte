@@ -329,7 +329,7 @@
 		section === 'selection'
 			? selectionTitle
 			: section === 'tag-edit'
-				? 'Tag'
+				? (app.ui.editingTag ?? 'Tag')
 				: section === 'nodes'
 					? nodes.length > 0
 						? `Nodes (${nodes.length})`
@@ -354,7 +354,8 @@
 	const tagEditHelper = $derived.by(() => {
 		const original = tagEditOriginal ?? '';
 		const draft = tagEditDraft.trim();
-		if (!draft || draft === original) return { kind: 'neutral' as const, text: 'Same as original' };
+		if (!draft || draft === original)
+			return { kind: 'neutral' as const, text: 'Use letters, digits, and hyphens only' };
 		if (!isValidTag(draft))
 			return { kind: 'error' as const, text: 'Use letters, digits, and hyphens only' };
 		if (allDocumentTags.includes(draft))
@@ -669,22 +670,34 @@
 					Add node
 				</button>
 			{:else if section === 'tags'}
-				<button
-					type="button"
-					class="icon-btn"
-					data-testid="tags-focus-reset"
-					aria-label="Clear tag focus"
-					title="Clear focus"
-					disabled={!focusActive}
-					onclick={() => app.clearFocusTags()}
-				>
-					<svg viewBox="0 0 24 24" aria-hidden="true">
-						<path
-							fill="currentColor"
-							d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+				<div class="tags-header-controls">
+					<div class="tags-search-field" data-testid="tags-search-field">
+						<input
+							class="tags-tool-search"
+							type="search"
+							placeholder="Search tags…"
+							aria-label="Search tags"
+							data-testid="tags-search"
+							bind:value={tagsSearchQuery}
 						/>
-					</svg>
-				</button>
+					</div>
+					<button
+						type="button"
+						class="icon-btn"
+						data-testid="tags-focus-reset"
+						aria-label="Clear tag focus"
+						title="Clear focus"
+						disabled={!focusActive}
+						onclick={() => app.clearFocusTags()}
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path
+								fill="currentColor"
+								d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+							/>
+						</svg>
+					</button>
+				</div>
 			{/if}
 		</div>
 		{#if listSearchActive}
@@ -1834,14 +1847,6 @@
 
 		{#if section === 'tags'}
 			<section class="block" data-testid="tags-section">
-				<input
-					class="list-search-input tags-tool-search"
-					type="search"
-					placeholder="Search tags…"
-					aria-label="Search tags"
-					data-testid="tags-search"
-					bind:value={tagsSearchQuery}
-				/>
 				{#if tagsListFiltered.length === 0}
 					<p class="hint muted" data-testid="tags-empty">
 						{tagUsageList.length === 0 ? 'No tags yet' : 'No tags match'}
@@ -2548,26 +2553,6 @@
 	.list-search-field.open .list-search-chevron {
 		transform: rotate(180deg);
 		color: var(--yg-accent);
-	}
-
-	.list-search-input {
-		flex: 1 1 4rem;
-		min-width: 3rem;
-		border: none;
-		background: transparent;
-		color: var(--yg-fg);
-		font: inherit;
-		font-size: 0.8rem;
-		font-weight: 400;
-		padding: 0.15rem 0.1rem;
-	}
-
-	.list-search-input:focus {
-		outline: none;
-	}
-
-	.list-search-input::-webkit-search-cancel-button {
-		appearance: none;
 	}
 
 	.list-search-chip {
@@ -3484,9 +3469,43 @@
 		color: var(--yg-fg);
 	}
 
+	.tags-header-controls {
+		display: flex;
+		flex: 1 1 auto;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.35rem;
+		min-width: 0;
+	}
+
+	.tags-search-field {
+		flex: 1 1 auto;
+		min-width: 0;
+		padding: 0.25rem 0.4rem;
+		border: 1px solid var(--yg-border);
+		border-radius: var(--yg-radius-control);
+		background: var(--yg-chip);
+	}
+
+	.tags-search-field:focus-within {
+		border-color: color-mix(in srgb, var(--yg-accent) 55%, var(--yg-border));
+		background: rgba(255, 255, 255, 0.72);
+	}
+
 	.tags-tool-search {
 		width: 100%;
-		margin-bottom: 0.55rem;
+		min-width: 0;
+		padding: 0;
+		border: 0;
+		outline: 0;
+		background: transparent;
+		color: var(--yg-fg);
+		font: inherit;
+		font-size: 0.8rem;
+	}
+
+	.tags-tool-search:focus-visible {
+		outline: none;
 	}
 
 	.tags-tool-list {
@@ -3499,9 +3518,11 @@
 	}
 
 	.tags-tool-row {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
+		min-height: 5rem;
 		padding: 0.55rem 0.55rem 0.45rem;
 		border: 1px solid var(--yg-border);
 		border-radius: var(--yg-radius-control);
@@ -3526,13 +3547,18 @@
 	}
 
 	.tags-tool-row-main {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
+		justify-content: flex-start;
 		gap: 0.15rem;
 		width: 100%;
-		padding: 0;
+		padding: 0.55rem 0.55rem 0.45rem;
 		border: none;
+		border-radius: inherit;
 		background: transparent;
 		text-align: left;
 		cursor: pointer;
@@ -3545,6 +3571,18 @@
 		background: transparent;
 	}
 
+	.tags-tool-row-main:focus {
+		outline: 2px solid color-mix(in srgb, var(--yg-accent) 65%, transparent);
+		outline-offset: 1px;
+	}
+
+	.tags-tool-label,
+	.tags-tool-meta {
+		position: relative;
+		z-index: 1;
+		pointer-events: none;
+	}
+
 	.tags-tool-label {
 		font-weight: 600;
 		font-size: 0.9rem;
@@ -3555,6 +3593,8 @@
 	}
 
 	.tags-tool-actions {
+		position: relative;
+		z-index: 2;
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: 0.35rem;
@@ -3569,8 +3609,8 @@
 		color: #b54a4a;
 	}
 
-	.field-helper {
-		margin: 0.25rem 0 0.65rem;
+	[data-testid='tag-edit-section'] .field-helper {
+		margin: 0.25rem 0;
 		font-size: 0.75rem;
 		color: var(--yg-muted);
 	}

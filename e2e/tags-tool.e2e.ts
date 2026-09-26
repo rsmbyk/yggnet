@@ -28,18 +28,51 @@ test('Tags tool lists usage, focuses, renames, and deletes', async ({ page }) =>
 	await expect(page.getByTestId('tags-row-beta')).toBeVisible();
 	await expect(page.getByTestId('tags-focus-reset')).toBeDisabled();
 
+	const tagsSearch = page.getByTestId('tags-search');
+	await expect(tagsSearch.locator('xpath=ancestor::header')).toHaveClass(/manager__header/);
+	const tagsSearchField = page.getByTestId('tags-search-field');
+	await expect(tagsSearchField).toHaveCSS('border-top-width', '1px');
+	await expect(tagsSearchField).toHaveCSS('padding-top', '4px');
+	const idleSearchBorder = await tagsSearchField.evaluate(
+		(element) => getComputedStyle(element).borderTopColor
+	);
+	await tagsSearch.fill('beta');
+	await expect(page.getByTestId('tags-row-beta')).toBeVisible();
+	await expect(page.getByTestId('tags-row-alpha')).toHaveCount(0);
+	await tagsSearch.clear();
+	await tagsSearch.focus();
+	await expect(tagsSearchField).toHaveCSS('border-top-width', '1px');
+	await expect
+		.poll(() => tagsSearchField.evaluate((element) => getComputedStyle(element).borderTopColor))
+		.not.toBe(idleSearchBorder);
+
 	await page.getByTestId('tags-toggle-focus-alpha').click();
 	await expect(page.getByTestId('tags-row-alpha')).toHaveClass(/focused/);
 	await expect(page.getByTestId('tags-row-beta')).toHaveClass(/dimmed/);
 	await expect(page.getByTestId('tags-focus-reset')).toBeEnabled();
+	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
 
 	await page.getByTestId('tags-show-only-beta').click();
 	await expect(page.getByTestId('tags-row-beta')).toHaveClass(/focused/);
 	await expect(page.getByTestId('tags-row-alpha')).toHaveClass(/dimmed/);
+	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
 
-	await page.getByTestId('tags-row-open-alpha').click();
+	await page.getByTestId('tags-row-open-beta').focus();
+	await expect(page.getByTestId('tags-row-open-beta')).toBeFocused();
+	await expect(page.getByTestId('tags-row-open-beta')).toHaveCSS('outline-style', 'solid');
+	await page.keyboard.press('Enter');
+	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('beta');
+	await openTool(page, 'tags');
+
+	await page.getByTestId('tags-row-alpha').click({ position: { x: 2, y: 2 } });
 	await expect(page.getByTestId('tag-edit-panel')).toBeVisible();
+	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('alpha');
+	await expect(page.getByTestId('tag-edit-helper')).toContainText(/letters, digits, and hyphens/i);
+	await expect(page.getByTestId('tag-edit-helper')).not.toContainText(/same as original/i);
+	await expect(page.getByTestId('tag-edit-helper')).toHaveCSS('margin-top', '4px');
+	await expect(page.getByTestId('tag-edit-helper')).toHaveCSS('margin-bottom', '4px');
 	await page.getByTestId('tag-edit-input').fill('beta');
+	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('alpha');
 	await expect(page.getByTestId('tag-edit-helper')).toContainText(/already exists/i);
 	await expect(page.getByTestId('tag-edit-save')).toBeDisabled();
 
@@ -48,8 +81,12 @@ test('Tags tool lists usage, focuses, renames, and deletes', async ({ page }) =>
 	await page.getByTestId('tag-edit-save').click();
 	await expect(page.getByTestId('tags-row-gamma')).toBeVisible();
 	await expect(page.getByTestId('tags-row-alpha')).toHaveCount(0);
-
+	await page.getByTestId('tags-row-open-gamma').click();
+	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('gamma');
+	await page.keyboard.press('Escape');
+	await openTool(page, 'tags');
 	await page.getByTestId('tags-delete-beta').click();
+	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
 	await expect(page.getByTestId('tags-row-beta')).toHaveCount(0);
 	await expect(page.getByTestId('tags-focus-reset')).toBeDisabled();
 });
