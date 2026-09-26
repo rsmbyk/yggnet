@@ -10,6 +10,12 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.38.0] - 2026-09-26
+
+### Added
+
+- Remove Diff tool; SPEC-018 deprecated.
+
 ## [0.37.0] - 2026-09-26
 
 ### Added

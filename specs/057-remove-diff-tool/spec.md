@@ -1,7 +1,7 @@
 # Spec: Remove Diff tool
 
 - **ID:** 057
-- **Status:** Accepted
+- **Status:** Done
 - **Item:** ITEM-065
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
