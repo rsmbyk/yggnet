@@ -46,8 +46,9 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
+| ID       | Title                                                | Summary                                                | Type | Priority | Effort | Spec                                                                          | Bump  | Branch                            | Updated    |
+| -------- | ---------------------------------------------------- | ------------------------------------------------------ | ---- | -------- | ------ | ----------------------------------------------------------------------------- | ----- | --------------------------------- | ---------- |
+| ITEM-058 | Illustrated empty states for Nodes/Edges/Tags/Groups | Icon + title + hint empty/no-match views, Groups in v1 | feat | P3       | M      | [053-illustrated-empty-states](../specs/053-illustrated-empty-states/spec.md) | minor | feat/053-illustrated-empty-states | 2026-09-26 |
 
 ## In review
 

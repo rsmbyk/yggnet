@@ -10,6 +10,12 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.35.0] - 2026-09-26
+
+### Added
+
+- Illustrated empty states (icon, title, hint) for the Nodes, Edges, Tags, and Groups tools, with distinct filter-no-match views.
+
 ## [0.34.0] - 2026-09-26
 
 ### Added
