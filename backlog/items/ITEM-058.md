@@ -1,6 +1,6 @@
 ---
 id: ITEM-058
-status: in_progress
+status: in_review
 title: 'Illustrated empty states for Nodes/Edges/Tags/Groups'
 type: feat
 priority: P3
@@ -9,7 +9,7 @@ created: 2026-09-26
 updated: 2026-09-26
 spec: specs/053-illustrated-empty-states
 branch: feat/053-illustrated-empty-states
-pr:
+pr: 28
 archived_at:
 archive_reason:
 bump: minor
