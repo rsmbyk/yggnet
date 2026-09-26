@@ -1,6 +1,6 @@
 ---
 id: ITEM-064
-status: in_review
+status: done
 title: 'Remove Groups; Group button auto-tags Group-N'
 type: feat
 priority: P1
@@ -13,7 +13,7 @@ pr: 31
 archived_at:
 archive_reason:
 bump: major
-release_version:
+release_version: 0.37.0
 ---
 
 # ITEM-064: Remove Groups; Group button auto-tags Group-N
