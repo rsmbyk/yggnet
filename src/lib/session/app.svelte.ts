@@ -61,11 +61,11 @@ import {
 	type RunStore,
 	type SelectionState
 } from '$lib/graph';
+import { autoTagGroup } from '$lib/graph/ops/ops';
 import { WORLD } from '$lib/world/world-config';
 import { createNodePadding, findFreePosition } from '$lib/world/node-physics';
 import type { GraphPath } from '$lib/graph/algorithms/adjacency';
 import { nextOpenTool, type ToolId } from '$lib/ui/tool-ids';
-import { SvelteSet } from 'svelte/reactivity';
 import { listSaveSlotNames, saveSlotExists, saveSlotStorageKey } from './save-slots';
 import { busyHold, waitForBusyOverlayPaint } from './work-busy';
 
@@ -236,7 +236,7 @@ class AppStore {
 			z: WORLD.camera.defaultPosition[2] - WORLD.camera.defaultTarget.z
 		}
 	});
-	groupsCollapsed = new SvelteSet<string>();
+
 	namedSlots = $state<string[]>([]);
 	/** Last Generate type + options; lives here so the panel remount does not reset it. */
 	generateForm = $state(defaultGenerateForm());
@@ -323,7 +323,7 @@ class AppStore {
 		if (clearRuns) this.runStore = createRunStore();
 		this.directions = emptyDirections();
 		this.overlay = createEmptyOverlay();
-		this.groupsCollapsed.clear();
+
 		this.analyze = { ...emptyAnalyze(), algorithmId: this.analyze.algorithmId };
 		// The incoming document may not contain the focused or edited tags.
 		this.setFocusTags([]);
@@ -621,43 +621,19 @@ class AppStore {
 		this.updateNode(id, { tags: normalizeTags(tags) });
 	}
 
-	groupSelected(groupId?: string): string | null {
+	/** Group selected nodes by auto-tagging them with the next Group-N tag. */
+	groupSelected(): string | null {
 		const ids = [...this.selection.nodeIds];
 		if (ids.length < 2) {
 			this.statusMessage =
 				ids.length === 0 ? 'Select nodes to group' : 'Select at least 2 nodes to group';
 			return null;
 		}
-		const gid = groupId ?? crypto.randomUUID();
 		const before = cloneDocument(this.document);
-		this.mutate((d) => {
-			let next = d;
-			for (const id of ids) {
-				next = updateNode(next, id, { groupId: gid });
-			}
-			return { doc: next, undo: () => cloneDocument(before) };
-		});
-		this.statusMessage = `Grouped ${ids.length} nodes`;
-		return gid;
-	}
-
-	ungroup(groupId: string): void {
-		const before = cloneDocument(this.document);
-		this.mutate((d) => {
-			let next = d;
-			for (const node of Object.values(d.nodes)) {
-				if (node.groupId === groupId) {
-					next = updateNode(next, node.id, { groupId: undefined });
-				}
-			}
-			return { doc: next, undo: () => cloneDocument(before) };
-		});
-		this.groupsCollapsed.delete(groupId);
-	}
-
-	toggleCollapseGroup(groupId: string): void {
-		if (this.groupsCollapsed.has(groupId)) this.groupsCollapsed.delete(groupId);
-		else this.groupsCollapsed.add(groupId);
+		const { doc: next, tag } = autoTagGroup(this.document, ids);
+		this.mutate(() => ({ doc: next, undo: () => cloneDocument(before) }));
+		this.statusMessage = `Grouped ${ids.length} nodes as ${tag}`;
+		return tag;
 	}
 
 	setFocusTags(tags: string[]): void {

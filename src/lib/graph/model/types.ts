@@ -43,4 +43,6 @@ export interface GraphDocument {
 	edges: Record<EdgeId, GraphEdge>;
 	createdAt: string;
 	updatedAt: string;
+	/** Monotonic counter for auto-generated Group-N tags. Never decreases. */
+	groupTagCounter: number;
 }

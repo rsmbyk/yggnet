@@ -151,3 +151,52 @@ export function removeEdge(doc: GraphDocument, id: EdgeId): GraphDocument {
 	const { [id]: _removed, ...edges } = doc.edges;
 	return touch({ ...doc, edges });
 }
+
+/**
+ * Find the next available Group-N tag name by incrementing the document counter
+ * until we find a name not currently used in the document.
+ * The counter is persisted on the document and never decreases.
+ */
+export function nextGroupTagName(doc: GraphDocument): string {
+	const existing = new Set<string>();
+	for (const node of Object.values(doc.nodes)) {
+		for (const tag of node.tags) {
+			if (tag.startsWith('Group-')) existing.add(tag);
+		}
+	}
+	for (const edge of Object.values(doc.edges)) {
+		for (const tag of edge.tags) {
+			if (tag.startsWith('Group-')) existing.add(tag);
+		}
+	}
+	let n = doc.groupTagCounter + 1;
+	while (existing.has(`Group-${n}`)) n += 1;
+	return `Group-${n}`;
+}
+
+/**
+ * Apply the next Group-N tag to a set of node IDs, incrementing the document counter.
+ * Returns the updated document and the tag name that was applied.
+ */
+export function autoTagGroup(
+	doc: GraphDocument,
+	nodeIds: NodeId[]
+): { doc: GraphDocument; tag: string } {
+	if (nodeIds.length === 0) return { doc, tag: '' };
+	const tag = nextGroupTagName(doc);
+	const updatedNodes: typeof doc.nodes = { ...doc.nodes };
+	for (const id of nodeIds) {
+		const node = doc.nodes[id];
+		if (!node) continue;
+		const tags = node.tags.includes(tag) ? node.tags : [...node.tags, tag];
+		updatedNodes[id] = { ...node, tags };
+	}
+	return {
+		doc: touch({
+			...doc,
+			nodes: updatedNodes,
+			groupTagCounter: Math.max(doc.groupTagCounter, parseInt(tag.replace('Group-', ''), 10))
+		}),
+		tag
+	};
+}
