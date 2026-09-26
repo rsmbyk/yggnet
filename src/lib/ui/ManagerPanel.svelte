@@ -56,6 +56,16 @@
 	const EDGE_SORT_LOCALE = 'en';
 	const EDGE_SORT_OPTIONS: Intl.CollatorOptions = { sensitivity: 'base' };
 
+	/** Empty-view icons, kept in sync with the matching Toolbar `iconPath` entries. */
+	const EMPTY_VIEW_ICONS = {
+		nodes:
+			'M12 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM5 14a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm14 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6z',
+		edges: 'M7 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm10 8a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM8.2 9h7.6v2H8.2z',
+		tags: 'M3 5h18l-7 8v5l-4 2v-7L3 5z',
+		groups:
+			'M7 12a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm10 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM12 20a3 3 0 1 1 0-6 3 3 0 0 1 0 6z'
+	} as const;
+
 	let tagsSearchQuery = $state('');
 	let tagEditDraft = $state('');
 	let stepNote = $state('');
@@ -662,6 +672,17 @@
 			? 'tag-edit-panel'
 			: 'yggnet-manager'}
 >
+	{#snippet emptyView(icon: string, title: string, hint: string, testid: string)}
+		<div class="empty-view" data-testid={testid}>
+			<span class="empty-view-icon" aria-hidden="true">
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<path fill="currentColor" d={icon} />
+				</svg>
+			</span>
+			<p class="empty-view-title">{title}</p>
+			<p class="empty-view-hint muted">{hint}</p>
+		</div>
+	{/snippet}
 	<header class="manager__header" bind:this={headerEl}>
 		<div class="manager__header-row">
 			<p class="brand">{brandTitle}</p>
@@ -1783,91 +1804,139 @@
 
 		{#if section === 'nodes'}
 			<section class="block node-panel" data-testid="nodes-section">
-				<ul class="list node-list" data-testid="node-list">
-					{#each filteredNodes as node (node.id)}
-						<li class="node-row">
-							<button
-								type="button"
-								class="list-item"
-								class:selected={selectedIds.has(node.id)}
-								data-testid={`node-item-${node.id}`}
-								onclick={(e) => onSelectNode(node.id, e)}
-							>
-								<span class="node-list-label">{node.label}</span>
-							</button>
-							<button
-								type="button"
-								class="icon-btn danger"
-								data-testid={`delete-node-row-${node.id}`}
-								aria-label={`Delete ${node.label}`}
-								onclick={(e) => {
-									e.stopPropagation();
-									app.removeNode(node.id);
-								}}
-							>
-								<svg viewBox="0 0 24 24" aria-hidden="true">
-									<path
-										fill="currentColor"
-										d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-									/>
-								</svg>
-							</button>
-						</li>
-					{/each}
-				</ul>
+				{#if filteredNodes.length === 0}
+					{#if nodes.length === 0}
+						{@render emptyView(
+							EMPTY_VIEW_ICONS.nodes,
+							'No nodes yet',
+							'Add a node to get started.',
+							'nodes-empty'
+						)}
+					{:else}
+						{@render emptyView(
+							EMPTY_VIEW_ICONS.nodes,
+							'No matching nodes',
+							'Adjust the filter to see more.',
+							'nodes-no-match'
+						)}
+					{/if}
+				{:else}
+					<ul class="list node-list" data-testid="node-list">
+						{#each filteredNodes as node (node.id)}
+							<li class="node-row">
+								<button
+									type="button"
+									class="list-item"
+									class:selected={selectedIds.has(node.id)}
+									data-testid={`node-item-${node.id}`}
+									onclick={(e) => onSelectNode(node.id, e)}
+								>
+									<span class="node-list-label">{node.label}</span>
+								</button>
+								<button
+									type="button"
+									class="icon-btn danger"
+									data-testid={`delete-node-row-${node.id}`}
+									aria-label={`Delete ${node.label}`}
+									onclick={(e) => {
+										e.stopPropagation();
+										app.removeNode(node.id);
+									}}
+								>
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path
+											fill="currentColor"
+											d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+										/>
+									</svg>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			</section>
 		{/if}
 
 		{#if section === 'edges'}
 			<section class="block edge-panel" data-testid="edges-section">
-				<ul class="list edge-list" data-testid="edge-list">
-					{#each sortedFilteredEdges as edge (edge.id)}
-						<li class="node-row">
-							<button
-								type="button"
-								class="list-item edge-select"
-								class:selected={selectedEdgeIds.has(edge.id)}
-								data-testid={`edge-item-${edge.id}`}
-								onclick={(e) => onSelectEdge(edge.id, e)}
-							>
-								<span class="node-list-label">
-									{app.document.nodes[edge.from]?.label ?? '?'}
-									{edge.directed ? '→' : '—'}
-									{app.document.nodes[edge.to]?.label ?? '?'}
-								</span>
-								{#if edge.weight !== 1}
-									<span class="edge-weight-pill">{edge.weight}</span>
-								{/if}
-							</button>
-							<button
-								type="button"
-								class="icon-btn danger"
-								data-testid={`delete-edge-${edge.id}`}
-								aria-label="Delete edge"
-								onclick={(e) => {
-									e.stopPropagation();
-									app.removeEdge(edge.id);
-								}}
-							>
-								<svg viewBox="0 0 24 24" aria-hidden="true">
-									<path
-										fill="currentColor"
-										d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-									/>
-								</svg>
-							</button>
-						</li>
-					{/each}
-				</ul>
+				{#if sortedFilteredEdges.length === 0}
+					{#if edges.length === 0}
+						{@render emptyView(
+							EMPTY_VIEW_ICONS.edges,
+							'No edges yet',
+							'Connect two nodes to create an edge.',
+							'edges-empty'
+						)}
+					{:else}
+						{@render emptyView(
+							EMPTY_VIEW_ICONS.edges,
+							'No matching edges',
+							'Adjust the filter to see more.',
+							'edges-no-match'
+						)}
+					{/if}
+				{:else}
+					<ul class="list edge-list" data-testid="edge-list">
+						{#each sortedFilteredEdges as edge (edge.id)}
+							<li class="node-row">
+								<button
+									type="button"
+									class="list-item edge-select"
+									class:selected={selectedEdgeIds.has(edge.id)}
+									data-testid={`edge-item-${edge.id}`}
+									onclick={(e) => onSelectEdge(edge.id, e)}
+								>
+									<span class="node-list-label">
+										{app.document.nodes[edge.from]?.label ?? '?'}
+										{edge.directed ? '→' : '—'}
+										{app.document.nodes[edge.to]?.label ?? '?'}
+									</span>
+									{#if edge.weight !== 1}
+										<span class="edge-weight-pill">{edge.weight}</span>
+									{/if}
+								</button>
+								<button
+									type="button"
+									class="icon-btn danger"
+									data-testid={`delete-edge-${edge.id}`}
+									aria-label="Delete edge"
+									onclick={(e) => {
+										e.stopPropagation();
+										app.removeEdge(edge.id);
+									}}
+								>
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path
+											fill="currentColor"
+											d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+										/>
+									</svg>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			</section>
 		{/if}
 
 		{#if section === 'tags'}
 			<section class="block" data-testid="tags-section">
 				{#if tagsListFiltered.length === 0}
-					<p class="hint muted" data-testid="tags-empty">
-						{tagUsageList.length === 0 ? 'No tags yet' : 'No tags match'}
-					</p>
+					{#if tagUsageList.length === 0}
+						{@render emptyView(
+							EMPTY_VIEW_ICONS.tags,
+							'No tags yet',
+							'Tag nodes or edges to build a shared vocabulary.',
+							'tags-empty'
+						)}
+					{:else}
+						{@render emptyView(
+							EMPTY_VIEW_ICONS.tags,
+							'No tags match',
+							'Try a different search.',
+							'tags-no-match'
+						)}
+					{/if}
 				{:else}
 					<ul class="list tags-tool-list" data-testid="tags-list">
 						{#each tagsListFiltered as row (row.tag)}
@@ -2009,7 +2078,12 @@
 						</div>
 					{/each}
 				{:else}
-					<p class="hint">No groups yet.</p>
+					{@render emptyView(
+						EMPTY_VIEW_ICONS.groups,
+						'No groups yet.',
+						'Select nodes and group them to organize the graph.',
+						'groups-empty'
+					)}
 				{/if}
 			</section>
 		{/if}
@@ -3530,6 +3604,43 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
+	}
+
+	.empty-view {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 1rem 0.75rem;
+		text-align: center;
+	}
+
+	.empty-view-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: 999px;
+		background: var(--yg-accent-soft);
+		color: var(--yg-accent);
+	}
+
+	.empty-view-icon svg {
+		width: 1.25rem;
+		height: 1.25rem;
+	}
+
+	.empty-view-title {
+		margin: 0;
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--yg-fg);
+	}
+
+	.empty-view-hint {
+		margin: 0;
+		font-size: 0.75rem;
 	}
 
 	.tags-tool-row {

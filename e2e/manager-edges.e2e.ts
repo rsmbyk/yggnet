@@ -10,6 +10,7 @@ function rowLabels(page: import('@playwright/test').Page) {
 
 test('Edges tool exposes TagPicker-style search and edge list', async ({ page }) => {
 	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
 	await openTool(page, 'edges');
 	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
 	await expect(page.getByTestId('edges-section')).toBeVisible();
