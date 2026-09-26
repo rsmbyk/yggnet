@@ -10,6 +10,12 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.37.0] - 2026-09-26
+
+### Added
+
+- Remove Groups tool; Nodes Group button auto-tags Group-N with monotonic counter.
+
 ## [0.36.0] - 2026-09-26
 
 ### Added
