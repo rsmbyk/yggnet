@@ -1,6 +1,6 @@
 ---
 id: ITEM-063
-status: in_review
+status: done
 title: 'Nodes keyword filter pill'
 type: feat
 priority: P2
