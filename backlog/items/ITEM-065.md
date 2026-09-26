@@ -1,6 +1,6 @@
 ---
 id: ITEM-065
-status: in_progress
+status: in_review
 title: 'Remove Diff tool'
 type: feat
 priority: P2
@@ -9,7 +9,7 @@ created: 2026-09-26
 updated: 2026-09-26
 spec: specs/057-remove-diff-tool
 branch: feat/057-remove-diff-tool
-pr:
+pr: 32
 archived_at:
 archive_reason:
 bump: minor
