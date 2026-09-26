@@ -1,6 +1,6 @@
 ---
 id: ITEM-056
-status: in_review
+status: done
 title: 'Clear edge selection when leaving Edges tool'
 type: feat
 priority: P2
