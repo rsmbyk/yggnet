@@ -1,6 +1,6 @@
 ---
 id: ITEM-048
-status: in_review
+status: done
 title: 'Sort Edges list by endpoints'
 type: feat
 priority: P2
@@ -13,14 +13,14 @@ pr: 23
 archived_at:
 archive_reason:
 bump: minor
-release_version: 0.31.0
+release_version: 0.32.0
 ---
 
 # ITEM-048: Sort Edges list by endpoints
 
 ## Summary
 
-Make the Edges tool easier to scan by sorting rows by the current left (`from`) node label and then the right (`to`) node label.
+Make the Edges tool easier to scan by sorting rows by the current `from` node label and then the `to` node label.
 
 ## Notes
 

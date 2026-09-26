@@ -51,9 +51,8 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In review
 
-| ID       | Title                        | Summary                                              | Type | Priority | Effort | Spec                                                                                  | Bump  | PR  | Updated    |
-| -------- | ---------------------------- | ---------------------------------------------------- | ---- | -------- | ------ | ------------------------------------------------------------------------------------- | ----- | --- | ---------- |
-| ITEM-048 | Sort Edges list by endpoints | Sort edge rows by left endpoint, then right endpoint | feat | P2       | S      | [048-sort-edges-list-by-endpoints](../specs/048-sort-edges-list-by-endpoints/spec.md) | minor | 23  | 2026-09-26 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
 
 ## Done
 
@@ -72,3 +71,4 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 | ITEM-051 | Expand Tags row click target      | Make all non-action card area open tag editor                   | fix  | P2       | S      | [050-tag-rename-helper-guidance](../specs/050-tag-rename-helper-guidance/spec.md)           | patch | 2026-09-26 | 2026-09-26 |
 | ITEM-052 | Show tag label in editor header   | Identify the tag in its rename panel header                     | fix  | P2       | S      | [050-tag-rename-helper-guidance](../specs/050-tag-rename-helper-guidance/spec.md)           | patch | 2026-09-26 | 2026-09-26 |
 | ITEM-053 | Move Tags search into header      | Put a properly styled Tags search field in the header           | fix  | P2       | S      | [050-tag-rename-helper-guidance](../specs/050-tag-rename-helper-guidance/spec.md)           | patch | 2026-09-26 | 2026-09-26 |
+| ITEM-048 | Sort Edges list by endpoints      | Sort edge rows by `from` endpoint, then `to` endpoint           | feat | P2       | S      | [048-sort-edges-list-by-endpoints](../specs/048-sort-edges-list-by-endpoints/spec.md)       | minor | 2026-09-26 | 2026-09-26 |

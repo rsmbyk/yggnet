@@ -4,10 +4,10 @@ item: ITEM-048
 type: feat
 feature_area: manager
 bump: minor
-status: Accepted
+status: done
 title: 'Sort Edges list by endpoints'
 created: 2026-09-25
-updated: 2026-09-25
+updated: 2026-09-26
 ---
 
 # SPEC-048: Sort Edges list by endpoints
