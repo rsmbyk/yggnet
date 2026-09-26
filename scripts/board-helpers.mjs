@@ -32,8 +32,12 @@ export function readBump(text) {
  */
 export function patchSpecMeta(text, boardStatus, date) {
 	let out = text;
+	// Board moves never write board vocabulary (done / in_progress) into the
+	// spec: after Accept the spec status stays Accepted (see docs/PROCESS.md).
+	// `boardStatus` is intentionally unused here.
+	void boardStatus;
 	if (/^status:/m.test(out)) {
-		out = out.replace(/^status:.*$/m, `status: ${boardStatus}`);
+		out = out.replace(/^status:.*$/m, `status: Accepted`);
 	} else if (/^- \*\*Status:\*\*/m.test(out)) {
 		out = out.replace(/^- \*\*Status:\*\*.*$/m, `- **Status:** Accepted`);
 	}

@@ -29,7 +29,8 @@ describe('board-helpers', () => {
 
 		const yaml = `---\nstatus: ready\nupdated: 2026-01-01\n---\n`;
 		const patched = patchSpecMeta(yaml, 'done', '2026-09-25');
-		expect(patched).toContain('status: done');
+		expect(patched).toContain('status: Accepted');
+		expect(patched).not.toContain('status: done');
 		expect(patched).toContain('updated: 2026-09-25');
 	});
 

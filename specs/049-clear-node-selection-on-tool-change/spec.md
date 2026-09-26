@@ -7,7 +7,7 @@ bump: minor
 status: Accepted
 title: 'Clear node selection when leaving Nodes tool'
 created: 2026-09-25
-updated: 2026-09-25
+updated: 2026-09-26
 ---
 
 # SPEC-049: Clear node selection when leaving Nodes tool
