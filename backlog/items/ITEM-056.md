@@ -1,6 +1,6 @@
 ---
 id: ITEM-056
-status: in_progress
+status: in_review
 title: 'Clear edge selection when leaving Edges tool'
 type: feat
 priority: P2
@@ -9,7 +9,7 @@ created: 2026-09-26
 updated: 2026-09-26
 spec: specs/052-clear-edge-selection-on-tool-change
 branch: feat/052-clear-edge-selection-on-tool-change
-pr:
+pr: 27
 archived_at:
 archive_reason:
 bump: minor
