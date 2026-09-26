@@ -46,14 +46,14 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID       | Title                     | Summary                                                                | Type | Priority | Effort | Spec                                                                  | Bump  | Branch                        | Updated    |
-| -------- | ------------------------- | ---------------------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------- | ----- | ----------------------------- | ---------- |
-| ITEM-063 | Nodes keyword filter pill | Single keyword pill filters labels by substring; tags-only suggestions | feat | P2       | M      | [055-nodes-keyword-filter](../specs/055-nodes-keyword-filter/spec.md) | minor | feat/055-nodes-keyword-filter | 2026-09-26 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
 
 ## In review
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
+| ID       | Title                     | Summary                                                                | Type | Priority | Effort | Spec                                                                  | Bump  | PR  | Updated    |
+| -------- | ------------------------- | ---------------------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------- | ----- | --- | ---------- |
+| ITEM-063 | Nodes keyword filter pill | Single keyword pill filters labels by substring; tags-only suggestions | feat | P2       | M      | [055-nodes-keyword-filter](../specs/055-nodes-keyword-filter/spec.md) | minor | 30  | 2026-09-26 |
 
 ## Done
 

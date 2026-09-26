@@ -1,6 +1,6 @@
 ---
 id: ITEM-063
-status: in_progress
+status: in_review
 title: 'Nodes keyword filter pill'
 type: feat
 priority: P2
@@ -9,7 +9,7 @@ created: 2026-09-26
 updated: 2026-09-26
 spec: specs/055-nodes-keyword-filter
 branch: feat/055-nodes-keyword-filter
-pr:
+pr: 30
 archived_at:
 archive_reason:
 bump: minor
