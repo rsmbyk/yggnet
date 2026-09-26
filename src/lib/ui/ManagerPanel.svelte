@@ -221,6 +221,21 @@
 	const filteredEdges = $derived(
 		edges.filter((e) => edgeMatchesListFilter(e, edgeSearchNodeIds, edgeSearchTags))
 	);
+	const sortedFilteredEdges = $derived(
+		[...filteredEdges].sort((a, b) => {
+			const aFrom = app.document.nodes[a.from]?.label ?? '?';
+			const bFrom = app.document.nodes[b.from]?.label ?? '?';
+			const fromOrder = aFrom.localeCompare(bFrom, undefined, { sensitivity: 'base' });
+			if (fromOrder !== 0) return fromOrder;
+
+			const aTo = app.document.nodes[a.to]?.label ?? '?';
+			const bTo = app.document.nodes[b.to]?.label ?? '?';
+			const toOrder = aTo.localeCompare(bTo, undefined, { sensitivity: 'base' });
+			if (toOrder !== 0) return toOrder;
+
+			return a.from.localeCompare(b.from) || a.to.localeCompare(b.to) || a.id.localeCompare(b.id);
+		})
+	);
 	const nodePickerOptions = $derived(nodes.map((n) => ({ id: n.id, label: n.label })));
 	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
@@ -1642,7 +1657,7 @@
 		{#if section === 'edges'}
 			<section class="block edge-panel" data-testid="edges-section">
 				<ul class="list edge-list" data-testid="edge-list">
-					{#each filteredEdges as edge (edge.id)}
+					{#each sortedFilteredEdges as edge (edge.id)}
 						<li class="node-row">
 							<button
 								type="button"
