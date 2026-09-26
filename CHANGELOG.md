@@ -10,6 +10,12 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.34.0] - 2026-09-26
+
+### Added
+
+- Clear edge selection when closing or switching away from the Edges tool.
+
 ## [0.33.1] - 2026-09-26
 
 ### Fixed

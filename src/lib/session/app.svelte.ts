@@ -1109,6 +1109,7 @@ class AppStore {
 
 	setOpenTool(id: ToolId | null): void {
 		const leavingNodes = this.ui.openTool === 'nodes' && id !== 'nodes';
+		const leavingEdges = this.ui.openTool === 'edges' && id !== 'edges';
 		this.ui = {
 			...this.ui,
 			openTool: id,
@@ -1122,6 +1123,12 @@ class AppStore {
 			// is unchanged by leaving Nodes.
 			for (const nodeId of this.selection.nodeIds) {
 				this.selection = removeNodeFromSelection(this.selection, nodeId);
+			}
+			this.setMultiSelectMode(false);
+		} else if (leavingEdges && this.selection.edgeIds.length > 0) {
+			// Edge selection only; node selection is unchanged by leaving Edges.
+			for (const edgeId of this.selection.edgeIds) {
+				this.selection = removeEdgeFromSelection(this.selection, edgeId);
 			}
 			this.setMultiSelectMode(false);
 		}
