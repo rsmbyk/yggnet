@@ -261,14 +261,8 @@
 	);
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
 	const dimOthers = $derived(app.overlay.dimOthers && app.overlay.kind !== 'none');
-	const collapsedGroups = $derived(app.groupsCollapsed);
 
-	const visibleNodes = $derived(
-		nodes.filter((n) => {
-			if (n.groupId && collapsedGroups.has(n.groupId)) return false;
-			return true;
-		})
-	);
+	const visibleNodes = $derived(nodes);
 
 	let shownNodes = $state(0);
 	let shownEdges = $state(0);
@@ -306,26 +300,6 @@
 			cancelAnimationFrame(raf);
 			clearTimeout(timer);
 		};
-	});
-
-	const groupProxies = $derived.by(() => {
-		const map: Record<string, { id: string; x: number; y: number; z: number; count: number }> = {};
-		for (const n of nodes) {
-			if (!n.groupId || !collapsedGroups.has(n.groupId)) continue;
-			const cur = map[n.groupId] ?? { id: n.groupId, x: 0, y: 0, z: 0, count: 0 };
-			cur.x += n.position.x;
-			cur.y += n.position.y;
-			cur.z += n.position.z;
-			cur.count += 1;
-			map[n.groupId] = cur;
-		}
-		return Object.values(map).map((g) => ({
-			id: g.id,
-			x: g.x / g.count,
-			y: g.y / g.count,
-			z: g.z / g.count,
-			count: g.count
-		}));
 	});
 
 	function nodeOpacity(id: string): number {
@@ -1909,27 +1883,6 @@
 				color="#d7dde5"
 				outlineWidth={0.02}
 				outlineColor="#1c242e"
-				oncreate={makeLabelPassThrough}
-			/>
-		</Billboard>
-	{/if}
-{/each}
-
-{#each groupProxies as g (g.id)}
-	{@const gPos = { x: g.x, y: g.y, z: g.z }}
-	<T.Mesh position={[g.x, g.y, g.z]}>
-		<T.SphereGeometry args={[0.9, 20, 20]} />
-		<T.MeshStandardMaterial color="#8a7a5a" roughness={0.5} />
-	</T.Mesh>
-	{#if labelVisibleAt(gPos)}
-		<Billboard position={[g.x, g.y, g.z]}>
-			<Text
-				position={[0, 1.3, 0]}
-				text={`Group (${g.count})`}
-				fontSize={0.4}
-				anchorX="center"
-				anchorY="middle"
-				color="#e6dcc8"
 				oncreate={makeLabelPassThrough}
 			/>
 		</Billboard>

@@ -11,7 +11,7 @@ async function addTagOnSelectedNode(page: import('@playwright/test').Page, tag: 
 	await expect(sheet.getByTestId('node-tags-search')).toHaveCount(0);
 }
 
-test('SPEC-053 illustrated empty states for Nodes, Edges, Tags, Groups', async ({ page }) => {
+test('SPEC-053 illustrated empty states for Nodes, Edges, Tags', async ({ page }) => {
 	await page.goto('/');
 
 	// Truly-empty states on a fresh document.
@@ -29,11 +29,6 @@ test('SPEC-053 illustrated empty states for Nodes, Edges, Tags, Groups', async (
 	await expect(page.getByTestId('tags-empty')).toBeVisible();
 	await expect(page.getByTestId('tags-empty').locator('svg')).toBeVisible();
 	await expect(page.getByTestId('tags-empty')).toContainText(/no tags yet/i);
-
-	await openTool(page, 'groups');
-	await expect(page.getByTestId('groups-empty')).toBeVisible();
-	await expect(page.getByTestId('groups-empty').locator('svg')).toBeVisible();
-	await expect(page.getByTestId('groups-empty')).toContainText(/no groups yet/i);
 });
 
 test('SPEC-053 empty views distinguish filter-no-match states', async ({ page }) => {

@@ -4,7 +4,6 @@ export const TOOL_IDS = [
 	'nodes',
 	'edges',
 	'tags',
-	'groups',
 	'pathfinder',
 	'analyze',
 	'diff'
@@ -18,7 +17,6 @@ export const TOOLS: { id: ToolId; label: string }[] = [
 	{ id: 'nodes', label: 'Nodes' },
 	{ id: 'edges', label: 'Edges' },
 	{ id: 'tags', label: 'Tags' },
-	{ id: 'groups', label: 'Groups' },
 	{ id: 'pathfinder', label: 'Pathfinder' },
 	{ id: 'analyze', label: 'Analyze' },
 	{ id: 'diff', label: 'Diff' }

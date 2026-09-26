@@ -61,9 +61,7 @@
 		nodes:
 			'M12 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM5 14a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm14 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6z',
 		edges: 'M7 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm10 8a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM8.2 9h7.6v2H8.2z',
-		tags: 'M3 5h18l-7 8v5l-4 2v-7L3 5z',
-		groups:
-			'M7 12a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm10 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM12 20a3 3 0 1 1 0-6 3 3 0 0 1 0 6z'
+		tags: 'M3 5h18l-7 8v5l-4 2v-7L3 5z'
 	} as const;
 
 	let tagsSearchQuery = $state('');
@@ -406,12 +404,6 @@
 		}
 		lastPrimaryNodeId = id;
 	});
-
-	const groupIds = $derived([
-		...new Set(
-			nodes.map((n) => n.groupId).filter((g): g is string => typeof g === 'string' && g.length > 0)
-		)
-	]);
 
 	const diffA = $derived(app.ui.diffIds[0] ? app.document.nodes[app.ui.diffIds[0]] : null);
 	const diffB = $derived(app.ui.diffIds[1] ? app.document.nodes[app.ui.diffIds[1]] : null);
@@ -2056,42 +2048,6 @@
 						Save
 					</button>
 				</div>
-			</section>
-		{/if}
-
-		{#if section === 'groups'}
-			<section class="block" data-testid="groups-section">
-				<h2>Groups</h2>
-				{#if groupIds.length}
-					{#each groupIds as gid (gid)}
-						<div class="row" data-testid={`group-row-${gid}`}>
-							<span class="muted">{gid.slice(0, 8)}…</span>
-							{#if app.groupsCollapsed.has(gid)}
-								<button
-									type="button"
-									data-testid={`expand-group-${gid}`}
-									onclick={() => app.toggleCollapseGroup(gid)}>Expand</button
-								>
-							{:else}
-								<button
-									type="button"
-									data-testid={`collapse-group-${gid}`}
-									onclick={() => app.toggleCollapseGroup(gid)}>Collapse</button
-								>
-							{/if}
-							<button type="button" data-testid={`ungroup-${gid}`} onclick={() => app.ungroup(gid)}
-								>Ungroup</button
-							>
-						</div>
-					{/each}
-				{:else}
-					{@render emptyView(
-						EMPTY_VIEW_ICONS.groups,
-						'No groups yet.',
-						'Select nodes and group them to organize the graph.',
-						'groups-empty'
-					)}
-				{/if}
 			</section>
 		{/if}
 

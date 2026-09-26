@@ -41,15 +41,18 @@ export function parseDocument(json: string): GraphDocument {
 	if (typeof doc.createdAt !== 'string' || typeof doc.updatedAt !== 'string') {
 		throw new Error('Invalid GraphDocument: missing timestamps');
 	}
+	// groupTagCounter is optional for backward compatibility (defaults to 0)
+	const counter = typeof doc.groupTagCounter === 'number' ? doc.groupTagCounter : 0;
 	const nodes = doc.nodes as Record<string, GraphNode>;
 	for (const node of Object.values(nodes)) {
 		node.tags = normalizeTags(Array.isArray(node.tags) ? node.tags : []);
+		// Legacy groupId is ignored (groups removed); field is silently dropped
 	}
 	const edges = doc.edges as Record<string, GraphEdge>;
 	for (const edge of Object.values(edges)) {
 		edge.tags = normalizeTags(Array.isArray(edge.tags) ? edge.tags : []);
 	}
-	return value as GraphDocument;
+	return { ...(value as GraphDocument), groupTagCounter: counter };
 }
 
 /** Deep clone via structured clone (JSON-safe domain data). */

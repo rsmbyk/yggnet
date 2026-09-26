@@ -9,7 +9,8 @@ export function createEmptyDocument(title = 'Untitled'): GraphDocument {
 		nodes: {},
 		edges: {},
 		createdAt: now,
-		updatedAt: now
+		updatedAt: now,
+		groupTagCounter: 0
 	};
 }
 

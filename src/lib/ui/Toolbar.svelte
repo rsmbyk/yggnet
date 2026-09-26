@@ -14,8 +14,7 @@
 				return 'M7 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm10 8a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM8.2 9h7.6v2H8.2z';
 			case 'tags':
 				return 'M3 5h18l-7 8v5l-4 2v-7L3 5z';
-			case 'groups':
-				return 'M7 12a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm10 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM12 20a3 3 0 1 1 0-6 3 3 0 0 1 0 6z';
+
 			case 'pathfinder':
 				return 'M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6z';
 			case 'analyze':
