@@ -10,6 +10,12 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.32.0] - 2026-09-26
+
+### Added
+
+- Sort the Edges tool list by source and destination node labels.
+
 ## [0.31.1] - 2026-09-25
 
 ### Fixed

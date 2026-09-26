@@ -9,7 +9,7 @@ items:
 type: fix
 feature_area: manager
 bump: patch
-status: done
+status: Accepted
 title: 'Tags tool interaction and polish'
 created: 2026-09-25
 updated: 2026-09-26

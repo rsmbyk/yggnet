@@ -4,7 +4,7 @@ item: ITEM-047
 type: feat
 feature_area: manager
 bump: minor
-status: done
+status: Accepted
 title: 'Shared tags + Tags tool'
 created: 2026-09-26
 updated: 2026-09-26
