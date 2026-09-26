@@ -1,6 +1,6 @@
 ---
 id: ITEM-058
-status: in_review
+status: done
 title: 'Illustrated empty states for Nodes/Edges/Tags/Groups'
 type: feat
 priority: P3
