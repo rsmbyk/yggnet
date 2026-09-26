@@ -673,36 +673,38 @@
 					Add node
 				</button>
 			{:else if section === 'tags'}
-				<div class="tags-header-controls">
-					<div class="tags-search-field" data-testid="tags-search-field">
-						<input
-							class="tags-tool-search"
-							type="search"
-							placeholder="Search tags…"
-							aria-label="Search tags"
-							data-testid="tags-search"
-							bind:value={tagsSearchQuery}
+				<button
+					type="button"
+					class="icon-btn"
+					data-testid="tags-focus-reset"
+					aria-label="Clear tag focus"
+					title="Clear focus"
+					disabled={!focusActive}
+					onclick={() => app.clearFocusTags()}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path
+							fill="currentColor"
+							d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
 						/>
-					</div>
-					<button
-						type="button"
-						class="icon-btn"
-						data-testid="tags-focus-reset"
-						aria-label="Clear tag focus"
-						title="Clear focus"
-						disabled={!focusActive}
-						onclick={() => app.clearFocusTags()}
-					>
-						<svg viewBox="0 0 24 24" aria-hidden="true">
-							<path
-								fill="currentColor"
-								d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
-							/>
-						</svg>
-					</button>
-				</div>
+					</svg>
+				</button>
 			{/if}
 		</div>
+		{#if section === 'tags'}
+			<div class="tags-search-row">
+				<div class="tags-search-field" data-testid="tags-search-field">
+					<input
+						class="tags-tool-search"
+						type="search"
+						placeholder="Search tags…"
+						aria-label="Search tags"
+						data-testid="tags-search"
+						bind:value={tagsSearchQuery}
+					/>
+				</div>
+			</div>
+		{/if}
 		{#if listSearchActive}
 			<div class="list-search" bind:this={listSearchRootEl}>
 				{#if section === 'edges'}
@@ -2501,6 +2503,8 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.5rem;
+		/* Reserve the Add-node button height so Nodes/Edges filters align. */
+		min-height: 2rem;
 	}
 
 	.list-search {
@@ -3484,13 +3488,9 @@
 		color: var(--yg-fg);
 	}
 
-	.tags-header-controls {
+	.tags-search-row {
 		display: flex;
-		flex: 1 1 auto;
-		align-items: center;
-		justify-content: flex-end;
-		gap: 0.35rem;
-		min-width: 0;
+		margin-top: 0.4rem;
 	}
 
 	.tags-search-field {
@@ -3538,7 +3538,7 @@
 		flex-direction: column;
 		gap: 0.35rem;
 		min-height: 5rem;
-		padding: 0.55rem 0.55rem 0.45rem;
+		padding: 0;
 		border: 1px solid var(--yg-border);
 		border-radius: var(--yg-radius-control);
 		background: var(--yg-chip);
@@ -3562,18 +3562,15 @@
 	}
 
 	.tags-tool-row-main {
-		position: absolute;
-		inset: 0;
-		z-index: 0;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
 		justify-content: flex-start;
 		gap: 0.15rem;
 		width: 100%;
-		padding: 0.55rem 0.55rem 0.45rem;
+		padding: 0.55rem 0.55rem 0;
 		border: none;
-		border-radius: inherit;
+		border-radius: var(--yg-radius-control) var(--yg-radius-control) 0 0;
 		background: transparent;
 		text-align: left;
 		cursor: pointer;
@@ -3608,11 +3605,10 @@
 	}
 
 	.tags-tool-actions {
-		position: relative;
-		z-index: 2;
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: 0.35rem;
+		padding: 0 0.55rem 0.45rem;
 	}
 
 	.tags-tool-actions .icon-btn {
@@ -3624,8 +3620,12 @@
 		color: #b54a4a;
 	}
 
+	[data-testid='tag-edit-section'] .selection-sheet-body {
+		gap: 0.25rem;
+	}
+
 	[data-testid='tag-edit-section'] .field-helper {
-		margin: 0.25rem 0;
+		margin: 0.125rem 0;
 		font-size: 0.75rem;
 		color: var(--yg-muted);
 	}
@@ -3635,6 +3635,6 @@
 	}
 
 	.field-helper.success {
-		color: #2f9e8a;
+		color: #1e7a64;
 	}
 </style>
