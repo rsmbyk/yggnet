@@ -52,6 +52,10 @@
 
 	let { section }: { section: PanelSection } = $props();
 
+	/** Edge row order: explicit locale so it does not follow the host's ICU data. */
+	const EDGE_SORT_LOCALE = 'en';
+	const EDGE_SORT_OPTIONS: Intl.CollatorOptions = { sensitivity: 'base' };
+
 	let tagsSearchQuery = $state('');
 	let tagEditDraft = $state('');
 	let stepNote = $state('');
@@ -239,12 +243,13 @@
 		[...filteredEdges].sort((a, b) => {
 			const aFrom = app.document.nodes[a.from]?.label ?? '?';
 			const bFrom = app.document.nodes[b.from]?.label ?? '?';
-			const fromOrder = aFrom.localeCompare(bFrom, undefined, { sensitivity: 'base' });
+			// Pin the locale so row order does not vary with the host's ICU data.
+			const fromOrder = aFrom.localeCompare(bFrom, EDGE_SORT_LOCALE, EDGE_SORT_OPTIONS);
 			if (fromOrder !== 0) return fromOrder;
 
 			const aTo = app.document.nodes[a.to]?.label ?? '?';
 			const bTo = app.document.nodes[b.to]?.label ?? '?';
-			const toOrder = aTo.localeCompare(bTo, undefined, { sensitivity: 'base' });
+			const toOrder = aTo.localeCompare(bTo, EDGE_SORT_LOCALE, EDGE_SORT_OPTIONS);
 			if (toOrder !== 0) return toOrder;
 
 			return a.from.localeCompare(b.from) || a.to.localeCompare(b.to) || a.id.localeCompare(b.id);
