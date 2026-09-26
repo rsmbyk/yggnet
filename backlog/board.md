@@ -33,7 +33,6 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 | ID       | Title                              | Summary                                                     | Type | Priority | Effort | Spec                                                                      | Updated    |
 | -------- | ---------------------------------- | ----------------------------------------------------------- | ---- | -------- | ------ | ------------------------------------------------------------------------- | ---------- |
-| ITEM-065 | Remove Diff tool                   | Drop Diff tool/state/E2E; deprecate SPEC-018                | feat | P2       | S      | [057-remove-diff-tool](../specs/057-remove-diff-tool/spec.md)             | 2026-09-26 |
 | ITEM-066 | Real transparency for dimmed edges | Split-bucket transparent instanced edges instead of bg-lerp | fix  | P3       | M      | [058-real-edge-transparency](../specs/058-real-edge-transparency/spec.md) | 2026-09-26 |
 
 ## Speccing
@@ -53,8 +52,9 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In review
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
+| ID       | Title            | Summary                                      | Type | Priority | Effort | Spec                                                          | Bump  | PR  | Updated    |
+| -------- | ---------------- | -------------------------------------------- | ---- | -------- | ------ | ------------------------------------------------------------- | ----- | --- | ---------- |
+| ITEM-065 | Remove Diff tool | Drop Diff tool/state/E2E; deprecate SPEC-018 | feat | P2       | S      | [057-remove-diff-tool](../specs/057-remove-diff-tool/spec.md) | minor | 32  | 2026-09-26 |
 
 ## Done
 
