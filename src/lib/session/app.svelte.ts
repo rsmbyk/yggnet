@@ -1108,6 +1108,7 @@ class AppStore {
 	}
 
 	setOpenTool(id: ToolId | null): void {
+		const leavingNodes = this.ui.openTool === 'nodes' && id !== 'nodes';
 		this.ui = {
 			...this.ui,
 			openTool: id,
@@ -1116,6 +1117,14 @@ class AppStore {
 			editingTag: id === 'tags' ? this.ui.editingTag : null
 		};
 		if (id === null) this.clearAllSelection();
+		else if (leavingNodes && this.selection.nodeIds.length > 0) {
+			// Node selection only; edge selection (and its sticky multi-select)
+			// is unchanged by leaving Nodes.
+			for (const nodeId of this.selection.nodeIds) {
+				this.selection = removeNodeFromSelection(this.selection, nodeId);
+			}
+			this.setMultiSelectMode(false);
+		}
 	}
 
 	setToolsPanelExpanded(expanded: boolean): void {

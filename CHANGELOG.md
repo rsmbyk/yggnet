@@ -10,6 +10,12 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.33.0] - 2026-09-26
+
+### Added
+
+- Clear node selection when closing or switching away from the Nodes tool.
+
 ## [0.32.0] - 2026-09-26
 
 ### Added

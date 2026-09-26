@@ -23,3 +23,32 @@ test('ctrl-click multi-selects nodes in manager', async ({ page }) => {
 	await expect(page.getByTestId('selection-count')).toHaveText(/2 selected/);
 	await expect(page.getByTestId('group-multi')).toBeVisible();
 });
+
+test('switching away from Nodes clears single and multiple node selections', async ({ page }) => {
+	await page.goto('/');
+	await openTool(page, 'nodes');
+	await page.getByTestId('add-node').click();
+	await page.getByTestId('add-node').click();
+
+	const items = page.getByTestId('node-list').locator('button.list-item');
+	await items.nth(0).click();
+	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
+	await openTool(page, 'edges');
+	await openTool(page, 'nodes');
+	await expect(page.getByTestId('world-node-sheet')).toHaveCount(0);
+
+	await items.nth(0).click();
+	await items.nth(1).click({ modifiers: ['ControlOrMeta'] });
+	await expect(page.getByTestId('selection-count')).toHaveText(/2 selected/);
+	await openTool(page, 'edges');
+	await openTool(page, 'nodes');
+	await expect(page.getByTestId('world-node-sheet')).toHaveCount(0);
+
+	await items.nth(0).click();
+	await items.nth(1).click({ modifiers: ['ControlOrMeta'] });
+	await expect(page.getByTestId('selection-count')).toHaveText(/2 selected/);
+	await page.getByTestId('tool-nodes').click();
+	await openTool(page, 'nodes');
+	await expect(page.getByTestId('selection-count')).toHaveCount(0);
+	await expect(page.getByTestId('world-node-sheet')).toHaveCount(0);
+});
