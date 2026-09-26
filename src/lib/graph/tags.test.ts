@@ -146,6 +146,29 @@ describe('renameTag / deleteTag', () => {
 		expect(renameTag(doc, 'x', 'y').nodes[a.nodeId].tags).toEqual(['y']);
 		expect(deleteTag(doc, 'x').nodes[a.nodeId].tags).toEqual([]);
 	});
+
+	it('rename and delete tolerate missing node.tags', () => {
+		let doc = createEmptyDocument();
+		const a = addNode(doc, { tags: ['keep'] });
+		doc = a.doc;
+		doc = {
+			...doc,
+			nodes: {
+				...doc.nodes,
+				[a.nodeId]: { ...doc.nodes[a.nodeId], tags: undefined as unknown as string[] }
+			}
+		};
+		expect(renameTag(doc, 'keep', 'renamed').nodes[a.nodeId].tags).toBeUndefined();
+		expect(deleteTag(doc, 'keep').nodes[a.nodeId].tags).toBeUndefined();
+	});
+
+	it('renameTag is a no-op when the source tag is absent', () => {
+		let doc = createEmptyDocument();
+		doc = addNode(doc, { tags: ['keep'] }).doc;
+		const before = doc.updatedAt;
+		expect(renameTag(doc, 'missing', 'other')).toBe(doc);
+		expect(doc.updatedAt).toBe(before);
+	});
 });
 
 describe('entityPassesFocus', () => {

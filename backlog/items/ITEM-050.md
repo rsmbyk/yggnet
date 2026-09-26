@@ -1,6 +1,6 @@
 ---
 id: ITEM-050
-status: in_review
+status: done
 title: 'Tags tool interaction and polish'
 type: fix
 priority: P2
@@ -38,5 +38,5 @@ Polish related Tags-tool interactions: explain valid tag syntax, tighten rename-
 
 ## Links
 
-- Spec: [050-tags-tool-interaction-and-polish](../../specs/050-tag-rename-helper-guidance/spec.md)
+- Spec: [050-tag-rename-helper-guidance](../../specs/050-tag-rename-helper-guidance/spec.md)
 - Related: ITEM-047, ITEM-051, ITEM-052, ITEM-053

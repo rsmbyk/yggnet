@@ -1,6 +1,6 @@
 ---
 id: ITEM-047
-status: in_review
+status: done
 title: 'Shared tags + Tags tool'
 type: feat
 priority: P1

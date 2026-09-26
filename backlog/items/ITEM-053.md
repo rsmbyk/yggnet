@@ -1,6 +1,6 @@
 ---
 id: ITEM-053
-status: in_review
+status: done
 title: 'Move Tags search into header'
 type: fix
 priority: P2
@@ -35,5 +35,5 @@ Move the Tags tool search input into the header and style it as a proper field, 
 
 ## Links
 
-- Spec: [050-tags-tool-interaction-and-polish](../../specs/050-tag-rename-helper-guidance/spec.md)
+- Spec: [050-tag-rename-helper-guidance](../../specs/050-tag-rename-helper-guidance/spec.md)
 - Related: ITEM-047, ITEM-050

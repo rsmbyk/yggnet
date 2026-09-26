@@ -1,6 +1,6 @@
 ---
 id: ITEM-051
-status: in_review
+status: done
 title: 'Expand Tags row click target'
 type: fix
 priority: P2
@@ -34,5 +34,5 @@ Make the full tag row/card easier to activate by opening its editor when the use
 
 ## Links
 
-- Spec: [050-tags-tool-interaction-and-polish](../../specs/050-tag-rename-helper-guidance/spec.md)
+- Spec: [050-tag-rename-helper-guidance](../../specs/050-tag-rename-helper-guidance/spec.md)
 - Related: ITEM-047, ITEM-050

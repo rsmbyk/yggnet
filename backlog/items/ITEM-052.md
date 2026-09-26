@@ -1,6 +1,6 @@
 ---
 id: ITEM-052
-status: in_review
+status: done
 title: 'Show tag label in editor header'
 type: fix
 priority: P2
@@ -35,5 +35,5 @@ Replace the generic “Tag” header in the tag rename panel with the tag's curr
 
 ## Links
 
-- Spec: [050-tags-tool-interaction-and-polish](../../specs/050-tag-rename-helper-guidance/spec.md)
+- Spec: [050-tag-rename-helper-guidance](../../specs/050-tag-rename-helper-guidance/spec.md)
 - Related: ITEM-047, ITEM-050

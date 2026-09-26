@@ -9,10 +9,10 @@ items:
 type: fix
 feature_area: manager
 bump: patch
-status: Accepted
+status: done
 title: 'Tags tool interaction and polish'
 created: 2026-09-25
-updated: 2026-09-25
+updated: 2026-09-26
 ---
 
 # SPEC-050: Tags tool interaction and polish
