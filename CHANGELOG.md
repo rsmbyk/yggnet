@@ -10,11 +10,25 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
-## [0.31.0] - 2026-09-25
+## [0.32.0] - 2026-09-26
 
 ### Added
 
 - Sort the Edges tool list by source and destination node labels.
+
+## [0.31.1] - 2026-09-25
+
+### Fixed
+
+- Tags tool interactions and polish: tag syntax helper, full-row editor target, tag-specific editor header, and header search field.
+
+## [0.31.0] - 2026-09-26
+
+### Added
+
+- Shared node/edge tag vocabulary with alphanumeric-hyphen validation (silent strip).
+- Tags tool (replaces Filters): usage-sorted list, focus emphasize/dim, rename companion, cascade delete.
+- Nodes list search Nodes|Tags optgroups; TagPicker shared suggestions and clearer empty copy.
 
 ## [0.30.0] - 2026-07-30
 

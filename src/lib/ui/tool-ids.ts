@@ -3,7 +3,7 @@ export const TOOL_IDS = [
 	'generate',
 	'nodes',
 	'edges',
-	'filters',
+	'tags',
 	'groups',
 	'pathfinder',
 	'analyze',
@@ -17,14 +17,14 @@ export const TOOLS: { id: ToolId; label: string }[] = [
 	{ id: 'generate', label: 'Generate' },
 	{ id: 'nodes', label: 'Nodes' },
 	{ id: 'edges', label: 'Edges' },
-	{ id: 'filters', label: 'Filters' },
+	{ id: 'tags', label: 'Tags' },
 	{ id: 'groups', label: 'Groups' },
 	{ id: 'pathfinder', label: 'Pathfinder' },
 	{ id: 'analyze', label: 'Analyze' },
 	{ id: 'diff', label: 'Diff' }
 ];
 
-export type PanelSection = ToolId | 'selection';
+export type PanelSection = ToolId | 'selection' | 'tag-edit';
 
 export function toolLabel(id: ToolId): string {
 	return TOOLS.find((t) => t.id === id)?.label ?? id;
@@ -52,4 +52,9 @@ export function nodesCompanionOpen(openTool: ToolId | null, nodeCount: number): 
 /** Edge details companion — sits to the right of the Edges tool when one edge is selected. */
 export function edgesCompanionOpen(openTool: ToolId | null, edgeCount: number): boolean {
 	return openTool === 'edges' && edgeCount === 1;
+}
+
+/** Tag rename companion — sits to the right of the Tags tool when a row is open for edit. */
+export function tagsCompanionOpen(openTool: ToolId | null, editingTag: string | null): boolean {
+	return openTool === 'tags' && editingTag !== null;
 }

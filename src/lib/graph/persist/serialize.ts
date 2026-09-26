@@ -1,4 +1,5 @@
-import type { GraphDocument } from '../model/types';
+import type { GraphDocument, GraphEdge, GraphNode } from '../model/types';
+import { normalizeTags } from '../tags';
 
 /** Serialize a document to JSON text. */
 export function serializeDocument(doc: GraphDocument): string {
@@ -8,6 +9,7 @@ export function serializeDocument(doc: GraphDocument): string {
 /**
  * Parse and validate a GraphDocument.
  * Requires `schemaVersion === 1`; throws on invalid JSON or schema.
+ * Invalid tags are silently stripped.
  */
 export function parseDocument(json: string): GraphDocument {
 	let value: unknown;
@@ -39,9 +41,13 @@ export function parseDocument(json: string): GraphDocument {
 	if (typeof doc.createdAt !== 'string' || typeof doc.updatedAt !== 'string') {
 		throw new Error('Invalid GraphDocument: missing timestamps');
 	}
-	const edges = doc.edges as Record<string, Record<string, unknown>>;
+	const nodes = doc.nodes as Record<string, GraphNode>;
+	for (const node of Object.values(nodes)) {
+		node.tags = normalizeTags(Array.isArray(node.tags) ? node.tags : []);
+	}
+	const edges = doc.edges as Record<string, GraphEdge>;
 	for (const edge of Object.values(edges)) {
-		if (!Array.isArray(edge.tags)) edge.tags = [];
+		edge.tags = normalizeTags(Array.isArray(edge.tags) ? edge.tags : []);
 	}
 	return value as GraphDocument;
 }

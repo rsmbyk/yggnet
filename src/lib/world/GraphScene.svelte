@@ -266,9 +266,6 @@
 	const visibleNodes = $derived(
 		nodes.filter((n) => {
 			if (n.groupId && collapsedGroups.has(n.groupId)) return false;
-			if (app.filters.hideFiltered && app.filters.tags.length > 0 && !app.nodePassesFilter(n.id)) {
-				return false;
-			}
 			return true;
 		})
 	);
@@ -447,9 +444,6 @@
 
 	function edgeIsHidden(from: string, to: string): boolean {
 		if (!app.document.nodes[from] || !app.document.nodes[to]) return true;
-		if (app.filters.hideFiltered && app.filters.tags.length > 0) {
-			return !app.nodePassesFilter(from) || !app.nodePassesFilter(to);
-		}
 		return false;
 	}
 

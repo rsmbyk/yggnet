@@ -1,22 +1,21 @@
-import type { GraphNode } from '../model/types';
+import type { GraphNode, NodeId } from '../model/types';
 
 /**
- * Whether a node should appear in the Nodes list given a text query and tag chips.
- * Empty query and no tags → match all. Otherwise match if the query hits label/id
- * **or** the node has any of the selected tags (OR).
+ * Whether a node should appear in the Nodes list given selected node chips and tag chips.
+ * Empty nodeIds and tags → match all. Otherwise match if the node id is selected
+ * **or** the node has any of the selected tags (OR). Query text is not used for matching
+ * (it only filters the dropdown suggestions).
  */
 export function nodeMatchesListFilter(
-	node: Pick<GraphNode, 'id' | 'label' | 'tags'>,
-	query: string,
+	node: Pick<GraphNode, 'id' | 'tags'>,
+	nodeIds: NodeId[],
 	tags: string[]
 ): boolean {
-	const q = query.trim().toLowerCase();
-	const hasQuery = q.length > 0;
+	const hasNodes = nodeIds.length > 0;
 	const hasTags = tags.length > 0;
-	if (!hasQuery && !hasTags) return true;
+	if (!hasNodes && !hasTags) return true;
 
-	const textMatch =
-		hasQuery && (node.label.toLowerCase().includes(q) || node.id.toLowerCase().startsWith(q));
+	const nodeMatch = hasNodes && nodeIds.includes(node.id);
 	const tagMatch = hasTags && tags.some((t) => node.tags.includes(t));
-	return Boolean(textMatch || tagMatch);
+	return Boolean(nodeMatch || tagMatch);
 }
