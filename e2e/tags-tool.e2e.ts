@@ -198,7 +198,7 @@ test('SPEC-054 panel header row polish', async ({ page }) => {
 	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
 });
 
-test('Nodes list search shows Nodes and Tags optgroups', async ({ page }) => {
+test('Nodes list search shows Tags optgroup and keyword row', async ({ page }) => {
 	await page.goto('/');
 	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
 	await openTool(page, 'nodes');
@@ -207,18 +207,73 @@ test('Nodes list search shows Nodes and Tags optgroups', async ({ page }) => {
 
 	await page.getByTestId('nodes-search-open').click();
 	await expect(page.getByTestId('nodes-search')).toBeVisible();
-	// Spec: with suggestions shown, both the Nodes and Tags sections appear.
-	await expect(page.getByTestId('nodes-search-group-nodes')).toBeVisible();
+	// Spec: with suggestions shown, only the Tags section appears (SPEC-055:
+	// exact nodes are found through the keyword pill instead).
+	await expect(page.getByTestId('nodes-search-group-nodes')).toHaveCount(0);
 	await expect(page.getByTestId('nodes-search-group-tags')).toBeVisible();
-	await expect(
-		page.locator('.list-search-results .list-search-option:not(.list-search-option--tag)').first()
-	).toBeVisible();
 	await expect(page.getByTestId('list-search-tag-shared')).toContainText('Tag');
 
 	// Typing narrows to matching suggestions; the shared tag stays reachable.
 	await page.getByTestId('nodes-search').fill('shared');
 	await expect(page.getByTestId('list-search-tag-shared')).toBeVisible();
 	await expect(page.getByTestId('list-search-tag-shared')).toContainText('Tag');
+	// Exact tag match wins over the keyword row.
+	await expect(page.getByTestId('nodes-search-keyword')).toHaveCount(0);
+
+	// No exact match: the keyword row appears at the top.
+	await page.getByTestId('nodes-search').fill('zzz-no-match');
+	await expect(page.getByTestId('nodes-search-keyword')).toBeVisible();
+});
+
+test('SPEC-055 Nodes keyword filter pill', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+	await openTool(page, 'nodes');
+
+	const items = page.getByTestId('node-list').locator('button.list-item');
+	const firstLabel = ((await items.first().locator('.node-list-label').textContent()) ?? '').trim();
+	const secondLabel = ((await items.nth(1).locator('.node-list-label').textContent()) ?? '').trim();
+	expect(firstLabel).toBeTruthy();
+
+	await page.getByTestId('nodes-search-open').click();
+	await page.getByTestId('nodes-search').fill(firstLabel);
+	await expect(page.getByTestId('nodes-search-keyword')).toBeVisible();
+	await expect(page.getByTestId('nodes-search-keyword')).toContainText(firstLabel);
+	await page.getByTestId('nodes-search-keyword').click();
+
+	const pill = page.getByTestId('nodes-keyword-pill');
+	await expect(pill).toBeVisible();
+	await expect(pill).toContainText(firstLabel);
+	await expect(pill).toHaveClass(/list-search-chip--keyword/);
+	await expect(page.getByTestId('node-list').locator('li')).toHaveCount(1);
+	await expect(page.getByTestId('node-list')).toContainText(firstLabel);
+	await expect(page.getByTestId('node-list')).not.toContainText(secondLabel);
+	await page.keyboard.press('Escape');
+
+	// Reopening prefills the query with the keyword.
+	await page.getByTestId('nodes-search-open').click();
+	await expect(page.getByTestId('nodes-search')).toHaveValue(firstLabel);
+	// Backspace on an emptied query clears the pill.
+	await page.getByTestId('nodes-search').fill('');
+	await page.keyboard.press('Backspace');
+	await expect(pill).toHaveCount(0);
+	await expect(page.getByTestId('node-list').locator('li')).toHaveCount(3);
+	await page.keyboard.press('Escape');
+
+	// Enter on an exact tag match adds the tag; Enter otherwise creates the keyword.
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'kwtag');
+	await openTool(page, 'nodes');
+	await page.getByTestId('nodes-search-open').click();
+	await page.getByTestId('nodes-search').fill('kwtag');
+	await page.keyboard.press('Enter');
+	await expect(page.getByTestId('list-search-tag-remove-kwtag')).toBeVisible();
+	await expect(page.getByTestId('nodes-keyword-pill')).toHaveCount(0);
+	await page.keyboard.press('Escape');
+	await page.getByTestId('nodes-search-open').click();
+	await page.getByTestId('nodes-search').fill('zzz-enter');
+	await page.keyboard.press('Enter');
+	await expect(page.getByTestId('nodes-keyword-pill')).toContainText('zzz-enter');
 });
 
 test('TagPicker shares suggestions across nodes and edges', async ({ page }) => {

@@ -71,7 +71,7 @@
 	let stepNote = $state('');
 	let nodeSearchQuery = $state('');
 	let nodeSearchTags = $state<string[]>([]);
-	let nodeSearchNodeIds = $state<string[]>([]);
+	let nodeSearchKeyword = $state('');
 	let nodeSearchOpen = $state(false);
 	let edgeSearchQuery = $state('');
 	let edgeSearchTags = $state<string[]>([]);
@@ -229,22 +229,20 @@
 					.slice(0, 40)
 			: []
 	);
-	const nodeNodeSuggestions = $derived(
-		section === 'nodes' && nodeSearchOpen
-			? nodes
-					.filter(
-						(n) =>
-							!nodeSearchNodeIds.includes(n.id) &&
-							(!listSearchQ ||
-								n.label.toLowerCase().includes(listSearchQ) ||
-								n.id.toLowerCase().startsWith(listSearchQ))
-					)
-					.slice(0, 40)
-			: []
+	/** Nodes keyword pill (SPEC-055): exact tag match wins on Enter; otherwise the query becomes the keyword. */
+	const nodesQueryTrimmed = $derived(nodeSearchQuery.trim());
+	const nodesExactTagMatch = $derived(
+		nodesQueryTrimmed !== '' &&
+			allDocumentTags.some((t) => t.toLowerCase() === nodesQueryTrimmed.toLowerCase())
+	);
+	const nodesKeywordOption = $derived(
+		section === 'nodes' && nodeSearchOpen && nodesQueryTrimmed !== '' && !nodesExactTagMatch
+			? nodesQueryTrimmed
+			: ''
 	);
 	const showListSearchDropdown = $derived(listSearchOpen);
 	const filteredNodes = $derived(
-		nodes.filter((n) => nodeMatchesListFilter(n, nodeSearchNodeIds, nodeSearchTags))
+		nodes.filter((n) => nodeMatchesListFilter(n, nodeSearchTags, nodeSearchKeyword))
 	);
 	const filteredEdges = $derived(
 		edges.filter((e) => edgeMatchesListFilter(e, edgeSearchNodeIds, edgeSearchTags))
@@ -468,7 +466,11 @@
 
 	function openListSearch() {
 		if (section === 'edges') edgeSearchOpen = true;
-		else nodeSearchOpen = true;
+		else {
+			// Prefill with the active keyword so it can be refined or cleared.
+			nodeSearchQuery = nodeSearchKeyword;
+			nodeSearchOpen = true;
+		}
 		queueMicrotask(() => {
 			syncListSearchDropdownPosition();
 			if (section === 'edges') edgeSearchInputEl?.focus();
@@ -539,11 +541,15 @@
 		queueMicrotask(() => edgeSearchInputEl?.focus());
 	}
 
-	function addNodeSearchNode(id: string) {
-		if (nodeSearchNodeIds.includes(id)) return;
-		nodeSearchNodeIds = [...nodeSearchNodeIds, id];
+	function setNodeSearchKeyword(keyword: string) {
+		nodeSearchKeyword = keyword.trim();
 		nodeSearchQuery = '';
 		queueMicrotask(() => nodeSearchInputEl?.focus());
+	}
+
+	function clearNodeSearchKeyword(e?: MouseEvent) {
+		e?.stopPropagation();
+		nodeSearchKeyword = '';
 	}
 
 	function removeListSearchTag(tag: string, e?: MouseEvent) {
@@ -560,11 +566,6 @@
 		edgeSearchNodeIds = edgeSearchNodeIds.filter((n) => n !== id);
 	}
 
-	function removeNodeSearchNode(id: string, e?: MouseEvent) {
-		e?.stopPropagation();
-		nodeSearchNodeIds = nodeSearchNodeIds.filter((n) => n !== id);
-	}
-
 	function onListSearchKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			e.preventDefault();
@@ -578,9 +579,20 @@
 				addEdgeSearchNode(edgeNodeSuggestions[0].id);
 				return;
 			}
-			if (section === 'nodes' && nodeNodeSuggestions.length > 0) {
-				addNodeSearchNode(nodeNodeSuggestions[0].id);
-				return;
+			if (section === 'nodes') {
+				if (nodesExactTagMatch) {
+					const match = listSearchTagSuggestions.find(
+						(t) => t.toLowerCase() === nodesQueryTrimmed.toLowerCase()
+					);
+					if (match !== undefined) {
+						addListSearchTag(match);
+						return;
+					}
+				}
+				if (nodesKeywordOption !== '') {
+					setNodeSearchKeyword(nodesKeywordOption);
+					return;
+				}
 			}
 			if (listSearchTagSuggestions.length > 0) {
 				addListSearchTag(listSearchTagSuggestions[0]);
@@ -602,8 +614,8 @@
 				removeListSearchTag(nodeSearchTags[nodeSearchTags.length - 1]);
 				return;
 			}
-			if (nodeSearchNodeIds.length > 0) {
-				removeNodeSearchNode(nodeSearchNodeIds[nodeSearchNodeIds.length - 1]);
+			if (nodeSearchKeyword !== '') {
+				nodeSearchKeyword = '';
 			}
 		}
 	}
@@ -846,20 +858,23 @@
 						onkeydown={onListSearchFieldKeydown}
 					>
 						<div class="list-search-pills">
-							{#each nodeSearchNodeIds as id (id)}
-								<span class="list-search-chip">
-									<span class="list-search-chip-label">{app.document.nodes[id]?.label ?? id}</span>
+							{#if nodeSearchKeyword !== ''}
+								<span
+									class="list-search-chip list-search-chip--keyword"
+									data-testid="nodes-keyword-pill"
+								>
+									<span class="list-search-chip-label">{nodeSearchKeyword}</span>
 									<button
 										type="button"
 										class="list-search-chip-remove"
 										tabindex="-1"
-										aria-label={`Remove filter node ${app.document.nodes[id]?.label ?? id}`}
-										data-testid={`nodes-search-node-remove-${id}`}
+										aria-label={`Remove keyword filter ${nodeSearchKeyword}`}
+										data-testid="nodes-keyword-remove"
 										onpointerdown={onEdgeSearchRemovePointerDown}
-										onclick={(e) => removeNodeSearchNode(id, e)}>×</button
+										onclick={clearNodeSearchKeyword}>×</button
 									>
 								</span>
-							{/each}
+							{/if}
 							{#each nodeSearchTags as tag (tag)}
 								<span class="list-search-chip">
 									<span class="list-search-chip-label">{tag}</span>
@@ -874,7 +889,7 @@
 									>
 								</span>
 							{/each}
-							{#if nodeSearchNodeIds.length === 0 && nodeSearchTags.length === 0}
+							{#if nodeSearchKeyword === '' && nodeSearchTags.length === 0}
 								<span class="list-search-empty">Filter…</span>
 							{/if}
 						</div>
@@ -893,32 +908,24 @@
 								bind:this={nodeSearchInputEl}
 								class="list-search-dropdown-input"
 								type="text"
-								placeholder="Search nodes or tags…"
+								placeholder="Search labels or tags…"
 								aria-label="Filter nodes"
 								data-testid="nodes-search"
 								bind:value={nodeSearchQuery}
 								onkeydown={onListSearchKeydown}
 							/>
 							<ul class="list-search-results">
-								{#if nodeNodeSuggestions.length > 0}
-									<li
-										class="list-search-section"
-										role="presentation"
-										data-testid="nodes-search-group-nodes"
-									>
-										Nodes
+								{#if nodesKeywordOption !== ''}
+									<li>
+										<button
+											type="button"
+											class="list-search-option"
+											role="option"
+											data-testid="nodes-search-keyword"
+											onclick={() => setNodeSearchKeyword(nodesKeywordOption)}
+											>Search “{nodesKeywordOption}”</button
+										>
 									</li>
-									{#each nodeNodeSuggestions as n (n.id)}
-										<li>
-											<button
-												type="button"
-												class="list-search-option"
-												role="option"
-												data-testid={`nodes-search-node-${n.id}`}
-												onclick={() => addNodeSearchNode(n.id)}>{n.label}</button
-											>
-										</li>
-									{/each}
 								{/if}
 								{#if listSearchTagSuggestions.length > 0}
 									<li
@@ -2689,6 +2696,13 @@
 	.list-search-chip-remove:hover {
 		color: #8b3a3a;
 		background: color-mix(in srgb, #8b3a3a 12%, transparent);
+	}
+
+	.list-search-chip--keyword {
+		border-color: color-mix(in srgb, var(--yg-accent) 55%, var(--yg-border));
+		background: var(--yg-accent-soft);
+		color: var(--yg-accent);
+		font-weight: 600;
 	}
 
 	.list-search-dropdown {
