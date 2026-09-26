@@ -13,7 +13,10 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: isCi,
 	retries: isCi ? 1 : 0,
-	workers: isCi ? 2 : undefined,
+	// One worker in CI: the suite drives a software-rendered WebGL scene, and
+	// two parallel browsers on a small runner starve the renderer until actions
+	// time out (reproduced locally by pinning the run to 2 CPUs).
+	workers: isCi ? 1 : undefined,
 	use: {
 		viewport: { width: 1280, height: 800 },
 		trace: isCi ? 'on-first-retry' : 'off'

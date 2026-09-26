@@ -4,7 +4,7 @@ item: ITEM-048
 type: feat
 feature_area: manager
 bump: minor
-status: done
+status: Accepted
 title: 'Sort Edges list by endpoints'
 created: 2026-09-25
 updated: 2026-09-26
