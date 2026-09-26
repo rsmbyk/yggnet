@@ -361,7 +361,7 @@
 			return { kind: 'error' as const, text: 'Tag already exists' };
 		return { kind: 'success' as const, text: 'Available' };
 	});
-	const tagEditCanSave = $derived(tagEditHelper.kind !== 'error');
+	const tagEditCanSave = $derived(tagEditHelper.kind === 'success');
 
 	$effect(() => {
 		const t = app.ui.editingTag;
@@ -435,11 +435,6 @@
 		listSearchDropdownStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px;`;
 	}
 
-	function setListSearchQuery(value: string) {
-		if (section === 'edges') edgeSearchQuery = value;
-		else nodeSearchQuery = value;
-	}
-
 	function openListSearch() {
 		if (section === 'edges') edgeSearchOpen = true;
 		else nodeSearchOpen = true;
@@ -478,18 +473,6 @@
 			e.preventDefault();
 			toggleListSearch();
 		}
-	}
-
-	function openEdgeSearch() {
-		openListSearch();
-	}
-
-	function closeEdgeSearch() {
-		closeListSearch();
-	}
-
-	function toggleEdgeSearch() {
-		toggleListSearch();
 	}
 
 	function onEdgeSearchFieldClick(e: MouseEvent) {
@@ -862,7 +845,13 @@
 							/>
 							<ul class="list-search-results">
 								{#if nodeNodeSuggestions.length > 0}
-									<li class="list-search-section" role="presentation">Nodes</li>
+									<li
+										class="list-search-section"
+										role="presentation"
+										data-testid="nodes-search-group-nodes"
+									>
+										Nodes
+									</li>
 									{#each nodeNodeSuggestions as n (n.id)}
 										<li>
 											<button
@@ -876,7 +865,13 @@
 									{/each}
 								{/if}
 								{#if listSearchTagSuggestions.length > 0}
-									<li class="list-search-section" role="presentation">Tags</li>
+									<li
+										class="list-search-section"
+										role="presentation"
+										data-testid="nodes-search-group-tags"
+									>
+										Tags
+									</li>
 									{#each listSearchTagSuggestions as tag (tag)}
 										<li>
 											<button
