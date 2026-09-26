@@ -10,6 +10,15 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.33.1] - 2026-09-26
+
+### Fixed
+
+- Tags search moves to a full-width row below the Tags title.
+- Tag rows no longer overlap their action buttons; the full non-action area still opens the editor.
+- Nodes and Edges header rows share one height so the Filter fields align.
+- Tag rename helper sits close under the input with a darker success green.
+
 ## [0.33.0] - 2026-09-26
 
 ### Added
