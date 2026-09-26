@@ -443,8 +443,4 @@
 		pointer-events: none;
 		user-select: none;
 	}
-
-	.muted {
-		color: var(--yg-muted);
-	}
 </style>
