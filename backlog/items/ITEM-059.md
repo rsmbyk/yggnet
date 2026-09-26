@@ -1,6 +1,6 @@
 ---
 id: ITEM-059
-status: in_progress
+status: in_review
 title: 'Tighten tag rename helper spacing'
 type: fix
 priority: P3
@@ -10,7 +10,7 @@ updated: 2026-09-26
 spec: specs/051-manager-layout-polish
 branch: fix/051-manager-layout-polish
 
-pr:
+pr: 26
 archived_at:
 archive_reason:
 bump: patch

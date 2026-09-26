@@ -46,18 +46,18 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID       | Title                               | Summary                                                     | Type | Priority | Effort | Spec                                                                    | Bump  | Branch                        | Updated    |
-| -------- | ----------------------------------- | ----------------------------------------------------------- | ---- | -------- | ------ | ----------------------------------------------------------------------- | ----- | ----------------------------- | ---------- |
-| ITEM-055 | Fix Tags row overlap                | Label + counts overlap action buttons; reserve header space | fix  | P1       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | fix/051-manager-layout-polish | 2026-09-26 |
-| ITEM-054 | Tags search below title             | Full-width search row below `Tags` title                    | fix  | P2       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | fix/051-manager-layout-polish | 2026-09-26 |
-| ITEM-057 | Fixed Nodes/Edges header row height | Fixed header min-height so Filters align                    | fix  | P3       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | fix/051-manager-layout-polish | 2026-09-26 |
-| ITEM-059 | Tighten tag rename helper spacing   | Helper close under input, small gap before Save             | fix  | P3       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | fix/051-manager-layout-polish | 2026-09-26 |
-| ITEM-060 | Darken success helper green         | Helper-scoped darker green for `Available`                  | fix  | P3       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | fix/051-manager-layout-polish | 2026-09-26 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
 
 ## In review
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
+| ID       | Title                               | Summary                                                     | Type | Priority | Effort | Spec                                                                    | Bump  | PR  | Updated    |
+| -------- | ----------------------------------- | ----------------------------------------------------------- | ---- | -------- | ------ | ----------------------------------------------------------------------- | ----- | --- | ---------- |
+| ITEM-055 | Fix Tags row overlap                | Label + counts overlap action buttons; reserve header space | fix  | P1       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | 26  | 2026-09-26 |
+| ITEM-054 | Tags search below title             | Full-width search row below `Tags` title                    | fix  | P2       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | 26  | 2026-09-26 |
+| ITEM-057 | Fixed Nodes/Edges header row height | Fixed header min-height so Filters align                    | fix  | P3       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | 26  | 2026-09-26 |
+| ITEM-059 | Tighten tag rename helper spacing   | Helper close under input, small gap before Save             | fix  | P3       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | 26  | 2026-09-26 |
+| ITEM-060 | Darken success helper green         | Helper-scoped darker green for `Available`                  | fix  | P3       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md) | patch | 26  | 2026-09-26 |
 
 ## Done
 

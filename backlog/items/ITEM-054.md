@@ -1,6 +1,6 @@
 ---
 id: ITEM-054
-status: in_progress
+status: in_review
 title: 'Tags search below title'
 type: fix
 priority: P2
@@ -10,7 +10,7 @@ updated: 2026-09-26
 spec: specs/051-manager-layout-polish
 branch: fix/051-manager-layout-polish
 
-pr:
+pr: 26
 archived_at:
 archive_reason:
 bump: patch
