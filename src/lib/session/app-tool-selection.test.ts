@@ -74,4 +74,36 @@ describe('tool switching and node selection', () => {
 		expect(app.selection.edgeIds).toEqual([]);
 		expect(app.ui.multiSelectMode).toBe(false);
 	});
+
+	it('clears edge selection and sticky multi-select when leaving Edges', () => {
+		app.setOpenTool('edges');
+		app.selectEdgeWithModifiers('edge-a');
+		app.selectEdgeWithModifiers('edge-b', 'add');
+		expect(app.ui.multiSelectMode).toBe(true);
+
+		app.setOpenTool('tags');
+
+		expect(app.selection.edgeIds).toEqual([]);
+		expect(app.ui.multiSelectMode).toBe(false);
+	});
+
+	it('clears edges through the toolbar toggle path', () => {
+		app.setOpenTool('edges');
+		app.selectEdgeWithModifiers('edge-a');
+
+		app.toggleTool('nodes');
+
+		expect(app.selection.edgeIds).toEqual([]);
+		expect(app.ui.openTool).toBe('nodes');
+	});
+
+	it('preserves edge selection when switching between non-Edges tools', () => {
+		app.setOpenTool('nodes');
+		app.selectEdgeWithModifiers('edge-a', 'add');
+
+		app.setOpenTool('file');
+
+		expect(app.selection.edgeIds).toEqual(['edge-a']);
+		expect(app.ui.multiSelectMode).toBe(true);
+	});
 });

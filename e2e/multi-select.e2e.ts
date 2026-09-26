@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openTool } from './open-tool';
+import { applyGeneratedGraph, openTool } from './open-tool';
 
 test('ctrl-click multi-selects nodes in manager', async ({ page }) => {
 	await page.goto('/');
@@ -51,4 +51,23 @@ test('switching away from Nodes clears single and multiple node selections', asy
 	await openTool(page, 'nodes');
 	await expect(page.getByTestId('selection-count')).toHaveCount(0);
 	await expect(page.getByTestId('world-node-sheet')).toHaveCount(0);
+});
+
+test('SPEC-052 switching away from Edges clears edge selection', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+	await openTool(page, 'edges');
+
+	const items = page.getByTestId('edge-list').locator('button[data-testid^="edge-item-"]');
+	await items.first().click();
+	await expect(page.getByTestId('world-edge-sheet')).toBeVisible();
+
+	await openTool(page, 'nodes');
+	await expect(page.getByTestId('world-edge-sheet')).toHaveCount(0);
+
+	await openTool(page, 'edges');
+	await items.first().click();
+	await expect(page.getByTestId('world-edge-sheet')).toBeVisible();
+	await page.getByTestId('tool-edges').click();
+	await expect(page.getByTestId('world-edge-sheet')).toHaveCount(0);
 });

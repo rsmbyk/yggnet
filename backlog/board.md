@@ -46,8 +46,9 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
+| ID       | Title                                        | Summary                                                   | Type | Priority | Effort | Spec                                                                                                | Bump  | Branch                                       | Updated    |
+| -------- | -------------------------------------------- | --------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------- | ---------- |
+| ITEM-056 | Clear edge selection when leaving Edges tool | Mirror ITEM-049: switch/close Edges clears edge selection | feat | P2       | S      | [052-clear-edge-selection-on-tool-change](../specs/052-clear-edge-selection-on-tool-change/spec.md) | minor | feat/052-clear-edge-selection-on-tool-change | 2026-09-26 |
 
 ## In review
 
