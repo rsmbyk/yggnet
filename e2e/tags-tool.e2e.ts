@@ -59,7 +59,7 @@ test('Tags tool lists usage, focuses, renames, and deletes', async ({ page }) =>
 
 	await page.getByTestId('tags-row-open-beta').focus();
 	await expect(page.getByTestId('tags-row-open-beta')).toBeFocused();
-	await expect(page.getByTestId('tags-row-open-beta')).toHaveCSS('outline-style', 'solid');
+	await expect(page.getByTestId('tags-row-beta')).toHaveCSS('outline-style', 'solid');
 	await page.keyboard.press('Enter');
 	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('beta');
 	await openTool(page, 'tags');
@@ -81,7 +81,7 @@ test('Tags tool lists usage, focuses, renames, and deletes', async ({ page }) =>
 	await page.getByTestId('tag-edit-save').click();
 	await expect(page.getByTestId('tags-row-gamma')).toBeVisible();
 	await expect(page.getByTestId('tags-row-alpha')).toHaveCount(0);
-	await page.getByTestId('tags-row-open-gamma').click();
+	await page.getByTestId('tags-row-gamma').locator('.tags-tool-label').click();
 	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('gamma');
 	await page.keyboard.press('Escape');
 	await openTool(page, 'tags');
@@ -142,6 +142,60 @@ test('SPEC-051 manager layout polish', async ({ page }) => {
 	await input.fill('gamma-new');
 	await expect(helper).toContainText(/available/i);
 	await expect(helper).toHaveCSS('color', 'rgb(30, 122, 100)');
+});
+
+test('SPEC-054 panel header row polish', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+
+	await openTool(page, 'nodes');
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'alpha');
+
+	await openTool(page, 'tags');
+
+	// ITEM-061: tight header→content gaps.
+	const headerRow = page.locator('header.manager__header .manager__header-row');
+	const headerRowBox = await headerRow.boundingBox();
+	const searchBox = await page.getByTestId('tags-search-field').boundingBox();
+	expect(searchBox!.y - (headerRowBox!.y + headerRowBox!.height)).toBeLessThanOrEqual(5);
+	await openTool(page, 'nodes');
+	const nodesHeaderBox = await page
+		.locator('header.manager__header .manager__header-row')
+		.boundingBox();
+	const nodesFilterBox = await page.getByTestId('nodes-search-open').boundingBox();
+	expect(nodesFilterBox!.y - (nodesHeaderBox!.y + nodesHeaderBox!.height)).toBeLessThanOrEqual(5);
+	// ITEM-057 alignment still holds.
+	await openTool(page, 'edges');
+	const edgesHeaderBox = await page
+		.locator('header.manager__header .manager__header-row')
+		.boundingBox();
+	expect(Math.abs(nodesHeaderBox!.height - edgesHeaderBox!.height)).toBeLessThanOrEqual(1);
+
+	// ITEM-062: the editor target covers the whole card.
+	await openTool(page, 'tags');
+	const row = page.getByTestId('tags-row-alpha');
+	const main = page.getByTestId('tags-row-open-alpha');
+	await main.focus();
+	await expect(main).toBeFocused();
+	await expect(row).toHaveCSS('outline-style', 'solid');
+	const rowBox = await row.boundingBox();
+	// Clicking the gap between two action buttons still opens the editor.
+	const showOnlyBox = await page.getByTestId('tags-show-only-alpha').boundingBox();
+	const toggleBox = await page.getByTestId('tags-toggle-focus-alpha').boundingBox();
+	const gapX = Math.round((showOnlyBox!.x + showOnlyBox!.width + toggleBox!.x) / 2 - rowBox!.x);
+	const gapY = Math.round(showOnlyBox!.y + showOnlyBox!.height / 2 - rowBox!.y);
+	await row.click({ position: { x: gapX, y: gapY } });
+	await expect(page.getByTestId('tag-edit-panel')).toBeVisible();
+	await page.keyboard.press('Escape');
+	await openTool(page, 'tags');
+	// No overlap: label stays above the actions.
+	const labelBox = await row.locator('.tags-tool-label').boundingBox();
+	const actionsBox = await row.locator('.tags-tool-actions').boundingBox();
+	expect(labelBox!.y + labelBox!.height).toBeLessThanOrEqual(actionsBox!.y + 1);
+	// Row actions stay independent.
+	await page.getByTestId('tags-toggle-focus-alpha').click();
+	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
 });
 
 test('Nodes list search shows Nodes and Tags optgroups', async ({ page }) => {

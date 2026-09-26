@@ -10,6 +10,13 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.35.1] - 2026-09-26
+
+### Fixed
+
+- Tighter manager header-to-content gaps across tools.
+- Whole-card Tags row editor target (click + focus ring) with action buttons unmoved and overlap-free.
+
 ## [0.35.0] - 2026-09-26
 
 ### Added
