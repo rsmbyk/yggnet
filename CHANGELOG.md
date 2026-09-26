@@ -10,11 +10,11 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
-## [0.38.0] - 2026-09-26
+## [0.38.0] - 2026-09-27
 
 ### Added
 
-- Remove Diff tool; SPEC-018 deprecated.
+- Real transparency for dimmed edges using split-bucket instanced meshes.
 
 ## [0.37.0] - 2026-09-26
 

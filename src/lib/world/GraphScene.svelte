@@ -20,8 +20,7 @@
 		composeEdgeArrowMatrix,
 		composeEdgeShaftMatrix,
 		edgePose,
-		instanceCapacity,
-		instanceTint
+		instanceCapacity
 	} from './edge-pose';
 	import { createNodeSphereGeometry } from './node-sphere';
 
@@ -91,8 +90,12 @@
 	let viewAnim: { mode: '2d' | '3d'; t0: number; duration: number } | null = null;
 	let shaftMesh: THREE.InstancedMesh | undefined;
 	let arrowMesh: THREE.InstancedMesh | undefined;
+	let shaftMeshTransparent: THREE.InstancedMesh | undefined;
+	let arrowMeshTransparent: THREE.InstancedMesh | undefined;
 	let shaftCap = $state(8);
 	let arrowCap = $state(8);
+	let shaftCapTransparent = $state(8);
+	let arrowCapTransparent = $state(8);
 	const _edgeMat = new THREE.Matrix4();
 	const _edgeCol = new THREE.Color();
 
@@ -320,11 +323,6 @@
 		return dx * dx + dy * dy + dz * dz < LABEL_DISTANCE * LABEL_DISTANCE;
 	}
 
-	function edgeOpacity(id: string): number {
-		if (!dimOthers) return 0.85;
-		return overlayEdgeSet.has(id) ? 1 : 0.12;
-	}
-
 	/** Labels draw over edges/nodes (no depth occlusion). */
 	function makeLabelPassThrough(ref: THREE.Object3D) {
 		const mesh = ref as THREE.Mesh & { sync?: (cb?: () => void) => void };
@@ -416,13 +414,31 @@
 		};
 	}
 
+	function attachShaftMeshTransparent(mesh: THREE.InstancedMesh) {
+		skipInstanceRaycast(mesh);
+		shaftMeshTransparent = mesh;
+		syncInstancedEdges();
+		return () => {
+			if (shaftMeshTransparent === mesh) shaftMeshTransparent = undefined;
+		};
+	}
+
+	function attachArrowMeshTransparent(mesh: THREE.InstancedMesh) {
+		skipInstanceRaycast(mesh);
+		arrowMeshTransparent = mesh;
+		syncInstancedEdges();
+		return () => {
+			if (arrowMeshTransparent === mesh) arrowMeshTransparent = undefined;
+		};
+	}
+
 	function edgeIsHidden(from: string, to: string): boolean {
 		if (!app.document.nodes[from] || !app.document.nodes[to]) return true;
 		return false;
 	}
 
 	function syncInstancedEdges() {
-		if (!shaftMesh && !arrowMesh) return;
+		if (!shaftMesh && !shaftMeshTransparent && !arrowMesh && !arrowMeshTransparent) return;
 		let shaftCount = 0;
 		let arrowCount = 0;
 		for (const edge of edges) {
@@ -432,47 +448,94 @@
 		}
 		const nextShaft = instanceCapacity(shaftCount, shaftCap);
 		const nextArrow = instanceCapacity(arrowCount, arrowCap);
-		if (nextShaft !== shaftCap || nextArrow !== arrowCap) {
+		const nextShaftTransparent = instanceCapacity(shaftCount, shaftCapTransparent);
+		const nextArrowTransparent = instanceCapacity(arrowCount, arrowCapTransparent);
+		if (
+			nextShaft !== shaftCap ||
+			nextArrow !== arrowCap ||
+			nextShaftTransparent !== shaftCapTransparent ||
+			nextArrowTransparent !== arrowCapTransparent
+		) {
 			shaftCap = nextShaft;
 			arrowCap = nextArrow;
+			shaftCapTransparent = nextShaftTransparent;
+			arrowCapTransparent = nextArrowTransparent;
 			return;
 		}
+
+		// Partition edges into matches (opaque) and non-matches (transparent)
+		const matchEdges: typeof edges = [];
+		const dimEdges: typeof edges = [];
+		for (const edge of edges) {
+			if (edgeIsHidden(edge.from, edge.to)) continue;
+			if (overlayEdgeSet.has(edge.id)) {
+				matchEdges.push(edge);
+			} else {
+				dimEdges.push(edge);
+			}
+		}
+
 		if (shaftMesh) {
 			let i = 0;
-			for (const edge of edges) {
-				if (edgeIsHidden(edge.from, edge.to)) continue;
+			for (const edge of matchEdges) {
 				const from = nodePos(edge.from);
 				const to = nodePos(edge.to);
 				composeEdgeShaftMatrix(edgePose(from, to), _edgeMat);
 				shaftMesh.setMatrixAt(i, _edgeMat);
-				shaftMesh.setColorAt(
-					i,
-					instanceTint(edgeColor(edge.id), edgeOpacity(edge.id), SCENE_BG, _edgeCol)
-				);
+				// Opaque mesh: use actual edge color (no bg-lerp)
+				shaftMesh.setColorAt(i, new THREE.Color(edgeColor(edge.id)));
 				i += 1;
 			}
-			shaftMesh.count = shaftCount;
+			shaftMesh.count = matchEdges.length;
 			shaftMesh.instanceMatrix.needsUpdate = true;
 			if (shaftMesh.instanceColor) shaftMesh.instanceColor.needsUpdate = true;
 		}
+		if (shaftMeshTransparent) {
+			let i = 0;
+			for (const edge of dimEdges) {
+				const from = nodePos(edge.from);
+				const to = nodePos(edge.to);
+				composeEdgeShaftMatrix(edgePose(from, to), _edgeMat);
+				shaftMeshTransparent.setMatrixAt(i, _edgeMat);
+				// Transparent mesh: color doesn't matter much with low opacity, but set base color
+				shaftMeshTransparent.setColorAt(i, new THREE.Color(edgeColor(edge.id)));
+				i += 1;
+			}
+			shaftMeshTransparent.count = dimEdges.length;
+			shaftMeshTransparent.instanceMatrix.needsUpdate = true;
+			if (shaftMeshTransparent.instanceColor) shaftMeshTransparent.instanceColor.needsUpdate = true;
+		}
 		if (arrowMesh) {
 			let i = 0;
-			for (const edge of edges) {
-				if (edgeIsHidden(edge.from, edge.to) || !edge.directed) continue;
+			for (const edge of matchEdges) {
+				if (!edge.directed) continue;
 				const from = nodePos(edge.from);
 				const to = nodePos(edge.to);
 				const pose = edgePose(from, to);
 				composeEdgeArrowMatrix(to, pose, ARROW_HEIGHT, ARROW_GAP_FRACTION, _edgeMat);
 				arrowMesh.setMatrixAt(i, _edgeMat);
-				arrowMesh.setColorAt(
-					i,
-					instanceTint(edgeColor(edge.id), edgeOpacity(edge.id), SCENE_BG, _edgeCol)
-				);
+				arrowMesh.setColorAt(i, new THREE.Color(edgeColor(edge.id)));
 				i += 1;
 			}
-			arrowMesh.count = arrowCount;
+			arrowMesh.count = matchEdges.filter((e) => e.directed).length;
 			arrowMesh.instanceMatrix.needsUpdate = true;
 			if (arrowMesh.instanceColor) arrowMesh.instanceColor.needsUpdate = true;
+		}
+		if (arrowMeshTransparent) {
+			let i = 0;
+			for (const edge of dimEdges) {
+				if (!edge.directed) continue;
+				const from = nodePos(edge.from);
+				const to = nodePos(edge.to);
+				const pose = edgePose(from, to);
+				composeEdgeArrowMatrix(to, pose, ARROW_HEIGHT, ARROW_GAP_FRACTION, _edgeMat);
+				arrowMeshTransparent.setMatrixAt(i, _edgeMat);
+				arrowMeshTransparent.setColorAt(i, new THREE.Color(edgeColor(edge.id)));
+				i += 1;
+			}
+			arrowMeshTransparent.count = dimEdges.filter((e) => e.directed).length;
+			arrowMeshTransparent.instanceMatrix.needsUpdate = true;
+			if (arrowMeshTransparent.instanceColor) arrowMeshTransparent.instanceColor.needsUpdate = true;
 		}
 	}
 
@@ -1899,6 +1962,30 @@
 		<T.MeshStandardMaterial roughness={0.45} metalness={0.15} />
 	</T.InstancedMesh>
 {/key}
+{#key shaftCapTransparent}
+	<T.InstancedMesh
+		args={[undefined, undefined, shaftCapTransparent]}
+		frustumCulled={false}
+		oncreate={attachShaftMeshTransparent}
+	>
+		<T.CylinderGeometry args={[EDGE_SHAFT_RADIUS, EDGE_SHAFT_RADIUS, 1, 8]} />
+		<T.MeshStandardMaterial
+			roughness={0.45}
+			metalness={0.15}
+			transparent
+			opacity={0.15}
+			depthWrite={false}
+		/>
+	</T.InstancedMesh>
+{/key}
+<T.InstancedMesh
+	args={[undefined, undefined, arrowCap]}
+	frustumCulled={false}
+	oncreate={attachArrowMesh}
+>
+	<T.ConeGeometry args={[ARROW_RADIUS, ARROW_HEIGHT, 32, 1, false]} />
+	<T.MeshStandardMaterial roughness={0.45} metalness={0.15} side={THREE.DoubleSide} />
+</T.InstancedMesh>
 {#key arrowCap}
 	<T.InstancedMesh
 		args={[undefined, undefined, arrowCap]}
@@ -1907,6 +1994,23 @@
 	>
 		<T.ConeGeometry args={[ARROW_RADIUS, ARROW_HEIGHT, 32, 1, false]} />
 		<T.MeshStandardMaterial roughness={0.45} metalness={0.15} side={THREE.DoubleSide} />
+	</T.InstancedMesh>
+{/key}
+{#key arrowCapTransparent}
+	<T.InstancedMesh
+		args={[undefined, undefined, arrowCapTransparent]}
+		frustumCulled={false}
+		oncreate={attachArrowMeshTransparent}
+	>
+		<T.ConeGeometry args={[ARROW_RADIUS, ARROW_HEIGHT, 32, 1, false]} />
+		<T.MeshStandardMaterial
+			roughness={0.45}
+			metalness={0.15}
+			side={THREE.DoubleSide}
+			transparent
+			opacity={0.15}
+			depthWrite={false}
+		/>
 	</T.InstancedMesh>
 {/key}
 

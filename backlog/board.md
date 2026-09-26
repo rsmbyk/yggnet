@@ -31,9 +31,8 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## Backlog
 
-| ID       | Title                              | Summary                                                     | Type | Priority | Effort | Spec                                                                      | Updated    |
-| -------- | ---------------------------------- | ----------------------------------------------------------- | ---- | -------- | ------ | ------------------------------------------------------------------------- | ---------- |
-| ITEM-066 | Real transparency for dimmed edges | Split-bucket transparent instanced edges instead of bg-lerp | fix  | P3       | M      | [058-real-edge-transparency](../specs/058-real-edge-transparency/spec.md) | 2026-09-26 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ------- |
 
 ## Speccing
 
@@ -86,3 +85,4 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 | ITEM-063 | Nodes keyword filter pill                            | Single keyword pill filters labels by substring; tags-only suggestions | feat | P2       | M      | [055-nodes-keyword-filter](../specs/055-nodes-keyword-filter/spec.md)                               | minor | 2026-09-26 | 2026-09-26 |
 | ITEM-064 | Remove Groups; Group button auto-tags Group-N        | Drop Groups tool/model; Nodes Group button tags Group-N monotonically  | feat | P1       | L      | [056-remove-groups-autotag](../specs/056-remove-groups-autotag/spec.md)                             | major | 2026-09-26 | 2026-09-26 |
 | ITEM-061 | Tighten header-to-content gap                        | Smaller headerâ†’content gaps; keep Nodes/Edges alignment                | fix  | P3       | S      | [054-panel-header-row-polish](../specs/054-panel-header-row-polish/spec.md)                         | patch | 2026-09-26 | 2026-09-26 |
+| ITEM-066 | Real transparency for dimmed edges                   | Split-bucket transparent instanced edges instead of bg-lerp            | fix  | P3       | M      | [058-real-edge-transparency](../specs/058-real-edge-transparency/spec.md)                           | patch | 2026-09-26 | 2026-09-26 |
