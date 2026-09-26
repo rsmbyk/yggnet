@@ -1,6 +1,6 @@
 ---
 id: ITEM-064
-status: done
+status: in_review
 title: 'Remove Groups; Group button auto-tags Group-N'
 type: feat
 priority: P1
@@ -9,7 +9,7 @@ created: 2026-09-26
 updated: 2026-09-26
 spec: specs/056-remove-groups-autotag
 branch: feat/056-remove-groups-autotag
-pr:
+pr: 31
 archived_at:
 archive_reason:
 bump: major
