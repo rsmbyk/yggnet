@@ -46,14 +46,14 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID       | Title                                   | Summary                                               | Type | Priority | Effort | Spec                                                                                                | Bump  | Branch                                       | Updated    |
-| -------- | --------------------------------------- | ----------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------- | ---------- |
-| ITEM-049 | Clear node selection when leaving Nodes | Clear node selection on close or switching from Nodes | feat | P2       | S      | [049-clear-node-selection-on-tool-change](../specs/049-clear-node-selection-on-tool-change/spec.md) | minor | feat/049-clear-node-selection-on-tool-change | 2026-09-25 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
 
 ## In review
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
+| ID       | Title                                   | Summary                                               | Type | Priority | Effort | Spec                                                                                                | Bump  | PR  | Updated    |
+| -------- | --------------------------------------- | ----------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------------------------------- | ----- | --- | ---------- |
+| ITEM-049 | Clear node selection when leaving Nodes | Clear node selection on close or switching from Nodes | feat | P2       | S      | [049-clear-node-selection-on-tool-change](../specs/049-clear-node-selection-on-tool-change/spec.md) | minor | 24  | 2026-09-26 |
 
 ## Done
 

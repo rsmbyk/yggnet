@@ -1,15 +1,15 @@
 ---
 id: ITEM-049
-status: in_progress
+status: in_review
 title: 'Clear node selection when leaving Nodes tool'
 type: feat
 priority: P2
 effort: S
 created: 2026-09-25
-updated: 2026-09-25
+updated: 2026-09-26
 spec: specs/049-clear-node-selection-on-tool-change
 branch: feat/049-clear-node-selection-on-tool-change
-pr:
+pr: 24
 archived_at:
 archive_reason:
 bump: minor
