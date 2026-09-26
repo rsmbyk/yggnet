@@ -1,6 +1,6 @@
 ---
 id: ITEM-049
-status: in_review
+status: done
 title: 'Clear node selection when leaving Nodes tool'
 type: feat
 priority: P2
@@ -13,7 +13,7 @@ pr: 24
 archived_at:
 archive_reason:
 bump: minor
-release_version: 0.31.0
+release_version: 0.33.0
 ---
 
 # ITEM-049: Clear node selection when leaving Nodes tool
