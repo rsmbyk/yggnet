@@ -1117,7 +1117,9 @@ class AppStore {
 			editingTag: id === 'tags' ? this.ui.editingTag : null
 		};
 		if (id === null) this.clearAllSelection();
-		else if (leavingNodes) {
+		else if (leavingNodes && this.selection.nodeIds.length > 0) {
+			// Node selection only; edge selection (and its sticky multi-select)
+			// is unchanged by leaving Nodes.
 			for (const nodeId of this.selection.nodeIds) {
 				this.selection = removeNodeFromSelection(this.selection, nodeId);
 			}
