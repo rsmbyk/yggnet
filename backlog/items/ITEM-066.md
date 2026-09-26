@@ -1,6 +1,6 @@
 ---
 id: ITEM-066
-status: backlog
+status: done
 title: 'Real transparency for dimmed edges'
 type: fix
 priority: P3
@@ -8,12 +8,12 @@ effort: M
 created: 2026-09-26
 updated: 2026-09-26
 spec: specs/058-real-edge-transparency
-branch:
+branch: fix/058-real-edge-transparency
 pr:
 archived_at:
 archive_reason:
 bump: patch
-release_version:
+release_version: 0.38.0
 ---
 
 # ITEM-066: Real transparency for dimmed edges

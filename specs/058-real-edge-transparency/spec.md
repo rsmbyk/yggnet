@@ -1,7 +1,7 @@
 # Spec: Real edge transparency
 
 - **ID:** 058
-- **Status:** Accepted
+- **Status:** Done
 - **Item:** ITEM-066
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
