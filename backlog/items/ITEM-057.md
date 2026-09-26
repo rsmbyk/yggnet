@@ -1,6 +1,6 @@
 ---
 id: ITEM-057
-status: in_review
+status: done
 title: 'Fixed Nodes/Edges header row height'
 type: fix
 priority: P3

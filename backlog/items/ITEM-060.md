@@ -1,6 +1,6 @@
 ---
 id: ITEM-060
-status: in_review
+status: done
 title: 'Darken success helper green'
 type: fix
 priority: P3

@@ -1,6 +1,6 @@
 ---
 id: ITEM-054
-status: in_review
+status: done
 title: 'Tags search below title'
 type: fix
 priority: P2

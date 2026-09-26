@@ -1,6 +1,6 @@
 ---
 id: ITEM-055
-status: in_review
+status: done
 title: 'Fix Tags row overlap'
 type: fix
 priority: P1

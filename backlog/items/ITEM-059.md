@@ -1,6 +1,6 @@
 ---
 id: ITEM-059
-status: in_review
+status: done
 title: 'Tighten tag rename helper spacing'
 type: fix
 priority: P3
