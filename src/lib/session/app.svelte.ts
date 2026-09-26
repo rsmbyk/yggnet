@@ -1042,6 +1042,7 @@ class AppStore {
 	}
 
 	setOpenTool(id: ToolId | null): void {
+		const leavingNodes = this.ui.openTool === 'nodes' && id !== 'nodes';
 		this.ui = {
 			...this.ui,
 			openTool: id,
@@ -1049,6 +1050,12 @@ class AppStore {
 			selectionPanelExpanded: false
 		};
 		if (id === null) this.clearAllSelection();
+		else if (leavingNodes) {
+			for (const nodeId of this.selection.nodeIds) {
+				this.selection = removeNodeFromSelection(this.selection, nodeId);
+			}
+			this.setMultiSelectMode(false);
+		}
 	}
 
 	setToolsPanelExpanded(expanded: boolean): void {
