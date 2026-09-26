@@ -45,6 +45,7 @@ import {
 	updateEdge,
 	updateNode,
 	defaultGenerateForm,
+	collectDocumentTags,
 	deleteTag,
 	entityPassesFocus,
 	normalizeTags,
@@ -324,6 +325,9 @@ class AppStore {
 		this.overlay = createEmptyOverlay();
 		this.groupsCollapsed.clear();
 		this.analyze = { ...emptyAnalyze(), algorithmId: this.analyze.algorithmId };
+		// The incoming document may not contain the focused or edited tags.
+		this.setFocusTags([]);
+		this.setEditingTag(null);
 		this.scheduleAutosave();
 	}
 
@@ -718,6 +722,7 @@ class AppStore {
 	}
 
 	deleteDocumentTag(tag: string): void {
+		if (!collectDocumentTags(this.document).includes(tag)) return;
 		const before = cloneDocument(this.document);
 		this.mutate((d) => ({
 			doc: deleteTag(d, tag),
