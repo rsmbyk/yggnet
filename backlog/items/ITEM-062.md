@@ -1,6 +1,6 @@
 ---
 id: ITEM-062
-status: in_progress
+status: in_review
 title: 'Full-card Tags row editor target'
 type: fix
 priority: P2
@@ -9,7 +9,7 @@ created: 2026-09-26
 updated: 2026-09-26
 spec: specs/054-panel-header-row-polish
 branch: fix/054-panel-header-row-polish
-pr:
+pr: 29
 archived_at:
 archive_reason:
 bump: patch

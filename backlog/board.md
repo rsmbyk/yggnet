@@ -46,15 +46,15 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft → Accept �
 
 ## In progress
 
-| ID       | Title                            | Summary                                                    | Type | Priority | Effort | Spec                                                                        | Bump  | Branch                          | Updated    |
-| -------- | -------------------------------- | ---------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------- | ----- | ------------------------------- | ---------- |
-| ITEM-062 | Full-card Tags row editor target | Whole-card click + focus ring; actions unmoved, no overlap | fix  | P2       | S      | [054-panel-header-row-polish](../specs/054-panel-header-row-polish/spec.md) | patch | fix/054-panel-header-row-polish | 2026-09-26 |
-| ITEM-061 | Tighten header-to-content gap    | Smaller header→content gaps; keep Nodes/Edges alignment    | fix  | P3       | S      | [054-panel-header-row-polish](../specs/054-panel-header-row-polish/spec.md) | patch | fix/054-panel-header-row-polish | 2026-09-26 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
 
 ## In review
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
+| ID       | Title                            | Summary                                                    | Type | Priority | Effort | Spec                                                                        | Bump  | PR  | Updated    |
+| -------- | -------------------------------- | ---------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------- | ----- | --- | ---------- |
+| ITEM-062 | Full-card Tags row editor target | Whole-card click + focus ring; actions unmoved, no overlap | fix  | P2       | S      | [054-panel-header-row-polish](../specs/054-panel-header-row-polish/spec.md) | patch | 29  | 2026-09-26 |
+| ITEM-061 | Tighten header-to-content gap    | Smaller header→content gaps; keep Nodes/Edges alignment    | fix  | P3       | S      | [054-panel-header-row-polish](../specs/054-panel-header-row-polish/spec.md) | patch | 29  | 2026-09-26 |
 
 ## Done
 
