@@ -2546,7 +2546,7 @@
 		z-index: auto;
 		display: flex;
 		flex-direction: column;
-		gap: 0.85rem;
+		gap: 0.5rem;
 		padding-block: var(--yg-hud-panel-inset);
 		padding-inline: 0;
 		background: var(--yg-panel-glass-strong);
@@ -2584,7 +2584,7 @@
 	.list-search {
 		position: relative;
 		width: 100%;
-		margin-top: 0.4rem;
+		margin-top: 0.25rem;
 	}
 
 	.list-search-field {
@@ -3564,7 +3564,7 @@
 
 	.tags-search-row {
 		display: flex;
-		margin-top: 0.4rem;
+		margin-top: 0.25rem;
 	}
 
 	.tags-search-field {
@@ -3690,13 +3690,25 @@
 		box-shadow: none;
 	}
 
-	.tags-tool-row-main:hover {
-		background: transparent;
+	/* Invisible whole-card click catcher: gaps and padding activate the editor. */
+	.tags-tool-row-main::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 0;
 	}
 
 	.tags-tool-row-main:focus {
+		outline: none;
+	}
+
+	.tags-tool-row:focus-within {
 		outline: 2px solid color-mix(in srgb, var(--yg-accent) 65%, transparent);
 		outline-offset: 1px;
+	}
+
+	.tags-tool-row-main:hover {
+		background: transparent;
 	}
 
 	.tags-tool-label,
@@ -3716,10 +3728,17 @@
 	}
 
 	.tags-tool-actions {
+		position: relative;
+		z-index: 2;
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: 0.35rem;
 		padding: 0 0.55rem 0.45rem;
+		pointer-events: none;
+	}
+
+	.tags-tool-actions .icon-btn {
+		pointer-events: auto;
 	}
 
 	.tags-tool-actions .icon-btn {
