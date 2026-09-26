@@ -1,15 +1,15 @@
 ---
 id: ITEM-048
-status: in_progress
+status: in_review
 title: 'Sort Edges list by endpoints'
 type: feat
 priority: P2
 effort: S
 created: 2026-09-25
-updated: 2026-09-25
+updated: 2026-09-26
 spec: specs/048-sort-edges-list-by-endpoints
 branch: feat/048-sort-edges-list-by-endpoints
-pr:
+pr: 23
 archived_at:
 archive_reason:
 bump: minor

@@ -46,14 +46,14 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID       | Title                        | Summary                                              | Type | Priority | Effort | Spec                                                                                  | Bump  | Branch                                | Updated    |
-| -------- | ---------------------------- | ---------------------------------------------------- | ---- | -------- | ------ | ------------------------------------------------------------------------------------- | ----- | ------------------------------------- | ---------- |
-| ITEM-048 | Sort Edges list by endpoints | Sort edge rows by left endpoint, then right endpoint | feat | P2       | S      | [048-sort-edges-list-by-endpoints](../specs/048-sort-edges-list-by-endpoints/spec.md) | minor | feat/048-sort-edges-list-by-endpoints | 2026-09-25 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
 
 ## In review
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
+| ID       | Title                        | Summary                                              | Type | Priority | Effort | Spec                                                                                  | Bump  | PR  | Updated    |
+| -------- | ---------------------------- | ---------------------------------------------------- | ---- | -------- | ------ | ------------------------------------------------------------------------------------- | ----- | --- | ---------- |
+| ITEM-048 | Sort Edges list by endpoints | Sort edge rows by left endpoint, then right endpoint | feat | P2       | S      | [048-sort-edges-list-by-endpoints](../specs/048-sort-edges-list-by-endpoints/spec.md) | minor | 23  | 2026-09-26 |
 
 ## Done
 
