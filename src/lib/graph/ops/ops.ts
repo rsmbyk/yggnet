@@ -1,4 +1,5 @@
 import type { EdgeId, GraphDocument, GraphEdge, GraphNode, NodeId } from '../model/types';
+import { normalizeTags } from '../tags';
 
 export type NodePatch = Partial<Omit<GraphNode, 'id'>>;
 export type EdgePatch = Partial<Omit<GraphEdge, 'id'>>;
@@ -42,7 +43,7 @@ export function addNode(
 		label: partial.label ?? 'Node',
 		position: partial.position ?? { x: 0, y: 0, z: 0 },
 		pinned: partial.pinned ?? false,
-		tags: partial.tags ?? [],
+		tags: normalizeTags(partial.tags),
 		attachments: partial.attachments ?? [],
 		data: partial.data ?? {},
 		...(partial.groupId !== undefined ? { groupId: partial.groupId } : {}),
@@ -67,7 +68,7 @@ export function updateNode(doc: GraphDocument, id: NodeId, patch: NodePatch): Gr
 		...patch,
 		id,
 		position: patch.position ? { ...prev.position, ...patch.position } : prev.position,
-		tags: patch.tags ?? prev.tags,
+		tags: patch.tags !== undefined ? normalizeTags(patch.tags) : prev.tags,
 		attachments: patch.attachments ?? prev.attachments,
 		data: patch.data ?? prev.data
 	};
@@ -107,7 +108,7 @@ export function addEdge(
 		to: input.to,
 		directed: input.directed ?? false,
 		weight: input.weight ?? 1,
-		tags: input.tags ?? [],
+		tags: normalizeTags(input.tags),
 		attachments: [],
 		data: {},
 		...(input.label !== undefined ? { label: input.label } : {})
@@ -135,7 +136,7 @@ export function updateEdge(doc: GraphDocument, id: EdgeId, patch: EdgePatch): Gr
 		id,
 		from,
 		to,
-		tags: patch.tags ?? prev.tags,
+		tags: patch.tags !== undefined ? normalizeTags(patch.tags) : prev.tags,
 		attachments: patch.attachments ?? prev.attachments,
 		data: patch.data ?? prev.data
 	};

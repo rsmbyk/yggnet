@@ -90,4 +90,41 @@ describe('serialize', () => {
 			)
 		).toThrow(/timestamps/i);
 	});
+
+	it('parseDocument silently strips invalid tags', () => {
+		const parsed = parseDocument(
+			JSON.stringify({
+				schemaVersion: 1,
+				id: 'x',
+				title: 't',
+				nodes: {
+					n1: {
+						id: 'n1',
+						label: 'A',
+						position: { x: 0, y: 0, z: 0 },
+						pinned: false,
+						tags: ['ok', 'bad tag!', 'also_bad'],
+						attachments: [],
+						data: {}
+					}
+				},
+				edges: {
+					e1: {
+						id: 'e1',
+						from: 'n1',
+						to: 'n1',
+						directed: false,
+						weight: 1,
+						tags: ['edge-ok', 'nope!'],
+						attachments: [],
+						data: {}
+					}
+				},
+				createdAt: 'a',
+				updatedAt: 'b'
+			})
+		);
+		expect(parsed.nodes.n1.tags).toEqual(['ok']);
+		expect(parsed.edges.e1.tags).toEqual(['edge-ok']);
+	});
 });
