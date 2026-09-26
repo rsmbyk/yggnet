@@ -405,9 +405,6 @@
 		lastPrimaryNodeId = id;
 	});
 
-	const diffA = $derived(app.ui.diffIds[0] ? app.document.nodes[app.ui.diffIds[0]] : null);
-	const diffB = $derived(app.ui.diffIds[1] ? app.document.nodes[app.ui.diffIds[1]] : null);
-
 	function onSelectNode(id: string, ev: MouseEvent) {
 		const node = app.document.nodes[id];
 		if (app.ui.connectFromId) {
@@ -653,14 +650,6 @@
 		const egoLabel = app.document.nodes[egoId]?.label ?? '?';
 		const connector = !edge.directed ? '—' : outgoing ? '→' : '←';
 		return { egoLabel, connector, otherLabel };
-	}
-
-	function pushDiff(id: string) {
-		const cur = [...app.ui.diffIds];
-		if (cur.includes(id)) return;
-		if (cur.length >= 2) cur.shift();
-		cur.push(id);
-		app.setDiffIds(cur);
 	}
 </script>
 
@@ -2334,44 +2323,6 @@
 							{/each}
 						</ul>
 					</details>
-				{/if}
-			</section>
-		{/if}
-
-		{#if section === 'diff'}
-			<section class="block" data-testid="diff-panel">
-				<h2>Diff</h2>
-				{#if diffA && diffB}
-					<div class="diff">
-						<div>
-							<strong>{diffA.label}</strong>
-							<p class="muted">{diffA.notes ?? '—'}</p>
-							<p class="muted">{diffA.tags.join(', ') || 'no tags'}</p>
-						</div>
-						<div>
-							<strong>{diffB.label}</strong>
-							<p class="muted">{diffB.notes ?? '—'}</p>
-							<p class="muted">{diffB.tags.join(', ') || 'no tags'}</p>
-						</div>
-					</div>
-					<button
-						type="button"
-						data-testid="diff-path"
-						onclick={() => {
-							app.setDirectionsEndpoints(diffA.id, diffB.id);
-						}}>Path between</button
-					>
-					<button type="button" onclick={() => app.setDiffIds([])}>Clear</button>
-				{:else}
-					<p class="hint">Select up to two nodes, then add them here.</p>
-					<button
-						type="button"
-						data-testid="diff-add-selection"
-						disabled={app.selection.nodeIds.length === 0}
-						onclick={() => {
-							for (const id of app.selection.nodeIds.slice(0, 2)) pushDiff(id);
-						}}>Add selection</button
-					>
 				{/if}
 			</section>
 		{/if}

@@ -19,8 +19,6 @@
 				return 'M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6z';
 			case 'analyze':
 				return 'M4 20V10h3v10H4zm6.5 0V4h3v16h-3zM17 20v-7h3v7h-3z';
-			case 'diff':
-				return 'M5 4h6v2H5v12h6v2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 0h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6v-2h6V6h-6V4zm-1 6h2v4h-2v-4z';
 		}
 	}
 </script>

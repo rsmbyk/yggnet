@@ -115,7 +115,6 @@ export type WorkKind = 'load' | 'generate';
 
 export type UiState = {
 	paletteOpen: boolean;
-	diffIds: string[];
 	commandQuery: string;
 	/** Open tool section, or null when the dock shows only the toolbar. */
 	openTool: ToolId | null;
@@ -242,7 +241,6 @@ class AppStore {
 	generateForm = $state(defaultGenerateForm());
 	ui = $state.raw<UiState>({
 		paletteOpen: false,
-		diffIds: [],
 		commandQuery: '',
 		openTool: null,
 		connectFromId: null,
@@ -1077,10 +1075,6 @@ class AppStore {
 
 	setCommandQuery(q: string): void {
 		this.ui = { ...this.ui, commandQuery: q };
-	}
-
-	setDiffIds(ids: string[]): void {
-		this.ui = { ...this.ui, diffIds: ids.slice(0, 2) };
 	}
 
 	setOpenTool(id: ToolId | null): void {

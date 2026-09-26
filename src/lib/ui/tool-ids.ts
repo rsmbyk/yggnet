@@ -5,8 +5,7 @@ export const TOOL_IDS = [
 	'edges',
 	'tags',
 	'pathfinder',
-	'analyze',
-	'diff'
+	'analyze'
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -18,8 +17,7 @@ export const TOOLS: { id: ToolId; label: string }[] = [
 	{ id: 'edges', label: 'Edges' },
 	{ id: 'tags', label: 'Tags' },
 	{ id: 'pathfinder', label: 'Pathfinder' },
-	{ id: 'analyze', label: 'Analyze' },
-	{ id: 'diff', label: 'Diff' }
+	{ id: 'analyze', label: 'Analyze' }
 ];
 
 export type PanelSection = ToolId | 'selection' | 'tag-edit';
