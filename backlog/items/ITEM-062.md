@@ -1,6 +1,6 @@
 ---
 id: ITEM-062
-status: in_review
+status: done
 title: 'Full-card Tags row editor target'
 type: fix
 priority: P2

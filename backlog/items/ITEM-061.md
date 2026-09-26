@@ -1,6 +1,6 @@
 ---
 id: ITEM-061
-status: in_review
+status: done
 title: 'Tighten header-to-content gap'
 type: fix
 priority: P3

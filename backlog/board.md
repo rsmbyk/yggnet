@@ -51,10 +51,8 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft → Accept �
 
 ## In review
 
-| ID       | Title                            | Summary                                                    | Type | Priority | Effort | Spec                                                                        | Bump  | PR  | Updated    |
-| -------- | -------------------------------- | ---------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------- | ----- | --- | ---------- |
-| ITEM-062 | Full-card Tags row editor target | Whole-card click + focus ring; actions unmoved, no overlap | fix  | P2       | S      | [054-panel-header-row-polish](../specs/054-panel-header-row-polish/spec.md) | patch | 29  | 2026-09-26 |
-| ITEM-061 | Tighten header-to-content gap    | Smaller header→content gaps; keep Nodes/Edges alignment    | fix  | P3       | S      | [054-panel-header-row-polish](../specs/054-panel-header-row-polish/spec.md) | patch | 29  | 2026-09-26 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
 
 ## Done
 
@@ -82,3 +80,5 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft → Accept �
 | ITEM-057 | Fixed Nodes/Edges header row height                  | Fixed header min-height so Filters align                        | fix  | P3       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md)                             | patch | 2026-09-26 | 2026-09-26 |
 | ITEM-059 | Tighten tag rename helper spacing                    | Helper close under input, small gap before Save                 | fix  | P3       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md)                             | patch | 2026-09-26 | 2026-09-26 |
 | ITEM-060 | Darken success helper green                          | Helper-scoped darker green for `Available`                      | fix  | P3       | S      | [051-manager-layout-polish](../specs/051-manager-layout-polish/spec.md)                             | patch | 2026-09-26 | 2026-09-26 |
+| ITEM-062 | Full-card Tags row editor target                     | Whole-card click + focus ring; actions unmoved, no overlap      | fix  | P2       | S      | [054-panel-header-row-polish](../specs/054-panel-header-row-polish/spec.md)                         | patch | 2026-09-26 | 2026-09-26 |
+| ITEM-061 | Tighten header-to-content gap                        | Smaller header→content gaps; keep Nodes/Edges alignment         | fix  | P3       | S      | [054-panel-header-row-polish](../specs/054-panel-header-row-polish/spec.md)                         | patch | 2026-09-26 | 2026-09-26 |
