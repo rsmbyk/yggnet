@@ -1,15 +1,15 @@
 ---
 id: ITEM-053
-status: in_progress
+status: in_review
 title: 'Move Tags search into header'
 type: fix
 priority: P2
 effort: S
 created: 2026-09-25
-updated: 2026-09-25
+updated: 2026-09-26
 spec: specs/050-tag-rename-helper-guidance
 branch: feat/050-tags-tool-polish
-pr:
+pr: 25
 archived_at:
 archive_reason:
 bump: patch
