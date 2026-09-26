@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { applyGeneratedGraph, openTool } from './open-tool';
 
-test('edge companion edits notes and keeps edge tags separate from node tags', async ({ page }) => {
+test('edge companion edits notes; selected edge tags stay on the edge', async ({ page }) => {
 	await page.goto('/');
 	await applyGeneratedGraph(page, 'cycle', { nodes: 4 });
 
@@ -13,6 +13,7 @@ test('edge companion edits notes and keeps edge tags separate from node tags', a
 	await nodeSheet.getByPlaceholder('Search or create…').fill('node-only');
 	await page.keyboard.press('Enter');
 	await expect(nodeSheet).toContainText('node-only');
+	await page.keyboard.press('Escape');
 
 	await openTool(page, 'edges');
 	await page.getByTestId('edge-list').locator('button.list-item').first().click();
@@ -26,6 +27,6 @@ test('edge companion edits notes and keeps edge tags separate from node tags', a
 	await edgeSheet.getByPlaceholder('Search or create…').fill('edge-route');
 	await page.keyboard.press('Enter');
 	await expect(edgeSheet).toContainText('edge-route');
-	// Node tags must not appear as edge pills.
+	// Selected chips are edge-owned; node-only is not on this edge.
 	await expect(edgeSheet.getByTestId('node-tag-remove-node-only')).toHaveCount(0);
 });

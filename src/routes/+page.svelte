@@ -6,7 +6,12 @@
 	import { app } from '$lib/session/app.svelte';
 	import { applyBeforeUnloadGuard } from '$lib/session/work-busy';
 	import { tabTitleFromGraph } from '$lib/session/tab-title';
-	import { edgesCompanionOpen, nodesCompanionOpen, selectionPanelOpen } from '$lib/ui/tool-ids';
+	import {
+		edgesCompanionOpen,
+		nodesCompanionOpen,
+		selectionPanelOpen,
+		tagsCompanionOpen
+	} from '$lib/ui/tool-ids';
 	import { forwardWheelEvent, worldCanvas } from '$lib/ui/forward-wheel';
 
 	const slide = { duration: 220, x: -28, opacity: 0 };
@@ -122,8 +127,16 @@
 	const showEdgesCompanion = $derived(
 		edgesCompanionOpen(app.ui.openTool, app.selection.edgeIds.length)
 	);
+	const showTagsCompanion = $derived(tagsCompanionOpen(app.ui.openTool, app.ui.editingTag));
 	const showSelectionSlot = $derived(
-		showSelectionPanel || showNodesCompanion || showEdgesCompanion
+		showSelectionPanel || showNodesCompanion || showEdgesCompanion || showTagsCompanion
+	);
+	const companionSection = $derived(
+		showTagsCompanion
+			? ('tag-edit' as const)
+			: showNodesCompanion || showEdgesCompanion || showSelectionPanel
+				? ('selection' as const)
+				: null
 	);
 
 	const tabTitle = $derived(tabTitleFromGraph(app.document.title));
@@ -208,16 +221,16 @@
 		<div
 			class="tool-panel-stage"
 			class:fill={app.ui.openTool !== null}
-			class:companion={showNodesCompanion || showEdgesCompanion}
+			class:companion={showNodesCompanion || showEdgesCompanion || showTagsCompanion}
 		>
 			{#if app.ui.openTool}
 				<div class="tool-panel-slot" in:fly={slide} out:fade={{ duration: 180 }}>
 					<ManagerPanel section={app.ui.openTool} />
 				</div>
 			{/if}
-			{#if showSelectionSlot}
+			{#if showSelectionSlot && companionSection}
 				<div class="tool-panel-slot">
-					<ManagerPanel section="selection" />
+					<ManagerPanel section={companionSection} />
 				</div>
 			{/if}
 		</div>

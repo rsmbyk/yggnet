@@ -38,7 +38,10 @@
 		SEGMENTS_FIELD_HELP,
 		TURNS_FIELD_HELP,
 		nodeMatchesListFilter,
-		edgeMatchesListFilter
+		edgeMatchesListFilter,
+		collectDocumentTags,
+		collectTagUsage,
+		isValidTag
 	} from '$lib/graph';
 	import type { KindField } from '$lib/graph';
 	import { tick } from 'svelte';
@@ -49,10 +52,13 @@
 
 	let { section }: { section: PanelSection } = $props();
 
-	let filterInput = $state('');
+	let tagsSearchQuery = $state('');
+	let tagEditDraft = $state('');
 	let stepNote = $state('');
 	let nodeSearchQuery = $state('');
 	let nodeSearchTags = $state<string[]>([]);
+	let nodeSearchNodeIds = $state<string[]>([]);
+	let nodeSearchOpen = $state(false);
 	let edgeSearchQuery = $state('');
 	let edgeSearchTags = $state<string[]>([]);
 	let edgeSearchNodeIds = $state<string[]>([]);
@@ -60,6 +66,7 @@
 	let listSearchRootEl = $state<HTMLDivElement | undefined>(undefined);
 	let listSearchFieldEl = $state<HTMLDivElement | undefined>(undefined);
 	let edgeSearchInputEl = $state<HTMLInputElement | undefined>(undefined);
+	let nodeSearchInputEl = $state<HTMLInputElement | undefined>(undefined);
 	let listSearchDropdownStyle = $state('');
 	const genFields = $derived(fieldsForKind(app.generateForm.kind));
 
@@ -95,7 +102,7 @@
 		const header = headerEl;
 		const body = bodyEl;
 		if (!el || !header || !body) return;
-		const isSelection = section === 'selection';
+		const isSelection = section === 'selection' || section === 'tag-edit';
 		const expanded = isSelection ? app.ui.selectionPanelExpanded : app.ui.toolsPanelExpanded;
 		void genFields;
 		void app.generateForm.kind;
@@ -169,35 +176,31 @@
 	});
 
 	const nodes = $derived(Object.values(app.document.nodes));
-	const allTags = $derived(
-		[...new Set(nodes.flatMap((n) => n.tags))].sort((a, b) => a.localeCompare(b))
-	);
+	const allDocumentTags = $derived(collectDocumentTags(app.document));
+	const tagUsageList = $derived(collectTagUsage(app.document));
+	const tagsListFiltered = $derived.by(() => {
+		const q = tagsSearchQuery.trim().toLowerCase();
+		if (!q) return tagUsageList;
+		return tagUsageList.filter((u) => u.tag.toLowerCase().includes(q));
+	});
+	const focusTags = $derived(app.filters.tags);
+	const focusActive = $derived(focusTags.length > 0);
 	const edges = $derived(Object.values(app.document.edges));
-	const allEdgeTags = $derived(
-		[...new Set(edges.flatMap((e) => e.tags ?? []))].sort((a, b) => a.localeCompare(b))
-	);
 
 	const listSearchActive = $derived(section === 'nodes' || section === 'edges');
 	const listSearchQuery = $derived(section === 'edges' ? edgeSearchQuery : nodeSearchQuery);
 	const listSearchTags = $derived(section === 'edges' ? edgeSearchTags : nodeSearchTags);
-	const listSearchAllTags = $derived(section === 'edges' ? allEdgeTags : allTags);
 	const listSearchQ = $derived(listSearchQuery.trim().toLowerCase());
+	const listSearchOpen = $derived(section === 'edges' ? edgeSearchOpen : nodeSearchOpen);
 	const listSearchTagSuggestions = $derived(
-		section === 'edges'
-			? edgeSearchOpen
-				? listSearchAllTags
-						.filter(
-							(t) =>
-								!listSearchTags.includes(t) &&
-								(!listSearchQ || t.toLowerCase().includes(listSearchQ))
-						)
-						.slice(0, 40)
-				: []
-			: listSearchQ
-				? listSearchAllTags
-						.filter((t) => !listSearchTags.includes(t) && t.toLowerCase().includes(listSearchQ))
-						.slice(0, 40)
-				: []
+		listSearchOpen
+			? allDocumentTags
+					.filter(
+						(t) =>
+							!listSearchTags.includes(t) && (!listSearchQ || t.toLowerCase().includes(listSearchQ))
+					)
+					.slice(0, 40)
+			: []
 	);
 	const edgeNodeSuggestions = $derived(
 		section === 'edges' && edgeSearchOpen
@@ -212,11 +215,22 @@
 					.slice(0, 40)
 			: []
 	);
-	const showListSearchDropdown = $derived(
-		section === 'edges' ? edgeSearchOpen : listSearchTagSuggestions.length > 0
+	const nodeNodeSuggestions = $derived(
+		section === 'nodes' && nodeSearchOpen
+			? nodes
+					.filter(
+						(n) =>
+							!nodeSearchNodeIds.includes(n.id) &&
+							(!listSearchQ ||
+								n.label.toLowerCase().includes(listSearchQ) ||
+								n.id.toLowerCase().startsWith(listSearchQ))
+					)
+					.slice(0, 40)
+			: []
 	);
+	const showListSearchDropdown = $derived(listSearchOpen);
 	const filteredNodes = $derived(
-		nodes.filter((n) => nodeMatchesListFilter(n, nodeSearchQuery, nodeSearchTags))
+		nodes.filter((n) => nodeMatchesListFilter(n, nodeSearchNodeIds, nodeSearchTags))
 	);
 	const filteredEdges = $derived(
 		edges.filter((e) => edgeMatchesListFilter(e, edgeSearchNodeIds, edgeSearchTags))
@@ -314,15 +328,19 @@
 	const brandTitle = $derived(
 		section === 'selection'
 			? selectionTitle
-			: section === 'nodes'
-				? nodes.length > 0
-					? `Nodes (${nodes.length})`
-					: 'Nodes'
-				: section === 'edges'
-					? edges.length > 0
-						? `Edges (${edges.length})`
-						: 'Edges'
-					: toolLabel(section)
+			: section === 'tag-edit'
+				? 'Tag'
+				: section === 'nodes'
+					? nodes.length > 0
+						? `Nodes (${nodes.length})`
+						: 'Nodes'
+					: section === 'edges'
+						? edges.length > 0
+							? `Edges (${edges.length})`
+							: 'Edges'
+						: section === 'tags'
+							? 'Tags'
+							: toolLabel(section)
 	);
 
 	const footerHasActions = $derived(
@@ -331,6 +349,24 @@
 			(section === 'edges' && selectedEdgeCount > 1) ||
 			(section === 'selection' && Boolean(selectedNode && selectedCount === 1))
 	);
+
+	const tagEditOriginal = $derived(app.ui.editingTag);
+	const tagEditHelper = $derived.by(() => {
+		const original = tagEditOriginal ?? '';
+		const draft = tagEditDraft.trim();
+		if (!draft || draft === original) return { kind: 'neutral' as const, text: 'Same as original' };
+		if (!isValidTag(draft))
+			return { kind: 'error' as const, text: 'Use letters, digits, and hyphens only' };
+		if (allDocumentTags.includes(draft))
+			return { kind: 'error' as const, text: 'Tag already exists' };
+		return { kind: 'success' as const, text: 'Available' };
+	});
+	const tagEditCanSave = $derived(tagEditHelper.kind === 'success');
+
+	$effect(() => {
+		const t = app.ui.editingTag;
+		if (t !== null) tagEditDraft = t;
+	});
 
 	/** Collapse the selection sheet when the primary selected node changes. */
 	let lastPrimaryNodeId = $state.raw<string | null | undefined>(undefined);
@@ -399,42 +435,52 @@
 		listSearchDropdownStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px;`;
 	}
 
-	function setListSearchQuery(value: string) {
-		if (section === 'edges') edgeSearchQuery = value;
-		else nodeSearchQuery = value;
-	}
-
-	function openEdgeSearch() {
-		edgeSearchOpen = true;
+	function openListSearch() {
+		if (section === 'edges') edgeSearchOpen = true;
+		else nodeSearchOpen = true;
 		queueMicrotask(() => {
 			syncListSearchDropdownPosition();
-			edgeSearchInputEl?.focus();
+			if (section === 'edges') edgeSearchInputEl?.focus();
+			else nodeSearchInputEl?.focus();
 		});
 	}
 
-	function closeEdgeSearch() {
-		edgeSearchOpen = false;
-		edgeSearchQuery = '';
+	function closeListSearch() {
+		if (section === 'edges') {
+			edgeSearchOpen = false;
+			edgeSearchQuery = '';
+		} else {
+			nodeSearchOpen = false;
+			nodeSearchQuery = '';
+		}
 		listSearchDropdownStyle = '';
 		queueMicrotask(() => listSearchFieldEl?.focus());
 	}
 
-	function toggleEdgeSearch() {
-		if (edgeSearchOpen) closeEdgeSearch();
-		else openEdgeSearch();
+	function toggleListSearch() {
+		if (listSearchOpen) closeListSearch();
+		else openListSearch();
+	}
+
+	function onListSearchFieldClick(e: MouseEvent) {
+		const t = e.target;
+		if (t instanceof Element && t.closest('.list-search-chip-remove')) return;
+		toggleListSearch();
+	}
+
+	function onListSearchFieldKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			toggleListSearch();
+		}
 	}
 
 	function onEdgeSearchFieldClick(e: MouseEvent) {
-		const t = e.target;
-		if (t instanceof Element && t.closest('.list-search-chip-remove')) return;
-		toggleEdgeSearch();
+		onListSearchFieldClick(e);
 	}
 
 	function onEdgeSearchFieldKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			toggleEdgeSearch();
-		}
+		onListSearchFieldKeydown(e);
 	}
 
 	function onEdgeSearchRemovePointerDown(e: PointerEvent) {
@@ -452,6 +498,7 @@
 		if (nodeSearchTags.includes(tag)) return;
 		nodeSearchTags = [...nodeSearchTags, tag];
 		nodeSearchQuery = '';
+		queueMicrotask(() => nodeSearchInputEl?.focus());
 	}
 
 	function addEdgeSearchNode(id: string) {
@@ -459,6 +506,13 @@
 		edgeSearchNodeIds = [...edgeSearchNodeIds, id];
 		edgeSearchQuery = '';
 		queueMicrotask(() => edgeSearchInputEl?.focus());
+	}
+
+	function addNodeSearchNode(id: string) {
+		if (nodeSearchNodeIds.includes(id)) return;
+		nodeSearchNodeIds = [...nodeSearchNodeIds, id];
+		nodeSearchQuery = '';
+		queueMicrotask(() => nodeSearchInputEl?.focus());
 	}
 
 	function removeListSearchTag(tag: string, e?: MouseEvent) {
@@ -475,21 +529,26 @@
 		edgeSearchNodeIds = edgeSearchNodeIds.filter((n) => n !== id);
 	}
 
+	function removeNodeSearchNode(id: string, e?: MouseEvent) {
+		e?.stopPropagation();
+		nodeSearchNodeIds = nodeSearchNodeIds.filter((n) => n !== id);
+	}
+
 	function onListSearchKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			e.preventDefault();
 			e.stopPropagation();
-			if (section === 'edges') {
-				closeEdgeSearch();
-				return;
-			}
-			setListSearchQuery('');
+			closeListSearch();
 			return;
 		}
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			if (section === 'edges' && edgeNodeSuggestions.length > 0) {
 				addEdgeSearchNode(edgeNodeSuggestions[0].id);
+				return;
+			}
+			if (section === 'nodes' && nodeNodeSuggestions.length > 0) {
+				addNodeSearchNode(nodeNodeSuggestions[0].id);
 				return;
 			}
 			if (listSearchTagSuggestions.length > 0) {
@@ -508,8 +567,12 @@
 				}
 				return;
 			}
-			if (listSearchTags.length > 0) {
-				removeListSearchTag(listSearchTags[listSearchTags.length - 1]);
+			if (nodeSearchTags.length > 0) {
+				removeListSearchTag(nodeSearchTags[nodeSearchTags.length - 1]);
+				return;
+			}
+			if (nodeSearchNodeIds.length > 0) {
+				removeNodeSearchNode(nodeSearchNodeIds[nodeSearchNodeIds.length - 1]);
 			}
 		}
 	}
@@ -523,8 +586,7 @@
 		const onDoc = (e: PointerEvent) => {
 			if (!listSearchRootEl) return;
 			if (e.target instanceof Node && listSearchRootEl.contains(e.target)) return;
-			if (section === 'edges') closeEdgeSearch();
-			else setListSearchQuery('');
+			closeListSearch();
 		};
 		document.addEventListener('pointerdown', onDoc, true);
 		window.addEventListener('resize', syncListSearchDropdownPosition);
@@ -541,6 +603,10 @@
 			edgeSearchOpen = false;
 			edgeSearchQuery = '';
 		}
+		if (section !== 'nodes' && nodeSearchOpen) {
+			nodeSearchOpen = false;
+			nodeSearchQuery = '';
+		}
 	});
 
 	/** Ego-centric incident edge: current node left; direction relative to it. */
@@ -552,14 +618,6 @@
 		const egoLabel = app.document.nodes[egoId]?.label ?? '?';
 		const connector = !edge.directed ? '—' : outgoing ? '→' : '←';
 		return { egoLabel, connector, otherLabel };
-	}
-
-	function applyFilter() {
-		const tags = filterInput
-			.split(',')
-			.map((t) => t.trim())
-			.filter(Boolean);
-		app.setFilterTags(tags);
 	}
 
 	function pushDiff(id: string) {
@@ -575,9 +633,13 @@
 	bind:this={panelEl}
 	class="manager"
 	class:manager--fill={true}
-	class:manager--selection={section === 'selection'}
+	class:manager--selection={section === 'selection' || section === 'tag-edit'}
 	style:max-height={maxHeightPx != null ? `${maxHeightPx}px` : undefined}
-	data-testid={section === 'selection' ? selectionTestId : 'yggnet-manager'}
+	data-testid={section === 'selection'
+		? selectionTestId
+		: section === 'tag-edit'
+			? 'tag-edit-panel'
+			: 'yggnet-manager'}
 >
 	<header class="manager__header" bind:this={headerEl}>
 		<div class="manager__header-row">
@@ -588,6 +650,23 @@
 						<path fill="currentColor" d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z" />
 					</svg>
 					Add node
+				</button>
+			{:else if section === 'tags'}
+				<button
+					type="button"
+					class="icon-btn"
+					data-testid="tags-focus-reset"
+					aria-label="Clear tag focus"
+					title="Clear focus"
+					disabled={!focusActive}
+					onclick={() => app.clearFocusTags()}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path
+							fill="currentColor"
+							d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+						/>
+					</svg>
 				</button>
 			{/if}
 		</div>
@@ -697,52 +776,117 @@
 						</div>
 					{/if}
 				{:else}
-					<div class="list-search-field" bind:this={listSearchFieldEl}>
-						{#each listSearchTags as tag (tag)}
-							<span class="list-search-chip">
-								<span class="list-search-chip-label">{tag}</span>
-								<button
-									type="button"
-									class="list-search-chip-remove"
-									aria-label={`Remove filter tag ${tag}`}
-									data-testid={`list-search-tag-remove-${tag}`}
-									onclick={() => removeListSearchTag(tag)}>×</button
-								>
-							</span>
-						{/each}
-						<input
-							class="list-search-input"
-							type="search"
-							placeholder="Search…"
-							aria-label="Filter nodes"
-							data-testid="nodes-search"
-							value={listSearchQuery}
-							oninput={(e) => {
-								setListSearchQuery(e.currentTarget.value);
-								syncListSearchDropdownPosition();
-							}}
-							onkeydown={onListSearchKeydown}
-						/>
+					<div
+						class="list-search-field"
+						class:open={nodeSearchOpen}
+						bind:this={listSearchFieldEl}
+						role="button"
+						tabindex="0"
+						data-testid="nodes-search-open"
+						aria-label="Filter nodes"
+						aria-expanded={nodeSearchOpen}
+						aria-haspopup="listbox"
+						onclick={onListSearchFieldClick}
+						onkeydown={onListSearchFieldKeydown}
+					>
+						<div class="list-search-pills">
+							{#each nodeSearchNodeIds as id (id)}
+								<span class="list-search-chip">
+									<span class="list-search-chip-label">{app.document.nodes[id]?.label ?? id}</span>
+									<button
+										type="button"
+										class="list-search-chip-remove"
+										tabindex="-1"
+										aria-label={`Remove filter node ${app.document.nodes[id]?.label ?? id}`}
+										data-testid={`nodes-search-node-remove-${id}`}
+										onpointerdown={onEdgeSearchRemovePointerDown}
+										onclick={(e) => removeNodeSearchNode(id, e)}>×</button
+									>
+								</span>
+							{/each}
+							{#each nodeSearchTags as tag (tag)}
+								<span class="list-search-chip">
+									<span class="list-search-chip-label">{tag}</span>
+									<button
+										type="button"
+										class="list-search-chip-remove"
+										tabindex="-1"
+										aria-label={`Remove filter tag ${tag}`}
+										data-testid={`list-search-tag-remove-${tag}`}
+										onpointerdown={onEdgeSearchRemovePointerDown}
+										onclick={(e) => removeListSearchTag(tag, e)}>×</button
+									>
+								</span>
+							{/each}
+							{#if nodeSearchNodeIds.length === 0 && nodeSearchTags.length === 0}
+								<span class="list-search-empty">Filter…</span>
+							{/if}
+						</div>
+						<svg class="list-search-chevron" viewBox="0 0 12 8" aria-hidden="true">
+							<path fill="currentColor" d="M1.2 1.4 6 6.2 10.8 1.4" />
+						</svg>
 					</div>
-					{#if showListSearchDropdown}
+					{#if nodeSearchOpen}
 						<div
 							class="list-search-dropdown"
 							role="listbox"
-							aria-label="Matching tags"
+							aria-label="Matching nodes and tags"
 							style={listSearchDropdownStyle}
 						>
+							<input
+								bind:this={nodeSearchInputEl}
+								class="list-search-dropdown-input"
+								type="text"
+								placeholder="Search nodes or tags…"
+								aria-label="Filter nodes"
+								data-testid="nodes-search"
+								bind:value={nodeSearchQuery}
+								onkeydown={onListSearchKeydown}
+							/>
 							<ul class="list-search-results">
-								{#each listSearchTagSuggestions as tag (tag)}
-									<li>
-										<button
-											type="button"
-											class="list-search-option"
-											role="option"
-											data-testid={`list-search-tag-${tag}`}
-											onclick={() => addListSearchTag(tag)}>{tag}</button
-										>
+								{#if nodeNodeSuggestions.length > 0}
+									<li
+										class="list-search-section"
+										role="presentation"
+										data-testid="nodes-search-group-nodes"
+									>
+										Nodes
 									</li>
-								{/each}
+									{#each nodeNodeSuggestions as n (n.id)}
+										<li>
+											<button
+												type="button"
+												class="list-search-option"
+												role="option"
+												data-testid={`nodes-search-node-${n.id}`}
+												onclick={() => addNodeSearchNode(n.id)}>{n.label}</button
+											>
+										</li>
+									{/each}
+								{/if}
+								{#if listSearchTagSuggestions.length > 0}
+									<li
+										class="list-search-section"
+										role="presentation"
+										data-testid="nodes-search-group-tags"
+									>
+										Tags
+									</li>
+									{#each listSearchTagSuggestions as tag (tag)}
+										<li>
+											<button
+												type="button"
+												class="list-search-option list-search-option--tag"
+												role="option"
+												data-testid={`list-search-tag-${tag}`}
+												onclick={() => addListSearchTag(tag)}
+											>
+												<span class="list-search-option-label">{tag}</span>
+												<span class="list-search-tag-badge">Tag</span>
+											</button>
+										</li>
+									{/each}
+								{/if}
 							</ul>
 						</div>
 					{/if}
@@ -832,7 +976,7 @@
 							<span class="field-caption">Tags</span>
 							<TagPicker
 								tags={selectedNode.tags}
-								suggestions={allTags}
+								suggestions={allDocumentTags}
 								onChange={(next) => app.setNodeTags(selectedNode.id, next)}
 							/>
 						</div>
@@ -948,7 +1092,7 @@
 							<span class="field-caption">Tags</span>
 							<TagPicker
 								tags={selectedEdge.tags ?? []}
-								suggestions={allEdgeTags}
+								suggestions={allDocumentTags}
 								onChange={(next) => app.updateEdge(selectedEdge.id, { tags: next })}
 							/>
 						</div>
@@ -1683,27 +1827,132 @@
 			</section>
 		{/if}
 
-		{#if section === 'filters'}
-			<section class="block" data-testid="filters-section">
-				<h2>Filters</h2>
-				<div class="row">
-					<input
-						data-testid="filter-tags"
-						placeholder="tag1, tag2"
-						bind:value={filterInput}
-						aria-label="Filter tags"
-					/>
-					<button type="button" data-testid="apply-filter" onclick={applyFilter}>Apply</button>
+		{#if section === 'tags'}
+			<section class="block" data-testid="tags-section">
+				<input
+					class="list-search-input tags-tool-search"
+					type="search"
+					placeholder="Search tags…"
+					aria-label="Search tags"
+					data-testid="tags-search"
+					bind:value={tagsSearchQuery}
+				/>
+				{#if tagsListFiltered.length === 0}
+					<p class="hint muted" data-testid="tags-empty">
+						{tagUsageList.length === 0 ? 'No tags yet' : 'No tags match'}
+					</p>
+				{:else}
+					<ul class="list tags-tool-list" data-testid="tags-list">
+						{#each tagsListFiltered as row (row.tag)}
+							{@const inFocus = focusTags.includes(row.tag)}
+							<li
+								class="tags-tool-row"
+								class:focused={focusActive && inFocus}
+								class:dimmed={focusActive && !inFocus}
+								class:editing={app.ui.editingTag === row.tag}
+								data-testid={`tags-row-${row.tag}`}
+							>
+								<button
+									type="button"
+									class="tags-tool-row-main"
+									data-testid={`tags-row-open-${row.tag}`}
+									onclick={() => app.toggleEditingTag(row.tag)}
+								>
+									<span class="tags-tool-label">{row.tag}</span>
+									<span class="tags-tool-meta muted"
+										>{row.nodeCount} Nodes · {row.edgeCount} Edges</span
+									>
+								</button>
+								<div class="tags-tool-actions">
+									<button
+										type="button"
+										class="icon-btn"
+										data-testid={`tags-show-only-${row.tag}`}
+										aria-label={`Show only ${row.tag}`}
+										title="Show only this"
+										onclick={() => app.showOnlyFocusTag(row.tag)}
+									>
+										<svg viewBox="0 0 24 24" aria-hidden="true">
+											<path
+												fill="currentColor"
+												d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
+											/>
+										</svg>
+									</button>
+									<button
+										type="button"
+										class="icon-btn"
+										data-testid={`tags-toggle-focus-${row.tag}`}
+										aria-label={inFocus
+											? `Remove ${row.tag} from focus`
+											: `Add ${row.tag} to focus`}
+										title={inFocus ? 'Remove from focus' : 'Add to focus'}
+										onclick={() => app.toggleFocusTag(row.tag)}
+									>
+										{#if inFocus}
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<path fill="currentColor" d="M19 13H5v-2h14v2z" />
+											</svg>
+										{:else}
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+											</svg>
+										{/if}
+									</button>
+									<button
+										type="button"
+										class="icon-btn danger-icon"
+										data-testid={`tags-delete-${row.tag}`}
+										aria-label={`Delete tag ${row.tag}`}
+										title="Delete"
+										onclick={() => app.deleteDocumentTag(row.tag)}
+									>
+										<svg viewBox="0 0 24 24" aria-hidden="true">
+											<path
+												fill="currentColor"
+												d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+											/>
+										</svg>
+									</button>
+								</div>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</section>
+		{/if}
+
+		{#if section === 'tag-edit' && tagEditOriginal}
+			<section class="block selection-sheet" data-testid="tag-edit-section">
+				<div class="selection-sheet-body">
+					<label>
+						Tag label
+						<input
+							type="text"
+							data-testid="tag-edit-input"
+							bind:value={tagEditDraft}
+							aria-invalid={tagEditHelper.kind === 'error'}
+							aria-describedby="tag-edit-helper"
+						/>
+					</label>
+					<p
+						id="tag-edit-helper"
+						class="field-helper"
+						class:error={tagEditHelper.kind === 'error'}
+						class:success={tagEditHelper.kind === 'success'}
+						data-testid="tag-edit-helper"
+					>
+						{tagEditHelper.text}
+					</p>
+					<button
+						type="button"
+						data-testid="tag-edit-save"
+						disabled={!tagEditCanSave}
+						onclick={() => app.renameDocumentTag(tagEditOriginal, tagEditDraft)}
+					>
+						Save
+					</button>
 				</div>
-				<label class="check">
-					<input
-						type="checkbox"
-						data-testid="hide-filtered"
-						checked={app.filters.hideFiltered}
-						onchange={(e) => app.setHideFiltered(e.currentTarget.checked)}
-					/>
-					Hide / dim non-matches
-				</label>
 			</section>
 		{/if}
 
@@ -3228,5 +3477,104 @@
 	button.manager__expand:hover:not(:disabled) {
 		background: rgba(255, 255, 255, 0.28);
 		color: var(--yg-fg);
+	}
+
+	.tags-tool-search {
+		width: 100%;
+		margin-bottom: 0.55rem;
+	}
+
+	.tags-tool-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.45rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.tags-tool-row {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		padding: 0.55rem 0.55rem 0.45rem;
+		border: 1px solid var(--yg-border);
+		border-radius: var(--yg-radius-control);
+		background: var(--yg-chip);
+		transition:
+			opacity var(--yg-motion) var(--yg-ease),
+			background var(--yg-motion) var(--yg-ease),
+			border-color var(--yg-motion) var(--yg-ease);
+	}
+
+	.tags-tool-row.focused {
+		background: var(--yg-accent-soft);
+		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));
+	}
+
+	.tags-tool-row.dimmed {
+		opacity: 0.45;
+	}
+
+	.tags-tool-row.editing {
+		outline: 1px solid color-mix(in srgb, var(--yg-accent) 50%, transparent);
+	}
+
+	.tags-tool-row-main {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.15rem;
+		width: 100%;
+		padding: 0;
+		border: none;
+		background: transparent;
+		text-align: left;
+		cursor: pointer;
+		color: inherit;
+		min-height: 0;
+		box-shadow: none;
+	}
+
+	.tags-tool-row-main:hover {
+		background: transparent;
+	}
+
+	.tags-tool-label {
+		font-weight: 600;
+		font-size: 0.9rem;
+	}
+
+	.tags-tool-meta {
+		font-size: 0.72rem;
+	}
+
+	.tags-tool-actions {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.35rem;
+	}
+
+	.tags-tool-actions .icon-btn {
+		width: 100%;
+		height: 1.85rem;
+	}
+
+	.danger-icon {
+		color: #b54a4a;
+	}
+
+	.field-helper {
+		margin: 0.25rem 0 0.65rem;
+		font-size: 0.75rem;
+		color: var(--yg-muted);
+	}
+
+	.field-helper.error {
+		color: #b54a4a;
+	}
+
+	.field-helper.success {
+		color: #2f9e8a;
 	}
 </style>
