@@ -10,6 +10,12 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.36.0] - 2026-09-26
+
+### Added
+
+- Nodes filter keyword pill: substring label search replacing exact-node chips, with tags-only suggestions.
+
 ## [0.35.1] - 2026-09-26
 
 ### Fixed

@@ -39,16 +39,11 @@ test('SPEC-053 illustrated empty states for Nodes, Edges, Tags, Groups', async (
 test('SPEC-053 empty views distinguish filter-no-match states', async ({ page }) => {
 	await page.goto('/');
 
-	// Nodes no-match: chip a node, then delete it so the chip goes stale.
+	// Nodes no-match: a keyword pill that matches no labels.
 	await openTool(page, 'nodes');
 	await page.getByTestId('add-node').click();
 	await page.getByTestId('add-node').click();
 	const nodeItems = page.getByTestId('node-list').locator('button.list-item');
-	const firstNodeTestId = (await nodeItems.first().getAttribute('data-testid')) ?? '';
-	const secondNodeTestId = (await nodeItems.nth(1).getAttribute('data-testid')) ?? '';
-	const nodeId = secondNodeTestId.replace('node-item-', '');
-	expect(firstNodeTestId).toBeTruthy();
-	expect(nodeId).toBeTruthy();
 
 	// Tags no-match: a tag exists, but the query matches nothing.
 	await nodeItems.first().click();
@@ -60,9 +55,9 @@ test('SPEC-053 empty views distinguish filter-no-match states', async ({ page })
 
 	await openTool(page, 'nodes');
 	await page.getByTestId('nodes-search-open').click();
-	await page.getByTestId(`nodes-search-node-${nodeId}`).click();
+	await page.getByTestId('nodes-search').fill('zzz-no-match');
+	await page.getByTestId('nodes-search-keyword').click();
 	await page.keyboard.press('Escape');
-	await page.getByTestId(`delete-node-row-${nodeId}`).click();
 	await expect(page.getByTestId('nodes-no-match')).toBeVisible();
 	await expect(page.getByTestId('nodes-no-match')).toContainText(/no matching nodes/i);
 
