@@ -95,13 +95,21 @@ vexbook records **both** models. The project picks one at kickoff and writes it 
 - **Hotfixes only:** merge commit (preserve hotfix history).
 - Scaffold may land on `main` **once**. After that, branches + PRs.
 
-### Git Flow
+### Git Flow (this project)
+
+> **This project uses Git Flow specifically.** The GitHub Flow section above is for reference only and is not the active model here.
 
 - `main` is production.
 - `develop` is integration.
-- Features from `develop` (`feat/*`, …). Hotfixes from `main`.
+- Features from `develop` (`feat/*`, `fix/*`, …). Hotfixes from `main`.
 - Default PR target for features: `develop`.
 - Release cuts `main` when the owner says release.
+
+#### Merge strategy (Git Flow with squash-merge for features)
+
+- **Feature branches** (`feat/`, `fix/`, `chore/`, `docs/`) into `develop`: **squash-merge**.
+- **Hotfixes and releases** (anything to `main`): **standard merge** (preserve hotfix/release history).
+- **Delete merged branches** remotely after merge (remote deletion is automatic; keep local branches intact).
 
 ### Shared hygiene (always)
 
