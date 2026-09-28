@@ -57,6 +57,9 @@ test('Tags tool lists usage, focuses, renames, and deletes', async ({ page }) =>
 	await expect(page.getByTestId('tags-row-alpha')).toHaveClass(/dimmed/);
 	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
 
+	// Focus ring is keyboard-only, so reach this row via the keyboard (a bare
+	// .focus() after the click above would be treated as a pointer interaction).
+	await page.keyboard.press('Tab');
 	await page.getByTestId('tags-row-open-beta').focus();
 	await expect(page.getByTestId('tags-row-open-beta')).toBeFocused();
 	await expect(page.getByTestId('tags-row-beta')).toHaveCSS('outline-style', 'solid');
@@ -176,6 +179,8 @@ test('SPEC-054 panel header row polish', async ({ page }) => {
 	await openTool(page, 'tags');
 	const row = page.getByTestId('tags-row-alpha');
 	const main = page.getByTestId('tags-row-open-alpha');
+	// Keyboard-only focus ring: reach the row through a Tab first.
+	await page.keyboard.press('Tab');
 	await main.focus();
 	await expect(main).toBeFocused();
 	await expect(row).toHaveCSS('outline-style', 'solid');
@@ -196,6 +201,46 @@ test('SPEC-054 panel header row polish', async ({ page }) => {
 	// Row actions stay independent.
 	await page.getByTestId('tags-toggle-focus-alpha').click();
 	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
+});
+
+test('tag row ring marks focus, not the open editor', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+
+	await openTool(page, 'nodes');
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'alpha');
+
+	await openTool(page, 'tags');
+	const row = page.getByTestId('tags-row-alpha');
+	const main = page.getByTestId('tags-row-open-alpha');
+
+	// Idle: no ring.
+	await expect(row).not.toHaveClass(/focused/);
+	await expect(row).toHaveCSS('outline-style', 'none');
+
+	// A keyboard user still gets the ring.
+	await page.keyboard.press('Tab');
+	await main.focus();
+	await expect(main).toBeFocused();
+	await expect(row).toHaveCSS('outline-style', 'solid');
+	await page.keyboard.press('Escape');
+	await openTool(page, 'tags');
+	await expect(row).toHaveCSS('outline-style', 'none');
+
+	// Opening the tag editor must not ring a row that is not in focus.
+	await main.click();
+	await expect(page.getByTestId('tag-edit-panel')).toBeVisible();
+	await expect(row).toHaveClass(/editing/);
+	await expect(row).not.toHaveClass(/focused/);
+	await expect(row).toHaveCSS('outline-style', 'none');
+	await page.keyboard.press('Escape');
+	await openTool(page, 'tags');
+
+	// Adding the tag to focus rings the row.
+	await page.getByTestId('tags-toggle-focus-alpha').click();
+	await expect(row).toHaveClass(/focused/);
+	await expect(row).toHaveCSS('outline-style', 'solid');
 });
 
 test('Nodes list search shows Tags optgroup and keyword row', async ({ page }) => {

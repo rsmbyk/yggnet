@@ -2949,7 +2949,11 @@
 			color var(--yg-motion-fast) var(--yg-ease);
 	}
 
-	button:hover:not(:disabled):not(.active):not(.selected) {
+	/* `.tags-tool-row-main` is excluded: it is a transparent, full-card click
+	   catcher whose hover is drawn by `.tags-tool-row` itself. Letting the generic
+	   button hover paint it would stack a second translucent layer over the card
+	   and make the text band read lighter than the gap between the rows. */
+	button:hover:not(:disabled):not(.active):not(.selected):not(.tags-tool-row-main) {
 		background: rgba(255, 255, 255, 0.72);
 	}
 
@@ -3589,10 +3593,6 @@
 		opacity: 0.45;
 	}
 
-	.tags-tool-row.editing {
-		outline: 1px solid color-mix(in srgb, var(--yg-accent) 50%, transparent);
-	}
-
 	.tags-tool-row-main {
 		display: flex;
 		flex-direction: column;
@@ -3623,12 +3623,24 @@
 		outline: none;
 	}
 
-	.tags-tool-row:focus-within {
+	/* The ring means "this tag is in focus" — never "the editor is open", so
+	   opening the editor must not outline the row. :focus-visible is kept as a
+	   second trigger so keyboard users can still see where they are; both share
+	   one declaration so the ring never changes appearance between them. */
+	.tags-tool-row.focused,
+	.tags-tool-row:has(:focus-visible) {
 		outline: 2px solid color-mix(in srgb, var(--yg-accent) 65%, transparent);
 		outline-offset: 1px;
 	}
 
-	.tags-tool-row-main:hover {
+	/* One hover owner for the whole card: the row. Children stay transparent so
+	   the text band, the gap, and the chip row all composite the same single
+	   fill. The chip under the pointer still lifts via the generic button hover. */
+	.tags-tool-row:hover {
+		background: rgba(255, 255, 255, 0.72);
+	}
+
+	.tags-tool-row:hover .tags-tool-actions .icon-btn {
 		background: transparent;
 	}
 
@@ -3660,9 +3672,6 @@
 
 	.tags-tool-actions .icon-btn {
 		pointer-events: auto;
-	}
-
-	.tags-tool-actions .icon-btn {
 		width: 100%;
 		height: 1.85rem;
 	}
