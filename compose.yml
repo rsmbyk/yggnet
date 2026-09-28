@@ -5,5 +5,5 @@ services:
       dockerfile: Dockerfile
     image: yggnet:local
     ports:
-      - '8080:80'
+      - '39523:80'
     restart: unless-stopped
