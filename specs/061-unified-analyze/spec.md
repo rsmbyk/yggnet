@@ -236,11 +236,14 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 
 ## Traceability
 
-- Domain/app tests: planned under `src/lib/graph/analysis/**`, `src/lib/graph/algorithms/**`, and `src/lib/session/**`
-- World tests: planned under `src/lib/world/analysis-*.test.ts`
-- E2E: planned `e2e/analyze-laboratory.e2e.ts`; remove superseded compare/annotation E2E files
-- Implementation: planned under `src/lib/graph/analysis/**`, `src/lib/session/**`, `src/lib/ui/**`, and `src/lib/world/**`
+- Domain contracts and algorithms: `src/lib/graph/analysis/{contracts,reducer,algorithms}.ts`
+- Domain verification: `src/lib/graph/analysis/analysis.test.ts`
+- Current-analysis lifecycle: `src/lib/session/current-analysis.ts` and `current-analysis.test.ts`
+- Unified UI: `src/lib/ui/ManagerPanel.svelte`, `AnalysisResultPanel.svelte`, `Toolbar.svelte`, and `src/routes/+page.svelte`
+- World roles and glyphs: `src/lib/world/analysis-decoration.ts`, `analysis-decoration.test.ts`, and `GraphScene.svelte`
+- Acceptance flow: `e2e/analyze-laboratory.e2e.ts`
+- Architecture decision: `docs/adr/008-unified-analysis-laboratory.md`
 
 ## Supersession
 
-Implementation will mark behavior removed or replaced by this spec as Deprecated in SPEC-006 through SPEC-014 where applicable and SPEC-034 through SPEC-036, while preserving those files as history. SPEC-061 becomes the current contract for algorithm selection, execution, results, traces, playback, and world analysis visualization.
+SPEC-006 through SPEC-014 where applicable and SPEC-034 through SPEC-036 are Deprecated and preserved as history. SPEC-061 is the current contract for algorithm selection, execution, results, traces, playback, and world analysis visualization.

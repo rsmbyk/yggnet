@@ -10,6 +10,18 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.39.0] - 2026-09-29
+
+### Added
+
+- Replace Pathfinder and the path-specific Analyze flow with one definition-driven Analyze laboratory.
+- Add BFS traversal and Dijkstra shortest path results, semantic trace playback, generic inspectors, and reversible checkpoints.
+- Add a temporary hybrid world glyph layer with bounded result reveal and a blocking Result/Trace panel.
+
+### Removed
+
+- Remove the Pathfinder toolbar entry, Travel experience, A* selection, path enumeration, stored-run comparison, and step annotations from the product UI.
+
 ## [0.38.1] - 2026-09-29
 
 ### Fixed

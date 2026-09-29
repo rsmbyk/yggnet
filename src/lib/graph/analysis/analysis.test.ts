@@ -7,6 +7,8 @@ import {
 	frameAt,
 	validateAnalysisInput
 } from './index';
+import type { AnalysisDefinition, AnalysisEvent } from './contracts';
+import { emptyAnalysisFrame, reduceAnalysisEvent } from './reducer';
 
 function graph(edges: Array<[string, string, number?, boolean?]>): GraphDocument {
 	const ids = new Set(edges.flatMap(([from, to]) => [from, to]));
@@ -108,6 +110,109 @@ describe('analysis contracts', () => {
 		expect(trace.events).toHaveLength(TRACE_EVENT_LIMIT);
 		expect(trace.truncated).toBe(true);
 	});
+
+	it('validates every declarative field kind and custom form rules', () => {
+		const doc = graph([['A', 'B']]);
+		const definition: AnalysisDefinition = {
+			id: 'fields',
+			name: 'Fields',
+			category: 'Test',
+			description: 'Test fields',
+			fields: [
+				{ kind: 'node-set', id: 'nodes', label: 'Nodes', required: true },
+				{ kind: 'edge', id: 'edge', label: 'Edge' },
+				{ kind: 'number', id: 'count', label: 'Count', min: 2, max: 4 },
+				{ kind: 'boolean', id: 'flag', label: 'Flag' },
+				{ kind: 'enum', id: 'choice', label: 'Choice', options: [{ value: 'yes', label: 'Yes' }] }
+			],
+			validate: (_snapshot, input) => (input.flag ? 'Custom rule failed.' : undefined),
+			execute: () => ({
+				result: { outcome: 'complete', summary: '', metrics: [], artifacts: [] },
+				events: []
+			})
+		};
+		expect(validateAnalysisInput(definition, doc, { nodes: [] }).fieldErrors.nodes).toBe(
+			'This field is required.'
+		);
+		expect(
+			validateAnalysisInput(definition, doc, { nodes: ['A'], edge: 'missing' }).fieldErrors.edge
+		).toMatch(/graph/);
+		expect(
+			validateAnalysisInput(definition, doc, { nodes: ['A'], count: 1 }).fieldErrors.count
+		).toBe('Must be at least 2.');
+		expect(
+			validateAnalysisInput(definition, doc, { nodes: ['A'], count: 5 }).fieldErrors.count
+		).toBe('Must be at most 4.');
+		expect(
+			validateAnalysisInput(definition, doc, { nodes: ['A'], choice: 'no' }).fieldErrors.choice
+		).toBe('Choose a valid option.');
+		expect(
+			validateAnalysisInput(definition, doc, {
+				nodes: ['A'],
+				edge: 'e0',
+				count: 3,
+				choice: 'yes',
+				flag: true
+			})
+		).toMatchObject({ valid: false, formError: 'Custom rule failed.' });
+		expect(
+			validateAnalysisInput(definition, doc, {
+				nodes: ['A'],
+				edge: 'e0',
+				count: 3,
+				choice: 'yes',
+				flag: false
+			}).valid
+		).toBe(true);
+	});
+
+	it('reduces all generic inspector operations and duplicate role changes', () => {
+		const events: AnalysisEvent[] = [
+			{
+				sequence: 0,
+				action: 'reset',
+				narration: { key: 'reset', refs: {} },
+				roles: [
+					{ entity: 'edge', id: 'e0', role: 'result', operation: 'add' },
+					{ entity: 'edge', id: 'e0', role: 'result', operation: 'add' }
+				],
+				inspectors: [
+					{ inspector: 'map', operation: 'reset', kind: 'map' },
+					{ inspector: 'stack', operation: 'reset', kind: 'stack' }
+				]
+			},
+			{
+				sequence: 1,
+				action: 'mutate',
+				narration: { key: 'mutate', refs: {} },
+				roles: [{ entity: 'edge', id: 'e0', role: 'result', operation: 'remove' }],
+				inspectors: [
+					{ inspector: 'map', operation: 'set', key: 'A', value: 2 },
+					{ inspector: 'scalar', operation: 'set', value: 7 },
+					{ inspector: 'stack', operation: 'push', value: 'A' },
+					{ inspector: 'stack', operation: 'add', value: 'A' },
+					{ inspector: 'stack', operation: 'append', value: 'B' }
+				]
+			},
+			{
+				sequence: 2,
+				action: 'remove',
+				narration: { key: 'remove', refs: {} },
+				roles: [],
+				inspectors: [
+					{ inspector: 'stack', operation: 'pop' },
+					{ inspector: 'stack', operation: 'remove', value: 'missing' }
+				]
+			}
+		];
+		let frame = emptyAnalysisFrame();
+		for (const item of events) frame = reduceAnalysisEvent(frame, item);
+		expect(frame.roles.edges.e0).toEqual([]);
+		expect(frame.inspectors.map.value).toEqual({ A: 2 });
+		expect(frame.inspectors.scalar.value).toBe(7);
+		expect(frame.inspectors.stack.value).toEqual(['A']);
+		expect(frameAt(buildAnalysisTrace([]), 12)).toEqual(emptyAnalysisFrame());
+	});
 });
 
 describe('BFS analysis', () => {
@@ -158,6 +263,14 @@ describe('BFS analysis', () => {
 			{ start: 'A' }
 		);
 		expect(output.result.artifacts[0]).toMatchObject({ nodeIds: ['A', 'B'] });
+	});
+
+	it('handles a single isolated start node', () => {
+		const doc = graph([['A', 'B']]);
+		delete doc.edges.e0;
+		delete doc.nodes.B;
+		const output = analysisDefinitions.get('bfs')!.execute(doc, { start: 'A' });
+		expect(output.result.summary).toBe('Visited 1 node.');
 	});
 });
 
@@ -212,5 +325,19 @@ describe('Dijkstra analysis', () => {
 		);
 		expect(validation.valid).toBe(false);
 		expect(validation.formError).toMatch(/negative/i);
+	});
+
+	it('keeps the best relaxation and reports a singular edge path', () => {
+		const output = analysisDefinitions.get('dijkstra')!.execute(
+			graph([
+				['A', 'B', 1],
+				['A', 'C', 5],
+				['B', 'C', 1],
+				['A', 'C', 9]
+			]),
+			{ start: 'A', end: 'B' }
+		);
+		expect(output.result.summary).toContain('1 edge.');
+		expect(output.result.metrics).toContainEqual({ label: 'Cost', value: 1 });
 	});
 });

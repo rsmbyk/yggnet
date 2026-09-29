@@ -55,7 +55,7 @@
   - Verify: `npm run test:e2e -- e2e/analyze-laboratory.e2e.ts` then full `npm run test:e2e`
   - Files: `e2e/analyze-laboratory.e2e.ts`; obsolete analyze/path E2E cleanup
 
-- [ ] **T8 — Legacy removal and architecture records**
+- [x] **T8 — Legacy removal and architecture records**
   - Acceptance: remove Pathfinder/Travel/A*/path enumeration/run history/compare/annotation code, tests, commands, and labels; no orphan imports or state remain
   - Acceptance: add an ADR and update `docs/ARCHITECTURE.md`; mark superseded specs Deprecated with SPEC-061 references
   - Verify: repository-wide `rg` inventory plus check/lint/build/tests

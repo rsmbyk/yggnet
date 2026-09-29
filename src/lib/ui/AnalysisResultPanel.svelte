@@ -171,7 +171,7 @@
 		{/if}
 
 		<footer class="legend" aria-label="Analysis legend">
-			{#each ['current', 'inspecting', 'frontier', 'settled', 'result', 'rejected'] as role}
+			{#each ['current', 'inspecting', 'frontier', 'settled', 'result', 'rejected'] as role (role)}
 				<span data-role={role}><i></i>{role}</span>
 			{/each}
 		</footer>

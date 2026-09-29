@@ -3,6 +3,7 @@
 	import { Billboard, OrbitControls, Text, interactivity } from '@threlte/extras';
 	import { app } from '$lib/session/app.svelte';
 	import { onDestroy } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import * as THREE from 'three';
 	import { MOUSE } from 'three';
 	import type { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -250,7 +251,7 @@
 		activeAnalysis?.panel === 'trace' ? frameAt(activeAnalysis.trace, activeAnalysis.cursor) : null
 	);
 	const analysisResultNodeIds = $derived.by(() => {
-		const ids = new Set<string>();
+		const ids = new SvelteSet<string>();
 		if (activeAnalysis?.panel !== 'result') return ids;
 		for (const artifact of activeAnalysis.result.artifacts) {
 			if ('nodeIds' in artifact) for (const id of artifact.nodeIds) ids.add(id);
@@ -258,7 +259,7 @@
 		return ids;
 	});
 	const analysisResultEdgeIds = $derived.by(() => {
-		const ids = new Set<string>();
+		const ids = new SvelteSet<string>();
 		if (activeAnalysis?.panel !== 'result') return ids;
 		for (const artifact of activeAnalysis.result.artifacts) {
 			if ('edgeIds' in artifact) for (const id of artifact.edgeIds) ids.add(id);
