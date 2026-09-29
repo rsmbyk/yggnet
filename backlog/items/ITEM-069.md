@@ -32,6 +32,7 @@ Replace the separate Pathfinder and path-specific Analyze flows with one extensi
 - The second owner review made idle replay activity-aware and reveal-only, interleaved BFS tree edges with discovered nodes, and refined inspector empty states, hover, motion, and overflow.
 - The third owner review aligned Analyze setup with manager conventions, reused searchable node pickers, and moved retained-result access into the panel header.
 - The fourth owner review accepted distinct result landmarks, a slightly faster reveal, persistent expanded inspectors during autoplay, and clearer boundary-aware trace transport controls.
+- The fifth owner review requests geometric and color-based Start/End treatments instead of literal letter badges, and Stop/Reset enabled at the final action; the amendment is Draft pending acceptance.
 
 ## Acceptance sketch
 

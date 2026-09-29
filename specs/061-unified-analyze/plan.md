@@ -1,6 +1,6 @@
 # Plan 061: Unified Analyze algorithm laboratory
 
-- **Status:** Accepted
+- **Status:** Draft
 - **Spec:** [./spec.md](./spec.md)
 - **Tasks:** [./tasks.md](./tasks.md)
 - **Item:** ITEM-069
@@ -29,6 +29,7 @@ The replacement must answer two different user needs without conflating them: sh
 - Second owner-review refinement: true user-idle replay, reveal-only repeats, animated inspector accordions, stable trace width, and traversal-ordered BFS reveal
 - Analyze tool-panel refinement: one header, shared field sizing, searchable node inputs, Generate-style primary action, and contextual Last result access
 - Result/Trace refinement: distinct result landmarks, a slightly faster bounded reveal, persistent inspector expansion during playback, and unambiguous media-control states
+- Result-landmark refinement: replace literal letter badges with geometric Start/End treatments and keep Stop/Reset available at the final action
 
 **Out:**
 
@@ -49,6 +50,7 @@ The replacement must answer two different user needs without conflating them: sh
 7. Derive BFS result reveal order from the ordered traversal plus accepted tree edges, interleaving each discovery edge before the node it discovered.
 8. Derive result-landmark decorations from the selected inputs and final artifacts so important nodes such as Start and End are distinguishable without changing base graph meshes or adding algorithm-owned rendering.
 9. Keep inspector expansion as panel UI state independent of trace frames, cursors, and autoplay, and derive transport labels, icons, and disabled states from the current cursor/playing state.
+10. Present landmark semantics with renderer-owned geometry and color rather than literal letter badges: Start uses a diamond cage, End uses a target-like double ring, and Start=End uses one combined treatment.
 
 ## Interface direction
 
@@ -71,6 +73,7 @@ The replacement must answer two different user needs without conflating them: sh
 8. Refine idle detection, inspector presentation, overflow behavior, and BFS result sequencing after the second owner review
 9. Align the Analyze setup panel with existing manager conventions after the third owner review, reusing the Edges node-search control for schema-generated node fields
 10. Refine result landmarks, reveal timing, inspector expansion persistence, and trace transport states after the fourth owner review
+11. Replace literal Start/End badges and enable Stop/Reset at the final action after the fifth owner review
 
 ## TDD
 

@@ -4,7 +4,7 @@ item: ITEM-069
 type: feat
 feature_area: analyze
 bump: minor
-status: Accepted
+status: Draft
 title: 'Unified Analyze algorithm laboratory'
 created: 2026-09-29
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Unified Analyze algorithm laboratory
 
 - **ID:** 061
-- **Status:** Accepted
+- **Status:** Draft
 - **Item:** ITEM-069
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -111,7 +111,7 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - Trace provides Previous, Play/Pause/Restart, Stop/Reset, Next, and a scrubber. Playback uses a fixed cadence of approximately 300 ms per semantic action (twice the original cadence); Previous, Next, Stop/Reset, and manual scrubbing pause playback.
 - The primary transport uses the conventional play triangle while paused before the final action and the conventional two-bar pause icon while playing; it never substitutes the square stop icon for Pause.
 - At the final action, the primary transport becomes Restart. Activating it seeks to action 1 and immediately resumes autoplay from there.
-- Stop/Reset is disabled at action 1 and at the final action, where it would duplicate an existing boundary control. It is enabled only at intermediate actions and returns to action 1 while pausing playback.
+- Stop/Reset is disabled only at action 1. It is enabled at every later action, including the final action, and returns to action 1 while pausing playback.
 - Inspector cards are collapsed by default and show a user-facing data-structure name, description, and item count; expanding a card reveals its current data.
 - An inspector card's expanded/collapsed state is panel UI state, not trace-frame state. Autoplay and cursor advancement preserve every expanded card; only an explicit user toggle, closing the panel, or replacing/invalidating the analysis may collapse it.
 - Missing/uninitialized inspector data and an initialized data structure with zero entries are both presented consistently as `Empty` with count 0.
@@ -130,8 +130,10 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - Dijkstra reveals the start node, then each path edge filling from the source-side endpoint toward the next node, ending at the target.
 - BFS reveals its reachable traversal/tree result as an alternating traversal sequence: the start node, then each accepted tree edge followed by the node that edge discovered. For A-B, B-C, A-C, A-D, B-E starting at A, the reveal order is A, A-B, B, A-C, C, A-D, D, B-E, E.
 - Result has no manual Skip control. The reveal completes on its bounded timer.
-- Result distinguishes important landmark nodes from ordinary result nodes with renderer-owned, non-color-only decoration. Dijkstra marks Start and End separately; BFS marks Start. If Start and End are the same node, one combined landmark communicates both roles without stacking primary glyphs.
-- Landmark labels and geometry remain legible beside the result decoration and are represented in the visible Result legend.
+- Result distinguishes important landmark nodes from ordinary result nodes with renderer-owned color and non-color-only geometry. Dijkstra marks Start and End separately; BFS marks Start.
+- Start uses a cyan diamond-shaped wireframe cage and End uses a green target-like double ring. They do not display literal `S` or `E` badges in the world.
+- If Start and End are the same node, one gold combined diamond-and-target treatment communicates both roles without stacking separate primary glyphs.
+- The visible Result legend uses matching geometric swatches and names Start and End without letter-badge icons.
 - After ten seconds with no user activity in Result, the result reveal replays automatically. Activity includes pointer/mouse movement, pointer/mouse buttons or clicks, wheel/zoom, orbit/pan gestures, touch/pointer actions, and keyboard presses anywhere in the app; every activity restarts the full idle window.
 - An idle replay restarts only the artifact reveal. It preserves the current camera position and never requests canonical framing.
 - Returning from Trace to Result resets the camera to the panel-aware canonical fitted view before revealing the result again.
@@ -226,11 +228,12 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 
 - **Given** a BFS or Dijkstra result is visible
 - **When** the final artifact is revealed
-- **Then** algorithm input landmarks are visually distinct from ordinary result nodes by geometry or a minimal marker as well as color
+- **Then** algorithm input landmarks are visually distinct from ordinary result nodes by geometry as well as color
 - **And** BFS identifies Start
 - **And** Dijkstra identifies Start and End
 - **And** a Start=End Dijkstra result uses one combined landmark
-- **And** the Result legend names the displayed landmark roles
+- **And** no world landmark or legend swatch uses a literal `S` or `E` badge
+- **And** the Result legend names the displayed landmark roles with matching geometric swatches
 
 ### Scenario: Idle result replay
 
@@ -267,8 +270,8 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - **And when** the cursor reaches the final action
 - **Then** the primary control is announced and displayed as Restart
 - **And activating Restart** seeks to action 1 and resumes playback
-- **And** Stop/Reset is disabled at action 1 and the final action
-- **But when** the cursor is on an intermediate action
+- **And** Stop/Reset is disabled at action 1
+- **But when** the cursor is on any later action, including the final action
 - **Then** Stop/Reset is enabled and returns to action 1 with playback paused
 
 ### Scenario: Trace is capped but result remains correct

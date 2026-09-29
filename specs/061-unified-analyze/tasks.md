@@ -1,6 +1,6 @@
 # Tasks 061: Unified Analyze algorithm laboratory
 
-- **Status:** Accepted
+- **Status:** Draft
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -94,10 +94,16 @@
   - Verify: targeted Vitest and Playwright, rendered Result/Trace inspection, then the full quality gate
   - Files: Analyze session/UI/world modules, `e2e/analyze-laboratory.e2e.ts`, and this Draft amendment
 
+- [ ] **T14 — Geometric result landmarks and final-action reset**
+  - Red: world/UI tests reject literal Start/End letter badges and cover distinct Start diamond, End target, and combined Start=End geometry; transport tests require Stop/Reset enabled at the final action and disabled only at action 1
+  - Green: replace letter badges and matching legend icons with renderer-owned geometric treatments, and revise the derived reset-disabled policy
+  - Verify: targeted Vitest and Playwright, rendered BFS/Dijkstra/Start=End inspection, then the full quality gate
+  - Files: Analyze UI/world policy and rendering modules, `e2e/analyze-laboratory.e2e.ts`, and this Draft amendment
+
 ## Done when
 
-- [x] Every acceptance scenario in `spec.md` holds
+- [ ] Every acceptance scenario in `spec.md` holds
 - [x] Analyze is the only algorithm tool and BFS/Dijkstra use the generic contracts
 - [x] Result and Trace remain synchronized and temporary glyphs have a clean lifecycle
 - [x] Removed capabilities leave no active UI, code path, command, or E2E expectation
-- [x] Full verification is green and delivery records are complete in the same PR
+- [ ] Full verification is green and delivery records are complete in the same PR
