@@ -46,14 +46,14 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID       | Title                       | Summary                                                            | Type | Priority | Effort | Spec                                                                                | Bump  | Branch                              | Updated    |
-| -------- | --------------------------- | ------------------------------------------------------------------ | ---- | -------- | ------ | ----------------------------------------------------------------------------------- | ----- | ----------------------------------- | ---------- |
-| ITEM-068 | Restore normal edge opacity | Keep normal edges opaque; dim only non-matches during active focus | fix  | P1       | S      | [060-restore-normal-edge-opacity](../specs/060-restore-normal-edge-opacity/spec.md) | patch | fix/060-restore-normal-edge-opacity | 2026-09-29 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
 
 ## In review
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
+| ID       | Title                       | Summary                                                            | Type | Priority | Effort | Spec                                                                                | Bump  | PR  | Updated    |
+| -------- | --------------------------- | ------------------------------------------------------------------ | ---- | -------- | ------ | ----------------------------------------------------------------------------------- | ----- | --- | ---------- |
+| ITEM-068 | Restore normal edge opacity | Keep normal edges opaque; dim only non-matches during active focus | fix  | P1       | S      | [060-restore-normal-edge-opacity](../specs/060-restore-normal-edge-opacity/spec.md) | patch | #36 | 2026-09-29 |
 
 ## Done
 

@@ -1,6 +1,6 @@
 ---
 id: ITEM-068
-status: in_progress
+status: in_review
 title: 'Restore normal edge opacity'
 type: fix
 priority: P1
@@ -9,7 +9,7 @@ created: 2026-09-29
 updated: 2026-09-29
 spec: specs/060-restore-normal-edge-opacity
 branch: fix/060-restore-normal-edge-opacity
-pr:
+pr: 36
 archived_at:
 archive_reason:
 bump: patch
