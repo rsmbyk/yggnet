@@ -5,6 +5,8 @@ export interface AnalysisResultEntity {
 	id: string;
 }
 
+export type AnalysisLandmarkRole = 'start' | 'end';
+
 const ROLE_PRIORITY: AnalysisRole[] = [
 	'result',
 	'current',
@@ -47,12 +49,37 @@ export function analysisResultSequence(artifacts: AnalysisArtifact[]): AnalysisR
 	for (const artifact of artifacts) {
 		if ('nodeIds' in artifact) artifact.nodeIds.forEach((id) => add('node', id));
 		if ('edgeIds' in artifact) artifact.edgeIds.forEach((id) => add('edge', id));
+		if (artifact.kind === 'landmarks')
+			artifact.entries.forEach((entry) => add('node', entry.nodeId));
 	}
 	return entities;
 }
 
+export function analysisResultLandmarks(
+	artifacts: AnalysisArtifact[]
+): Record<string, AnalysisLandmarkRole[]> {
+	const landmarks: Record<string, AnalysisLandmarkRole[]> = {};
+	for (const artifact of artifacts) {
+		if (artifact.kind !== 'landmarks') continue;
+		for (const entry of artifact.entries) {
+			const roles = landmarks[entry.nodeId] ?? [];
+			if (!roles.includes(entry.role)) roles.push(entry.role);
+			landmarks[entry.nodeId] = roles;
+		}
+	}
+	return landmarks;
+}
+
+export function landmarkBadge(roles: AnalysisLandmarkRole[]): string {
+	const start = roles.includes('start');
+	const end = roles.includes('end');
+	if (start && end) return 'S/E';
+	if (start) return 'S';
+	return end ? 'E' : '';
+}
+
 export function revealDuration(entityCount: number): number {
-	return Math.min(3000, Math.max(800, 800 + Math.max(0, entityCount - 1) * 32));
+	return Math.min(2600, Math.max(700, 700 + Math.max(0, entityCount - 1) * 28));
 }
 
 export function revealProgress(

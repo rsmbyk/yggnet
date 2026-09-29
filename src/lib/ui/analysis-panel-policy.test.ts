@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	RESULT_IDLE_REPLAY_MS,
+	analysisTransportState,
 	formatInspectorValue,
 	inspectorValueSummary,
 	watchResultIdle
@@ -35,5 +36,20 @@ describe('analysis panel policy', () => {
 		vi.advanceTimersByTime(1);
 		expect(onIdle).toHaveBeenCalledOnce();
 		stop();
+	});
+
+	it('derives accessible boundary-aware transport states', () => {
+		expect(analysisTransportState(0, 4, false)).toEqual({
+			primary: 'play',
+			resetDisabled: true
+		});
+		expect(analysisTransportState(1, 4, true)).toEqual({
+			primary: 'pause',
+			resetDisabled: false
+		});
+		expect(analysisTransportState(3, 4, false)).toEqual({
+			primary: 'restart',
+			resetDisabled: true
+		});
 	});
 });

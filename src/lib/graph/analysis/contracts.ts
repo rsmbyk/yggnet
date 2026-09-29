@@ -24,6 +24,12 @@ export type AnalysisArtifact =
 	| { kind: 'edge-set'; id: string; label: string; edgeIds: string[] }
 	| { kind: 'tree'; id: string; label: string; nodeIds: string[]; edgeIds: string[] }
 	| {
+			kind: 'landmarks';
+			id: string;
+			label: string;
+			entries: Array<{ nodeId: string; role: 'start' | 'end' }>;
+	  }
+	| {
 			kind: 'partition';
 			id: string;
 			label: string;

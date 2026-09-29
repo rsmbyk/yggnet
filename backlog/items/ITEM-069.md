@@ -31,7 +31,7 @@ Replace the separate Pathfinder and path-specific Analyze flows with one extensi
 - Owner review refined the panel to the shared app chrome, added a real bounded/idle-repeating result reveal, made framing panel-aware, and simplified Trace to fixed 2x media controls with collapsed inspector cards.
 - The second owner review made idle replay activity-aware and reveal-only, interleaved BFS tree edges with discovered nodes, and refined inspector empty states, hover, motion, and overflow.
 - The third owner review aligned Analyze setup with manager conventions, reused searchable node pickers, and moved retained-result access into the panel header.
-- The fourth owner review requests distinct result landmarks, a slightly faster reveal, persistent expanded inspectors during autoplay, and clearer boundary-aware trace transport controls; the amendment is Draft pending acceptance.
+- The fourth owner review accepted distinct result landmarks, a slightly faster reveal, persistent expanded inspectors during autoplay, and clearer boundary-aware trace transport controls.
 
 ## Acceptance sketch
 

@@ -1,5 +1,21 @@
 export const RESULT_IDLE_REPLAY_MS = 10_000;
 
+export type AnalysisPrimaryTransport = 'play' | 'pause' | 'restart';
+
+export function analysisTransportState(
+	cursor: number,
+	eventCount: number,
+	playing: boolean
+): { primary: AnalysisPrimaryTransport; resetDisabled: boolean } {
+	const last = Math.max(0, eventCount - 1);
+	const atStart = cursor <= 0;
+	const atEnd = cursor >= last;
+	return {
+		primary: playing ? 'pause' : atEnd ? 'restart' : 'play',
+		resetDisabled: atStart || atEnd
+	};
+}
+
 const RESULT_ACTIVITY_EVENTS = [
 	'mousemove',
 	'mousedown',

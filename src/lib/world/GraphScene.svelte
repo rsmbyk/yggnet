@@ -27,7 +27,9 @@
 	import { createNodeSphereGeometry } from './node-sphere';
 	import {
 		analysisGlyphScale,
+		analysisResultLandmarks,
 		analysisResultSequence,
+		landmarkBadge,
 		primaryAnalysisRole,
 		revealProgress
 	} from './analysis-decoration';
@@ -259,6 +261,11 @@
 		if (activeAnalysis?.panel !== 'result') return [];
 		return analysisResultSequence(activeAnalysis.result.artifacts);
 	});
+	const resultLandmarks = $derived(
+		activeAnalysis?.panel === 'result'
+			? analysisResultLandmarks(activeAnalysis.result.artifacts)
+			: {}
+	);
 	const analysisResultEdgeDirections = $derived.by(() => {
 		const directions: Record<string, { from: string; to: string }> = {};
 		if (activeAnalysis?.panel !== 'result') return directions;
@@ -527,6 +534,17 @@
 	function attachAnalysisGlyph(object: THREE.Object3D) {
 		(object as THREE.Mesh).raycast = () => {};
 		object.renderOrder = 12;
+	}
+
+	function attachAnalysisLabel(object: THREE.Object3D) {
+		(object as THREE.Mesh).raycast = () => {};
+		makeLabelPassThrough(object);
+		object.renderOrder = 13;
+	}
+
+	function landmarkColor(roles: Array<'start' | 'end'>): string {
+		if (roles.includes('start') && roles.includes('end')) return '#e8c56a';
+		return roles.includes('start') ? '#67e8f9' : '#4ade80';
 	}
 
 	function analysisColor(role: AnalysisRole | null): string {
@@ -2078,6 +2096,7 @@
 		{#if node}
 			{@const pos = displayPosition(node)}
 			{@const role = primaryAnalysisRole(roles)}
+			{@const landmarks = resultLandmarks[nodeId] ?? []}
 			{@const glyphScale = analysisGlyphScale(app.camera.distance)}
 			{@const color = analysisColor(role)}
 			{#if role === 'current'}
@@ -2102,6 +2121,32 @@
 					/>
 					<T.MeshBasicMaterial {color} transparent opacity={0.92} depthWrite={false} />
 				</T.Mesh>
+			{/if}
+			{#if landmarks.length > 0}
+				<Billboard position={[pos.x, pos.y, pos.z]}>
+					<T.Mesh
+						position={[NODE_RADIUS * 1.55, NODE_RADIUS * 1.1, 0]}
+						oncreate={attachAnalysisGlyph}
+					>
+						<T.CircleGeometry args={[0.4, 24]} />
+						<T.MeshBasicMaterial
+							color={landmarkColor(landmarks)}
+							transparent
+							opacity={0.96}
+							depthTest={false}
+							depthWrite={false}
+						/>
+					</T.Mesh>
+					<Text
+						position={[NODE_RADIUS * 1.55, NODE_RADIUS * 1.1, 0.01]}
+						text={landmarkBadge(landmarks)}
+						fontSize={landmarks.length > 1 ? 0.21 : 0.3}
+						anchorX="center"
+						anchorY="middle"
+						color="#16242a"
+						oncreate={attachAnalysisLabel}
+					/>
+				</Billboard>
 			{/if}
 		{/if}
 	{/each}

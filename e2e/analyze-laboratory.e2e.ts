@@ -59,6 +59,9 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 		page.getByTestId('analysis-result-panel').getByRole('heading', { level: 2 })
 	).toHaveText('BFS Traversal');
 	await expect(page.getByTestId('analysis-result')).toContainText('Visited');
+	await expect(page.getByTestId('analysis-result').getByLabel('Analysis legend')).toContainText(
+		'Start'
+	);
 	await expect(page.getByRole('button', { name: 'Replay' })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Analyze steps' })).toHaveCount(0);
 	await expect(page.getByTestId('skip-reveal')).toHaveCount(0);
@@ -98,16 +101,36 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 	}));
 	expect(traceOverflow.scrollWidth).toBeLessThanOrEqual(traceOverflow.clientWidth);
 	await expect(page.getByTestId('trace-speed')).toHaveCount(0);
+	await expect(page.getByTestId('trace-reset')).toBeDisabled();
 	await page.getByTestId('trace-next').click();
 	await expect(page.getByTestId('trace-scrubber')).toHaveValue('1');
+	await expect(page.getByTestId('trace-reset')).toBeEnabled();
 	await page.getByTestId('trace-play').click();
 	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Pause playback');
+	await expect(page.getByTestId('trace-play')).toHaveAttribute('data-icon', 'pause');
+	await expect.poll(() => page.getByTestId('trace-scrubber').inputValue()).not.toBe('1');
+	await expect(inspectorButton).toHaveAttribute('aria-expanded', 'true');
 	await page.getByTestId('trace-previous').click();
 	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Start playback');
 	await page.getByTestId('trace-play').click();
 	await page.getByTestId('trace-reset').click();
 	await expect(page.getByTestId('trace-scrubber')).toHaveValue('0');
 	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Start playback');
+	await expect(page.getByTestId('trace-reset')).toBeDisabled();
+
+	const lastAction = await page.getByTestId('trace-scrubber').getAttribute('max');
+	if (!lastAction) throw new Error('Expected a final trace action');
+	await page.getByTestId('trace-scrubber').evaluate((element, value) => {
+		const input = element as HTMLInputElement;
+		input.value = value;
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+	}, lastAction);
+	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Restart playback');
+	await expect(page.getByTestId('trace-play')).toHaveAttribute('data-icon', 'restart');
+	await expect(page.getByTestId('trace-reset')).toBeDisabled();
+	await page.getByTestId('trace-play').click();
+	await expect(page.getByTestId('trace-scrubber')).toHaveValue('0');
+	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Pause playback');
 
 	await page.getByRole('button', { name: 'Result', exact: true }).click();
 	await expect(page.getByTestId('analysis-result')).toBeVisible();
@@ -134,6 +157,12 @@ test('Dijkstra reports edge length and total cost', async ({ page }) => {
 	await page.getByTestId('run-analysis').click();
 	await expect(page.getByTestId('analysis-result')).toContainText('Length');
 	await expect(page.getByTestId('analysis-result')).toContainText('Cost');
+	await expect(page.getByTestId('analysis-result').getByLabel('Analysis legend')).toContainText(
+		'Start'
+	);
+	await expect(page.getByTestId('analysis-result').getByLabel('Analysis legend')).toContainText(
+		'End'
+	);
 	const metricRows = page.getByTestId('analysis-result').locator('.metrics > div');
 	await expect(metricRows).toHaveCount(2);
 	await expect(metricRows.nth(0).locator('dt')).toHaveCount(1);

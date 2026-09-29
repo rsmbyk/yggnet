@@ -238,6 +238,12 @@ describe('BFS analysis', () => {
 			nodeIds: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
 			edgeIds: ['e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6']
 		});
+		expect(output.result.artifacts).toContainEqual({
+			kind: 'landmarks',
+			id: 'landmarks',
+			label: 'Important nodes',
+			entries: [{ nodeId: 'A', role: 'start' }]
+		});
 		expect(output.events.map((event) => event.action)).toEqual(
 			expect.arrayContaining([
 				'focus',
@@ -290,7 +296,16 @@ describe('Dijkstra analysis', () => {
 				{ label: 'Length', value: 2 },
 				{ label: 'Cost', value: 1.5 }
 			],
-			artifacts: [{ kind: 'path', nodeIds: ['A', 'C', 'B'], edgeIds: ['e1', 'e2'] }]
+			artifacts: [
+				{ kind: 'path', nodeIds: ['A', 'C', 'B'], edgeIds: ['e1', 'e2'] },
+				{
+					kind: 'landmarks',
+					entries: [
+						{ nodeId: 'A', role: 'start' },
+						{ nodeId: 'B', role: 'end' }
+					]
+				}
+			]
 		});
 	});
 
@@ -300,11 +315,21 @@ describe('Dijkstra analysis', () => {
 			['A', 'B'],
 			['C', 'D']
 		]);
-		expect(def.execute(doc, { start: 'A', end: 'A' }).result).toMatchObject({
+		const sameNode = def.execute(doc, { start: 'A', end: 'A' }).result;
+		expect(sameNode).toMatchObject({
 			outcome: 'complete',
 			metrics: [
 				{ label: 'Length', value: 0 },
 				{ label: 'Cost', value: 0 }
+			]
+		});
+		expect(sameNode.artifacts).toContainEqual({
+			kind: 'landmarks',
+			id: 'landmarks',
+			label: 'Important nodes',
+			entries: [
+				{ nodeId: 'A', role: 'start' },
+				{ nodeId: 'A', role: 'end' }
 			]
 		});
 		expect(def.execute(doc, { start: 'A', end: 'D' }).result.outcome).toBe('no-result');

@@ -104,7 +104,13 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 			metrics: [{ label: 'Visited', value: order.length }],
 			artifacts: [
 				{ kind: 'ordered-nodes', id: 'traversal', label: 'Traversal order', nodeIds: order },
-				{ kind: 'tree', id: 'tree', label: 'BFS tree', nodeIds: order, edgeIds: treeEdges }
+				{ kind: 'tree', id: 'tree', label: 'BFS tree', nodeIds: order, edgeIds: treeEdges },
+				{
+					kind: 'landmarks',
+					id: 'landmarks',
+					label: 'Important nodes',
+					entries: [{ nodeId: start, role: 'start' }]
+				}
 			]
 		},
 		events
@@ -219,7 +225,17 @@ function runDijkstra(snapshot: GraphDocument, input: AnalysisInput): AnalysisOut
 				outcome: 'no-result',
 				summary: 'No path reaches the end node.',
 				metrics: [],
-				artifacts: []
+				artifacts: [
+					{
+						kind: 'landmarks',
+						id: 'landmarks',
+						label: 'Important nodes',
+						entries: [
+							{ nodeId: start, role: 'start' },
+							{ nodeId: end, role: 'end' }
+						]
+					}
+				]
 			},
 			events
 		};
@@ -240,7 +256,18 @@ function runDijkstra(snapshot: GraphDocument, input: AnalysisInput): AnalysisOut
 				{ label: 'Length', value: path.edgeIds.length },
 				{ label: 'Cost', value: dist.get(end)! }
 			],
-			artifacts: [{ kind: 'path', id: 'path', label: 'Shortest path', ...path }]
+			artifacts: [
+				{ kind: 'path', id: 'path', label: 'Shortest path', ...path },
+				{
+					kind: 'landmarks',
+					id: 'landmarks',
+					label: 'Important nodes',
+					entries: [
+						{ nodeId: start, role: 'start' },
+						{ nodeId: end, role: 'end' }
+					]
+				}
+			]
 		},
 		events
 	};

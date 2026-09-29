@@ -23,6 +23,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 - Align Analyze Result/Trace with the app chrome, animate result artifacts, center zoom-stable node rings, fit the camera around the panel, and simplify trace playback and inspectors.
 - Make result replay wait for true user inactivity without moving the camera, reveal BFS edges in traversal order, and refine inspector empty states, hover, expansion motion, and trace sizing.
 - Align the Analyze setup panel with Generate controls, add searchable node inputs, and show contextual Last result access in the manager header.
+- Distinguish important result nodes, quicken result reveals, preserve expanded trace inspectors during playback, and clarify Play/Pause/Restart transport states.
 
 ### Removed
 

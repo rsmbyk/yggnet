@@ -3,8 +3,13 @@
 	import { ANALYSIS_PLAYBACK_INTERVAL_MS } from '$lib/session/current-analysis';
 	import { frameAt } from '$lib/graph';
 	import { SvelteSet } from 'svelte/reactivity';
-	import { analysisResultSequence, revealDuration } from '$lib/world/analysis-decoration';
 	import {
+		analysisResultLandmarks,
+		analysisResultSequence,
+		revealDuration
+	} from '$lib/world/analysis-decoration';
+	import {
+		analysisTransportState,
 		formatInspectorValue,
 		inspectorValueSummary,
 		watchResultIdle
@@ -19,6 +24,16 @@
 	const frame = $derived(current ? frameAt(current.trace, current.cursor) : null);
 	let panelElement = $state<HTMLElement>();
 	let expandedInspectors = new SvelteSet<string>();
+	let inspectorAnalysisKey: string | null = null;
+	const resultLandmarks = $derived(
+		current ? analysisResultLandmarks(current.result.artifacts) : {}
+	);
+	const resultLandmarkRoles = $derived(new Set(Object.values(resultLandmarks).flat()));
+	const transport = $derived(
+		current
+			? analysisTransportState(current.cursor, current.trace.events.length, current.playing)
+			: { primary: 'play' as const, resetDisabled: true }
+	);
 
 	const inspectorCopy: Record<string, { name: string; description: string }> = {
 		queue: { name: 'Queue', description: 'Nodes waiting to be explored, in processing order.' },
@@ -77,8 +92,11 @@
 	});
 
 	$effect(() => {
-		void current?.trace;
-		expandedInspectors.clear();
+		const key = current ? `${current.sourceRevision}:${current.algorithmId}` : null;
+		if (key !== inspectorAnalysisKey || current?.panel === 'closed') {
+			expandedInspectors.clear();
+			inspectorAnalysisKey = current?.panel === 'closed' ? null : key;
+		}
 	});
 
 	$effect(() => {
@@ -115,6 +133,16 @@
 	function toggleInspector(id: string) {
 		if (expandedInspectors.has(id)) expandedInspectors.delete(id);
 		else expandedInspectors.add(id);
+	}
+
+	function activatePrimaryTransport() {
+		if (!current) return;
+		if (transport.primary === 'restart') {
+			app.seekAnalysis(0);
+			app.setAnalysisPlaying(true);
+			return;
+		}
+		app.setAnalysisPlaying(!current.playing);
 	}
 
 	function inspectorMeta(id: string) {
@@ -191,6 +219,12 @@
 					<h3>Legend</h3>
 					<div class="legend legend--result" aria-label="Analysis legend">
 						<span><i class="legend-mark legend-mark--result"></i>Result</span>
+						{#if resultLandmarkRoles.has('start')}
+							<span><i class="legend-mark legend-mark--landmark">S</i>Start</span>
+						{/if}
+						{#if resultLandmarkRoles.has('end')}
+							<span><i class="legend-mark legend-mark--landmark">E</i>End</span>
+						{/if}
 					</div>
 				</section>
 			</section>
@@ -211,15 +245,28 @@
 					<button
 						class="transport-button transport-button--primary"
 						type="button"
-						aria-label={current.playing ? 'Pause playback' : 'Start playback'}
-						title={current.playing ? 'Pause' : 'Play'}
+						aria-label={transport.primary === 'pause'
+							? 'Pause playback'
+							: transport.primary === 'restart'
+								? 'Restart playback'
+								: 'Start playback'}
+						title={transport.primary === 'pause'
+							? 'Pause'
+							: transport.primary === 'restart'
+								? 'Restart'
+								: 'Play'}
+						data-icon={transport.primary}
 						data-testid="trace-play"
-						onclick={() => app.setAnalysisPlaying(!current.playing)}
+						onclick={activatePrimaryTransport}
 					>
-						{#if current.playing}<svg viewBox="0 0 24 24" aria-hidden="true"
-								><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg
+						{#if transport.primary === 'pause'}<svg viewBox="0 0 24 24" aria-hidden="true"
+								><path d="M7 5h3v14H7zM14 5h3v14h-3z" /></svg
 							>{:else}<svg viewBox="0 0 24 24" aria-hidden="true"
-								><path d="M8 5l11 7-11 7V5z" /></svg
+								><path
+									d={transport.primary === 'restart'
+										? 'M18.4 7.2A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.2-3.6L14 11h7V4l-2.6 3.2z'
+										: 'M8 5l11 7-11 7V5z'}
+								/></svg
 							>{/if}
 					</button>
 					<button
@@ -228,6 +275,7 @@
 						aria-label="Stop and reset playback"
 						title="Stop and reset"
 						data-testid="trace-reset"
+						disabled={transport.resetDisabled}
 						onclick={() => app.resetAnalysisPlayback()}
 					>
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z" /></svg>
@@ -630,6 +678,17 @@
 		top: 0.26rem;
 		border: 0.2rem solid transparent;
 		border-left-color: #b28b26;
+	}
+	.legend-mark--landmark {
+		place-items: center;
+		border: 1px solid #527d89;
+		border-radius: 50%;
+		background: rgba(82, 125, 137, 0.12);
+		color: #315f69;
+		font-size: 0.55rem;
+		font-style: normal;
+		font-weight: 700;
+		line-height: 1;
 	}
 	.legend-mark--rejected::before,
 	.legend-mark--rejected::after {

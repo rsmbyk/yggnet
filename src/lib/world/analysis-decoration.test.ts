@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
 	analysisResultSequence,
+	analysisResultLandmarks,
 	analysisGlyphScale,
+	landmarkBadge,
 	primaryAnalysisRole,
 	revealDuration,
 	revealProgress
@@ -20,10 +22,28 @@ describe('analysis decoration policy', () => {
 	});
 
 	it('bounds result reveal and supports immediate reduced motion', () => {
-		expect(revealDuration(1)).toBe(800);
-		expect(revealDuration(10_000)).toBe(3000);
+		expect(revealDuration(1)).toBe(700);
+		expect(revealDuration(10_000)).toBe(2600);
 		expect(revealProgress(revealDuration(10) / 2, 10, false)).toBeCloseTo(0.5);
 		expect(revealProgress(0, 10, true)).toBe(1);
+	});
+
+	it('merges result landmarks without stacking badges', () => {
+		const landmarks = analysisResultLandmarks([
+			{
+				kind: 'landmarks',
+				id: 'terminals',
+				label: 'Important nodes',
+				entries: [
+					{ nodeId: 'A', role: 'start' },
+					{ nodeId: 'B', role: 'end' }
+				]
+			}
+		]);
+		expect(landmarks).toEqual({ A: ['start'], B: ['end'] });
+		expect(landmarkBadge(['start'])).toBe('S');
+		expect(landmarkBadge(['end'])).toBe('E');
+		expect(landmarkBadge(['start', 'end'])).toBe('S/E');
 	});
 
 	it('interleaves BFS tree edges with the nodes they discover', () => {
