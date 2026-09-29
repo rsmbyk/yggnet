@@ -7,7 +7,7 @@ bump: minor
 status: Accepted
 title: 'Unified Analyze algorithm laboratory'
 created: 2026-09-29
-updated: 2026-09-29
+updated: 2026-09-30
 ---
 
 # Spec: Unified Analyze algorithm laboratory
@@ -85,7 +85,7 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 ### Current-analysis lifecycle
 
 - Exactly one `CurrentAnalysis` exists in session memory. A successful new run replaces it.
-- It contains the definition id, validated inputs, source revision, result, retained trace, truncation flag, reducer checkpoints, mode, cursor, playback state, and playback speed.
+- It contains the definition id, validated inputs, source revision, result, retained trace, truncation flag, reducer checkpoints, mode, cursor, and playback state.
 - It is not serialized into graph documents, autosave, named saves, import/export, or local storage.
 - Adding/removing a node or edge or changing an edge endpoint, direction, or weight stops playback/reveal and clears the current analysis immediately.
 - Label, tag, color, note, and node-position changes do not invalidate the current analysis.
@@ -99,19 +99,25 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - The panel is application-modal: other tools, selection, dragging, graph-edit commands, undo/redo, and destructive shortcuts cannot act while it is open.
 - Panel controls and camera orbit/pan/zoom remain operable.
 - Result and Trace are separate views of the same current analysis. Entering Trace begins at the initial event rather than inheriting the final result frame.
-- Trace provides Previous, Play/Pause, Next, a scrubber, and 0.5x, 1x, and 2x speed. Default 1x cadence is approximately 600 ms per semantic action.
+- The panel follows the existing manager chrome tokens, sizes itself to its content up to the available viewport, uses the algorithm name as its title, and gives Result and Trace equal full-width tabs.
+- Result shows one metric per row, the final-artifact legend, and Skip while reveal is active. It has no repeated summary, Replay, or Analyze steps action.
+- Trace orders its contents as media-style controls, scrubber, current action, data structures, and legend.
+- Trace provides Previous, Play/Pause, Stop/Reset, Next, and a scrubber. Playback uses a fixed cadence of approximately 300 ms per semantic action (twice the original cadence); Previous, Next, Stop/Reset, and manual scrubbing pause playback.
+- Inspector cards are collapsed by default and show a user-facing data-structure name, description, and item count; expanding a card reveals its current data.
+- The main top toolbar is disabled while Result/Trace is open, in addition to the other editing and tool surfaces.
 - Closing Result/Trace stops animation, removes analysis visuals, preserves the current analysis, and reopens Analyze with its previous definition and inputs.
 - View last result reconstructs the result view and glyphs without rerunning the algorithm.
 
 ### Result reveal
 
 - Result reveal is derived from result artifacts and is not a replay of the execution trace.
-- Before reveal, the camera returns to the canonical orbit/center and fits the whole graph.
+- Before reveal, the camera returns to the canonical orbit/center and fits the whole graph in the viewport area not covered by the Result/Trace panel.
 - All graph entities begin dimmed; the result is then revealed in artifact order.
 - Total reveal duration is clamped to approximately 0.8–3 seconds, independent of result size. Large results advance in batches or a continuous wave.
 - Dijkstra reveals the start node, then each path edge filling from the source-side endpoint toward the next node, ending at the target.
 - BFS reveals its reachable traversal/tree result in traversal order within the same duration budget.
-- Replay restarts framing/reveal. Skip immediately applies the completed result frame.
+- Skip immediately applies the completed result frame. After approximately four idle seconds in Result, the reveal replays automatically.
+- Returning from Trace to Result resets the camera to the panel-aware canonical fitted view before revealing the result again.
 - Reduced-motion preference removes spatial glyph motion and directional growth and uses a brief opacity transition or the completed frame.
 
 ### Hybrid glyph layer
@@ -121,14 +127,14 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - The initial decoration vocabulary is:
   - wireframe cage for the current node;
   - dashed halo plus traveling probe for the node/edge being inspected;
-  - under-ring for a frontier/queued node;
-  - ring plus check for a settled node;
+  - centered ring for a frontier/queued node;
+  - centered ring plus check for a settled node;
   - directional ribbon/fill for an accepted or result edge;
   - minimal badge only when an active marker or traversal ordinal materially aids understanding.
 - Queue positions, distances, predecessors, scores, and other detailed values appear in panel inspectors, not as dense world text.
 - Result view renders only result-artifact decorations. Trace view replaces them with the selected semantic frame; the two sets never accumulate.
 - Decorations use shared geometry/materials and pooling or instancing, ignore raycasts, and permit at most one primary glyph per entity.
-- Glyphs remain screen-readable with near/far size clamps.
+- Node glyphs keep a stable size relative to their base node as the camera zoom changes.
 - Color is never the sole distinction: geometry, line style, motion, legend, and reduced-motion equivalents communicate each role.
 - Closing/invalidation removes every analysis decoration and restores normal graph opacity immediately. The camera remains where the user left it.
 
@@ -189,9 +195,10 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 ### Scenario: Step and scrub through the trace
 
 - **Given** the current analysis has a retained semantic trace
-- **When** the user enters Trace and uses Previous, Next, playback, pause, speed, or scrubber controls
+- **When** the user enters Trace and uses Previous, Next, playback, pause, Stop/Reset, or scrubber controls
 - **Then** narration, inspectors, legend, and world glyphs describe the same selected semantic step
 - **And** backward/arbitrary movement reconstructs the same frame without rerunning the algorithm
+- **And** stepping, resetting, or scrubbing pauses autoplay
 
 ### Scenario: Trace is capped but result remains correct
 

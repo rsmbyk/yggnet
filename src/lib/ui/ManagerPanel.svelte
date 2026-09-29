@@ -28,10 +28,8 @@
 		JUMPS_FIELD_HELP,
 		NEIGHBORS_FIELD_HELP,
 		PALEY_ORDERS,
-		pathSeriesMetrics,
 		PLATONIC_LABELS,
 		PLATONIC_SOLIDS,
-		PROBABILITY_RANGE_HELP,
 		REWIRE_FIELD_HELP,
 		RINGS_FIELD_HELP,
 		RUNGS_FIELD_HELP,
@@ -66,7 +64,6 @@
 
 	let tagsSearchQuery = $state('');
 	let tagEditDraft = $state('');
-	let stepNote = $state('');
 	let nodeSearchQuery = $state('');
 	let nodeSearchTags = $state<string[]>([]);
 	let nodeSearchKeyword = $state('');
@@ -94,9 +91,6 @@
 		app.applyGeneratedGraph(kind, options);
 	}
 
-	let compareAlgo = $state('dijkstra');
-	let compareRunIdA = $state('');
-	let compareRunIdB = $state('');
 	let saveSlotName = $state('');
 	let panelEl = $state<HTMLElement | undefined>(undefined);
 	let headerEl = $state<HTMLElement | undefined>(undefined);
@@ -266,7 +260,6 @@
 		})
 	);
 	const nodePickerOptions = $derived(nodes.map((n) => ({ id: n.id, label: n.label })));
-	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
 	const selectedCount = $derived(app.selection.nodeIds.length);
@@ -278,60 +271,6 @@
 	const selectedEdgeIds = $derived(new Set(app.selection.edgeIds));
 	const selectedEdgeCount = $derived(app.selection.edgeIds.length);
 	const selectedEdge = $derived(selectedEdgeId ? app.document.edges[selectedEdgeId] : null);
-	const lastRun = $derived(app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null);
-	const traceLen = $derived(lastRun?.trace.length ?? 0);
-	const currentStepAnnotation = $derived(lastRun?.annotations?.[app.analyze.stepIndex] ?? '');
-
-	$effect(() => {
-		if (!app.analyze.playback || !lastRun || traceLen < 2) return;
-		const maxStep = Math.max(0, traceLen - 1);
-		if (app.analyze.stepIndex >= maxStep) {
-			app.setPlayback(false);
-			return;
-		}
-		const handle = setInterval(() => {
-			const idx = app.analyze.stepIndex;
-			if (idx >= maxStep) {
-				app.setPlayback(false);
-				return;
-			}
-			app.setStepIndex(idx + 1);
-		}, 400);
-		return () => clearInterval(handle);
-	});
-
-	const compareRunA = $derived(
-		app.analyze.compareRunIds[0] ? app.runStore.runs[app.analyze.compareRunIds[0]] : null
-	);
-	const compareRunB = $derived(
-		app.analyze.compareRunIds[1] ? app.runStore.runs[app.analyze.compareRunIds[1]] : null
-	);
-
-	const edgeWeights = $derived(
-		Object.fromEntries(Object.values(app.document.edges).map((e) => [e.id, e.weight]))
-	);
-
-	function compareMetrics(run: typeof compareRunA) {
-		if (!run || run.result.kind !== 'path') return { hops: 0, cost: 0, nodes: 0 };
-		const { hops, cost } = pathSeriesMetrics(run.result.edgeIds, edgeWeights);
-		return { hops, cost, nodes: run.result.nodeIds.length };
-	}
-
-	function runLabel(run: (typeof storedRuns)[number]): string {
-		const stale = run.stale ? ' (stale)' : '';
-		return `${run.algorithmId} · ${run.id.slice(0, 8)}…${stale}`;
-	}
-
-	$effect(() => {
-		const ids = storedRuns.map((r) => r.id);
-		if (ids.length === 0) {
-			compareRunIdA = '';
-			compareRunIdB = '';
-			return;
-		}
-		if (!ids.includes(compareRunIdA)) compareRunIdA = ids[0];
-		if (!ids.includes(compareRunIdB)) compareRunIdB = ids.length > 1 ? ids[1] : ids[0];
-	});
 
 	const selectionTestId = $derived(
 		selectedCount > 1

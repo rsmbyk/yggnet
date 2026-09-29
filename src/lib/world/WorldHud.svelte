@@ -189,7 +189,7 @@
 					data-testid="undo"
 					aria-label="Undo"
 					title="Undo"
-					disabled={!app.canUndo}
+					disabled={app.analysisBlocking || !app.canUndo}
 					onclick={() => app.undo()}
 				>
 					<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -205,7 +205,7 @@
 					data-testid="redo"
 					aria-label="Redo"
 					title="Redo"
-					disabled={!app.canRedo}
+					disabled={app.analysisBlocking || !app.canRedo}
 					onclick={() => app.redo()}
 				>
 					<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -221,6 +221,7 @@
 					data-testid="world-add-node"
 					aria-label="Add node"
 					title="Add node"
+					disabled={app.analysisBlocking}
 					onclick={addNearView}
 				>
 					<svg viewBox="0 0 24 24" aria-hidden="true"
@@ -233,6 +234,7 @@
 					data-testid="palette-trigger"
 					aria-label="Command palette"
 					title="Palette (Ctrl+K)"
+					disabled={app.analysisBlocking}
 					onclick={() => app.openPalette(true)}
 				>
 					<svg viewBox="0 0 24 24" aria-hidden="true"

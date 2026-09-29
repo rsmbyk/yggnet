@@ -6,7 +6,7 @@ type: feat
 priority: P0
 effort: L
 created: 2026-09-29
-updated: 2026-09-29
+updated: 2026-09-30
 spec: specs/061-unified-analyze
 branch: feat/061-unified-analyze
 pr: 37
@@ -28,6 +28,7 @@ Replace the separate Pathfinder and path-specific Analyze flows with one extensi
 - The current analysis is session-only, replaces the prior run, and clears on analysis-relevant structural edits.
 - Result and trace visuals use temporary hybrid glyphs around unchanged spherical nodes.
 - Future algorithms should normally plug into the definition and artifact contracts without adding algorithm-specific panels or world code.
+- Owner review refined the panel to the shared app chrome, added a real bounded/idle-repeating result reveal, made framing panel-aware, and simplified Trace to fixed 2x media controls with collapsed inspector cards.
 
 ## Acceptance sketch
 

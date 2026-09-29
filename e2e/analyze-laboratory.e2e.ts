@@ -19,17 +19,51 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 	await page.getByTestId('run-analysis').click();
 
 	await expect(page.getByTestId('analysis-result-panel')).toBeVisible();
+	await expect(
+		page.getByTestId('analysis-result-panel').getByRole('heading', { level: 2 })
+	).toHaveText('BFS Traversal');
 	await expect(page.getByTestId('analysis-result')).toContainText('Visited');
+	await expect(page.getByRole('button', { name: 'Replay' })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Analyze steps' })).toHaveCount(0);
+	await expect(page.getByTestId('skip-reveal')).toBeVisible();
+	await page.getByTestId('skip-reveal').click();
+	await expect(page.getByTestId('skip-reveal')).toHaveCount(0);
+	await expect(page.getByTestId('skip-reveal')).toBeVisible({ timeout: 6000 });
+	await page.getByTestId('skip-reveal').click();
 	await expect(page.getByTestId('tool-nodes')).toBeDisabled();
+	await expect(page.getByTestId('undo')).toBeDisabled();
+	await expect(page.getByTestId('redo')).toBeDisabled();
+	await expect(page.getByTestId('world-add-node')).toBeDisabled();
+	await expect(page.getByTestId('palette-trigger')).toBeDisabled();
+
+	const panelWidth = (await page.getByTestId('analysis-result-panel').boundingBox())?.width ?? 0;
+	const resultWidth =
+		(await page.getByRole('button', { name: 'Result', exact: true }).boundingBox())?.width ?? 0;
+	const traceWidth = (await page.getByTestId('open-trace').boundingBox())?.width ?? 0;
+	expect(resultWidth).toBeGreaterThan(panelWidth * 0.4);
+	expect(traceWidth).toBeGreaterThan(panelWidth * 0.4);
+
 	await page.getByTestId('open-trace').click();
-	await expect(page.getByTestId('analysis-inspectors')).toContainText('queue');
+	await expect(page.getByTestId('analysis-inspectors')).toContainText('Queue');
+	const firstInspector = page.getByTestId('analysis-inspectors').locator('details').first();
+	await expect(firstInspector).not.toHaveAttribute('open', '');
+	await expect(firstInspector).toContainText('Nodes waiting to be explored');
+	await firstInspector.locator('summary').click();
+	await expect(firstInspector).toHaveAttribute('open', '');
+	await expect(page.getByTestId('trace-speed')).toHaveCount(0);
 	await page.getByTestId('trace-next').click();
 	await expect(page.getByTestId('trace-scrubber')).toHaveValue('1');
-	await page.getByTestId('trace-previous').click();
-	await expect(page.getByTestId('trace-scrubber')).toHaveValue('0');
-	await page.getByTestId('trace-speed').selectOption('2');
 	await page.getByTestId('trace-play').click();
-	await expect(page.getByTestId('trace-play')).toHaveText('Pause');
+	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Pause playback');
+	await page.getByTestId('trace-previous').click();
+	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Start playback');
+	await page.getByTestId('trace-play').click();
+	await page.getByTestId('trace-reset').click();
+	await expect(page.getByTestId('trace-scrubber')).toHaveValue('0');
+	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Start playback');
+
+	await page.getByRole('button', { name: 'Result', exact: true }).click();
+	await expect(page.getByTestId('analysis-result')).toBeVisible();
 
 	await page.getByTestId('close-analysis').click();
 	await expect(page.getByTestId('analysis-result-panel')).toHaveCount(0);
@@ -51,4 +85,8 @@ test('Dijkstra reports edge length and total cost', async ({ page }) => {
 	await page.getByTestId('run-analysis').click();
 	await expect(page.getByTestId('analysis-result')).toContainText('Length');
 	await expect(page.getByTestId('analysis-result')).toContainText('Cost');
+	const metricRows = page.getByTestId('analysis-result').locator('.metrics > div');
+	await expect(metricRows).toHaveCount(2);
+	await expect(metricRows.nth(0).locator('dt')).toHaveCount(1);
+	await expect(metricRows.nth(0).locator('dd')).toHaveCount(1);
 });

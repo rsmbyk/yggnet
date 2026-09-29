@@ -13,8 +13,8 @@ export function primaryAnalysisRole(roles: AnalysisRole[]): AnalysisRole | null 
 	return ROLE_PRIORITY.find((role) => roles.includes(role)) ?? roles[0] ?? null;
 }
 
-export function analysisGlyphScale(cameraDistance: number): number {
-	return Math.min(2.4, Math.max(0.85, cameraDistance * 0.055));
+export function analysisGlyphScale(_cameraDistance: number): number {
+	return 1;
 }
 
 export function revealDuration(entityCount: number): number {

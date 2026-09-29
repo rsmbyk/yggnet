@@ -70,6 +70,12 @@
   - Acceptance: fill spec Traceability with final paths; update ITEM/board/tasks; bump `VERSION` and `package.json` to `0.39.0`; add changelog section; open draft PR to `develop`
   - Files: spec pack, ITEM/board, version/changelog, PR metadata
 
+- [x] **T10 — Owner-review Analyze UI and playback refinement**
+  - Red: session/world tests cover fixed 2x cadence controls and zoom-stable glyph sizing; Playwright covers native panel layout, algorithm title, full-width tabs, metric rows, toolbar blocking, inspector accordions, and idle result replay
+  - Green: align Result/Trace with app chrome, animate result artifacts, center node rings, fit the camera around the panel, and implement the requested media-player trace flow
+  - Verify: targeted Vitest and Playwright, then the full quality gate
+  - Files: Analyze session/UI/world modules, `e2e/analyze-laboratory.e2e.ts`, and accepted SPEC-061 pack
+
 ## Done when
 
 - [x] Every acceptance scenario in `spec.md` holds

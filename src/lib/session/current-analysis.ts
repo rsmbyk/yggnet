@@ -6,7 +6,7 @@ import {
 } from '$lib/graph';
 
 export type AnalysisPanelMode = 'closed' | 'result' | 'trace';
-export type AnalysisSpeed = 0.5 | 1 | 2;
+export const ANALYSIS_PLAYBACK_INTERVAL_MS = 300;
 
 export interface CurrentAnalysis {
 	algorithmId: string;
@@ -17,7 +17,6 @@ export interface CurrentAnalysis {
 	panel: AnalysisPanelMode;
 	cursor: number;
 	playing: boolean;
-	speed: AnalysisSpeed;
 	reveal: 'playing' | 'complete';
 }
 
@@ -36,7 +35,6 @@ export function createCurrentAnalysis(
 		panel: 'result',
 		cursor: 0,
 		playing: false,
-		speed: 1,
 		reveal: 'playing'
 	};
 }
@@ -64,12 +62,16 @@ export function seekAnalysis(
 	};
 }
 
-export function setAnalysisSpeed(
+export function stepAnalysis(
 	current: CurrentAnalysis | null,
-	speed: number
+	delta: -1 | 1
 ): CurrentAnalysis | null {
-	if (!current) return null;
-	return { ...current, speed: speed === 0.5 || speed === 2 ? speed : 1 };
+	const sought = current ? seekAnalysis(current, current.cursor + delta) : null;
+	return sought ? { ...sought, playing: false } : null;
+}
+
+export function resetAnalysis(current: CurrentAnalysis | null): CurrentAnalysis | null {
+	return current ? { ...current, cursor: 0, playing: false } : null;
 }
 
 export function invalidateAnalysis(_current: CurrentAnalysis | null): null {

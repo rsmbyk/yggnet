@@ -76,8 +76,9 @@ import {
 	createCurrentAnalysis,
 	openAnalysisResult,
 	openAnalysisTrace,
+	resetAnalysis,
 	seekAnalysis,
-	setAnalysisSpeed,
+	stepAnalysis,
 	type CurrentAnalysis
 } from './current-analysis';
 import { validateAnalysisInput } from '$lib/graph';
@@ -221,6 +222,7 @@ class AppStore {
 		current: null
 	});
 	private analysisRevision = 0;
+	analysisPanelWidth = $state(0);
 	filters = $state.raw<FiltersState>({ tags: [] });
 	camera = $state.raw<CameraState>({
 		distance: WORLD.camera.defaultDistance,
@@ -337,8 +339,6 @@ class AppStore {
 		};
 		this.ui = { ...this.ui, openTool: null };
 		this.clearAllSelection();
-		this.resetCameraTarget();
-		this.resetCameraOrbit();
 		this.requestFrameGraph();
 		return true;
 	}
@@ -351,18 +351,32 @@ class AppStore {
 	viewLastAnalysis(): void {
 		this.analysis = { ...this.analysis, current: openAnalysisResult(this.analysis.current) };
 		this.ui = { ...this.ui, openTool: null };
+		this.requestFrameGraph();
 	}
 
 	showAnalysisResult(): void {
 		this.analysis = { ...this.analysis, current: openAnalysisResult(this.analysis.current) };
+		this.requestFrameGraph();
 	}
 
 	showAnalysisTrace(): void {
 		this.analysis = { ...this.analysis, current: openAnalysisTrace(this.analysis.current) };
 	}
 
-	seekAnalysis(index: number): void {
-		this.analysis = { ...this.analysis, current: seekAnalysis(this.analysis.current, index) };
+	seekAnalysis(index: number, pause = true): void {
+		const current = seekAnalysis(this.analysis.current, index);
+		this.analysis = {
+			...this.analysis,
+			current: current && pause ? { ...current, playing: false } : current
+		};
+	}
+
+	stepAnalysis(delta: -1 | 1): void {
+		this.analysis = { ...this.analysis, current: stepAnalysis(this.analysis.current, delta) };
+	}
+
+	resetAnalysisPlayback(): void {
+		this.analysis = { ...this.analysis, current: resetAnalysis(this.analysis.current) };
 	}
 
 	setAnalysisPlaying(playing: boolean): void {
@@ -371,14 +385,24 @@ class AppStore {
 		this.analysis = { ...this.analysis, current: { ...current, playing } };
 	}
 
-	setAnalysisPlaybackSpeed(speed: number): void {
-		this.analysis = { ...this.analysis, current: setAnalysisSpeed(this.analysis.current, speed) };
-	}
-
 	skipAnalysisReveal(): void {
 		const current = this.analysis.current;
 		if (!current) return;
 		this.analysis = { ...this.analysis, current: { ...current, reveal: 'complete' } };
+	}
+
+	replayAnalysisResult(): void {
+		const current = this.analysis.current;
+		if (!current || current.panel !== 'result') return;
+		this.analysis = { ...this.analysis, current: { ...current, reveal: 'playing' } };
+		this.requestFrameGraph();
+	}
+
+	setAnalysisPanelWidth(width: number): void {
+		const next = Math.max(0, width);
+		if (Math.abs(next - this.analysisPanelWidth) < 1) return;
+		this.analysisPanelWidth = next;
+		if (this.analysisBlocking && next > 0) this.requestFrameGraph();
 	}
 
 	clearCurrentAnalysis(): void {

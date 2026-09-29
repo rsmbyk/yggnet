@@ -12,10 +12,10 @@ describe('analysis decoration policy', () => {
 		expect(primaryAnalysisRole(['current', 'result', 'inspecting'])).toBe('result');
 	});
 
-	it('clamps glyph scale for near and far cameras', () => {
-		expect(analysisGlyphScale(1)).toBe(0.85);
-		expect(analysisGlyphScale(1000)).toBe(2.4);
-		expect(analysisGlyphScale(20)).toBeGreaterThan(0.85);
+	it('keeps glyph scale stable at every camera distance', () => {
+		expect(analysisGlyphScale(1)).toBe(1);
+		expect(analysisGlyphScale(1000)).toBe(1);
+		expect(analysisGlyphScale(20)).toBe(1);
 	});
 
 	it('bounds result reveal and supports immediate reduced motion', () => {

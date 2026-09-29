@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { app } from '$lib/session/app.svelte';
+	import { ANALYSIS_PLAYBACK_INTERVAL_MS } from '$lib/session/current-analysis';
 	import { frameAt } from '$lib/graph';
 	import { revealDuration } from '$lib/world/analysis-decoration';
 
@@ -10,6 +11,47 @@
 			: null
 	);
 	const frame = $derived(current ? frameAt(current.trace, current.cursor) : null);
+	let panelElement = $state<HTMLElement>();
+
+	const inspectorCopy: Record<string, { name: string; description: string }> = {
+		queue: { name: 'Queue', description: 'Nodes waiting to be explored, in processing order.' },
+		visited: { name: 'Visited nodes', description: 'Nodes already visited by the traversal.' },
+		distances: {
+			name: 'Tentative distances',
+			description: 'The best known cost from Start to each node.'
+		},
+		predecessors: {
+			name: 'Predecessors',
+			description: 'The previous node on each best known route.'
+		},
+		unsettled: {
+			name: 'Unsettled nodes',
+			description: 'Discovered nodes whose shortest distance is not final.'
+		},
+		settled: { name: 'Settled nodes', description: 'Nodes whose shortest distance is final.' }
+	};
+
+	const legendRoles = [
+		{ id: 'current', label: 'Current' },
+		{ id: 'inspecting', label: 'Inspecting' },
+		{ id: 'frontier', label: 'Frontier' },
+		{ id: 'settled', label: 'Settled' },
+		{ id: 'result', label: 'Result' },
+		{ id: 'rejected', label: 'Rejected' }
+	] as const;
+
+	$effect(() => {
+		const element = panelElement;
+		if (!element) return;
+		const update = () => app.setAnalysisPanelWidth(element.getBoundingClientRect().width);
+		update();
+		const observer = new ResizeObserver(update);
+		observer.observe(element);
+		return () => {
+			observer.disconnect();
+			app.setAnalysisPanelWidth(0);
+		};
+	});
 
 	$effect(() => {
 		if (!current || current.panel !== 'result' || current.reveal !== 'playing') return;
@@ -23,8 +65,14 @@
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		const timer = window.setTimeout(
 			() => app.skipAnalysisReveal(),
-			reduced ? 0 : 250 + revealDuration(count)
+			reduced ? 0 : 300 + revealDuration(count)
 		);
+		return () => window.clearTimeout(timer);
+	});
+
+	$effect(() => {
+		if (!current || current.panel !== 'result' || current.reveal !== 'complete') return;
+		const timer = window.setTimeout(() => app.replayAnalysisResult(), 4000);
 		return () => window.clearTimeout(timer);
 	});
 
@@ -41,19 +89,48 @@
 				app.setAnalysisPlaying(false);
 				return;
 			}
-			app.seekAnalysis(active.cursor + 1);
-		}, 600 / current.speed);
+			app.seekAnalysis(active.cursor + 1, false);
+		}, ANALYSIS_PLAYBACK_INTERVAL_MS);
 		return () => window.clearInterval(timer);
 	});
 
 	function display(value: unknown): string {
-		if (Array.isArray(value)) return value.join(' → ') || 'Empty';
+		if (Array.isArray(value)) return value.map(entityLabel).join(' → ') || 'Empty';
 		if (value && typeof value === 'object') {
 			return Object.entries(value as Record<string, unknown>)
-				.map(([key, item]) => `${key}: ${String(item)}`)
+				.map(([key, item]) => `${entityLabel(key)}: ${entityLabel(item)}`)
 				.join(', ');
 		}
 		return String(value ?? 'Empty');
+	}
+
+	function entityLabel(value: unknown): string {
+		if (typeof value !== 'string') return String(value);
+		return app.document.nodes[value]?.label ?? app.document.edges[value]?.label ?? value;
+	}
+
+	function count(value: unknown): number {
+		if (Array.isArray(value)) return value.length;
+		if (value && typeof value === 'object') return Object.keys(value).length;
+		return value === undefined || value === null || value === '' ? 0 : 1;
+	}
+
+	function inspectorMeta(id: string) {
+		return (
+			inspectorCopy[id] ?? {
+				name: id.replaceAll('-', ' ').replace(/^./, (letter) => letter.toUpperCase()),
+				description: 'Current values maintained by the algorithm.'
+			}
+		);
+	}
+
+	function narration(): string {
+		const item = frame?.narration;
+		if (!item) return 'Ready to inspect the algorithm.';
+		const action = item.key.replaceAll('-', ' ');
+		const node = 'nodeId' in item.refs ? entityLabel(item.refs.nodeId) : '';
+		const edge = 'edgeId' in item.refs ? entityLabel(item.refs.edgeId) : '';
+		return [action, node, edge].filter(Boolean).join(' · ');
 	}
 </script>
 
@@ -65,21 +142,22 @@
 		tabindex="-1"
 		aria-modal="true"
 		aria-label={`${definition?.name ?? 'Analysis'} ${current.panel}`}
+		bind:this={panelElement}
 	>
-		<header>
-			<div>
-				<p class="eyebrow">{definition?.name}</p>
-				<h2>{current.panel === 'result' ? 'Result' : 'Trace'}</h2>
-			</div>
+		<header class="panel-header">
+			<h2>{definition?.name ?? 'Analysis'}</h2>
 			<button
+				class="icon-button"
 				type="button"
 				aria-label="Close analysis"
 				data-testid="close-analysis"
-				onclick={() => app.closeAnalysisPanel()}>×</button
+				onclick={() => app.closeAnalysisPanel()}
 			>
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+			</button>
 		</header>
 
-		<nav aria-label="Analysis view">
+		<nav class="tabs" aria-label="Analysis view">
 			<button
 				type="button"
 				class:active={current.panel === 'result'}
@@ -94,58 +172,86 @@
 		</nav>
 
 		{#if current.panel === 'result'}
-			<section data-testid="analysis-result">
-				<p>{current.result.summary}</p>
-				<div class="metrics">
-					{#each current.result.metrics as metric (metric.label)}
-						<div><strong>{metric.value}</strong><span>{metric.label}</span></div>
-					{/each}
-				</div>
-				{#if current.result.outcome === 'no-result'}<p class="notice">No result</p>{/if}
+			<section class="panel-content" data-testid="analysis-result">
+				{#if current.result.metrics.length > 0}
+					<dl class="metrics">
+						{#each current.result.metrics as metric (metric.label)}
+							<div>
+								<dt>{metric.label}</dt>
+								<dd>{metric.value}</dd>
+							</div>
+						{/each}
+					</dl>
+				{/if}
+				{#if current.result.outcome === 'no-result'}<p class="notice">No result was found.</p>{/if}
+				<section class="trace-section">
+					<h3>Legend</h3>
+					<div class="legend legend--result" aria-label="Analysis legend">
+						<span><i class="legend-mark legend-mark--result"></i>Result</span>
+					</div>
+				</section>
 				{#if current.reveal === 'playing'}
-					<button type="button" data-testid="skip-reveal" onclick={() => app.skipAnalysisReveal()}
-						>Skip animation</button
-					>
-				{:else}
-					<button type="button" data-testid="replay-result" onclick={() => app.viewLastAnalysis()}
-						>Replay</button
+					<button
+						class="skip"
+						type="button"
+						data-testid="skip-reveal"
+						onclick={() => app.skipAnalysisReveal()}>Skip animation</button
 					>
 				{/if}
-				<button type="button" onclick={() => app.showAnalysisTrace()}>Analyze steps</button>
 			</section>
 		{:else}
-			<section data-testid="analysis-trace">
-				<p class="narration" data-testid="trace-narration">{frame?.narration?.key ?? 'Ready'}</p>
-				{#if current.trace.truncated}<p class="notice">
-						Playback is partial: the trace reached 50,000 actions.
-					</p>{/if}
-				<div class="inspectors" data-testid="analysis-inspectors">
-					{#each Object.entries(frame?.inspectors ?? {}) as [name, inspector] (name)}
-						<div><strong>{name}</strong><span>{display(inspector.value)}</span></div>
-					{/each}
-				</div>
-				<div class="controls">
+			<section class="panel-content trace-content" data-testid="analysis-trace">
+				<div class="transport" aria-label="Trace playback controls">
 					<button
+						class="transport-button"
 						type="button"
+						aria-label="Previous action"
+						title="Previous"
 						data-testid="trace-previous"
 						disabled={current.cursor <= 0}
-						onclick={() => app.seekAnalysis(current.cursor - 1)}>Previous</button
+						onclick={() => app.stepAnalysis(-1)}
 					>
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M18 6l-8 6 8 6V6z" /></svg>
+					</button>
 					<button
+						class="transport-button transport-button--primary"
 						type="button"
+						aria-label={current.playing ? 'Pause playback' : 'Start playback'}
+						title={current.playing ? 'Pause' : 'Play'}
 						data-testid="trace-play"
 						onclick={() => app.setAnalysisPlaying(!current.playing)}
-						>{current.playing ? 'Pause' : 'Play'}</button
 					>
+						{#if current.playing}<svg viewBox="0 0 24 24" aria-hidden="true"
+								><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg
+							>{:else}<svg viewBox="0 0 24 24" aria-hidden="true"
+								><path d="M8 5l11 7-11 7V5z" /></svg
+							>{/if}
+					</button>
 					<button
+						class="transport-button"
 						type="button"
+						aria-label="Stop and reset playback"
+						title="Stop and reset"
+						data-testid="trace-reset"
+						onclick={() => app.resetAnalysisPlayback()}
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z" /></svg>
+					</button>
+					<button
+						class="transport-button"
+						type="button"
+						aria-label="Next action"
+						title="Next"
 						data-testid="trace-next"
 						disabled={current.cursor >= current.trace.events.length - 1}
-						onclick={() => app.seekAnalysis(current.cursor + 1)}>Next</button
+						onclick={() => app.stepAnalysis(1)}
 					>
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M6 6l8 6-8 6V6z" /></svg>
+					</button>
 				</div>
-				<label
-					>Step {current.cursor + 1} of {current.trace.events.length}
+
+				<label class="scrubber">
+					<span>Action {current.cursor + 1} of {current.trace.events.length}</span>
 					<input
 						type="range"
 						min="0"
@@ -155,26 +261,41 @@
 						oninput={(event) => app.seekAnalysis(Number(event.currentTarget.value))}
 					/>
 				</label>
-				<label
-					>Speed
-					<select
-						value={current.speed}
-						data-testid="trace-speed"
-						onchange={(event) => app.setAnalysisPlaybackSpeed(Number(event.currentTarget.value))}
-					>
-						<option value="0.5">0.5×</option><option value="1">1×</option><option value="2"
-							>2×</option
-						>
-					</select>
-				</label>
+
+				<section class="trace-section current-action">
+					<h3>Current action</h3>
+					<p data-testid="trace-narration">{narration()}</p>
+				</section>
+
+				<section class="trace-section">
+					<h3>Data structures</h3>
+					<div class="inspectors" data-testid="analysis-inspectors">
+						{#each Object.entries(frame?.inspectors ?? {}) as [id, inspector] (id)}
+							{@const meta = inspectorMeta(id)}
+							<details class="inspector">
+								<summary>
+									<span><strong>{meta.name}</strong><small>{meta.description}</small></span>
+									<span class="count">{count(inspector.value)}</span>
+								</summary>
+								<p>{display(inspector.value)}</p>
+							</details>
+						{/each}
+					</div>
+				</section>
+
+				<section class="trace-section">
+					<h3>Legend</h3>
+					<div class="legend" aria-label="Analysis legend">
+						{#each legendRoles as role (role.id)}
+							<span><i class={`legend-mark legend-mark--${role.id}`}></i>{role.label}</span>
+						{/each}
+					</div>
+				</section>
+				{#if current.trace.truncated}<p class="notice">
+						Playback is partial: the trace reached 50,000 actions.
+					</p>{/if}
 			</section>
 		{/if}
-
-		<footer class="legend" aria-label="Analysis legend">
-			{#each ['current', 'inspecting', 'frontier', 'settled', 'result', 'rejected'] as role (role)}
-				<span data-role={role}><i></i>{role}</span>
-			{/each}
-		</footer>
 	</div>
 {/if}
 
@@ -182,95 +303,308 @@
 	.analysis-panel {
 		position: fixed;
 		z-index: 40;
-		right: 1rem;
-		top: 1rem;
-		bottom: 1rem;
-		width: min(25rem, calc(100vw - 2rem));
-		padding: 1rem;
-		overflow: auto;
+		top: var(--yg-hud-edge);
+		right: var(--yg-hud-edge);
+		display: flex;
+		flex-direction: column;
+		width: min(22rem, calc(100vw - 2 * var(--yg-hud-edge)));
+		max-height: calc(100dvh - 2 * var(--yg-hud-edge));
+		overflow: hidden;
+		padding: var(--yg-hud-panel-inset);
+		gap: 0.65rem;
 		border: 1px solid var(--yg-border);
-		border-radius: 1rem;
-		background: color-mix(in srgb, var(--yg-panel) 94%, transparent);
-		backdrop-filter: blur(18px);
-		box-shadow: 0 1rem 3rem #0005;
+		border-radius: var(--yg-radius-modal);
+		background: var(--yg-panel-glass-strong);
+		box-shadow: 0 10px 32px rgba(28, 36, 46, 0.16);
+		color: var(--yg-fg);
 	}
-	header,
-	nav,
-	.controls,
-	.legend {
+
+	.panel-header {
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		gap: 0.5rem;
 	}
-	header {
-		justify-content: space-between;
-	}
-	h2,
-	.eyebrow {
+	h2 {
 		margin: 0;
+		font-size: 1rem;
+		font-weight: 600;
+		letter-spacing: 0.01em;
 	}
-	.eyebrow {
+	h3 {
+		margin: 0 0 0.4rem;
+		font-size: 0.72rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
 		color: var(--yg-muted);
-		font-size: 0.75rem;
 	}
-	nav {
-		margin: 1rem 0;
+	button {
+		font: inherit;
+		font-size: 0.8rem;
+		border: 1px solid var(--yg-border);
+		background: var(--yg-chip);
+		color: var(--yg-fg);
+		border-radius: var(--yg-radius-control);
+		cursor: pointer;
+		transition:
+			background var(--yg-motion-fast) var(--yg-ease),
+			border-color var(--yg-motion-fast) var(--yg-ease),
+			color var(--yg-motion-fast) var(--yg-ease);
 	}
-	button.active {
+	button:hover:not(:disabled):not(.active) {
+		background: rgba(255, 255, 255, 0.72);
+	}
+	button:disabled {
+		cursor: not-allowed;
+		opacity: 0.42;
+	}
+	.icon-button,
+	.transport-button {
+		display: inline-grid;
+		place-items: center;
+		width: var(--yg-hud-btn);
+		height: var(--yg-hud-btn);
+		padding: 0;
+	}
+	.icon-button svg,
+	.transport-button svg {
+		width: 1rem;
+		height: 1rem;
+		fill: currentColor;
+		stroke: currentColor;
+		stroke-width: 1.8;
+	}
+	.icon-button svg {
+		fill: none;
+	}
+	.tabs {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		width: 100%;
+		border: 1px solid var(--yg-border);
+		border-radius: var(--yg-radius-control);
+		overflow: hidden;
+	}
+	.tabs button {
+		min-height: 2rem;
+		padding: 0.4rem 0.55rem;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+	}
+	.tabs button + button {
+		border-left: 1px solid var(--yg-border);
+	}
+	.tabs button.active {
 		background: var(--yg-accent-soft);
+		color: var(--yg-accent);
+		font-weight: 600;
+	}
+	.panel-content {
+		min-height: 0;
+		overflow-y: auto;
 	}
 	.metrics {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 0.5rem;
-		margin: 1rem 0;
+		gap: 0.35rem;
+		margin: 0;
 	}
-	.metrics div,
-	.inspectors div {
+	.metrics div {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 0.55rem 0.65rem;
+		border: 1px solid var(--yg-border);
+		border-radius: var(--yg-radius-control);
+		background: var(--yg-chip);
+	}
+	.metrics dt {
+		color: var(--yg-muted);
+		font-size: 0.78rem;
+	}
+	.metrics dd {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+	.skip {
+		width: 100%;
+		margin-top: 0.5rem;
+		padding: 0.4rem 0.55rem;
+	}
+	.trace-content {
 		display: flex;
 		flex-direction: column;
-		padding: 0.65rem;
-		border-radius: 0.65rem;
-		background: #ffffff0b;
+		gap: 0.85rem;
 	}
-	.metrics span,
-	.inspectors span {
+	.transport {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.35rem;
+	}
+	.transport-button--primary {
+		width: 2.45rem;
+		height: 2.45rem;
+		border-radius: var(--yg-radius-pill);
+		background: var(--yg-accent);
+		color: #f4f8f9;
+		border-color: color-mix(in srgb, var(--yg-accent) 70%, #062e34);
+	}
+	.scrubber {
+		display: grid;
+		gap: 0.35rem;
 		color: var(--yg-muted);
-		font-size: 0.8rem;
+		font-size: 0.72rem;
+	}
+	.scrubber input {
+		width: 100%;
+		accent-color: var(--yg-accent);
+	}
+	.trace-section {
+		min-width: 0;
+	}
+	.current-action p {
+		margin: 0;
+		padding: 0.6rem 0.65rem;
+		border-left: 3px solid var(--yg-accent);
+		border-radius: 0 var(--yg-radius-control) var(--yg-radius-control) 0;
+		background: var(--yg-chip);
+		font-size: 0.85rem;
+		text-transform: capitalize;
 	}
 	.inspectors {
 		display: grid;
-		gap: 0.5rem;
-		margin: 1rem 0;
-	}
-	.narration {
-		min-height: 3rem;
-		font-size: 1.05rem;
-	}
-	.notice {
-		color: #f0bd68;
-	}
-	label {
-		display: grid;
 		gap: 0.35rem;
-		margin-top: 0.8rem;
+	}
+	.inspector {
+		border: 1px solid var(--yg-border);
+		border-radius: var(--yg-radius-control);
+		background: var(--yg-chip);
+		overflow: hidden;
+	}
+	.inspector summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.65rem;
+		padding: 0.55rem 0.65rem;
+		cursor: pointer;
+		list-style: none;
+	}
+	.inspector summary::-webkit-details-marker {
+		display: none;
+	}
+	.inspector summary > span:first-child {
+		display: grid;
+		gap: 0.12rem;
+		min-width: 0;
+	}
+	.inspector strong {
+		font-size: 0.8rem;
+		font-weight: 600;
+	}
+	.inspector small {
+		color: var(--yg-muted);
+		font-size: 0.7rem;
+		line-height: 1.3;
+	}
+	.inspector .count {
+		flex: 0 0 auto;
+		min-width: 1.45rem;
+		padding: 0.12rem 0.4rem;
+		border: 1px solid var(--yg-border);
+		border-radius: var(--yg-radius-pill);
+		text-align: center;
+		color: var(--yg-muted);
+		font-size: 0.7rem;
+	}
+	.inspector p {
+		margin: 0;
+		padding: 0.55rem 0.65rem;
+		border-top: 1px solid var(--yg-border);
+		font-size: 0.78rem;
+		overflow-wrap: anywhere;
 	}
 	.legend {
-		flex-wrap: wrap;
-		margin-top: 1.2rem;
-		font-size: 0.72rem;
-		color: var(--yg-muted);
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.45rem 0.65rem;
 	}
-	.legend span {
-		display: inline-flex;
+	.legend > span {
+		display: flex;
 		align-items: center;
-		gap: 0.25rem;
-		text-transform: capitalize;
+		gap: 0.45rem;
+		color: var(--yg-muted);
+		font-size: 0.72rem;
 	}
-	.legend i {
-		width: 0.55rem;
-		height: 0.55rem;
-		border: 1px solid currentColor;
+	.legend-mark {
+		position: relative;
+		display: inline-grid;
+		flex: 0 0 auto;
+		width: 0.9rem;
+		height: 0.9rem;
+		color: var(--yg-accent);
+	}
+	.legend-mark--current {
+		border: 1.5px solid #4a9baa;
+		transform: rotate(45deg) scale(0.72);
+	}
+	.legend-mark--inspecting {
+		border: 1.5px dashed #c57b35;
 		border-radius: 50%;
+	}
+	.legend-mark--frontier {
+		border: 1.5px solid #765bb8;
+		border-radius: 50%;
+		clip-path: inset(45% 0 0);
+	}
+	.legend-mark--settled {
+		border: 1.5px solid #31864e;
+		border-radius: 50%;
+	}
+	.legend-mark--settled::after {
+		content: '';
+		width: 0.35rem;
+		height: 0.18rem;
+		border-left: 1.5px solid #31864e;
+		border-bottom: 1.5px solid #31864e;
+		transform: rotate(-45deg);
+		place-self: center;
+	}
+	.legend-mark--result::before {
+		content: '';
+		width: 100%;
+		height: 2px;
+		background: #b28b26;
+		place-self: center;
+	}
+	.legend-mark--result::after {
+		content: '';
+		position: absolute;
+		right: 0;
+		top: 0.26rem;
+		border: 0.2rem solid transparent;
+		border-left-color: #b28b26;
+	}
+	.legend-mark--rejected::before,
+	.legend-mark--rejected::after {
+		content: '';
+		position: absolute;
+		left: 0.4rem;
+		width: 1.5px;
+		height: 100%;
+		background: #a84a4f;
+		transform: rotate(45deg);
+	}
+	.legend-mark--rejected::after {
+		transform: rotate(-45deg);
+	}
+	.notice {
+		margin: 0;
+		color: #7b5721;
+		font-size: 0.78rem;
 	}
 </style>

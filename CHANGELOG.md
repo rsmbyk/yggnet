@@ -18,6 +18,10 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 - Add BFS traversal and Dijkstra shortest path results, semantic trace playback, generic inspectors, and reversible checkpoints.
 - Add a temporary hybrid world glyph layer with bounded result reveal and a blocking Result/Trace panel.
 
+### Fixed
+
+- Align Analyze Result/Trace with the app chrome, animate result artifacts, center zoom-stable node rings, fit the camera around the panel, and simplify trace playback and inspectors.
+
 ### Removed
 
 - Remove the Pathfinder toolbar entry, Travel experience, A* selection, path enumeration, stored-run comparison, and step annotations from the product UI.

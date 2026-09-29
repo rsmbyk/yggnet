@@ -25,6 +25,7 @@ The replacement must answer two different user needs without conflating them: sh
 - Analysis-relevant invalidation, trace cap, reduced-motion behavior, and clear error/no-result states
 - Removal of Pathfinder, Travel, A*, all/simple shortest path enumeration, stored runs, comparison, and annotations
 - ADR/architecture and superseded-spec updates
+- Owner-requested UI refinement: native app styling, panel-aware camera fitting, real result animation, compact media controls, and inspector accordions
 
 **Out:**
 
@@ -48,7 +49,7 @@ The replacement must answer two different user needs without conflating them: sh
 - `AnalysisResult` is an outcome plus summary metrics and reusable `AnalysisArtifact` values.
 - `AnalysisEvent` carries structured narration references, role changes, and inspector operations.
 - `AnalysisFrame` is the reducer output consumed by UI/world adapters.
-- `CurrentAnalysis` owns the latest result, retained trace, playback cursor/mode/speed, checkpoints, truncation flag, and source revision.
+- `CurrentAnalysis` owns the latest result, retained trace, playback cursor/mode, checkpoints, truncation flag, and source revision.
 - Core roles are `current`, `inspecting`, `frontier`, `settled`, `result`, and `rejected`; future definitions may declare named extension roles but not colors or geometry.
 
 ## Delivery order
@@ -59,6 +60,7 @@ The replacement must answer two different user needs without conflating them: sh
 4. Unified Analyze form and Result/Trace panel
 5. Hybrid glyph renderer, camera framing, result reveal, and playback animation
 6. Legacy removal, E2E, ADR/spec deprecation, release/process records
+7. Refine the accepted UI from owner review without changing the generic algorithm contracts
 
 ## TDD
 

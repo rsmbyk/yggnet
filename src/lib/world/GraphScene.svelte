@@ -25,7 +25,7 @@
 	} from './edge-pose';
 	import { partitionEdgesByDimming } from './edge-partition';
 	import { createNodeSphereGeometry } from './node-sphere';
-	import { analysisGlyphScale, primaryAnalysisRole } from './analysis-decoration';
+	import { analysisGlyphScale, primaryAnalysisRole, revealProgress } from './analysis-decoration';
 
 	interactivity();
 
@@ -250,19 +250,103 @@
 	const analysisFrame = $derived(
 		activeAnalysis?.panel === 'trace' ? frameAt(activeAnalysis.trace, activeAnalysis.cursor) : null
 	);
+	const analysisResultEntities = $derived.by(() => {
+		const entities: Array<{ kind: 'node' | 'edge'; id: string }> = [];
+		const seen: string[] = [];
+		if (activeAnalysis?.panel !== 'result') return entities;
+		const add = (kind: 'node' | 'edge', id: string) => {
+			const key = `${kind}:${id}`;
+			if (!seen.includes(key)) {
+				seen.push(key);
+				entities.push({ kind, id });
+			}
+		};
+		for (const artifact of activeAnalysis.result.artifacts) {
+			if (artifact.kind === 'path') {
+				artifact.nodeIds.forEach((nodeId, index) => {
+					add('node', nodeId);
+					if (artifact.edgeIds[index]) add('edge', artifact.edgeIds[index]);
+				});
+			} else {
+				if ('nodeIds' in artifact) artifact.nodeIds.forEach((id) => add('node', id));
+				if ('edgeIds' in artifact) artifact.edgeIds.forEach((id) => add('edge', id));
+			}
+		}
+		return entities;
+	});
+	const analysisResultEdgeDirections = $derived.by(() => {
+		const directions: Record<string, { from: string; to: string }> = {};
+		if (activeAnalysis?.panel !== 'result') return directions;
+		for (const artifact of activeAnalysis.result.artifacts) {
+			if (artifact.kind !== 'path') continue;
+			artifact.edgeIds.forEach((edgeId, index) => {
+				const from = artifact.nodeIds[index];
+				const to = artifact.nodeIds[index + 1];
+				if (from && to) directions[edgeId] = { from, to };
+			});
+		}
+		return directions;
+	});
+	let analysisRevealProgress = $state(1);
+
+	$effect(() => {
+		const analysis = activeAnalysis;
+		if (!analysis || analysis.panel !== 'result') {
+			analysisRevealProgress = 1;
+			return;
+		}
+		if (analysis.reveal === 'complete') {
+			analysisRevealProgress = 1;
+			return;
+		}
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (reduced) {
+			analysisRevealProgress = 1;
+			return;
+		}
+		analysisRevealProgress = 0;
+		let frameId = 0;
+		let delayId = 0;
+		const startAfterCamera = () => {
+			const started = performance.now();
+			const animate = (now: number) => {
+				analysisRevealProgress = revealProgress(
+					now - started,
+					analysisResultEntities.length,
+					false
+				);
+				if (analysisRevealProgress < 1) frameId = requestAnimationFrame(animate);
+			};
+			frameId = requestAnimationFrame(animate);
+		};
+		delayId = window.setTimeout(startAfterCamera, 300);
+		return () => {
+			window.clearTimeout(delayId);
+			cancelAnimationFrame(frameId);
+		};
+	});
+
+	function resultEntityProgress(kind: 'node' | 'edge', id: string): number {
+		if (activeAnalysis?.panel !== 'result') return 1;
+		const index = analysisResultEntities.findIndex(
+			(entity) => entity.kind === kind && entity.id === id
+		);
+		if (index < 0) return 0;
+		return Math.min(1, Math.max(0, analysisRevealProgress * analysisResultEntities.length - index));
+	}
 	const analysisResultNodeIds = $derived.by(() => {
 		const ids = new SvelteSet<string>();
 		if (activeAnalysis?.panel !== 'result') return ids;
-		for (const artifact of activeAnalysis.result.artifacts) {
-			if ('nodeIds' in artifact) for (const id of artifact.nodeIds) ids.add(id);
+		for (const entity of analysisResultEntities) {
+			if (entity.kind === 'node' && resultEntityProgress('node', entity.id) > 0) ids.add(entity.id);
 		}
 		return ids;
 	});
 	const analysisResultEdgeIds = $derived.by(() => {
 		const ids = new SvelteSet<string>();
 		if (activeAnalysis?.panel !== 'result') return ids;
-		for (const artifact of activeAnalysis.result.artifacts) {
-			if ('edgeIds' in artifact) for (const id of artifact.edgeIds) ids.add(id);
+		for (const entity of analysisResultEntities) {
+			if (entity.kind === 'edge' && resultEntityProgress('edge', entity.id) > 0) ids.add(entity.id);
 		}
 		return ids;
 	});
@@ -418,6 +502,18 @@
 		to: { x: number; y: number; z: number }
 	) {
 		return edgePose(from, to);
+	}
+
+	function partialEdgeEnd(
+		from: { x: number; y: number; z: number },
+		to: { x: number; y: number; z: number },
+		progress: number
+	) {
+		return {
+			x: from.x + (to.x - from.x) * progress,
+			y: from.y + (to.y - from.y) * progress,
+			z: from.z + (to.z - from.z) * progress
+		};
 	}
 
 	function edgeArrowHead(
@@ -1845,7 +1941,9 @@
 		const cam = camera.current;
 		if (!(cam instanceof THREE.PerspectiveCamera)) return;
 		const el = renderer.domElement;
-		const aspect = el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 16 / 9;
+		const reservedWidth = app.analysisBlocking ? app.analysisPanelWidth + 2 * 12 : 0;
+		const availableWidth = Math.max(160, el.clientWidth - reservedWidth);
+		const aspect = el.clientHeight > 0 ? availableWidth / el.clientHeight : 16 / 9;
 		captureFromPose();
 		const t = WORLD.camera.defaultTarget;
 		const is2d = app.ui.viewMode === '2d';
@@ -1887,6 +1985,16 @@
 			});
 			_toEye.set(look.x + dir.x * fitted, look.y + dir.y * fitted, look.z + dir.z * fitted);
 		}
+		if (reservedWidth > 0 && el.clientWidth > 0 && el.clientHeight > 0) {
+			const viewAxis = _toEye.clone().sub(_toTarget).normalize();
+			const rightAxis = _toUp.clone().cross(viewAxis).normalize();
+			const distance = _toEye.distanceTo(_toTarget);
+			const fullAspect = el.clientWidth / el.clientHeight;
+			const tanHalf = Math.tan((cam.fov * Math.PI) / 360);
+			const shift = (reservedWidth / el.clientWidth) * distance * tanHalf * fullAspect;
+			_toTarget.addScaledVector(rightAxis, shift);
+			_toEye.addScaledVector(rightAxis, shift);
+		}
 		prepareToQuat();
 		startCamPoseTween(app.ui.viewMode);
 	}
@@ -1894,6 +2002,7 @@
 	$effect(() => {
 		const epoch = app.frameGraphEpoch;
 		void Object.keys(app.document.nodes).length;
+		void app.analysisPanelWidth;
 		if (!controls || epoch === 0 || epoch === appliedFrameEpoch) return;
 		appliedFrameEpoch = epoch;
 		animateFrameGraph();
@@ -1987,7 +2096,7 @@
 				</T.Mesh>
 			{:else}
 				<T.Mesh
-					position={[pos.x, pos.y - NODE_RADIUS * 0.8, pos.z]}
+					position={[pos.x, pos.y, pos.z]}
 					rotation={[Math.PI / 2, 0, 0]}
 					scale={glyphScale}
 					oncreate={attachAnalysisGlyph}
@@ -2008,8 +2117,10 @@
 	{#each Object.entries(analysisEdgeRoles) as [edgeId, roles] (edgeId)}
 		{@const edge = app.document.edges[edgeId]}
 		{#if edge}
-			{@const from = nodePos(edge.from)}
-			{@const to = nodePos(edge.to)}
+			{@const direction = analysisResultEdgeDirections[edgeId]}
+			{@const from = nodePos(direction?.from ?? edge.from)}
+			{@const fullTo = nodePos(direction?.to ?? edge.to)}
+			{@const to = partialEdgeEnd(from, fullTo, resultEntityProgress('edge', edgeId))}
 			{@const geo = edgeObject(from, to)}
 			{@const role = primaryAnalysisRole(roles)}
 			<T.Mesh

@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { AnalysisOutput } from '$lib/graph';
 import {
+	ANALYSIS_PLAYBACK_INTERVAL_MS,
 	closeAnalysis,
 	createCurrentAnalysis,
 	invalidateAnalysis,
 	openAnalysisTrace,
+	resetAnalysis,
 	seekAnalysis,
-	setAnalysisSpeed
+	stepAnalysis
 } from './current-analysis';
 
 const output: AnalysisOutput = {
@@ -30,6 +32,7 @@ describe('current analysis lifecycle', () => {
 		expect(first.panel).toBe('result');
 		expect(second.algorithmId).toBe('dijkstra');
 		expect(second.sourceRevision).toBe(2);
+		expect(ANALYSIS_PLAYBACK_INTERVAL_MS).toBe(300);
 	});
 
 	it('closes without discarding and resumes in result or trace mode', () => {
@@ -38,12 +41,17 @@ describe('current analysis lifecycle', () => {
 		expect(openAnalysisTrace(closeAnalysis(current)!)?.panel).toBe('trace');
 	});
 
-	it('clamps seeking and supports the specified speeds', () => {
+	it('clamps seeking', () => {
 		let current = openAnalysisTrace(createCurrentAnalysis('bfs', { start: 'A' }, output, 1))!;
 		current = seekAnalysis(current, 99)!;
 		expect(current.cursor).toBe(1);
-		expect(setAnalysisSpeed(current, 2)?.speed).toBe(2);
-		expect(setAnalysisSpeed(current, 3)?.speed).toBe(1);
+	});
+
+	it('pauses when stepping or resetting playback', () => {
+		let current = openAnalysisTrace(createCurrentAnalysis('bfs', { start: 'A' }, output, 1))!;
+		current = { ...current, playing: true };
+		expect(stepAnalysis(current, 1)).toMatchObject({ cursor: 1, playing: false });
+		expect(resetAnalysis({ ...current, cursor: 1 })).toMatchObject({ cursor: 0, playing: false });
 	});
 
 	it('clears immediately when structurally invalidated', () => {
