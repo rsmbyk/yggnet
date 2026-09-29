@@ -10,6 +10,12 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.38.1] - 2026-09-29
+
+### Fixed
+
+- Restore full edge opacity outside active dimming overlays while preserving transparent non-matches during Tags focus.
+
 ## [0.38.0] - 2026-09-27
 
 ### Added

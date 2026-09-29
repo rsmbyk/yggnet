@@ -22,6 +22,7 @@
 		edgePose,
 		instanceCapacity
 	} from './edge-pose';
+	import { partitionEdgesByDimming } from './edge-partition';
 	import { createNodeSphereGeometry } from './node-sphere';
 
 	interactivity();
@@ -463,17 +464,12 @@
 			return;
 		}
 
-		// Partition edges into matches (opaque) and non-matches (transparent)
-		const matchEdges: typeof edges = [];
-		const dimEdges: typeof edges = [];
-		for (const edge of edges) {
-			if (edgeIsHidden(edge.from, edge.to)) continue;
-			if (overlayEdgeSet.has(edge.id)) {
-				matchEdges.push(edge);
-			} else {
-				dimEdges.push(edge);
-			}
-		}
+		const visibleEdges = edges.filter((edge) => !edgeIsHidden(edge.from, edge.to));
+		const { opaque: matchEdges, dimmed: dimEdges } = partitionEdgesByDimming(
+			visibleEdges,
+			overlayEdgeSet,
+			dimOthers
+		);
 
 		if (shaftMesh) {
 			let i = 0;
