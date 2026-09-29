@@ -36,8 +36,9 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## Speccing
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
+| ID       | Title                                | Summary                                                            | Type | Priority | Effort | Spec                                                        | Bump  | Updated    |
+| -------- | ------------------------------------ | ------------------------------------------------------------------ | ---- | -------- | ------ | ----------------------------------------------------------- | ----- | ---------- |
+| ITEM-069 | Unified Analyze algorithm laboratory | One generic Analyze tool with BFS/Dijkstra result and trace replay | feat | P0       | L      | [061-unified-analyze](../specs/061-unified-analyze/spec.md) | minor | 2026-09-29 |
 
 ## Ready
 
