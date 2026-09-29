@@ -46,15 +46,15 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID       | Title                                    | Summary                                                   | Type | Priority | Effort | Spec                                                                                | Bump | Branch                                 | Updated    |
-| -------- | ---------------------------------------- | --------------------------------------------------------- | ---- | -------- | ------ | ----------------------------------------------------------------------------------- | ---- | -------------------------------------- | ---------- |
-| ITEM-067 | Reconcile delivery records through PR 34 | Align merged-work metadata and agent attribution guidance | docs | P1       | S      | [059-delivery-record-remediation](../specs/059-delivery-record-remediation/spec.md) | none | `docs/059-delivery-record-remediation` | 2026-09-29 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
 
 ## In review
 
-| ID       | Title            | Summary                                      | Type | Priority | Effort | Spec                                                          | Bump  | PR         | Updated    |
-| -------- | ---------------- | -------------------------------------------- | ---- | -------- | ------ | ------------------------------------------------------------- | ----- | ---------- | ---------- |
-| ITEM-065 | Remove Diff tool | Drop Diff tool/state/E2E; deprecate SPEC-018 | feat | P2       | S      | [057-remove-diff-tool](../specs/057-remove-diff-tool/spec.md) | minor | 2026-09-26 | 2026-09-26 |
+| ID       | Title                                    | Summary                                                   | Type | Priority | Effort | Spec                                                                                | Bump  | PR                                              | Updated    |
+| -------- | ---------------------------------------- | --------------------------------------------------------- | ---- | -------- | ------ | ----------------------------------------------------------------------------------- | ----- | ----------------------------------------------- | ---------- |
+| ITEM-067 | Reconcile delivery records through PR 34 | Align merged-work metadata and agent attribution guidance | docs | P1       | S      | [059-delivery-record-remediation](../specs/059-delivery-record-remediation/spec.md) | none  | [#35](https://github.com/rsmbyk/yggnet/pull/35) | 2026-09-29 |
+| ITEM-065 | Remove Diff tool                         | Drop Diff tool/state/E2E; deprecate SPEC-018              | feat | P2       | S      | [057-remove-diff-tool](../specs/057-remove-diff-tool/spec.md)                       | minor | 2026-09-26                                      | 2026-09-26 |
 
 ## Done
 

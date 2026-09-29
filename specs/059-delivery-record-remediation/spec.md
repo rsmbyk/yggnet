@@ -54,5 +54,5 @@ Bring process records for the merged SPEC-057, SPEC-058, and PR #34 work into ag
 
 ## Traceability
 
-- Historical evidence: PR #32, PR #33, and PR #34
+- Historical evidence: PR #32, PR #33, and PR #34; remediation PR [#35](https://github.com/rsmbyk/yggnet/pull/35)
 - Planned validation: `npm run lint`, `npm run check`, `npm run test:coverage`, `npm run build`, `npm run test:e2e`

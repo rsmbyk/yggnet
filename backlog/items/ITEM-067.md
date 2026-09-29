@@ -1,6 +1,6 @@
 ---
 id: ITEM-067
-status: in_progress
+status: in_review
 title: 'Reconcile delivery records through PR 34'
 type: docs
 priority: P1
@@ -9,7 +9,7 @@ created: 2026-09-29
 updated: 2026-09-29
 spec: specs/059-delivery-record-remediation
 branch: docs/059-delivery-record-remediation
-pr:
+pr: 35
 archived_at:
 archive_reason:
 bump: none
