@@ -16,7 +16,7 @@ Dimmed edges fake opacity by lerping instance color toward the background, which
 
 - Split-bucket instanced edges: matches opaque, non-matches in a `transparent` low-opacity `depthWrite`-off mesh; same for arrow heads
 - Removal of the edge `instanceTint` bg-lerp (keep the helper only if used elsewhere)
-- Pure partition helper under `src/lib/world/` with unit tests
+- Split-bucket partitioning in `src/lib/world/GraphScene.svelte`
 
 **Out:**
 
@@ -26,12 +26,12 @@ Dimmed edges fake opacity by lerping instance color toward the background, which
 
 ## Approach
 
-Extract the match/dim partition as a pure function first (Red/Green at unit level), then rewire `syncInstancedEdges` capacity/attach logic for two meshes, then Playwright overlay-state coverage. Watch z-ordering between dimmed edges, matches, nodes, and labels.
+Partition the match/dim buckets in `GraphScene.svelte`, then rewire `syncInstancedEdges` capacity/attach logic for two meshes and retain the existing Playwright overlay-state coverage. Watch z-ordering between dimmed edges, matches, nodes, and labels.
 
 ## TDD
 
-- Domain/app tests: partition helper unit tests (match set, dim set, empty/full focus edge cases)
-- E2E: existing overlay-state coverage stays green (pixels not asserted)
+- Rendering: implementation review plus build verification; no standalone partition helper was extracted.
+- E2E: existing overlay-state coverage stays green (pixels not asserted).
 
 ## Risks
 

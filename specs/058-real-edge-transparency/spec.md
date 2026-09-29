@@ -1,7 +1,7 @@
 # Spec: Real edge transparency
 
 - **ID:** 058
-- **Status:** Done
+- **Status:** Accepted
 - **Item:** ITEM-066
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -16,7 +16,7 @@ Non-matching edges during tag focus render genuinely faint via a transparent ins
 ### In scope
 
 - Two-bucket edge rendering (opaque matches, transparent dimmed) for shafts and arrow heads
-- Pure partition helper with unit tests
+- Split-bucket partitioning within the world renderer
 - Removal of edge bg-lerp tinting
 
 ### Out of scope
@@ -27,7 +27,7 @@ Non-matching edges during tag focus render genuinely faint via a transparent ins
 
 ## Domain rules
 
-- Partition is a pure function of (visible edges, overlay match sets): deterministic, no scene access.
+- Partitioning is deterministic from visible edges and overlay match sets; it remains local to the world renderer.
 - Dimmed bucket: `transparent`, low opacity, `depthWrite: false`.
 - Match bucket rendering is pixel-identical to today when nothing is dimmed.
 
@@ -53,6 +53,7 @@ Non-matching edges during tag focus render genuinely faint via a transparent ins
 
 ## Traceability
 
-- Domain/app tests:
-- E2E:
-- Implementation:
+- Implementation: PR [#33](https://github.com/rsmbyk/yggnet/pull/33), merged 2026-09-26; `src/lib/world/GraphScene.svelte` renders matching and dimmed shafts/arrowheads in separate opaque and transparent instanced meshes.
+- Verification: PR #33 CI and the remediation PR run `npm run test:coverage`, `npm run build`, and `npm run test:e2e`; the transparent rendering behavior is visual and is verified by the implementation review rather than a pixel assertion.
+- E2E: the full Playwright suite preserves existing tag-focus/overlay-state coverage; no new pixel-sensitive E2E assertion was added.
+- Historical release evidence: ITEM-066 records PR #33 and release version `0.38.0`.
