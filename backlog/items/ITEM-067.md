@@ -1,6 +1,6 @@
 ---
 id: ITEM-067
-status: in_review
+status: done
 title: 'Reconcile delivery records through PR 34'
 type: docs
 priority: P1
