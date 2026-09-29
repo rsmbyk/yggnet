@@ -1,6 +1,6 @@
 # Plan 061: Unified Analyze algorithm laboratory
 
-- **Status:** Accepted
+- **Status:** Draft
 - **Spec:** [./spec.md](./spec.md)
 - **Tasks:** [./tasks.md](./tasks.md)
 - **Item:** ITEM-069
@@ -26,6 +26,7 @@ The replacement must answer two different user needs without conflating them: sh
 - Removal of Pathfinder, Travel, A*, all/simple shortest path enumeration, stored runs, comparison, and annotations
 - ADR/architecture and superseded-spec updates
 - Owner-requested UI refinement: native app styling, panel-aware camera fitting, real result animation, compact media controls, and inspector accordions
+- Second owner-review refinement: true user-idle replay, reveal-only repeats, animated inspector accordions, stable trace width, and traversal-ordered BFS reveal
 
 **Out:**
 
@@ -42,6 +43,8 @@ The replacement must answer two different user needs without conflating them: sh
 3. Render result artifacts and trace frames through shared presentation adapters. The world maps semantic roles to a pooled, non-interactive hybrid glyph layer and keeps detailed data structures in generic panel inspectors.
 4. Replace the two old tools with the generated Analyze form and blocking Result/Trace panel. Remove the coupled legacy state rather than leave dormant code.
 5. Preserve the existing worker-ready `AlgorithmRunner` principle and structured-clone-safe graph snapshot boundary.
+6. Treat pointer, wheel, click, keyboard, and camera-control activity as user activity. Restart a ten-second Result idle window on any such input; an idle replay restarts only artifact reveal progress and never reframes the camera.
+7. Derive BFS result reveal order from the ordered traversal plus accepted tree edges, interleaving each discovery edge before the node it discovered.
 
 ## Interface direction
 
@@ -61,6 +64,7 @@ The replacement must answer two different user needs without conflating them: sh
 5. Hybrid glyph renderer, camera framing, result reveal, and playback animation
 6. Legacy removal, E2E, ADR/spec deprecation, release/process records
 7. Refine the accepted UI from owner review without changing the generic algorithm contracts
+8. Refine idle detection, inspector presentation, overflow behavior, and BFS result sequencing after the second owner review
 
 ## TDD
 

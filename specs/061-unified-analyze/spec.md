@@ -4,7 +4,7 @@ item: ITEM-069
 type: feat
 feature_area: analyze
 bump: minor
-status: Accepted
+status: Draft
 title: 'Unified Analyze algorithm laboratory'
 created: 2026-09-29
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Unified Analyze algorithm laboratory
 
 - **ID:** 061
-- **Status:** Accepted
+- **Status:** Draft
 - **Item:** ITEM-069
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -100,10 +100,13 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - Panel controls and camera orbit/pan/zoom remain operable.
 - Result and Trace are separate views of the same current analysis. Entering Trace begins at the initial event rather than inheriting the final result frame.
 - The panel follows the existing manager chrome tokens, sizes itself to its content up to the available viewport, uses the algorithm name as its title, and gives Result and Trace equal full-width tabs.
-- Result shows one metric per row, the final-artifact legend, and Skip while reveal is active. It has no repeated summary, Replay, or Analyze steps action.
+- Result shows one metric per row and the final-artifact legend. It has no repeated summary, Skip animation, Replay, or Analyze steps action.
 - Trace orders its contents as media-style controls, scrubber, current action, data structures, and legend.
 - Trace provides Previous, Play/Pause, Stop/Reset, Next, and a scrubber. Playback uses a fixed cadence of approximately 300 ms per semantic action (twice the original cadence); Previous, Next, Stop/Reset, and manual scrubbing pause playback.
 - Inspector cards are collapsed by default and show a user-facing data-structure name, description, and item count; expanding a card reveals its current data.
+- Missing/uninitialized inspector data and an initialized data structure with zero entries are both presented consistently as `Empty` with count 0.
+- Inspector cards use the app hover treatment and animate open/close without horizontal overflow or layout jumps. Reduced-motion preference removes the height transition.
+- Trace content keeps one stable full width in every state; scrollbars, range inputs, expanded inspectors, and long values must not introduce intermittent horizontal inset or overflow.
 - The main top toolbar is disabled while Result/Trace is open, in addition to the other editing and tool surfaces.
 - Closing Result/Trace stops animation, removes analysis visuals, preserves the current analysis, and reopens Analyze with its previous definition and inputs.
 - View last result reconstructs the result view and glyphs without rerunning the algorithm.
@@ -115,8 +118,10 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - All graph entities begin dimmed; the result is then revealed in artifact order.
 - Total reveal duration is clamped to approximately 0.8–3 seconds, independent of result size. Large results advance in batches or a continuous wave.
 - Dijkstra reveals the start node, then each path edge filling from the source-side endpoint toward the next node, ending at the target.
-- BFS reveals its reachable traversal/tree result in traversal order within the same duration budget.
-- Skip immediately applies the completed result frame. After approximately four idle seconds in Result, the reveal replays automatically.
+- BFS reveals its reachable traversal/tree result as an alternating traversal sequence: the start node, then each accepted tree edge followed by the node that edge discovered. For A-B, B-C, A-C, A-D, B-E starting at A, the reveal order is A, A-B, B, A-C, C, A-D, D, B-E, E.
+- Result has no manual Skip control. The reveal completes on its bounded timer.
+- After ten seconds with no user activity in Result, the result reveal replays automatically. Activity includes pointer/mouse movement, pointer/mouse buttons or clicks, wheel/zoom, orbit/pan gestures, touch/pointer actions, and keyboard presses anywhere in the app; every activity restarts the full idle window.
+- An idle replay restarts only the artifact reveal. It preserves the current camera position and never requests canonical framing.
 - Returning from Trace to Result resets the camera to the panel-aware canonical fitted view before revealing the result again.
 - Reduced-motion preference removes spatial glyph motion and directional growth and uses a brief opacity transition or the completed frame.
 
@@ -191,6 +196,23 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - **And** the graph starts dimmed
 - **And** the result reveal finishes within the bounded duration
 - **And** the completed artifact and metrics remain visible
+
+### Scenario: Idle result replay
+
+- **Given** Result is open and its reveal has completed
+- **When** ten seconds pass without pointer, mouse, wheel, touch, camera-control, or keyboard activity
+- **Then** only the result-artifact reveal replays
+- **And** the camera position and orientation remain unchanged
+- **But when** any listed input occurs before the threshold
+- **Then** the full ten-second idle window starts again
+
+### Scenario: BFS result reveal follows traversal
+
+- **Given** undirected edges A-B, B-C, A-C, A-D, and B-E
+- **And** BFS starts at A
+- **When** the result reveal plays
+- **Then** its entity order is A, A-B, B, A-C, C, A-D, D, B-E, E
+- **And** it never reveals all result nodes before their accepted tree edges
 
 ### Scenario: Step and scrub through the trace
 
