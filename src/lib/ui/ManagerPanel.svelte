@@ -2044,7 +2044,7 @@
 			</section>
 		{/if}
 
-		{#if false}
+		<!-- Superseded Pathfinder markup retained only in git history.
 			<section class="block" data-testid="directions-panel">
 				<h2>Pathfinder</h2>
 				<div class="row">
@@ -2132,7 +2132,7 @@
 					</label>
 				{/if}
 			</section>
-		{/if}
+		-->
 
 		{#if section === 'analyze'}
 			<section class="block" data-testid="analyze-panel">
@@ -2218,7 +2218,7 @@
 			</section>
 		{/if}
 
-		{#if false}
+		<!-- Superseded path-specific Analyze markup retained only in git history.
 			<section class="block" data-testid="analyze-panel">
 				<h2>Analyze</h2>
 				<label>
@@ -2413,7 +2413,7 @@
 					</details>
 				{/if}
 			</section>
-		{/if}
+		-->
 	</div>
 
 	{#if footerHasActions || overflowing}
