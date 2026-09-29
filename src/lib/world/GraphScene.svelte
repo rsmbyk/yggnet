@@ -25,7 +25,12 @@
 	} from './edge-pose';
 	import { partitionEdgesByDimming } from './edge-partition';
 	import { createNodeSphereGeometry } from './node-sphere';
-	import { analysisGlyphScale, primaryAnalysisRole, revealProgress } from './analysis-decoration';
+	import {
+		analysisGlyphScale,
+		analysisResultSequence,
+		primaryAnalysisRole,
+		revealProgress
+	} from './analysis-decoration';
 
 	interactivity();
 
@@ -251,37 +256,23 @@
 		activeAnalysis?.panel === 'trace' ? frameAt(activeAnalysis.trace, activeAnalysis.cursor) : null
 	);
 	const analysisResultEntities = $derived.by(() => {
-		const entities: Array<{ kind: 'node' | 'edge'; id: string }> = [];
-		const seen: string[] = [];
-		if (activeAnalysis?.panel !== 'result') return entities;
-		const add = (kind: 'node' | 'edge', id: string) => {
-			const key = `${kind}:${id}`;
-			if (!seen.includes(key)) {
-				seen.push(key);
-				entities.push({ kind, id });
-			}
-		};
-		for (const artifact of activeAnalysis.result.artifacts) {
-			if (artifact.kind === 'path') {
-				artifact.nodeIds.forEach((nodeId, index) => {
-					add('node', nodeId);
-					if (artifact.edgeIds[index]) add('edge', artifact.edgeIds[index]);
-				});
-			} else {
-				if ('nodeIds' in artifact) artifact.nodeIds.forEach((id) => add('node', id));
-				if ('edgeIds' in artifact) artifact.edgeIds.forEach((id) => add('edge', id));
-			}
-		}
-		return entities;
+		if (activeAnalysis?.panel !== 'result') return [];
+		return analysisResultSequence(activeAnalysis.result.artifacts);
 	});
 	const analysisResultEdgeDirections = $derived.by(() => {
 		const directions: Record<string, { from: string; to: string }> = {};
 		if (activeAnalysis?.panel !== 'result') return directions;
 		for (const artifact of activeAnalysis.result.artifacts) {
-			if (artifact.kind !== 'path') continue;
+			if (artifact.kind !== 'path' && artifact.kind !== 'tree') continue;
 			artifact.edgeIds.forEach((edgeId, index) => {
-				const from = artifact.nodeIds[index];
 				const to = artifact.nodeIds[index + 1];
+				const edge = app.document.edges[edgeId];
+				const from =
+					artifact.kind === 'tree' && edge && to
+						? edge.from === to
+							? edge.to
+							: edge.from
+						: artifact.nodeIds[index];
 				if (from && to) directions[edgeId] = { from, to };
 			});
 		}

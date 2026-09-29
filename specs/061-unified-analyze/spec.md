@@ -4,7 +4,7 @@ item: ITEM-069
 type: feat
 feature_area: analyze
 bump: minor
-status: Draft
+status: Accepted
 title: 'Unified Analyze algorithm laboratory'
 created: 2026-09-29
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Unified Analyze algorithm laboratory
 
 - **ID:** 061
-- **Status:** Draft
+- **Status:** Accepted
 - **Item:** ITEM-069
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -268,7 +268,7 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - Domain contracts and algorithms: `src/lib/graph/analysis/{contracts,reducer,algorithms}.ts`
 - Domain verification: `src/lib/graph/analysis/analysis.test.ts`
 - Current-analysis lifecycle: `src/lib/session/current-analysis.ts` and `current-analysis.test.ts`
-- Unified UI: `src/lib/ui/ManagerPanel.svelte`, `AnalysisResultPanel.svelte`, `Toolbar.svelte`, and `src/routes/+page.svelte`
+- Unified UI: `src/lib/ui/ManagerPanel.svelte`, `AnalysisResultPanel.svelte`, `analysis-panel-policy.ts`, `Toolbar.svelte`, and `src/routes/+page.svelte`
 - World roles and glyphs: `src/lib/world/analysis-decoration.ts`, `analysis-decoration.test.ts`, and `GraphScene.svelte`
 - Acceptance flow: `e2e/analyze-laboratory.e2e.ts`
 - Architecture decision: `docs/adr/008-unified-analysis-laboratory.md`

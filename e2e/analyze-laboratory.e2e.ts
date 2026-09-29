@@ -25,11 +25,7 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 	await expect(page.getByTestId('analysis-result')).toContainText('Visited');
 	await expect(page.getByRole('button', { name: 'Replay' })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Analyze steps' })).toHaveCount(0);
-	await expect(page.getByTestId('skip-reveal')).toBeVisible();
-	await page.getByTestId('skip-reveal').click();
 	await expect(page.getByTestId('skip-reveal')).toHaveCount(0);
-	await expect(page.getByTestId('skip-reveal')).toBeVisible({ timeout: 6000 });
-	await page.getByTestId('skip-reveal').click();
 	await expect(page.getByTestId('tool-nodes')).toBeDisabled();
 	await expect(page.getByTestId('undo')).toBeDisabled();
 	await expect(page.getByTestId('redo')).toBeDisabled();
@@ -45,11 +41,26 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 
 	await page.getByTestId('open-trace').click();
 	await expect(page.getByTestId('analysis-inspectors')).toContainText('Queue');
-	const firstInspector = page.getByTestId('analysis-inspectors').locator('details').first();
-	await expect(firstInspector).not.toHaveAttribute('open', '');
+	const firstInspector = page.getByTestId('analysis-inspectors').locator('.inspector').first();
+	const inspectorButton = firstInspector.getByRole('button');
+	await expect(inspectorButton).toHaveAttribute('aria-expanded', 'false');
 	await expect(firstInspector).toContainText('Nodes waiting to be explored');
-	await firstInspector.locator('summary').click();
-	await expect(firstInspector).toHaveAttribute('open', '');
+	const restingInspectorColor = await inspectorButton.evaluate(
+		(element) => getComputedStyle(element).backgroundColor
+	);
+	await inspectorButton.hover();
+	await expect
+		.poll(() => inspectorButton.evaluate((element) => getComputedStyle(element).backgroundColor))
+		.not.toBe(restingInspectorColor);
+	await inspectorButton.click();
+	await expect(inspectorButton).toHaveAttribute('aria-expanded', 'true');
+	const secondInspector = page.getByTestId('analysis-inspectors').locator('.inspector').nth(1);
+	await secondInspector.getByRole('button').click();
+	const traceOverflow = await page.getByTestId('analysis-trace').evaluate((element) => ({
+		clientWidth: element.clientWidth,
+		scrollWidth: element.scrollWidth
+	}));
+	expect(traceOverflow.scrollWidth).toBeLessThanOrEqual(traceOverflow.clientWidth);
 	await expect(page.getByTestId('trace-speed')).toHaveCount(0);
 	await page.getByTestId('trace-next').click();
 	await expect(page.getByTestId('trace-scrubber')).toHaveValue('1');

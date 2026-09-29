@@ -1,6 +1,6 @@
 # Tasks 061: Unified Analyze algorithm laboratory
 
-- **Status:** Draft
+- **Status:** Accepted
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -76,7 +76,7 @@
   - Verify: targeted Vitest and Playwright, then the full quality gate
   - Files: Analyze session/UI/world modules, `e2e/analyze-laboratory.e2e.ts`, and accepted SPEC-061 pack
 
-- [ ] **T11 — Second owner-review idle, inspector, overflow, and BFS reveal refinement**
+- [x] **T11 — Second owner-review idle, inspector, overflow, and BFS reveal refinement**
   - Red: tests cover activity-aware ten-second idle reset, reveal-only replay without camera framing, absent Skip control, equivalent empty inspector states, stable trace width, and exact A/A-B/B/A-C/C/A-D/D/B-E/E reveal order
   - Green: add centralized Result activity tracking, separate replay from framing, animate accessible inspector accordions with hover feedback, eliminate trace horizontal layout drift, and interleave BFS tree edges with discovered nodes
   - Verify: targeted session/world/UI tests and Playwright, rendered inspection at narrow and desktop widths, then the full quality gate
@@ -84,8 +84,8 @@
 
 ## Done when
 
-- [ ] Every acceptance scenario in `spec.md` holds
+- [x] Every acceptance scenario in `spec.md` holds
 - [x] Analyze is the only algorithm tool and BFS/Dijkstra use the generic contracts
-- [ ] Result and Trace remain synchronized and temporary glyphs have a clean lifecycle
+- [x] Result and Trace remain synchronized and temporary glyphs have a clean lifecycle
 - [x] Removed capabilities leave no active UI, code path, command, or E2E expectation
-- [ ] Full verification is green and delivery records are complete in the same PR
+- [x] Full verification is green and delivery records are complete in the same PR

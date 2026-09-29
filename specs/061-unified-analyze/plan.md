@@ -1,6 +1,6 @@
 # Plan 061: Unified Analyze algorithm laboratory
 
-- **Status:** Draft
+- **Status:** Accepted
 - **Spec:** [./spec.md](./spec.md)
 - **Tasks:** [./tasks.md](./tasks.md)
 - **Item:** ITEM-069

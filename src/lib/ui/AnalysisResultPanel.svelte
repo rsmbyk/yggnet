@@ -2,7 +2,13 @@
 	import { app } from '$lib/session/app.svelte';
 	import { ANALYSIS_PLAYBACK_INTERVAL_MS } from '$lib/session/current-analysis';
 	import { frameAt } from '$lib/graph';
-	import { revealDuration } from '$lib/world/analysis-decoration';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { analysisResultSequence, revealDuration } from '$lib/world/analysis-decoration';
+	import {
+		formatInspectorValue,
+		inspectorValueSummary,
+		watchResultIdle
+	} from './analysis-panel-policy';
 
 	const current = $derived(app.analysis.current);
 	const definition = $derived(
@@ -12,6 +18,7 @@
 	);
 	const frame = $derived(current ? frameAt(current.trace, current.cursor) : null);
 	let panelElement = $state<HTMLElement>();
+	let expandedInspectors = new SvelteSet<string>();
 
 	const inspectorCopy: Record<string, { name: string; description: string }> = {
 		queue: { name: 'Queue', description: 'Nodes waiting to be explored, in processing order.' },
@@ -55,13 +62,7 @@
 
 	$effect(() => {
 		if (!current || current.panel !== 'result' || current.reveal !== 'playing') return;
-		const count = current.result.artifacts.reduce(
-			(total, artifact) =>
-				total +
-				('nodeIds' in artifact ? artifact.nodeIds.length : 0) +
-				('edgeIds' in artifact ? artifact.edgeIds.length : 0),
-			0
-		);
+		const count = analysisResultSequence(current.result.artifacts).length;
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		const timer = window.setTimeout(
 			() => app.skipAnalysisReveal(),
@@ -72,8 +73,12 @@
 
 	$effect(() => {
 		if (!current || current.panel !== 'result' || current.reveal !== 'complete') return;
-		const timer = window.setTimeout(() => app.replayAnalysisResult(), 4000);
-		return () => window.clearTimeout(timer);
+		return watchResultIdle(window, () => app.replayAnalysisResult());
+	});
+
+	$effect(() => {
+		void current?.trace;
+		expandedInspectors.clear();
 	});
 
 	$effect(() => {
@@ -95,13 +100,7 @@
 	});
 
 	function display(value: unknown): string {
-		if (Array.isArray(value)) return value.map(entityLabel).join(' → ') || 'Empty';
-		if (value && typeof value === 'object') {
-			return Object.entries(value as Record<string, unknown>)
-				.map(([key, item]) => `${entityLabel(key)}: ${entityLabel(item)}`)
-				.join(', ');
-		}
-		return String(value ?? 'Empty');
+		return formatInspectorValue(value, entityLabel);
 	}
 
 	function entityLabel(value: unknown): string {
@@ -110,9 +109,12 @@
 	}
 
 	function count(value: unknown): number {
-		if (Array.isArray(value)) return value.length;
-		if (value && typeof value === 'object') return Object.keys(value).length;
-		return value === undefined || value === null || value === '' ? 0 : 1;
+		return inspectorValueSummary(value).count;
+	}
+
+	function toggleInspector(id: string) {
+		if (expandedInspectors.has(id)) expandedInspectors.delete(id);
+		else expandedInspectors.add(id);
 	}
 
 	function inspectorMeta(id: string) {
@@ -142,6 +144,7 @@
 		tabindex="-1"
 		aria-modal="true"
 		aria-label={`${definition?.name ?? 'Analysis'} ${current.panel}`}
+		data-reveal-state={current.reveal}
 		bind:this={panelElement}
 	>
 		<header class="panel-header">
@@ -184,20 +187,12 @@
 					</dl>
 				{/if}
 				{#if current.result.outcome === 'no-result'}<p class="notice">No result was found.</p>{/if}
-				<section class="trace-section">
+				<section class="trace-section result-legend">
 					<h3>Legend</h3>
 					<div class="legend legend--result" aria-label="Analysis legend">
 						<span><i class="legend-mark legend-mark--result"></i>Result</span>
 					</div>
 				</section>
-				{#if current.reveal === 'playing'}
-					<button
-						class="skip"
-						type="button"
-						data-testid="skip-reveal"
-						onclick={() => app.skipAnalysisReveal()}>Skip animation</button
-					>
-				{/if}
 			</section>
 		{:else}
 			<section class="panel-content trace-content" data-testid="analysis-trace">
@@ -272,13 +267,22 @@
 					<div class="inspectors" data-testid="analysis-inspectors">
 						{#each Object.entries(frame?.inspectors ?? {}) as [id, inspector] (id)}
 							{@const meta = inspectorMeta(id)}
-							<details class="inspector">
-								<summary>
+							{@const expanded = expandedInspectors.has(id)}
+							<article class="inspector" class:expanded>
+								<button
+									class="inspector-summary"
+									type="button"
+									aria-expanded={expanded}
+									aria-controls={`analysis-inspector-${id}`}
+									onclick={() => toggleInspector(id)}
+								>
 									<span><strong>{meta.name}</strong><small>{meta.description}</small></span>
 									<span class="count">{count(inspector.value)}</span>
-								</summary>
-								<p>{display(inspector.value)}</p>
-							</details>
+								</button>
+								<div class="inspector-collapse" class:expanded id={`analysis-inspector-${id}`}>
+									<div><p>{display(inspector.value)}</p></div>
+								</div>
+							</article>
 						{/each}
 					</div>
 				</section>
@@ -402,8 +406,12 @@
 		font-weight: 600;
 	}
 	.panel-content {
+		box-sizing: border-box;
+		width: 100%;
 		min-height: 0;
 		overflow-y: auto;
+		overflow-x: hidden;
+		scrollbar-width: thin;
 	}
 	.metrics {
 		display: grid;
@@ -429,15 +437,22 @@
 		font-size: 1rem;
 		font-weight: 600;
 	}
-	.skip {
-		width: 100%;
-		margin-top: 0.5rem;
-		padding: 0.4rem 0.55rem;
+	.result-legend {
+		margin-top: 0.85rem;
 	}
 	.trace-content {
 		display: flex;
 		flex-direction: column;
+		box-sizing: border-box;
+		width: 100%;
+		min-width: 0;
+		padding: 0;
 		gap: 0.85rem;
+	}
+	.trace-content > * {
+		box-sizing: border-box;
+		width: 100%;
+		min-width: 0;
 	}
 	.transport {
 		display: flex;
@@ -460,7 +475,9 @@
 		font-size: 0.72rem;
 	}
 	.scrubber input {
+		box-sizing: border-box;
 		width: 100%;
+		margin: 0;
 		accent-color: var(--yg-accent);
 	}
 	.trace-section {
@@ -484,20 +501,33 @@
 		border-radius: var(--yg-radius-control);
 		background: var(--yg-chip);
 		overflow: hidden;
+		transition:
+			background var(--yg-motion-fast) var(--yg-ease),
+			border-color var(--yg-motion-fast) var(--yg-ease);
 	}
-	.inspector summary {
+	.inspector:hover,
+	.inspector:focus-within {
+		background: rgba(255, 255, 255, 0.72);
+		border-color: color-mix(in srgb, var(--yg-accent) 28%, var(--yg-border));
+	}
+	.inspector-summary {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		box-sizing: border-box;
+		width: 100%;
 		gap: 0.65rem;
 		padding: 0.55rem 0.65rem;
-		cursor: pointer;
-		list-style: none;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		text-align: left;
 	}
-	.inspector summary::-webkit-details-marker {
-		display: none;
+	.inspector-summary:hover,
+	.inspector-summary:focus-visible {
+		background: var(--yg-accent-soft);
 	}
-	.inspector summary > span:first-child {
+	.inspector-summary > span:first-child {
 		display: grid;
 		gap: 0.12rem;
 		min-width: 0;
@@ -520,6 +550,18 @@
 		text-align: center;
 		color: var(--yg-muted);
 		font-size: 0.7rem;
+	}
+	.inspector-collapse {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows var(--yg-motion-fast) var(--yg-ease);
+	}
+	.inspector-collapse.expanded {
+		grid-template-rows: 1fr;
+	}
+	.inspector-collapse > div {
+		min-height: 0;
+		overflow: hidden;
 	}
 	.inspector p {
 		margin: 0;
@@ -606,5 +648,11 @@
 		margin: 0;
 		color: #7b5721;
 		font-size: 0.78rem;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.inspector-collapse {
+			transition: none;
+		}
 	}
 </style>

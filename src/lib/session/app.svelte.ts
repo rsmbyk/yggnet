@@ -395,7 +395,6 @@ class AppStore {
 		const current = this.analysis.current;
 		if (!current || current.panel !== 'result') return;
 		this.analysis = { ...this.analysis, current: { ...current, reveal: 'playing' } };
-		this.requestFrameGraph();
 	}
 
 	setAnalysisPanelWidth(width: number): void {
