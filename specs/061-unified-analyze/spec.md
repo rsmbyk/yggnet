@@ -4,7 +4,7 @@ item: ITEM-069
 type: feat
 feature_area: analyze
 bump: minor
-status: Draft
+status: Accepted
 title: 'Unified Analyze algorithm laboratory'
 created: 2026-09-29
 updated: 2026-09-29
@@ -13,7 +13,7 @@ updated: 2026-09-29
 # Spec: Unified Analyze algorithm laboratory
 
 - **ID:** 061
-- **Status:** Draft
+- **Status:** Accepted
 - **Item:** ITEM-069
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)

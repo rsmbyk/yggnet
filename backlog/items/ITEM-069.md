@@ -1,6 +1,6 @@
 ---
 id: ITEM-069
-status: speccing
+status: in_progress
 title: 'Unified Analyze algorithm laboratory'
 type: feat
 priority: P0

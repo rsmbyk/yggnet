@@ -1,6 +1,6 @@
 # Tasks 061: Unified Analyze algorithm laboratory
 
-- **Status:** Draft
+- **Status:** Accepted
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -8,7 +8,7 @@
 
 ## Checklist
 
-- [ ] **T0 — Owner acceptance gate**
+- [x] **T0 — Owner acceptance gate**
   - Acceptance: project owner explicitly Accepts this Draft pack
   - Verify: `plan.md`, `spec.md`, and `tasks.md` all say Accepted before product-code work
   - Files: `specs/061-unified-analyze/{plan,spec,tasks}.md`; `backlog/items/ITEM-069.md`; `backlog/board.md`
