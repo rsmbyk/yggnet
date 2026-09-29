@@ -1,6 +1,6 @@
 # Plan 061: Unified Analyze algorithm laboratory
 
-- **Status:** Accepted
+- **Status:** Draft
 - **Spec:** [./spec.md](./spec.md)
 - **Tasks:** [./tasks.md](./tasks.md)
 - **Item:** ITEM-069
@@ -28,6 +28,7 @@ The replacement must answer two different user needs without conflating them: sh
 - Owner-requested UI refinement: native app styling, panel-aware camera fitting, real result animation, compact media controls, and inspector accordions
 - Second owner-review refinement: true user-idle replay, reveal-only repeats, animated inspector accordions, stable trace width, and traversal-ordered BFS reveal
 - Analyze tool-panel refinement: one header, shared field sizing, searchable node inputs, Generate-style primary action, and contextual Last result access
+- Result/Trace refinement: distinct result landmarks, a slightly faster bounded reveal, persistent inspector expansion during playback, and unambiguous media-control states
 
 **Out:**
 
@@ -46,6 +47,8 @@ The replacement must answer two different user needs without conflating them: sh
 5. Preserve the existing worker-ready `AlgorithmRunner` principle and structured-clone-safe graph snapshot boundary.
 6. Treat pointer, wheel, click, keyboard, and camera-control activity as user activity. Restart a ten-second Result idle window on any such input; an idle replay restarts only artifact reveal progress and never reframes the camera.
 7. Derive BFS result reveal order from the ordered traversal plus accepted tree edges, interleaving each discovery edge before the node it discovered.
+8. Derive result-landmark decorations from the selected inputs and final artifacts so important nodes such as Start and End are distinguishable without changing base graph meshes or adding algorithm-owned rendering.
+9. Keep inspector expansion as panel UI state independent of trace frames, cursors, and autoplay, and derive transport labels, icons, and disabled states from the current cursor/playing state.
 
 ## Interface direction
 
@@ -67,6 +70,7 @@ The replacement must answer two different user needs without conflating them: sh
 7. Refine the accepted UI from owner review without changing the generic algorithm contracts
 8. Refine idle detection, inspector presentation, overflow behavior, and BFS result sequencing after the second owner review
 9. Align the Analyze setup panel with existing manager conventions after the third owner review, reusing the Edges node-search control for schema-generated node fields
+10. Refine result landmarks, reveal timing, inspector expansion persistence, and trace transport states after the fourth owner review
 
 ## TDD
 

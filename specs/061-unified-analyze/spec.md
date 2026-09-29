@@ -4,7 +4,7 @@ item: ITEM-069
 type: feat
 feature_area: analyze
 bump: minor
-status: Accepted
+status: Draft
 title: 'Unified Analyze algorithm laboratory'
 created: 2026-09-29
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Unified Analyze algorithm laboratory
 
 - **ID:** 061
-- **Status:** Accepted
+- **Status:** Draft
 - **Item:** ITEM-069
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -108,8 +108,12 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - The panel follows the existing manager chrome tokens, sizes itself to its content up to the available viewport, uses the algorithm name as its title, and gives Result and Trace equal full-width tabs.
 - Result shows one metric per row and the final-artifact legend. It has no repeated summary, Skip animation, Replay, or Analyze steps action.
 - Trace orders its contents as media-style controls, scrubber, current action, data structures, and legend.
-- Trace provides Previous, Play/Pause, Stop/Reset, Next, and a scrubber. Playback uses a fixed cadence of approximately 300 ms per semantic action (twice the original cadence); Previous, Next, Stop/Reset, and manual scrubbing pause playback.
+- Trace provides Previous, Play/Pause/Restart, Stop/Reset, Next, and a scrubber. Playback uses a fixed cadence of approximately 300 ms per semantic action (twice the original cadence); Previous, Next, Stop/Reset, and manual scrubbing pause playback.
+- The primary transport uses the conventional play triangle while paused before the final action and the conventional two-bar pause icon while playing; it never substitutes the square stop icon for Pause.
+- At the final action, the primary transport becomes Restart. Activating it seeks to action 1 and immediately resumes autoplay from there.
+- Stop/Reset is disabled at action 1 and at the final action, where it would duplicate an existing boundary control. It is enabled only at intermediate actions and returns to action 1 while pausing playback.
 - Inspector cards are collapsed by default and show a user-facing data-structure name, description, and item count; expanding a card reveals its current data.
+- An inspector card's expanded/collapsed state is panel UI state, not trace-frame state. Autoplay and cursor advancement preserve every expanded card; only an explicit user toggle, closing the panel, or replacing/invalidating the analysis may collapse it.
 - Missing/uninitialized inspector data and an initialized data structure with zero entries are both presented consistently as `Empty` with count 0.
 - Inspector cards use the app hover treatment and animate open/close without horizontal overflow or layout jumps. Reduced-motion preference removes the height transition.
 - Trace content keeps one stable full width in every state; scrollbars, range inputs, expanded inspectors, and long values must not introduce intermittent horizontal inset or overflow.
@@ -122,10 +126,12 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - Result reveal is derived from result artifacts and is not a replay of the execution trace.
 - Before reveal, the camera returns to the canonical orbit/center and fits the whole graph in the viewport area not covered by the Result/Trace panel.
 - All graph entities begin dimmed; the result is then revealed in artifact order.
-- Total reveal duration is clamped to approximately 0.8–3 seconds, independent of result size. Large results advance in batches or a continuous wave.
+- Total reveal duration is clamped to approximately 0.7–2.6 seconds, independent of result size. Large results advance in batches or a continuous wave.
 - Dijkstra reveals the start node, then each path edge filling from the source-side endpoint toward the next node, ending at the target.
 - BFS reveals its reachable traversal/tree result as an alternating traversal sequence: the start node, then each accepted tree edge followed by the node that edge discovered. For A-B, B-C, A-C, A-D, B-E starting at A, the reveal order is A, A-B, B, A-C, C, A-D, D, B-E, E.
 - Result has no manual Skip control. The reveal completes on its bounded timer.
+- Result distinguishes important landmark nodes from ordinary result nodes with renderer-owned, non-color-only decoration. Dijkstra marks Start and End separately; BFS marks Start. If Start and End are the same node, one combined landmark communicates both roles without stacking primary glyphs.
+- Landmark labels and geometry remain legible beside the result decoration and are represented in the visible Result legend.
 - After ten seconds with no user activity in Result, the result reveal replays automatically. Activity includes pointer/mouse movement, pointer/mouse buttons or clicks, wheel/zoom, orbit/pan gestures, touch/pointer actions, and keyboard presses anywhere in the app; every activity restarts the full idle window.
 - An idle replay restarts only the artifact reveal. It preserves the current camera position and never requests canonical framing.
 - Returning from Trace to Result resets the camera to the panel-aware canonical fitted view before revealing the result again.
@@ -216,6 +222,16 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - **And** the result reveal finishes within the bounded duration
 - **And** the completed artifact and metrics remain visible
 
+### Scenario: Result landmarks remain distinguishable
+
+- **Given** a BFS or Dijkstra result is visible
+- **When** the final artifact is revealed
+- **Then** algorithm input landmarks are visually distinct from ordinary result nodes by geometry or a minimal marker as well as color
+- **And** BFS identifies Start
+- **And** Dijkstra identifies Start and End
+- **And** a Start=End Dijkstra result uses one combined landmark
+- **And** the Result legend names the displayed landmark roles
+
 ### Scenario: Idle result replay
 
 - **Given** Result is open and its reveal has completed
@@ -240,6 +256,20 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - **Then** narration, inspectors, legend, and world glyphs describe the same selected semantic step
 - **And** backward/arbitrary movement reconstructs the same frame without rerunning the algorithm
 - **And** stepping, resetting, or scrubbing pauses autoplay
+
+### Scenario: Trace transport preserves inspector intent
+
+- **Given** Trace is open and the user expands one or more data structures
+- **When** autoplay advances through semantic actions
+- **Then** those data structures remain expanded while their displayed contents update
+- **And when** playback is active
+- **Then** the primary control shows a conventional two-bar Pause icon, never the square Stop icon
+- **And when** the cursor reaches the final action
+- **Then** the primary control is announced and displayed as Restart
+- **And activating Restart** seeks to action 1 and resumes playback
+- **And** Stop/Reset is disabled at action 1 and the final action
+- **But when** the cursor is on an intermediate action
+- **Then** Stop/Reset is enabled and returns to action 1 with playback paused
 
 ### Scenario: Trace is capped but result remains correct
 

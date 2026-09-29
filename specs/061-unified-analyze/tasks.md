@@ -1,6 +1,6 @@
 # Tasks 061: Unified Analyze algorithm laboratory
 
-- **Status:** Accepted
+- **Status:** Draft
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -88,10 +88,16 @@
   - Verify: focused Playwright and rendered comparison against Generate, then the full quality gate
   - Files: `src/lib/ui/ManagerPanel.svelte`, `e2e/analyze-laboratory.e2e.ts`, and this accepted amendment
 
+- [ ] **T13 — Result landmarks and trace transport refinement**
+  - Red: world tests cover distinct Start, End, and combined Start=End result landmarks plus the faster reveal bounds; session/UI tests cover Restart-at-end, conventional Pause icon semantics, Stop/Reset boundary disabling, and expanded inspector persistence during autoplay
+  - Green: derive landmark decorations from inputs/artifacts, shorten the bounded reveal to approximately 0.7–2.6 seconds, keep inspector expansion independent from cursor changes, and derive accessible transport state from cursor and playback
+  - Verify: targeted Vitest and Playwright, rendered Result/Trace inspection, then the full quality gate
+  - Files: Analyze session/UI/world modules, `e2e/analyze-laboratory.e2e.ts`, and this Draft amendment
+
 ## Done when
 
-- [x] Every acceptance scenario in `spec.md` holds
+- [ ] Every acceptance scenario in `spec.md` holds
 - [x] Analyze is the only algorithm tool and BFS/Dijkstra use the generic contracts
 - [x] Result and Trace remain synchronized and temporary glyphs have a clean lifecycle
 - [x] Removed capabilities leave no active UI, code path, command, or E2E expectation
-- [x] Full verification is green and delivery records are complete in the same PR
+- [ ] Full verification is green and delivery records are complete in the same PR
