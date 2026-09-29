@@ -4,12 +4,14 @@
 		value,
 		testid,
 		ariaLabel,
+		placeholder = '?',
 		onChange
 	}: {
 		nodes: { id: string; label: string }[];
 		value: string;
 		testid: string;
 		ariaLabel: string;
+		placeholder?: string;
 		onChange: (id: string) => void;
 	} = $props();
 
@@ -109,7 +111,7 @@
 		data-testid={`${testid}-open`}
 		onclick={toggleDropdown}
 	>
-		<span class="nss-value">{selected?.label ?? '?'}</span>
+		<span class="nss-value">{selected?.label ?? placeholder}</span>
 		<svg class="nss-chevron" viewBox="0 0 12 8" aria-hidden="true">
 			<path fill="currentColor" d="M1.2 1.4 6 6.2 10.8 1.4" />
 		</svg>

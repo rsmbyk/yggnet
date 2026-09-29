@@ -314,6 +314,7 @@
 
 	const footerHasActions = $derived(
 		section === 'generate' ||
+			section === 'analyze' ||
 			(section === 'nodes' && selectedCount > 1) ||
 			(section === 'edges' && selectedEdgeCount > 1) ||
 			(section === 'selection' && Boolean(selectedNode && selectedCount === 1))
@@ -646,6 +647,12 @@
 						/>
 					</svg>
 				</button>
+			{:else if section === 'analyze' && app.analysis.current?.panel === 'closed'}
+				<button
+					type="button"
+					data-testid="view-last-analysis"
+					onclick={() => app.viewLastAnalysis()}>Last result</button
+				>
 			{/if}
 		</div>
 		{#if section === 'tags'}
@@ -2075,10 +2082,10 @@
 
 		{#if section === 'analyze'}
 			<section class="block" data-testid="analyze-panel">
-				<h2>Analyze</h2>
 				<label>
 					Algorithm
 					<select
+						class="slot-name-input"
 						data-testid="analysis-picker"
 						value={app.analysis.algorithmId}
 						onchange={(event) => app.setAnalysisAlgorithm(event.currentTarget.value)}
@@ -2092,15 +2099,25 @@
 				{#each activeAnalysisDefinition?.fields ?? [] as field (field.id)}
 					<label>
 						{field.label}
-						{#if field.kind === 'node' || field.kind === 'edge'}
+						{#if field.kind === 'node'}
+							<NodeSearchSelect
+								nodes={nodePickerOptions}
+								value={String(activeAnalysisInput[field.id] ?? '')}
+								testid={`analysis-field-${field.id}`}
+								ariaLabel={field.label}
+								placeholder="Choose…"
+								onChange={(id) => app.setAnalysisInput(field.id, id)}
+							/>
+						{:else if field.kind === 'edge'}
 							<select
+								class="slot-name-input"
 								data-testid={`analysis-field-${field.id}`}
 								value={String(activeAnalysisInput[field.id] ?? '')}
 								onchange={(event) =>
 									app.setAnalysisInput(field.id, event.currentTarget.value || undefined)}
 							>
 								<option value="">Choose…</option>
-								{#each field.kind === 'node' ? nodes : edges as entity (entity.id)}
+								{#each edges as entity (entity.id)}
 									<option value={entity.id}
 										>{'label' in entity && entity.label ? entity.label : entity.id}</option
 									>
@@ -2114,6 +2131,7 @@
 							/>
 						{:else if field.kind === 'number'}
 							<input
+								class="slot-name-input"
 								type="number"
 								min={field.min}
 								max={field.max}
@@ -2126,6 +2144,7 @@
 							/>
 						{:else if field.kind === 'enum'}
 							<select
+								class="slot-name-input"
 								value={String(activeAnalysisInput[field.id] ?? '')}
 								onchange={(event) => app.setAnalysisInput(field.id, event.currentTarget.value)}
 							>
@@ -2144,16 +2163,6 @@
 				{#if app.analysis.validation?.formError}<p class="field-helper error">
 						{app.analysis.validation.formError}
 					</p>{/if}
-				<button type="button" data-testid="run-analysis" onclick={() => app.runAnalysis()}
-					>Run analysis</button
-				>
-				{#if app.analysis.current?.panel === 'closed'}
-					<button
-						type="button"
-						data-testid="view-last-analysis"
-						onclick={() => app.viewLastAnalysis()}>View last result</button
-					>
-				{/if}
 			</section>
 		{/if}
 
@@ -2380,6 +2389,15 @@
 					class="generate-submit"
 					data-testid="generate-submit"
 					disabled={app.busyKind !== null}>Generate</button
+				>
+			{/if}
+			{#if section === 'analyze'}
+				<button
+					type="button"
+					class="generate-submit"
+					data-testid="run-analysis"
+					disabled={app.busyKind !== null}
+					onclick={() => app.runAnalysis()}>Run analysis</button
 				>
 			{/if}
 			{#if section === 'nodes' && selectedCount > 1}

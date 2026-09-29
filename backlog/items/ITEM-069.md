@@ -30,6 +30,7 @@ Replace the separate Pathfinder and path-specific Analyze flows with one extensi
 - Future algorithms should normally plug into the definition and artifact contracts without adding algorithm-specific panels or world code.
 - Owner review refined the panel to the shared app chrome, added a real bounded/idle-repeating result reveal, made framing panel-aware, and simplified Trace to fixed 2x media controls with collapsed inspector cards.
 - The second owner review made idle replay activity-aware and reveal-only, interleaved BFS tree edges with discovered nodes, and refined inspector empty states, hover, motion, and overflow.
+- The third owner review aligned Analyze setup with manager conventions, reused searchable node pickers, and moved retained-result access into the panel header.
 
 ## Acceptance sketch
 

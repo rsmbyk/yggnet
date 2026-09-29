@@ -1,21 +1,57 @@
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { applyGeneratedGraph, openTool } from './open-tool';
 
-async function chooseFirst(select: Locator) {
-	const value = await select.locator('option').nth(1).getAttribute('value');
-	if (!value) throw new Error('Expected a graph node option');
-	await select.selectOption(value);
+async function chooseNode(page: Page, testid: string, index = 0) {
+	const picker = page.getByTestId(testid);
+	await page.getByTestId(`${testid}-open`).click();
+	const option = picker.getByRole('option').nth(index);
+	await option.click();
+	const value = await picker.getAttribute('data-value');
+	if (!value) throw new Error('Expected a selected graph node');
 	return value;
 }
 
 test('one Analyze tool runs BFS and exposes reversible trace playback', async ({ page }) => {
 	await page.goto('/');
 	await applyGeneratedGraph(page, 'grid', { rows: 3, columns: 3 });
+	await page.mouse.move(500, 500);
+	const generateSelectHeight = (await page.getByTestId('generate-kind').boundingBox())?.height;
+	const generateButtonStyle = await page.getByTestId('generate-submit').evaluate((element) => {
+		const style = getComputedStyle(element);
+		return {
+			backgroundColor: style.backgroundColor,
+			fontWeight: style.fontWeight,
+			height: style.height
+		};
+	});
 	await expect(page.getByTestId('tool-pathfinder')).toHaveCount(0);
 	await openTool(page, 'analyze');
+	await expect(page.getByTestId('analyze-panel').locator('h2')).toHaveCount(0);
+	await expect(page.getByTestId('yggnet-manager').locator('.brand')).toHaveText('Analyze');
+	await expect(page.getByTestId('view-last-analysis')).toHaveCount(0);
+	expect((await page.getByTestId('analysis-picker').boundingBox())?.height).toBe(
+		generateSelectHeight
+	);
+	await expect
+		.poll(() =>
+			page.getByTestId('run-analysis').evaluate((element) => {
+				const style = getComputedStyle(element);
+				return {
+					backgroundColor: style.backgroundColor,
+					fontWeight: style.fontWeight,
+					height: style.height
+				};
+			})
+		)
+		.toEqual(generateButtonStyle);
 	await expect(page.getByTestId('analysis-picker')).toContainText('BFS Traversal');
 	await expect(page.getByTestId('analysis-picker')).toContainText('Dijkstra Shortest Path');
-	await chooseFirst(page.getByTestId('analysis-field-start'));
+	await expect(page.getByTestId('analysis-field-start-open')).toContainText('Choose…');
+	await page.getByTestId('analysis-field-start-open').click();
+	await page.getByTestId('analysis-field-start-search').fill('N9');
+	await expect(page.getByTestId('analysis-field-start').getByRole('option')).toHaveCount(1);
+	await page.getByTestId('analysis-field-start-search').press('Enter');
+	await expect(page.getByTestId('analysis-field-start')).not.toHaveAttribute('data-value', '');
 	await page.getByTestId('run-analysis').click();
 
 	await expect(page.getByTestId('analysis-result-panel')).toBeVisible();
@@ -79,7 +115,13 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 	await page.getByTestId('close-analysis').click();
 	await expect(page.getByTestId('analysis-result-panel')).toHaveCount(0);
 	await expect(page.getByTestId('analyze-panel')).toBeVisible();
-	await expect(page.getByTestId('view-last-analysis')).toBeVisible();
+	await expect(page.getByTestId('yggnet-manager').locator('.manager__header')).toContainText(
+		'Last result'
+	);
+	await page.getByTestId('manager-scrim').click();
+	await page.getByTestId('world-add-node').click();
+	await openTool(page, 'analyze');
+	await expect(page.getByTestId('view-last-analysis')).toHaveCount(0);
 });
 
 test('Dijkstra reports edge length and total cost', async ({ page }) => {
@@ -87,12 +129,8 @@ test('Dijkstra reports edge length and total cost', async ({ page }) => {
 	await applyGeneratedGraph(page, 'grid', { rows: 2, columns: 2 });
 	await openTool(page, 'analyze');
 	await page.getByTestId('analysis-picker').selectOption('dijkstra');
-	const start = page.getByTestId('analysis-field-start');
-	const end = page.getByTestId('analysis-field-end');
-	await chooseFirst(start);
-	const endValue = await end.locator('option').nth(2).getAttribute('value');
-	if (!endValue) throw new Error('Expected an end node');
-	await end.selectOption(endValue);
+	await chooseNode(page, 'analysis-field-start');
+	await chooseNode(page, 'analysis-field-end', 1);
 	await page.getByTestId('run-analysis').click();
 	await expect(page.getByTestId('analysis-result')).toContainText('Length');
 	await expect(page.getByTestId('analysis-result')).toContainText('Cost');
