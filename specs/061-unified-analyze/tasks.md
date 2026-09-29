@@ -1,6 +1,6 @@
 # Tasks 061: Unified Analyze algorithm laboratory
 
-- **Status:** Accepted
+- **Status:** Draft
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -82,10 +82,16 @@
   - Verify: targeted session/world/UI tests and Playwright, rendered inspection at narrow and desktop widths, then the full quality gate
   - Files: Analyze session/UI/world modules, `e2e/analyze-laboratory.e2e.ts`, and this accepted amendment
 
+- [ ] **T12 — Analyze setup panel alignment**
+  - Red: Playwright covers one Analyze heading, Generate-matched select height and primary action styling, header-level Last result visibility after close, and disappearance after structural invalidation
+  - Green: remove the body heading, apply shared field sizing, move Run analysis into the shared primary footer, and conditionally render Last result in the manager header
+  - Verify: focused Playwright and rendered comparison against Generate, then the full quality gate
+  - Files: `src/lib/ui/ManagerPanel.svelte`, `e2e/analyze-laboratory.e2e.ts`, and this accepted amendment
+
 ## Done when
 
-- [x] Every acceptance scenario in `spec.md` holds
+- [ ] Every acceptance scenario in `spec.md` holds
 - [x] Analyze is the only algorithm tool and BFS/Dijkstra use the generic contracts
 - [x] Result and Trace remain synchronized and temporary glyphs have a clean lifecycle
 - [x] Removed capabilities leave no active UI, code path, command, or E2E expectation
-- [x] Full verification is green and delivery records are complete in the same PR
+- [ ] Full verification is green and delivery records are complete in the same PR

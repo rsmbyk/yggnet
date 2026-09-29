@@ -4,7 +4,7 @@ item: ITEM-069
 type: feat
 feature_area: analyze
 bump: minor
-status: Accepted
+status: Draft
 title: 'Unified Analyze algorithm laboratory'
 created: 2026-09-29
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Unified Analyze algorithm laboratory
 
 - **ID:** 061
-- **Status:** Accepted
+- **Status:** Draft
 - **Item:** ITEM-069
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -94,7 +94,11 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 ### Tool and panel behavior
 
 - Analyze is the only toolbar entry for algorithms and paths. Pathfinder is absent.
-- The Analyze tool contains the definition picker, generated fields, inline validation, Run, and—when valid—View last result.
+- The Analyze tool uses the manager header as its only title; it does not repeat an `Analyze` heading inside the panel body.
+- The Analyze tool contains the definition picker, generated fields, inline validation, and Run analysis.
+- Analyze selects use the same shared control sizing as Generate selects.
+- Run analysis uses the same primary footer placement, dimensions, typography, colors, hover, and disabled treatment as Generate.
+- When a retained current analysis exists with its Result/Trace panel closed, the manager header shows a `Last result` button at the top right. It is absent before the first valid result and disappears immediately when structural invalidation clears that result.
 - A completed run closes the Analyze tool and opens the right-side Result/Trace panel.
 - The panel is application-modal: other tools, selection, dragging, graph-edit commands, undo/redo, and destructive shortcuts cannot act while it is open.
 - Panel controls and camera orbit/pan/zoom remain operable.
@@ -152,6 +156,18 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - **Then** Analyze is available
 - **And** Pathfinder is absent
 - **And** no Travel, A*, path-enumeration, compare, history, or annotation controls are present
+
+### Scenario: Analyze setup follows manager conventions
+
+- **Given** the Analyze tool is open
+- **Then** the manager header contains the only Analyze title
+- **And** its selects have the same computed height as Generate selects
+- **And** Run analysis matches the Generate primary action in the manager footer
+- **And** no Last result action appears without a retained analysis
+- **But given** a valid analysis was run and Result/Trace was closed
+- **Then** `Last result` appears at the top right of the Analyze header
+- **And when** a structural edit invalidates that analysis
+- **Then** `Last result` disappears
 
 ### Scenario: Run BFS traversal
 
