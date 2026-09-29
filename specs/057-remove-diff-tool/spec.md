@@ -1,7 +1,7 @@
 # Spec: Remove Diff tool
 
 - **ID:** 057
-- **Status:** Done
+- **Status:** Accepted
 - **Item:** ITEM-065
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -52,6 +52,7 @@ Delete the Diff tool completely: no toolbar entry, no panel, no session state, S
 
 ## Traceability
 
-- Domain/app tests:
-- E2E:
-- Implementation:
+- Implementation: PR [#32](https://github.com/rsmbyk/yggnet/pull/32), merged 2026-09-26; removed the state from `src/lib/session/app.svelte.ts`, the UI/panel from `src/lib/ui/ManagerPanel.svelte`, the toolbar entry from `src/lib/ui/Toolbar.svelte`, and the tool ID from `src/lib/ui/tool-ids.ts`.
+- Verification: repository search for `diffIds`, `setDiffIds`, and `pushDiff` confirms no active `src/` or `e2e/` consumers; `npm run test:coverage` and `npm run test:e2e` pass in this remediation PR.
+- E2E: Diff-specific coverage was removed with the tool; the full Playwright suite verifies the remaining toolbar, panel, and overlay flows.
+- Historical release evidence: ITEM-065 records PR #32 and release version `0.38.0`.

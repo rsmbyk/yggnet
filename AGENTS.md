@@ -28,7 +28,7 @@ If this agent’s project-rules directory is missing or incomplete, create or up
 - **Git Flow:** feature branches from `develop` (`feat/NNN-slug`, …); hotfixes from `main`. Default PR target: `develop`.
 - Update `backlog/board.md` + ITEM frontmatter in the **same PR** as status changes (one PR is complete — see PROCESS).
 - Process-only work: `bump: none`; no `VERSION` change.
-- Conventional Commits; agent commits end with `Co-authored-by: Cursor <cursoragent@cursor.com>`.
+- Conventional Commits; agent commits end with the `Co-authored-by` trailer for the vendor product that authored the commit, as defined in [`docs/PROCESS.md`](docs/PROCESS.md).
 - Do not mention personal names in docs — use roles (“project owner”, “reviewer”).
 - Never commit secrets. Never force-push protected branches unless the owner explicitly asks.
 - Never create `cursor/`, vendor-named, or other non-standard agent branches.

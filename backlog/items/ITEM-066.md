@@ -9,7 +9,7 @@ created: 2026-09-26
 updated: 2026-09-26
 spec: specs/058-real-edge-transparency
 branch: fix/058-real-edge-transparency
-pr:
+pr: 33
 archived_at:
 archive_reason:
 bump: patch

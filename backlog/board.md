@@ -46,8 +46,9 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
+| ID       | Title                                    | Summary                                                   | Type | Priority | Effort | Spec                                                                                | Bump | Branch                                 | Updated    |
+| -------- | ---------------------------------------- | --------------------------------------------------------- | ---- | -------- | ------ | ----------------------------------------------------------------------------------- | ---- | -------------------------------------- | ---------- |
+| ITEM-067 | Reconcile delivery records through PR 34 | Align merged-work metadata and agent attribution guidance | docs | P1       | S      | [059-delivery-record-remediation](../specs/059-delivery-record-remediation/spec.md) | none | `docs/059-delivery-record-remediation` | 2026-09-29 |
 
 ## In review
 
@@ -59,6 +60,7 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 | ID       | Title                                                | Summary                                                                | Type | Priority | Effort | Spec                                                                                                | Bump  | Merged     | Updated    |
 | -------- | ---------------------------------------------------- | ---------------------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------------------------------- | ----- | ---------- | ---------- |
+| ITEM-065 | Remove Diff tool                                     | Drop Diff tool/state/E2E; deprecate SPEC-018                           | feat | P2       | S      | [057-remove-diff-tool](../specs/057-remove-diff-tool/spec.md)                                       | minor | 2026-09-26 | 2026-09-26 |
 | ITEM-039 | World-first shell + HUD                              | Full-bleed world + floating HUD; no World Tune                         | feat | P1       | M      | [039-world-first-shell-hud](../specs/039-world-first-shell-hud/spec.md)                             | minor | 2026-09-25 | 2026-09-25 |
 | ITEM-040 | Canonical world config                               | Frozen WORLD + synced world-scale; file-only                           | feat | P1       | M      | [040-canonical-world-config](../specs/040-canonical-world-config/spec.md)                           | minor | 2026-09-25 | 2026-09-25 |
 | ITEM-041 | Camera chrome + 2D/3D                                | Map chrome, 2D/3D toggle, cursor rules                                 | feat | P1       | M      | [041-camera-chrome-2d-3d](../specs/041-camera-chrome-2d-3d/spec.md)                                 | minor | 2026-09-25 | 2026-09-25 |
