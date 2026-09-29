@@ -13,19 +13,19 @@
   - Verify: `plan.md`, `spec.md`, and `tasks.md` all say Accepted before product-code work
   - Files: `specs/061-unified-analyze/{plan,spec,tasks}.md`; `backlog/items/ITEM-069.md`; `backlog/board.md`
 
-- [ ] **T1 — Analysis contracts, validation, reducer, checkpoints, and trace budget**
+- [x] **T1 — Analysis contracts, validation, reducer, checkpoints, and trace budget**
   - Red: contract tests cover field validation, serializable results/events, role precedence, inspector operations, checkpoint seeking, and 50,000-event truncation
   - Green: framework-agnostic `src/lib/graph/analysis/**` contracts and reducer pass
   - Verify: targeted Vitest plus structured-clone round-trip assertions
   - Files: new focused modules/tests under `src/lib/graph/analysis/**`; graph barrel exports
 
-- [ ] **T2 — BFS traversal definition**
+- [x] **T2 — BFS traversal definition**
   - Red: A-H example asserts exact reachable order, BFS tree, semantic action sequence, Queue, and Visited states; add directed/disconnected cases
   - Green: start-only BFS emits the generic result and event contracts
   - Verify: targeted algorithm tests
   - Files: BFS implementation/test plus registry/definition wiring
 
-- [ ] **T3 — Dijkstra definition**
+- [x] **T3 — Dijkstra definition**
   - Red: shortest path, Length, Cost, directed edges, Start=End, unreachable target, negative-weight validation, and inspector/event cases
   - Green: Dijkstra emits generic path result, metrics, trace, and inspectors
   - Verify: targeted algorithm and registry tests
