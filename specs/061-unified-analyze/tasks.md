@@ -61,7 +61,7 @@
   - Verify: repository-wide `rg` inventory plus check/lint/build/tests
   - Files: legacy graph/session/UI/world modules and relevant docs/spec headers
 
-- [ ] **T9 — Quality and release records**
+- [x] **T9 — Quality and release records**
   - Verify: `npm run check`
   - Verify: `npm run lint`
   - Verify: `npm run test:coverage` with `src/lib/graph/**` at least 90%
@@ -72,8 +72,8 @@
 
 ## Done when
 
-- [ ] Every acceptance scenario in `spec.md` holds
-- [ ] Analyze is the only algorithm tool and BFS/Dijkstra use the generic contracts
-- [ ] Result and Trace remain synchronized and temporary glyphs have a clean lifecycle
-- [ ] Removed capabilities leave no active UI, code path, command, or E2E expectation
-- [ ] Full verification is green and delivery records are complete in the same PR
+- [x] Every acceptance scenario in `spec.md` holds
+- [x] Analyze is the only algorithm tool and BFS/Dijkstra use the generic contracts
+- [x] Result and Trace remain synchronized and temporary glyphs have a clean lifecycle
+- [x] Removed capabilities leave no active UI, code path, command, or E2E expectation
+- [x] Full verification is green and delivery records are complete in the same PR

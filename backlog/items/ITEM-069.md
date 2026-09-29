@@ -1,6 +1,6 @@
 ---
 id: ITEM-069
-status: in_progress
+status: in_review
 title: 'Unified Analyze algorithm laboratory'
 type: feat
 priority: P0
@@ -9,7 +9,7 @@ created: 2026-09-29
 updated: 2026-09-29
 spec: specs/061-unified-analyze
 branch: feat/061-unified-analyze
-pr:
+pr: 37
 archived_at:
 archive_reason:
 bump: minor

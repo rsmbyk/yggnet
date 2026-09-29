@@ -46,14 +46,14 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In progress
 
-| ID       | Title                                | Summary                                                            | Type | Priority | Effort | Spec                                                        | Bump  | Branch                     | Updated    |
-| -------- | ------------------------------------ | ------------------------------------------------------------------ | ---- | -------- | ------ | ----------------------------------------------------------- | ----- | -------------------------- | ---------- |
-| ITEM-069 | Unified Analyze algorithm laboratory | One generic Analyze tool with BFS/Dijkstra result and trace replay | feat | P0       | L      | [061-unified-analyze](../specs/061-unified-analyze/spec.md) | minor | `feat/061-unified-analyze` | 2026-09-29 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Branch | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------ | ------- |
 
 ## In review
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
+| ID       | Title                                | Summary                                                            | Type | Priority | Effort | Spec                                                        | Bump  | PR                                              | Updated    |
+| -------- | ------------------------------------ | ------------------------------------------------------------------ | ---- | -------- | ------ | ----------------------------------------------------------- | ----- | ----------------------------------------------- | ---------- |
+| ITEM-069 | Unified Analyze algorithm laboratory | One generic Analyze tool with BFS/Dijkstra result and trace replay | feat | P0       | L      | [061-unified-analyze](../specs/061-unified-analyze/spec.md) | minor | [#37](https://github.com/rsmbyk/yggnet/pull/37) | 2026-09-29 |
 
 ## Done
 
