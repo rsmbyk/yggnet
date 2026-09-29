@@ -30,6 +30,7 @@
 	{#each TOOLS as tool (tool.id)}
 		<button
 			type="button"
+			disabled={app.analysisBlocking}
 			class="icon-btn"
 			class:active={app.ui.openTool === tool.id}
 			data-testid={`tool-${tool.id}`}
@@ -125,5 +126,10 @@
 		background: var(--yg-accent-soft);
 		color: var(--yg-accent);
 		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));
+	}
+
+	.icon-btn:disabled {
+		cursor: not-allowed;
+		opacity: 0.35;
 	}
 </style>

@@ -44,8 +44,8 @@ test('graph title is the browser tab title and autosaves', async ({ page }) => {
 
 test('command palette opens from the keyboard', async ({ page }) => {
 	await page.goto('/');
-	await openTool(page, 'pathfinder');
-	await expect(page.getByTestId('directions-panel')).toBeVisible();
+	await openTool(page, 'analyze');
+	await expect(page.getByTestId('analyze-panel')).toBeVisible();
 	await page.keyboard.press('Control+K');
 	await expect(page.getByTestId('command-palette')).toBeVisible();
 });

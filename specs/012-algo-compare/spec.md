@@ -4,13 +4,15 @@ item: ITEM-012
 type: feat
 feature_area: analyze
 bump: minor
-status: done
+status: deprecated
 title: 'Algo compare'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-012: Algo compare
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). Run comparison is no longer part of the product.
 
 ## Problem
 

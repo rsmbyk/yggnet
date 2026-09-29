@@ -43,13 +43,13 @@
   - Verify: component/session tests and keyboard/accessibility checks
   - Files: tool ids/toolbar, Analyze form, Result/Trace panel, focused styles/tests
 
-- [ ] **T6 — Hybrid glyph renderer and bounded reveal**
+- [x] **T6 — Hybrid glyph renderer and bounded reveal**
   - Red: pure world tests cover role priority, decoration lifecycle/sizing, raycast exclusion, directional edge progress, reveal budgeting/batching, and reduced motion
   - Green: render pooled/instanced cages, halos, rings/checks, probes, minimal badges, and edge ribbons above the unchanged base graph
   - Verify: world unit tests, `npm run check`, and manual WebGL inspection
   - Files: focused analysis-decoration/reveal helpers and `GraphScene.svelte` integration
 
-- [ ] **T7 — Playwright acceptance flow**
+- [x] **T7 — Playwright acceptance flow**
   - Red: new E2E covers BFS, Dijkstra, result reveal, trace controls, camera-only world input, close/resume, structural invalidation, and absence of removed features
   - Green: user-visible acceptance scenarios pass; remove superseded compare/annotation E2E files
   - Verify: `npm run test:e2e -- e2e/analyze-laboratory.e2e.ts` then full `npm run test:e2e`

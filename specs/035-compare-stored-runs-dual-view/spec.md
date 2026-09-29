@@ -4,13 +4,15 @@ item: ITEM-035
 type: feat
 feature_area: analyze
 bump: minor
-status: done
+status: deprecated
 title: 'Compare stored runs dual view'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-035: Compare stored runs dual view
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). Stored-run comparison was removed.
 
 ## Problem
 

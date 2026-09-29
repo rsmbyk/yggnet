@@ -4,13 +4,15 @@ item: ITEM-036
 type: feat
 feature_area: analyze
 bump: minor
-status: done
+status: deprecated
 title: 'Step annotations readback + playback'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-036: Step annotations readback + playback
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). Semantic trace playback remains; annotations were removed.
 
 ## Problem
 

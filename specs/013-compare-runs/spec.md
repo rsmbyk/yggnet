@@ -4,13 +4,15 @@ item: ITEM-013
 type: feat
 feature_area: analyze
 bump: minor
-status: done
+status: deprecated
 title: 'Compare runs'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-013: Compare runs
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). Stored runs and comparison were removed.
 
 ## Problem
 

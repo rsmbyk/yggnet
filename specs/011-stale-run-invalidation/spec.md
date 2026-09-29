@@ -4,13 +4,15 @@ item: ITEM-011
 type: feat
 feature_area: analyze
 bump: patch
-status: done
+status: deprecated
 title: 'Stale-run invalidation'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-011: Stale-run invalidation
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). A single current analysis now clears on relevant structural changes.
 
 ## Problem
 

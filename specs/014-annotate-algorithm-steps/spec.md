@@ -4,13 +4,15 @@ item: ITEM-014
 type: feat
 feature_area: analyze
 bump: patch
-status: done
+status: deprecated
 title: 'Annotate algorithm steps'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-014: Annotate algorithm steps
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). Step annotations were removed from the unified Analyze laboratory.
 
 ## Problem
 

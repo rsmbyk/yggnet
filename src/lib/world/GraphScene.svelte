@@ -77,7 +77,6 @@
 	const _connectNormal = new THREE.Vector3();
 	const _snapPoint = new THREE.Vector3();
 
-	let travelRaf = 0;
 	/** Free end of the in-progress connect rubber-band (world space). */
 	let connectCursor = $state<{ x: number; y: number; z: number } | null>(null);
 	/**
@@ -1489,7 +1488,7 @@
 	$effect(() => {
 		const t = app.camera.target;
 		const d = app.camera.distance;
-		if (!controls || app.directions.traveling || pan || orbiting || viewModeAnimating) return;
+		if (!controls || pan || orbiting || viewModeAnimating) return;
 		if (performance.now() < camInteractiveUntil) return;
 		const synced = lastSyncedFromControls;
 		const eps = cameraSyncEps(d, t);
@@ -1524,7 +1523,7 @@
 		const epoch = app.revealEpoch;
 		const pos = app.revealPosition;
 		if (!controls || !pos || epoch === 0 || epoch === appliedRevealEpoch) return;
-		if (app.directions.traveling || viewModeAnimating) return;
+		if (viewModeAnimating) return;
 		const cam = camera.current;
 		if (!(cam instanceof THREE.PerspectiveCamera)) return;
 		const el = renderer.domElement;
@@ -1895,45 +1894,11 @@
 		const epoch = app.frameGraphEpoch;
 		void Object.keys(app.document.nodes).length;
 		if (!controls || epoch === 0 || epoch === appliedFrameEpoch) return;
-		if (app.directions.traveling) return;
 		appliedFrameEpoch = epoch;
 		animateFrameGraph();
 	});
 
-	$effect(() => {
-		if (!app.directions.traveling) {
-			if (travelRaf) cancelAnimationFrame(travelRaf);
-			travelRaf = 0;
-			return;
-		}
-		let last = performance.now();
-		const tick = (now: number) => {
-			const dt = (now - last) / 1000;
-			last = now;
-			const next = app.directions.travelProgress + dt * 0.15;
-			if (next >= 1) {
-				app.setTravelProgress(1);
-				app.stopTravel();
-				return;
-			}
-			app.setTravelProgress(next);
-			const pos = app.travelPosition();
-			if (pos && controls) {
-				controls.target.set(pos.x, 0, pos.z);
-				controls.object.position.set(pos.x + 6, 8, pos.z + 6);
-				controls.update();
-				app.setCamera({ target: { x: pos.x, y: 0, z: pos.z }, distance: 12 });
-			}
-			travelRaf = requestAnimationFrame(tick);
-		};
-		travelRaf = requestAnimationFrame(tick);
-		return () => {
-			if (travelRaf) cancelAnimationFrame(travelRaf);
-		};
-	});
-
 	onDestroy(() => {
-		if (travelRaf) cancelAnimationFrame(travelRaf);
 		viewAnim = null;
 		gridTexture.dispose();
 		groundMaterial.dispose();
@@ -2162,15 +2127,5 @@
 				/>
 			</T.Mesh>
 		{/if}
-	{/if}
-{/if}
-
-{#if app.directions.traveling}
-	{@const pos = app.travelPosition()}
-	{#if pos}
-		<T.Mesh position={[pos.x, pos.y, pos.z]}>
-			<T.SphereGeometry args={[0.28, 16, 16]} />
-			<T.MeshStandardMaterial color="#e8c56a" emissive="#6a5420" emissiveIntensity={0.25} />
-		</T.Mesh>
 	{/if}
 {/if}

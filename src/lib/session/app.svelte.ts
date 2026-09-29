@@ -1216,6 +1216,7 @@ class AppStore {
 	}
 
 	openPalette(open = true): void {
+		if (this.ui.paletteOpen === open && (open || this.ui.commandQuery === '')) return;
 		this.ui = { ...this.ui, paletteOpen: open, commandQuery: open ? this.ui.commandQuery : '' };
 	}
 
@@ -1224,6 +1225,13 @@ class AppStore {
 	}
 
 	setOpenTool(id: ToolId | null): void {
+		if (
+			this.ui.openTool === id &&
+			!this.ui.toolsPanelExpanded &&
+			!this.ui.selectionPanelExpanded &&
+			(id === 'tags' || this.ui.editingTag === null)
+		)
+			return;
 		const leavingNodes = this.ui.openTool === 'nodes' && id !== 'nodes';
 		const leavingEdges = this.ui.openTool === 'edges' && id !== 'edges';
 		this.ui = {

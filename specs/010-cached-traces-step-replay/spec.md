@@ -4,13 +4,15 @@ item: ITEM-010
 type: feat
 feature_area: analyze
 bump: minor
-status: done
+status: deprecated
 title: 'Cached traces + step replay'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-010: Cached traces + step replay
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). The generic semantic-event reducer and checkpoints replace cached path traces.
 
 ## Problem
 
