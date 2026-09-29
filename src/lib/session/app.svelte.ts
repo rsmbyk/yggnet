@@ -5,6 +5,7 @@
 import {
 	addEdge,
 	addNode,
+	analysisDefinitions,
 	addRun,
 	annotateStep,
 	clear as clearHistory,
@@ -51,6 +52,8 @@ import {
 	normalizeTags,
 	renameTag,
 	type EdgePatch,
+	type AnalysisInput,
+	type AnalysisValidation,
 	type GraphDocument,
 	type GenerateOptions,
 	type GraphKind,
@@ -68,6 +71,16 @@ import type { GraphPath } from '$lib/graph/algorithms/adjacency';
 import { nextOpenTool, type ToolId } from '$lib/ui/tool-ids';
 import { listSaveSlotNames, saveSlotExists, saveSlotStorageKey } from './save-slots';
 import { busyHold, waitForBusyOverlayPaint } from './work-busy';
+import {
+	closeAnalysis,
+	createCurrentAnalysis,
+	openAnalysisResult,
+	openAnalysisTrace,
+	seekAnalysis,
+	setAnalysisSpeed,
+	type CurrentAnalysis
+} from './current-analysis';
+import { validateAnalysisInput } from '$lib/graph';
 
 const AUTOSAVE_KEY = 'yggnet.autosave';
 const AUTOSAVE_MS = 600;
@@ -91,6 +104,13 @@ export type AnalyzeState = {
 	compareRunIds: string[];
 	playback: boolean;
 	lastRunId: string | null;
+};
+
+export type AnalysisSessionState = {
+	algorithmId: string;
+	inputs: Record<string, AnalysisInput>;
+	validation: AnalysisValidation | null;
+	current: CurrentAnalysis | null;
 };
 
 /** Session focus list for the Tags tool (world emphasize/dim). */
@@ -177,6 +197,15 @@ function emptyAnalyze(): AnalyzeState {
 	};
 }
 
+function analysisStructure(document: GraphDocument): string {
+	return JSON.stringify({
+		nodes: Object.keys(document.nodes).sort(),
+		edges: Object.values(document.edges)
+			.map(({ id, from, to, directed, weight }) => ({ id, from, to, directed, weight }))
+			.sort((a, b) => a.id.localeCompare(b.id))
+	});
+}
+
 class AppStore {
 	document = $state.raw<GraphDocument>(createEmptyDocument('Untitled graph'));
 	history = $state.raw<History>(createHistory());
@@ -185,6 +214,13 @@ class AppStore {
 	runStore = $state.raw<RunStore>(createRunStore());
 	directions = $state.raw<DirectionsState>(emptyDirections());
 	analyze = $state.raw<AnalyzeState>(emptyAnalyze());
+	analysis = $state.raw<AnalysisSessionState>({
+		algorithmId: 'bfs',
+		inputs: { bfs: {}, dijkstra: {} },
+		validation: null,
+		current: null
+	});
+	private analysisRevision = 0;
 	filters = $state.raw<FiltersState>({ tags: [] });
 	camera = $state.raw<CameraState>({
 		distance: WORLD.camera.defaultDistance,
@@ -261,17 +297,107 @@ class AppStore {
 	private sceneReadyWait: { docId: string; resolve: () => void } | null = null;
 
 	readonly algorithms = listAlgorithms();
+	readonly analysisDefinitions = [...analysisDefinitions.values()];
+
+	get analysisBlocking(): boolean {
+		return this.analysis.current?.panel === 'result' || this.analysis.current?.panel === 'trace';
+	}
+
+	setAnalysisAlgorithm(algorithmId: string): void {
+		if (!analysisDefinitions.has(algorithmId)) return;
+		this.analysis = { ...this.analysis, algorithmId, validation: null };
+	}
+
+	setAnalysisInput(fieldId: string, value: AnalysisInput[string]): void {
+		const inputs = {
+			...this.analysis.inputs,
+			[this.analysis.algorithmId]: {
+				...(this.analysis.inputs[this.analysis.algorithmId] ?? {}),
+				[fieldId]: value
+			}
+		};
+		this.analysis = { ...this.analysis, inputs, validation: null };
+	}
+
+	runAnalysis(): boolean {
+		const definition = analysisDefinitions.get(this.analysis.algorithmId);
+		if (!definition) return false;
+		const input = this.analysis.inputs[definition.id] ?? {};
+		const validation = validateAnalysisInput(definition, this.document, input);
+		if (!validation.valid) {
+			this.analysis = { ...this.analysis, validation };
+			return false;
+		}
+		const output = definition.execute(cloneDocument(this.document), input);
+		this.analysisRevision += 1;
+		this.analysis = {
+			...this.analysis,
+			validation: null,
+			current: createCurrentAnalysis(definition.id, input, output, this.analysisRevision)
+		};
+		this.ui = { ...this.ui, openTool: null };
+		this.clearAllSelection();
+		this.resetCameraTarget();
+		this.resetCameraOrbit();
+		this.requestFrameGraph();
+		return true;
+	}
+
+	closeAnalysisPanel(): void {
+		this.analysis = { ...this.analysis, current: closeAnalysis(this.analysis.current) };
+		this.setOpenTool('analyze');
+	}
+
+	viewLastAnalysis(): void {
+		this.analysis = { ...this.analysis, current: openAnalysisResult(this.analysis.current) };
+		this.ui = { ...this.ui, openTool: null };
+	}
+
+	showAnalysisResult(): void {
+		this.analysis = { ...this.analysis, current: openAnalysisResult(this.analysis.current) };
+	}
+
+	showAnalysisTrace(): void {
+		this.analysis = { ...this.analysis, current: openAnalysisTrace(this.analysis.current) };
+	}
+
+	seekAnalysis(index: number): void {
+		this.analysis = { ...this.analysis, current: seekAnalysis(this.analysis.current, index) };
+	}
+
+	setAnalysisPlaying(playing: boolean): void {
+		const current = this.analysis.current;
+		if (!current) return;
+		this.analysis = { ...this.analysis, current: { ...current, playing } };
+	}
+
+	setAnalysisPlaybackSpeed(speed: number): void {
+		this.analysis = { ...this.analysis, current: setAnalysisSpeed(this.analysis.current, speed) };
+	}
+
+	skipAnalysisReveal(): void {
+		const current = this.analysis.current;
+		if (!current) return;
+		this.analysis = { ...this.analysis, current: { ...current, reveal: 'complete' } };
+	}
+
+	clearCurrentAnalysis(): void {
+		if (!this.analysis.current) return;
+		this.analysis = { ...this.analysis, current: null, validation: null };
+	}
 
 	/** Apply a graph mutation with undo support; marks runs stale. */
 	private mutate(
 		mutateFn: (doc: GraphDocument) => {
 			doc: GraphDocument;
 			undo: (d: GraphDocument) => GraphDocument;
-		}
+		},
+		invalidatesAnalysis = true
 	): void {
 		const result = execute(this.history, this.document, mutateFn);
 		this.document = result.doc;
 		this.history = result.history;
+		if (invalidatesAnalysis) this.clearCurrentAnalysis();
 		this.runStore = markAllStale(this.runStore);
 		this.refreshPaths();
 		this.syncFilterOverlay();
@@ -323,6 +449,7 @@ class AppStore {
 		this.overlay = createEmptyOverlay();
 
 		this.analyze = { ...emptyAnalyze(), algorithmId: this.analyze.algorithmId };
+		this.analysis = { ...this.analysis, validation: null, current: null };
 		// The incoming document may not contain the focused or edited tags.
 		this.setFocusTags([]);
 		this.setEditingTag(null);
@@ -471,9 +598,11 @@ class AppStore {
 	canRedo = $derived(this.history.redoStack.length > 0);
 
 	undo(): void {
+		const beforeStructure = analysisStructure(this.document);
 		const result = historyUndo(this.history, this.document);
 		this.document = result.doc;
 		this.history = result.history;
+		if (analysisStructure(this.document) !== beforeStructure) this.clearCurrentAnalysis();
 		this.runStore = markAllStale(this.runStore);
 		this.refreshPaths();
 		this.syncFilterOverlay();
@@ -481,9 +610,11 @@ class AppStore {
 	}
 
 	redo(): void {
+		const beforeStructure = analysisStructure(this.document);
 		const result = historyRedo(this.history, this.document);
 		this.document = result.doc;
 		this.history = result.history;
+		if (analysisStructure(this.document) !== beforeStructure) this.clearCurrentAnalysis();
 		this.runStore = markAllStale(this.runStore);
 		this.refreshPaths();
 		this.syncFilterOverlay();
@@ -534,10 +665,13 @@ class AppStore {
 			attachments: prev.attachments.map((a) => ({ ...a })),
 			data: { ...prev.data }
 		};
-		this.mutate((d) => ({
-			doc: updateNode(d, id, patch),
-			undo: (cur) => updateNode(cur, id, snapshot)
-		}));
+		this.mutate(
+			(d) => ({
+				doc: updateNode(d, id, patch),
+				undo: (cur) => updateNode(cur, id, snapshot)
+			}),
+			false
+		);
 	}
 
 	removeNode(id: NodeId): void {
@@ -577,10 +711,13 @@ class AppStore {
 			attachments: prev.attachments.map((a) => ({ ...a })),
 			data: { ...prev.data }
 		};
-		this.mutate((d) => ({
-			doc: updateEdge(d, id, patch),
-			undo: (cur) => updateEdge(cur, id, snapshot)
-		}));
+		this.mutate(
+			(d) => ({
+				doc: updateEdge(d, id, patch),
+				undo: (cur) => updateEdge(cur, id, snapshot)
+			}),
+			'from' in patch || 'to' in patch || 'directed' in patch || 'weight' in patch
+		);
 	}
 
 	removeEdge(id: string): void {
@@ -608,10 +745,13 @@ class AppStore {
 			this.statusMessage = 'Nothing to layout';
 			return;
 		}
-		this.mutate(() => ({
-			doc: after,
-			undo: () => cloneDocument(before)
-		}));
+		this.mutate(
+			() => ({
+				doc: after,
+				undo: () => cloneDocument(before)
+			}),
+			false
+		);
 		this.statusMessage = 'Re-layout applied';
 	}
 
@@ -629,7 +769,7 @@ class AppStore {
 		}
 		const before = cloneDocument(this.document);
 		const { doc: next, tag } = autoTagGroup(this.document, ids);
-		this.mutate(() => ({ doc: next, undo: () => cloneDocument(before) }));
+		this.mutate(() => ({ doc: next, undo: () => cloneDocument(before) }), false);
 		this.statusMessage = `Grouped ${ids.length} nodes as ${tag}`;
 		return tag;
 	}
@@ -685,10 +825,13 @@ class AppStore {
 			this.statusMessage = err instanceof Error ? err.message : 'Rename failed';
 			return false;
 		}
-		this.mutate((d) => ({
-			doc: renameTag(d, from, next),
-			undo: () => cloneDocument(before)
-		}));
+		this.mutate(
+			(d) => ({
+				doc: renameTag(d, from, next),
+				undo: () => cloneDocument(before)
+			}),
+			false
+		);
 		this.setFocusTags(this.filters.tags.map((t) => (t === from ? next : t)));
 		this.setEditingTag(null);
 		this.statusMessage = `Renamed tag ${from} → ${next}`;
@@ -698,10 +841,13 @@ class AppStore {
 	deleteDocumentTag(tag: string): void {
 		if (!collectDocumentTags(this.document).includes(tag)) return;
 		const before = cloneDocument(this.document);
-		this.mutate((d) => ({
-			doc: deleteTag(d, tag),
-			undo: () => cloneDocument(before)
-		}));
+		this.mutate(
+			(d) => ({
+				doc: deleteTag(d, tag),
+				undo: () => cloneDocument(before)
+			}),
+			false
+		);
 		this.setFocusTags(this.filters.tags.filter((t) => t !== tag));
 		if (this.ui.editingTag === tag) this.setEditingTag(null);
 		this.statusMessage = `Deleted tag ${tag}`;

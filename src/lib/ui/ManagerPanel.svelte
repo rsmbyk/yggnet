@@ -198,6 +198,10 @@
 	const focusTags = $derived(app.filters.tags);
 	const focusActive = $derived(focusTags.length > 0);
 	const edges = $derived(Object.values(app.document.edges));
+	const activeAnalysisDefinition = $derived(
+		app.analysisDefinitions.find((definition) => definition.id === app.analysis.algorithmId)
+	);
+	const activeAnalysisInput = $derived(app.analysis.inputs[app.analysis.algorithmId] ?? {});
 
 	const listSearchActive = $derived(section === 'nodes' || section === 'edges');
 	const listSearchQuery = $derived(section === 'edges' ? edgeSearchQuery : nodeSearchQuery);
@@ -2040,7 +2044,7 @@
 			</section>
 		{/if}
 
-		{#if section === 'pathfinder'}
+		{#if false}
 			<section class="block" data-testid="directions-panel">
 				<h2>Pathfinder</h2>
 				<div class="row">
@@ -2136,6 +2140,90 @@
 				<label>
 					Algorithm
 					<select
+						data-testid="analysis-picker"
+						value={app.analysis.algorithmId}
+						onchange={(event) => app.setAnalysisAlgorithm(event.currentTarget.value)}
+					>
+						{#each app.analysisDefinitions as definition (definition.id)}
+							<option value={definition.id}>{definition.name}</option>
+						{/each}
+					</select>
+				</label>
+				<p class="hint">{activeAnalysisDefinition?.description}</p>
+				{#each activeAnalysisDefinition?.fields ?? [] as field (field.id)}
+					<label>
+						{field.label}
+						{#if field.kind === 'node' || field.kind === 'edge'}
+							<select
+								data-testid={`analysis-field-${field.id}`}
+								value={String(activeAnalysisInput[field.id] ?? '')}
+								onchange={(event) =>
+									app.setAnalysisInput(field.id, event.currentTarget.value || undefined)}
+							>
+								<option value="">Choose…</option>
+								{#each field.kind === 'node' ? nodes : edges as entity (entity.id)}
+									<option value={entity.id}
+										>{'label' in entity && entity.label ? entity.label : entity.id}</option
+									>
+								{/each}
+							</select>
+						{:else if field.kind === 'boolean'}
+							<input
+								type="checkbox"
+								checked={Boolean(activeAnalysisInput[field.id])}
+								onchange={(event) => app.setAnalysisInput(field.id, event.currentTarget.checked)}
+							/>
+						{:else if field.kind === 'number'}
+							<input
+								type="number"
+								min={field.min}
+								max={field.max}
+								value={String(activeAnalysisInput[field.id] ?? '')}
+								onchange={(event) =>
+									app.setAnalysisInput(
+										field.id,
+										event.currentTarget.value === '' ? undefined : Number(event.currentTarget.value)
+									)}
+							/>
+						{:else if field.kind === 'enum'}
+							<select
+								value={String(activeAnalysisInput[field.id] ?? '')}
+								onchange={(event) => app.setAnalysisInput(field.id, event.currentTarget.value)}
+							>
+								{#each field.options as option (option.value)}<option value={option.value}
+										>{option.label}</option
+									>{/each}
+							</select>
+						{:else}
+							<p class="hint">This input type is ready for a future picker.</p>
+						{/if}
+						{#if app.analysis.validation?.fieldErrors[field.id]}<span class="field-helper error"
+								>{app.analysis.validation.fieldErrors[field.id]}</span
+							>{/if}
+					</label>
+				{/each}
+				{#if app.analysis.validation?.formError}<p class="field-helper error">
+						{app.analysis.validation.formError}
+					</p>{/if}
+				<button type="button" data-testid="run-analysis" onclick={() => app.runAnalysis()}
+					>Run analysis</button
+				>
+				{#if app.analysis.current?.panel === 'closed'}
+					<button
+						type="button"
+						data-testid="view-last-analysis"
+						onclick={() => app.viewLastAnalysis()}>View last result</button
+					>
+				{/if}
+			</section>
+		{/if}
+
+		{#if false}
+			<section class="block" data-testid="analyze-panel">
+				<h2>Analyze</h2>
+				<label>
+					Algorithm
+					<select
 						data-testid="algo-picker"
 						value={app.analyze.algorithmId}
 						onchange={(e) => app.setAlgorithm(e.currentTarget.value)}
@@ -2172,8 +2260,8 @@
 						<h3>Compare</h3>
 						<div class="diff">
 							<div data-testid="compare-series-a">
-								<strong class="series-a">{compareRunA.algorithmId}</strong>
-								{#if compareRunA.stale}<span class="tag">stale</span>{/if}
+								<strong class="series-a">{compareRunA?.algorithmId}</strong>
+								{#if compareRunA?.stale}<span class="tag">stale</span>{/if}
 								<p class="muted">
 									{compareMetrics(compareRunA).nodes} nodes · {compareMetrics(compareRunA).hops} hops
 									· cost
@@ -2181,8 +2269,8 @@
 								</p>
 							</div>
 							<div data-testid="compare-series-b">
-								<strong class="series-b">{compareRunB.algorithmId}</strong>
-								{#if compareRunB.stale}<span class="tag">stale</span>{/if}
+								<strong class="series-b">{compareRunB?.algorithmId}</strong>
+								{#if compareRunB?.stale}<span class="tag">stale</span>{/if}
 								<p class="muted">
 									{compareMetrics(compareRunB).nodes} nodes · {compareMetrics(compareRunB).hops} hops
 									· cost
@@ -2197,8 +2285,8 @@
 				{/if}
 				{#if lastRun}
 					<p class="hint" data-testid="run-status">
-						Run {lastRun.id.slice(0, 8)}… {lastRun.stale ? '(stale)' : ''}
-						— {lastRun.result.kind}
+						Run {lastRun?.id.slice(0, 8)}… {lastRun?.stale ? '(stale)' : ''}
+						— {lastRun?.result.kind}
 					</p>
 					<label class="check">
 						<input

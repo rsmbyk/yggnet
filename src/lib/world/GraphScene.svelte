@@ -6,7 +6,7 @@
 	import * as THREE from 'three';
 	import { MOUSE } from 'three';
 	import type { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-	import type { GraphNode } from '$lib/graph';
+	import { frameAt, type AnalysisRole, type GraphNode } from '$lib/graph';
 	import { WORLD, defaultCameraPosition } from './world-config';
 	import { clampToFloor, resolveMoveAgainstNodes, snapToGrid } from './node-physics';
 	import {
@@ -24,6 +24,7 @@
 	} from './edge-pose';
 	import { partitionEdgesByDimming } from './edge-partition';
 	import { createNodeSphereGeometry } from './node-sphere';
+	import { analysisGlyphScale, primaryAnalysisRole } from './analysis-decoration';
 
 	interactivity();
 
@@ -243,6 +244,42 @@
 	const edges = $derived(Object.values(app.document.edges));
 	const overlayNodeSet = $derived(new Set(app.overlay.nodeIds));
 	const overlayEdgeSet = $derived(new Set(app.overlay.edgeIds));
+	const activeAnalysis = $derived(
+		app.analysis.current && app.analysis.current.panel !== 'closed' ? app.analysis.current : null
+	);
+	const analysisFrame = $derived(
+		activeAnalysis?.panel === 'trace' ? frameAt(activeAnalysis.trace, activeAnalysis.cursor) : null
+	);
+	const analysisResultNodeIds = $derived.by(() => {
+		const ids = new Set<string>();
+		if (activeAnalysis?.panel !== 'result') return ids;
+		for (const artifact of activeAnalysis.result.artifacts) {
+			if ('nodeIds' in artifact) for (const id of artifact.nodeIds) ids.add(id);
+		}
+		return ids;
+	});
+	const analysisResultEdgeIds = $derived.by(() => {
+		const ids = new Set<string>();
+		if (activeAnalysis?.panel !== 'result') return ids;
+		for (const artifact of activeAnalysis.result.artifacts) {
+			if ('edgeIds' in artifact) for (const id of artifact.edgeIds) ids.add(id);
+		}
+		return ids;
+	});
+	const analysisNodeRoles = $derived(
+		analysisFrame?.roles.nodes ??
+			Object.fromEntries([...analysisResultNodeIds].map((id) => [id, ['result'] as AnalysisRole[]]))
+	);
+	const analysisEdgeRoles = $derived(
+		analysisFrame?.roles.edges ??
+			Object.fromEntries([...analysisResultEdgeIds].map((id) => [id, ['result'] as AnalysisRole[]]))
+	);
+	const effectiveEdgeSet = $derived(
+		activeAnalysis ? new Set(Object.keys(analysisEdgeRoles)) : overlayEdgeSet
+	);
+	const effectiveNodeSet = $derived(
+		activeAnalysis ? new Set(Object.keys(analysisNodeRoles)) : overlayNodeSet
+	);
 	const compareSeriesANodes = $derived(
 		app.overlay.kind === 'compare' && app.overlay.seriesA
 			? new Set(app.overlay.seriesA.nodeIds)
@@ -264,7 +301,9 @@
 			: null
 	);
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
-	const dimOthers = $derived(app.overlay.dimOthers && app.overlay.kind !== 'none');
+	const dimOthers = $derived(
+		Boolean(activeAnalysis) || (app.overlay.dimOthers && app.overlay.kind !== 'none')
+	);
 
 	const visibleNodes = $derived(nodes);
 
@@ -308,7 +347,7 @@
 
 	function nodeOpacity(id: string): number {
 		if (!dimOthers) return 1;
-		return overlayNodeSet.has(id) ? 1 : 0.22;
+		return effectiveNodeSet.has(id) ? 1 : 0.22;
 	}
 
 	/**
@@ -362,6 +401,7 @@
 	}
 
 	function edgeColor(id: string): string {
+		if (activeAnalysis && analysisEdgeRoles[id]) return '#e8c56a';
 		if (app.overlay.kind === 'compare') {
 			const inA = compareSeriesAEdges?.has(id);
 			const inB = compareSeriesBEdges?.has(id);
@@ -395,6 +435,20 @@
 
 	function skipInstanceRaycast(mesh: THREE.InstancedMesh) {
 		mesh.raycast = () => {};
+	}
+
+	function attachAnalysisGlyph(object: THREE.Object3D) {
+		(object as THREE.Mesh).raycast = () => {};
+		object.renderOrder = 12;
+	}
+
+	function analysisColor(role: AnalysisRole | null): string {
+		if (role === 'result') return '#e8c56a';
+		if (role === 'current') return '#67e8f9';
+		if (role === 'inspecting') return '#f0a65a';
+		if (role === 'frontier') return '#a78bfa';
+		if (role === 'settled') return '#4ade80';
+		return '#ef6b73';
 	}
 
 	function attachShaftMesh(mesh: THREE.InstancedMesh) {
@@ -467,7 +521,7 @@
 		const visibleEdges = edges.filter((edge) => !edgeIsHidden(edge.from, edge.to));
 		const { opaque: matchEdges, dimmed: dimEdges } = partitionEdgesByDimming(
 			visibleEdges,
-			overlayEdgeSet,
+			effectiveEdgeSet,
 			dimOthers
 		);
 
@@ -1048,6 +1102,7 @@
 	}
 
 	function onNodePointerDown(node: GraphNode, ev: PointerLike) {
+		if (app.analysisBlocking) return;
 		const button = ev.nativeEvent?.button ?? ev.button ?? 0;
 		if (button !== 0) return;
 		if (pan) return;
@@ -1207,6 +1262,7 @@
 	}
 
 	function maybeClearSelectionOnSpaceClick(ev: PointerEvent) {
+		if (app.analysisBlocking) return;
 		const press = spacePress;
 		spacePress = null;
 		const hitNode = pointerHitNode;
@@ -1232,6 +1288,7 @@
 	}
 
 	function onSpacePointerDown(ev: PointerEvent) {
+		if (app.analysisBlocking) return;
 		if (ev.button !== 0) return;
 		if (pan || drag) return;
 		const mods = eventMods(ev);
@@ -1947,6 +2004,66 @@
 		</Billboard>
 	{/if}
 {/each}
+
+<!-- Analysis-only, non-interactive glyph layer. Base node spheres remain unchanged. -->
+{#if activeAnalysis}
+	{#each Object.entries(analysisNodeRoles) as [nodeId, roles] (nodeId)}
+		{@const node = app.document.nodes[nodeId]}
+		{#if node}
+			{@const pos = displayPosition(node)}
+			{@const role = primaryAnalysisRole(roles)}
+			{@const glyphScale = analysisGlyphScale(app.camera.distance)}
+			{@const color = analysisColor(role)}
+			{#if role === 'current'}
+				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+					<T.IcosahedronGeometry args={[NODE_RADIUS * 1.3, 1]} />
+					<T.MeshBasicMaterial {color} wireframe transparent opacity={0.95} depthWrite={false} />
+				</T.Mesh>
+			{:else}
+				<T.Mesh
+					position={[pos.x, pos.y - NODE_RADIUS * 0.8, pos.z]}
+					rotation={[Math.PI / 2, 0, 0]}
+					scale={glyphScale}
+					oncreate={attachAnalysisGlyph}
+				>
+					<T.TorusGeometry
+						args={[
+							NODE_RADIUS * (role === 'inspecting' ? 1.42 : 1.2),
+							0.055,
+							8,
+							role === 'inspecting' ? 12 : 32
+						]}
+					/>
+					<T.MeshBasicMaterial {color} transparent opacity={0.92} depthWrite={false} />
+				</T.Mesh>
+			{/if}
+		{/if}
+	{/each}
+	{#each Object.entries(analysisEdgeRoles) as [edgeId, roles] (edgeId)}
+		{@const edge = app.document.edges[edgeId]}
+		{#if edge}
+			{@const from = nodePos(edge.from)}
+			{@const to = nodePos(edge.to)}
+			{@const geo = edgeObject(from, to)}
+			{@const role = primaryAnalysisRole(roles)}
+			<T.Mesh
+				position={[geo.mid.x, geo.mid.y, geo.mid.z]}
+				quaternion={geo.quaternion}
+				oncreate={attachAnalysisGlyph}
+			>
+				<T.CylinderGeometry
+					args={[EDGE_SHAFT_RADIUS * 2.2, EDGE_SHAFT_RADIUS * 2.2, geo.len, 10]}
+				/>
+				<T.MeshBasicMaterial
+					color={analysisColor(role)}
+					transparent
+					opacity={0.82}
+					depthWrite={false}
+				/>
+			</T.Mesh>
+		{/if}
+	{/each}
+{/if}
 
 {#key shaftCap}
 	<T.InstancedMesh

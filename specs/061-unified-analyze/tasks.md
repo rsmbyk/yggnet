@@ -31,13 +31,13 @@
   - Verify: targeted algorithm and registry tests
   - Files: Dijkstra implementation/test plus definition wiring
 
-- [ ] **T4 — Single current-analysis session lifecycle**
+- [x] **T4 — Single current-analysis session lifecycle**
   - Red: tests cover run replacement, open/close/resume, cursor/mode/speed, playback cancellation, relevant structural invalidation, and non-invalidating presentation/position changes
   - Green: replace directions/analyze/run-store coupling with one `CurrentAnalysis`
   - Verify: session tests and `npm run check`
   - Files: focused session state/helper/test modules and app orchestration
 
-- [ ] **T5 — Unified Analyze form and blocking Result/Trace panel**
+- [x] **T5 — Unified Analyze form and blocking Result/Trace panel**
   - Red: tool/panel tests cover one Analyze entry, generated fields, inline validation, Result/Trace switching, inspectors, controls, prior inputs, and blocked app commands
   - Green: remove Pathfinder UI and replace the path-specific Analyze panel
   - Verify: component/session tests and keyboard/accessibility checks

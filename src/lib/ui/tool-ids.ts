@@ -1,12 +1,4 @@
-export const TOOL_IDS = [
-	'file',
-	'generate',
-	'nodes',
-	'edges',
-	'tags',
-	'pathfinder',
-	'analyze'
-] as const;
+export const TOOL_IDS = ['file', 'generate', 'nodes', 'edges', 'tags', 'analyze'] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
 
@@ -16,7 +8,6 @@ export const TOOLS: { id: ToolId; label: string }[] = [
 	{ id: 'nodes', label: 'Nodes' },
 	{ id: 'edges', label: 'Edges' },
 	{ id: 'tags', label: 'Tags' },
-	{ id: 'pathfinder', label: 'Pathfinder' },
 	{ id: 'analyze', label: 'Analyze' }
 ];
 
