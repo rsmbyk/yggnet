@@ -1,6 +1,6 @@
 ---
 id: ITEM-068
-status: in_review
+status: done
 title: 'Restore normal edge opacity'
 type: fix
 priority: P1
