@@ -27,7 +27,7 @@ The replacement must answer two different user needs without conflating them: sh
 - ADR/architecture and superseded-spec updates
 - Owner-requested UI refinement: native app styling, panel-aware camera fitting, real result animation, compact media controls, and inspector accordions
 - Second owner-review refinement: true user-idle replay, reveal-only repeats, animated inspector accordions, stable trace width, and traversal-ordered BFS reveal
-- Analyze tool-panel refinement: one header, shared field sizing, Generate-style primary action, and contextual Last result access
+- Analyze tool-panel refinement: one header, shared field sizing, searchable node inputs, Generate-style primary action, and contextual Last result access
 
 **Out:**
 
@@ -66,7 +66,7 @@ The replacement must answer two different user needs without conflating them: sh
 6. Legacy removal, E2E, ADR/spec deprecation, release/process records
 7. Refine the accepted UI from owner review without changing the generic algorithm contracts
 8. Refine idle detection, inspector presentation, overflow behavior, and BFS result sequencing after the second owner review
-9. Align the Analyze setup panel with existing manager conventions after the third owner review
+9. Align the Analyze setup panel with existing manager conventions after the third owner review, reusing the Edges node-search control for schema-generated node fields
 
 ## TDD
 

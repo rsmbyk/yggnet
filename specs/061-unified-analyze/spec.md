@@ -97,6 +97,8 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - The Analyze tool uses the manager header as its only title; it does not repeat an `Analyze` heading inside the panel body.
 - The Analyze tool contains the definition picker, generated fields, inline validation, and Run analysis.
 - Analyze selects use the same shared control sizing as Generate selects.
+- Every schema-generated `node` field uses the same searchable node picker behavior and visual treatment as the Edges Source and Destination fields. Typing filters node labels, selecting a result commits its stable node id, and the field remains keyboard accessible.
+- Algorithm, enum, edge, and other non-node fields remain their existing field type unless a future spec supplies a dedicated picker.
 - Run analysis uses the same primary footer placement, dimensions, typography, colors, hover, and disabled treatment as Generate.
 - When a retained current analysis exists with its Result/Trace panel closed, the manager header shows a `Last result` button at the top right. It is absent before the first valid result and disappears immediately when structural invalidation clears that result.
 - A completed run closes the Analyze tool and opens the right-side Result/Trace panel.
@@ -162,6 +164,7 @@ Make Analyze a reusable graph-algorithm laboratory. A user selects an algorithm,
 - **Given** the Analyze tool is open
 - **Then** the manager header contains the only Analyze title
 - **And** its selects have the same computed height as Generate selects
+- **And** each node input is searchable with the same interaction as Edges Source and Destination
 - **And** Run analysis matches the Generate primary action in the manager footer
 - **And** no Last result action appears without a retained analysis
 - **But given** a valid analysis was run and Result/Trace was closed

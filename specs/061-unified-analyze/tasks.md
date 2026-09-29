@@ -83,8 +83,8 @@
   - Files: Analyze session/UI/world modules, `e2e/analyze-laboratory.e2e.ts`, and this accepted amendment
 
 - [ ] **T12 — Analyze setup panel alignment**
-  - Red: Playwright covers one Analyze heading, Generate-matched select height and primary action styling, header-level Last result visibility after close, and disappearance after structural invalidation
-  - Green: remove the body heading, apply shared field sizing, move Run analysis into the shared primary footer, and conditionally render Last result in the manager header
+  - Red: Playwright covers one Analyze heading, Generate-matched select height and primary action styling, searchable node selection matching Edges Source/Destination, header-level Last result visibility after close, and disappearance after structural invalidation
+  - Green: remove the body heading, apply shared field sizing, reuse `NodeSearchSelect` for generated node fields, move Run analysis into the shared primary footer, and conditionally render Last result in the manager header
   - Verify: focused Playwright and rendered comparison against Generate, then the full quality gate
   - Files: `src/lib/ui/ManagerPanel.svelte`, `e2e/analyze-laboratory.e2e.ts`, and this accepted amendment
 
