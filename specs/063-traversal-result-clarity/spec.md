@@ -4,7 +4,7 @@ item: ITEM-071
 type: fix
 feature_area: analyze
 bump: patch
-status: Accepted
+status: Draft
 title: 'Traversal result clarity and pacing'
 created: 2026-09-30
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Traversal result clarity and pacing
 
 - **ID:** 063
-- **Status:** Accepted
+- **Status:** Draft
 - **Item:** ITEM-071
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -32,7 +32,7 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 - Common traversal reveal roles for orange traversed objects and a green final path replay
 - Removal of purple Multi-source edge overlays and green target-side Bidirectional edge overlays
 - Prominent no-result Result status
-- A fixed 100 ms reveal-step interval shared by every traversal algorithm, with exactly one
+- A fixed 50 ms reveal-step interval shared by every traversal algorithm, with exactly one
   node or edge action per step
 - A shared 200 ms pause between IDDFS result-reveal phases
 - Random Walk early termination on Target found or complete outgoing-reachable coverage
@@ -96,7 +96,7 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 
 ### Reveal pacing and IDDFS
 
-- Every traversal algorithm uses the same fixed 100 ms interval per generic Reveal step.
+- Every traversal algorithm uses the same fixed 50 ms interval per generic Reveal step.
 - Each timed Reveal step contains exactly one visual action: reveal/emphasize one node, or
   reveal/emphasize one edge. A node and its incoming edge therefore occupy two consecutive
   steps rather than appearing together.
@@ -199,7 +199,7 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 
 - **Given** any traversal Result contains nodes and edges to reveal
 - **When** timed Reveal playback advances
-- **Then** each 100 ms step marks exactly one node or exactly one edge
+- **Then** each 50 ms step marks exactly one node or exactly one edge
 - **And** no step marks a node and edge together
 - **And** breadth-first levels and multi-frontier waves use deterministic one-object ordering
 - **And** Trace grouping and playback remain unchanged
@@ -207,7 +207,7 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 ## Boundaries
 
 - **Always:** keep reveal actions structured-clone-safe; use generic roles and scheduling; keep each timed Reveal step to one node or edge action; keep graph coverage at least 90%; add Playwright for visible behavior.
-- **Ask first:** change the 100 ms reveal interval, change the 200 ms phase hold, change the shared palette meanings, remove Random Walk Max steps, or change Trace speed.
+- **Ask first:** change the 50 ms reveal interval, change the 200 ms phase hold, change the shared palette meanings, remove Random Walk Max steps, or change Trace speed.
 - **Never:** add algorithm-specific UI/world components, fabricate graph edges, persist reveal decoration, hide explored Search footprints, or use color as the only endpoint/frontier distinction.
 
 ## Commands
