@@ -402,6 +402,10 @@ describe('Iterative Deepening DFS', () => {
 });
 
 describe('Random Walk', () => {
+	function metric(output: ReturnType<AnalysisDefinition['execute']>, label: string) {
+		return output.result.metrics.find((item) => item.label === label)?.value;
+	}
+
 	it('replays the same walk for the same seed and exposes the used seed', () => {
 		const randomWalk = analysisDefinitions.get('random-walk')!;
 		const doc = graph([
@@ -419,18 +423,26 @@ describe('Random Walk', () => {
 	});
 
 	it('marks revisits with a transient reveal action and never a badge action', () => {
-		const output = analysisDefinitions.get('random-walk')!.execute(graph([['A', 'B']]), {
-			mode: 'traverse',
-			start: 'A',
-			maxSteps: 3,
-			seed: 7
-		});
+		const output = analysisDefinitions.get('random-walk')!.execute(
+			graph([
+				['A', 'B'],
+				['A', 'C']
+			]),
+			{
+				mode: 'traverse',
+				start: 'A',
+				maxSteps: 10,
+				seed: 7
+			}
+		);
 		const actions = output.result.reveal!.phases[0].steps.flatMap((step) => step.actions);
 		expect(actions).toContainEqual({ kind: 'revisit-node', nodeId: 'A', viaEdgeId: 'e0' });
 		expect(actions.some((action) => (action as { kind: string }).kind.includes('badge'))).toBe(
 			false
 		);
-		expect(output.result.metrics).toContainEqual({ label: 'Unique nodes', value: 2 });
+		expect(output.result.metrics).toContainEqual({ label: 'Unique nodes', value: 3 });
+		expect(metric(output, 'Steps taken')).toBe(3);
+		expect(output.events.at(-1)?.action).toBe('coverage-complete');
 	});
 
 	it('generates and retains an unsigned seed when the optional field is omitted', () => {
@@ -451,21 +463,82 @@ describe('Random Walk', () => {
 	it('reports dead ends and a failed Search without hiding the starting footprint', () => {
 		const doc = graph([
 			['A', 'B', true],
-			['C', 'D']
+			['A', 'C', true],
+			['D', 'E']
 		]);
 		const output = analysisDefinitions.get('random-walk')!.execute(doc, {
 			mode: 'search',
-			start: 'B',
-			target: 'D',
+			start: 'A',
+			target: 'E',
 			maxSteps: 4,
-			seed: 1
+			seed: 7
 		});
 
 		expect(output.result.outcome).toBe('no-result');
 		expect(output.result.metrics).toContainEqual({ label: 'Target found', value: 'No' });
 		expect(output.events.some((event) => event.action === 'dead-end')).toBe(true);
 		expect(output.result.artifacts.find((item) => item.id === 'walk-order')).toMatchObject({
-			nodeIds: ['B']
+			nodeIds: ['A', 'B']
 		});
+	});
+
+	it('stops immediately when Search finds Target or Traverse covers every reachable node', () => {
+		const doc = graph([
+			['A', 'B', true],
+			['B', 'C', true],
+			['D', 'E']
+		]);
+		const search = analysisDefinitions.get('random-walk')!.execute(doc, {
+			mode: 'search',
+			start: 'A',
+			target: 'B',
+			maxSteps: 50,
+			seed: 4
+		});
+		const traverse = analysisDefinitions.get('random-walk')!.execute(doc, {
+			mode: 'traverse',
+			start: 'A',
+			maxSteps: 50,
+			seed: 4
+		});
+
+		expect(metric(search, 'Steps taken')).toBe(1);
+		expect(search.result.outcome).toBe('complete');
+		expect(metric(traverse, 'Steps taken')).toBe(2);
+		expect(traverse.events.at(-1)?.action).toBe('coverage-complete');
+	});
+
+	it('ends unreachable Search after outgoing-reachable coverage and excludes reverse-only nodes', () => {
+		const output = analysisDefinitions.get('random-walk')!.execute(
+			graph([
+				['A', 'B', true],
+				['B', 'C', true],
+				['D', 'B', true],
+				['T', 'U']
+			]),
+			{ mode: 'search', start: 'B', target: 'T', maxSteps: 50, seed: 2 }
+		);
+
+		expect(output.result.outcome).toBe('no-result');
+		expect(output.result.artifacts.find((item) => item.id === 'walk-order')).toMatchObject({
+			nodeIds: ['B', 'C']
+		});
+		expect(metric(output, 'Steps taken')).toBe(1);
+		expect(output.events.at(-1)?.action).toBe('coverage-complete');
+	});
+
+	it('takes zero steps when Start is the whole reachable graph', () => {
+		const doc = graph([['A', 'B']]);
+		delete doc.edges.e0;
+		delete doc.nodes.B;
+		const output = analysisDefinitions.get('random-walk')!.execute(doc, {
+			mode: 'traverse',
+			start: 'A',
+			maxSteps: 50,
+			seed: 9
+		});
+
+		expect(metric(output, 'Steps taken')).toBe(0);
+		expect(output.events.at(-1)?.action).toBe('coverage-complete');
 	});
 });

@@ -477,6 +477,20 @@ function seededRandom(seed: number): () => number {
 	};
 }
 
+function reachableNodes(snapshot: GraphDocument, start: string): Set<string> {
+	const reachable = new Set([start]);
+	const queue = [start];
+	while (queue.length) {
+		const current = queue.shift()!;
+		for (const neighbor of neighborsOf(snapshot, current)) {
+			if (reachable.has(neighbor.nodeId)) continue;
+			reachable.add(neighbor.nodeId);
+			queue.push(neighbor.nodeId);
+		}
+	}
+	return reachable;
+}
+
 function runRandomWalk(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 	const start = node(input, 'start');
 	const search = input.mode === 'search';
@@ -491,6 +505,7 @@ function runRandomWalk(snapshot: GraphDocument, input: AnalysisInput): AnalysisO
 	const revealSteps: AnalysisRevealStep[] = [
 		{ actions: [{ kind: 'reveal-node', nodeId: start, role: 'start' }] }
 	];
+	const reachable = reachableNodes(snapshot, start);
 	event(
 		events,
 		'initialize-walk',
@@ -505,10 +520,14 @@ function runRandomWalk(snapshot: GraphDocument, input: AnalysisInput): AnalysisO
 	);
 	let current = start;
 	let found = current === target;
-	for (let step = 1; step <= maxSteps && !found; step += 1) {
+	let termination: 'target-found' | 'coverage-complete' | 'dead-end' | 'max-steps' | null =
+		found ? 'target-found' : visitCounts.size === reachable.size ? 'coverage-complete' : null;
+	if (termination) event(events, termination, { nodeId: current, step: 0 });
+	for (let step = 1; step <= maxSteps && !termination; step += 1) {
 		const neighbors = neighborsOf(snapshot, current);
 		if (!neighbors.length) {
 			event(events, 'dead-end', { nodeId: current, step: step - 1 });
+			termination = 'dead-end';
 			break;
 		}
 		const chosen = neighbors[Math.floor(random() * neighbors.length)];
@@ -539,6 +558,17 @@ function runRandomWalk(snapshot: GraphDocument, input: AnalysisInput): AnalysisO
 			]
 		);
 		found = current === target;
+		if (found) {
+			termination = 'target-found';
+			event(events, termination, { nodeId: current, step });
+		} else if (visitCounts.size === reachable.size) {
+			termination = 'coverage-complete';
+			event(events, termination, { nodeId: current, step });
+		}
+	}
+	if (!termination) {
+		termination = 'max-steps';
+		event(events, termination, { nodeId: current, step: edgeIds.length });
 	}
 	const walkArtifact = {
 		kind: 'path' as const,
@@ -560,7 +590,7 @@ function runRandomWalk(snapshot: GraphDocument, input: AnalysisInput): AnalysisO
 					: `Did not reach the target within ${maxSteps} steps.`
 				: `Walked ${edgeIds.length} steps.`,
 			metrics: [
-				{ label: 'Steps', value: edgeIds.length },
+				{ label: 'Steps taken', value: edgeIds.length },
 				{ label: 'Unique nodes', value: visitCounts.size },
 				{ label: 'Seed', value: seed },
 				...(search ? [{ label: 'Target found', value: found ? 'Yes' : 'No' }] : [])
