@@ -5,6 +5,7 @@ import type {
 	AnalysisEvent,
 	AnalysisInput,
 	AnalysisOutput,
+	AnalysisRevealStep,
 	InspectorOperation
 } from './contracts';
 
@@ -30,11 +31,14 @@ function node(input: AnalysisInput, id: string): string {
 
 function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 	const start = node(input, 'start');
+	const search = input.mode === 'search';
+	const target = search ? node(input, 'target') : undefined;
 	const events: AnalysisEvent[] = [];
 	const queue = [start];
 	const discovered = new Set([start]);
 	const order: string[] = [];
-	const treeEdges: string[] = [];
+	const cameFrom = new Map<string, { prev: string; edgeId: string }>();
+	const depths = new Map<string, number>([[start, 0]]);
 	event(
 		events,
 		'enqueue',
@@ -67,6 +71,14 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 			[],
 			[{ inspector: 'visited', operation: 'append', value: current }]
 		);
+		if (current === target) {
+			event(events, 'target-found', { nodeId: current });
+			event(events, 'settle', { nodeId: current }, [
+				{ entity: 'node', id: current, role: 'current', operation: 'remove' },
+				{ entity: 'node', id: current, role: 'settled', operation: 'add' }
+			]);
+			break;
+		}
 		for (const neighbor of neighborsOf(snapshot, current)) {
 			event(events, 'inspect', { nodeId: neighbor.nodeId, edgeId: neighbor.edgeId }, [
 				{ entity: 'node', id: neighbor.nodeId, role: 'inspecting', operation: 'add' },
@@ -75,7 +87,8 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 			if (!discovered.has(neighbor.nodeId)) {
 				discovered.add(neighbor.nodeId);
 				queue.push(neighbor.nodeId);
-				treeEdges.push(neighbor.edgeId);
+				cameFrom.set(neighbor.nodeId, { prev: current, edgeId: neighbor.edgeId });
+				depths.set(neighbor.nodeId, (depths.get(current) ?? 0) + 1);
 				event(events, 'accept-tree-edge', { edgeId: neighbor.edgeId, nodeId: neighbor.nodeId }, [
 					{ entity: 'edge', id: neighbor.edgeId, role: 'result', operation: 'add' }
 				]);
@@ -96,6 +109,57 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 			{ entity: 'node', id: current, role: 'current', operation: 'remove' },
 			{ entity: 'node', id: current, role: 'settled', operation: 'add' }
 		]);
+	}
+	const treeEdges = order
+		.slice(1)
+		.map((id) => cameFrom.get(id)?.edgeId)
+		.filter((id): id is string => Boolean(id));
+	const path = target ? reconstructPath(cameFrom, start, target) : null;
+	const revealSteps: AnalysisRevealStep[] = [
+		...new Set(order.map((id) => depths.get(id) ?? 0))
+	].map((depth) => ({
+		actions: order
+			.filter((id) => (depths.get(id) ?? 0) === depth)
+			.flatMap((id) => {
+				const incoming = cameFrom.get(id)?.edgeId;
+				return [
+					...(incoming ? ([{ kind: 'reveal-edge', edgeId: incoming }] as const) : []),
+					{ kind: 'reveal-node' as const, nodeId: id }
+				];
+			})
+	}));
+	if (path) revealSteps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }] });
+
+	if (search) {
+		const artifacts: AnalysisOutput['result']['artifacts'] = [
+			{ kind: 'ordered-nodes', id: 'explored', label: 'Explored nodes', nodeIds: order },
+			{ kind: 'tree', id: 'tree', label: 'Exploration tree', nodeIds: order, edgeIds: treeEdges },
+			...(path ? [{ kind: 'path' as const, id: 'path', label: 'Found path', ...path }] : []),
+			{
+				kind: 'landmarks',
+				id: 'landmarks',
+				label: 'Important nodes',
+				entries: [
+					{ nodeId: start, role: 'start' },
+					{ nodeId: target!, role: 'end' }
+				]
+			}
+		];
+		return {
+			result: {
+				outcome: path ? 'complete' : 'no-result',
+				summary: path
+					? `Found a path with ${path.edgeIds.length} edges.`
+					: 'Target was not reached.',
+				metrics: [
+					{ label: 'Visited', value: order.length },
+					...(path ? [{ label: 'Length', value: path.edgeIds.length }] : [])
+				],
+				artifacts,
+				reveal: { phases: [{ id: 'search', steps: revealSteps }] }
+			},
+			events
+		};
 	}
 	return {
 		result: {
@@ -275,10 +339,30 @@ function runDijkstra(snapshot: GraphDocument, input: AnalysisInput): AnalysisOut
 
 export const bfsDefinition: AnalysisDefinition = {
 	id: 'bfs',
-	name: 'BFS Traversal',
+	name: 'Breadth-First Search',
 	category: 'Traversal',
-	description: 'Visit every node reachable from a starting node in breadth-first order.',
-	fields: [{ kind: 'node', id: 'start', label: 'Start', required: true }],
+	description: 'Traverse or search a graph one breadth layer at a time.',
+	fields: [
+		{
+			kind: 'enum',
+			id: 'mode',
+			label: 'Mode',
+			required: true,
+			defaultValue: 'traverse',
+			options: [
+				{ value: 'traverse', label: 'Traverse' },
+				{ value: 'search', label: 'Search' }
+			]
+		},
+		{ kind: 'node', id: 'start', label: 'Start', required: true },
+		{
+			kind: 'node',
+			id: 'target',
+			label: 'Target',
+			required: true,
+			when: { fieldId: 'mode', equals: 'search' }
+		}
+	],
 	execute: runBfs
 };
 
