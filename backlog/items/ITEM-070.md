@@ -13,7 +13,7 @@ pr:
 archived_at:
 archive_reason:
 bump: minor
-release_version:
+release_version: 0.40.0
 ---
 
 # ITEM-070: Traversal and search algorithms

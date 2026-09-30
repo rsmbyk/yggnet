@@ -279,10 +279,10 @@ Expand Analyze from one traversal into a coherent traversal-and-search laborator
 
 ## Traceability
 
-- Planned domain contracts/definitions: `src/lib/graph/analysis/**`
-- Planned session/UI integration: `src/lib/session/current-analysis.ts`, `src/lib/ui/ManagerPanel.svelte`, `src/lib/ui/AnalysisResultPanel.svelte`
-- Planned reveal policy/world integration: focused helpers under `src/lib/world/**` and `src/lib/world/GraphScene.svelte`
-- Planned acceptance flow: `e2e/analyze-laboratory.e2e.ts`
+- Domain contracts and algorithms: `src/lib/graph/analysis/contracts.ts`, `src/lib/graph/analysis/algorithms.ts`, `src/lib/graph/analysis/traversal-algorithms.test.ts`
+- Session and generated Analyze form: `src/lib/session/current-analysis.ts`, `src/lib/session/app.svelte.ts`, `src/lib/ui/ManagerPanel.svelte`, `src/lib/ui/NodeSetSearchSelect.svelte`
+- Result reveal and world decoration: `src/lib/ui/AnalysisResultPanel.svelte`, `src/lib/world/analysis-decoration.ts`, `src/lib/world/GraphScene.svelte`
+- Acceptance flow: `e2e/analyze-laboratory.e2e.ts`
 
 ## Relationship to SPEC-061
 
