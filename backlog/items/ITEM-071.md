@@ -1,6 +1,6 @@
 ---
 id: ITEM-071
-status: speccing
+status: ready
 title: 'Clarify traversal results and reveal pacing'
 type: fix
 priority: P1
