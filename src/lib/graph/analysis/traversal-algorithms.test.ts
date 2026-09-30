@@ -292,3 +292,51 @@ describe('Iterative Deepening DFS', () => {
 		expect(output.result.reveal?.phases).toHaveLength(3);
 	});
 });
+
+describe('Random Walk', () => {
+	it('replays the same walk for the same seed and exposes the used seed', () => {
+		const randomWalk = analysisDefinitions.get('random-walk')!;
+		const doc = graph([
+			['A', 'B'],
+			['A', 'C'],
+			['B', 'D'],
+			['C', 'D']
+		]);
+		const input = { mode: 'traverse', start: 'A', maxSteps: 5, seed: 42 };
+		const first = randomWalk.execute(doc, input);
+		const second = randomWalk.execute(doc, input);
+		expect(second).toEqual(first);
+		expect(first.result.metrics).toContainEqual({ label: 'Seed', value: 42 });
+		expect(first.effectiveInput).toMatchObject({ seed: 42, maxSteps: 5 });
+	});
+
+	it('marks revisits with a transient reveal action and never a badge action', () => {
+		const output = analysisDefinitions.get('random-walk')!.execute(graph([['A', 'B']]), {
+			mode: 'traverse',
+			start: 'A',
+			maxSteps: 3,
+			seed: 7
+		});
+		const actions = output.result.reveal!.phases[0].steps.flatMap((step) => step.actions);
+		expect(actions).toContainEqual({ kind: 'revisit-node', nodeId: 'A', viaEdgeId: 'e0' });
+		expect(actions.some((action) => (action as { kind: string }).kind.includes('badge'))).toBe(
+			false
+		);
+		expect(output.result.metrics).toContainEqual({ label: 'Unique nodes', value: 2 });
+	});
+
+	it('generates and retains an unsigned seed when the optional field is omitted', () => {
+		const output = analysisDefinitions.get('random-walk')!.execute(graph([['A', 'B']]), {
+			mode: 'search',
+			start: 'A',
+			target: 'B',
+			maxSteps: 10
+		});
+		const seed = output.result.metrics.find((metric) => metric.label === 'Seed')?.value;
+		expect(seed).toEqual(expect.any(Number));
+		expect(seed).toBeGreaterThanOrEqual(0);
+		expect(seed).toBeLessThanOrEqual(0xffffffff);
+		expect(output.effectiveInput?.seed).toBe(seed);
+		expect(output.result.outcome).toBe('complete');
+	});
+});

@@ -444,6 +444,135 @@ function runIddfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput
 	};
 }
 
+function randomSeed(): number {
+	if (typeof globalThis.crypto?.getRandomValues === 'function') {
+		return globalThis.crypto.getRandomValues(new Uint32Array(1))[0];
+	}
+	return Math.floor(Math.random() * 0x1_0000_0000) >>> 0;
+}
+
+function seededRandom(seed: number): () => number {
+	let state = seed >>> 0;
+	return () => {
+		state = (state + 0x6d2b79f5) | 0;
+		let value = Math.imul(state ^ (state >>> 15), 1 | state);
+		value = (value + Math.imul(value ^ (value >>> 7), 61 | value)) ^ value;
+		return ((value ^ (value >>> 14)) >>> 0) / 0x1_0000_0000;
+	};
+}
+
+function runRandomWalk(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
+	const start = node(input, 'start');
+	const search = input.mode === 'search';
+	const target = search ? node(input, 'target') : undefined;
+	const maxSteps = Number(input.maxSteps ?? 100);
+	const seed = input.seed === undefined ? randomSeed() : Number(input.seed) >>> 0;
+	const random = seededRandom(seed);
+	const events: AnalysisEvent[] = [];
+	const nodeIds = [start];
+	const edgeIds: string[] = [];
+	const visitCounts = new Map<string, number>([[start, 1]]);
+	const revealSteps: AnalysisRevealStep[] = [
+		{ actions: [{ kind: 'reveal-node', nodeId: start, role: 'start' }] }
+	];
+	event(
+		events,
+		'initialize-walk',
+		{ nodeId: start, seed, maxSteps },
+		[],
+		[
+			{ inspector: 'current-node', operation: 'reset', kind: 'scalar', value: start },
+			{ inspector: 'step', operation: 'reset', kind: 'scalar', value: 0 },
+			{ inspector: 'visit-history', operation: 'reset', kind: 'ordered-list', value: [start] },
+			{ inspector: 'visit-counts', operation: 'reset', kind: 'map', value: { [start]: 1 } }
+		]
+	);
+	let current = start;
+	let found = current === target;
+	for (let step = 1; step <= maxSteps && !found; step += 1) {
+		const neighbors = neighborsOf(snapshot, current);
+		if (!neighbors.length) {
+			event(events, 'dead-end', { nodeId: current, step: step - 1 });
+			break;
+		}
+		const chosen = neighbors[Math.floor(random() * neighbors.length)];
+		current = chosen.nodeId;
+		nodeIds.push(current);
+		edgeIds.push(chosen.edgeId);
+		const visitNumber = (visitCounts.get(current) ?? 0) + 1;
+		const revisit = visitNumber > 1;
+		visitCounts.set(current, visitNumber);
+		revealSteps.push({
+			actions: [
+				{ kind: 'reveal-edge', edgeId: chosen.edgeId, role: 'walk' },
+				...(revisit
+					? [{ kind: 'revisit-node' as const, nodeId: current, viaEdgeId: chosen.edgeId }]
+					: [{ kind: 'reveal-node' as const, nodeId: current, role: 'walk' }])
+			]
+		});
+		event(
+			events,
+			revisit ? 'revisit' : 'walk-step',
+			{ nodeId: current, edgeId: chosen.edgeId, step, visitNumber },
+			[{ entity: 'node', id: current, role: 'current', operation: 'add' }],
+			[
+				{ inspector: 'current-node', operation: 'set', value: current },
+				{ inspector: 'step', operation: 'set', value: step },
+				{ inspector: 'visit-history', operation: 'append', value: current },
+				{ inspector: 'visit-counts', operation: 'set', key: current, value: visitNumber }
+			]
+		);
+		found = current === target;
+	}
+	const walkArtifact = {
+		kind: 'path' as const,
+		id: 'walk',
+		label: search && found ? 'Found walk' : 'Walk',
+		nodeIds,
+		edgeIds
+	};
+	if (search && found) {
+		revealSteps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'walk' }] });
+	}
+	return {
+		effectiveInput: { ...input, maxSteps, seed },
+		result: {
+			outcome: search && !found ? 'no-result' : 'complete',
+			summary: search
+				? found
+					? `Reached the target in ${edgeIds.length} steps.`
+					: `Did not reach the target within ${maxSteps} steps.`
+				: `Walked ${edgeIds.length} steps.`,
+			metrics: [
+				{ label: 'Steps', value: edgeIds.length },
+				{ label: 'Unique nodes', value: visitCounts.size },
+				{ label: 'Seed', value: seed },
+				...(search ? [{ label: 'Target found', value: found ? 'Yes' : 'No' }] : [])
+			],
+			artifacts: [
+				{
+					kind: 'ordered-nodes',
+					id: 'walk-order',
+					label: 'Walk order',
+					nodeIds
+				},
+				walkArtifact,
+				{
+					kind: 'landmarks',
+					id: 'landmarks',
+					label: 'Important nodes',
+					entries: [
+						{ nodeId: start, role: 'start' },
+						...(target ? [{ nodeId: target, role: 'end' as const }] : [])
+					]
+				}
+			],
+			reveal: { phases: [{ id: 'walk', steps: revealSteps }] }
+		},
+		events
+	};
+}
+
 function runMultiSourceBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 	const starts = [...new Set((input.starts as string[]) ?? [])];
 	const search = input.mode === 'search';
@@ -958,6 +1087,34 @@ export const iddfsDefinition: AnalysisDefinition = {
 	execute: runIddfs
 };
 
+export const randomWalkDefinition: AnalysisDefinition = {
+	id: 'random-walk',
+	name: 'Random Walk',
+	category: 'Traversal',
+	description: 'Follow randomly selected traversable edges with a reproducible optional seed.',
+	fields: traversalModeFields([
+		{
+			kind: 'number',
+			id: 'maxSteps',
+			label: 'Max steps',
+			required: true,
+			defaultValue: 100,
+			min: 1,
+			max: 10_000,
+			integer: true
+		},
+		{
+			kind: 'number',
+			id: 'seed',
+			label: 'Seed (optional)',
+			min: 0,
+			max: 0xffffffff,
+			integer: true
+		}
+	]),
+	execute: runRandomWalk
+};
+
 export const multiSourceBfsDefinition: AnalysisDefinition = {
 	id: 'multi-source-bfs',
 	name: 'Multi-source BFS',
@@ -1020,6 +1177,7 @@ export const analysisDefinitions = new Map<string, AnalysisDefinition>([
 	[dfsDefinition.id, dfsDefinition],
 	[depthLimitedDfsDefinition.id, depthLimitedDfsDefinition],
 	[iddfsDefinition.id, iddfsDefinition],
+	[randomWalkDefinition.id, randomWalkDefinition],
 	[multiSourceBfsDefinition.id, multiSourceBfsDefinition],
 	[bidirectionalBfsDefinition.id, bidirectionalBfsDefinition],
 	[dijkstraDefinition.id, dijkstraDefinition]

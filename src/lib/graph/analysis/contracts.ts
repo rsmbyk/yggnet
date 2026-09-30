@@ -116,6 +116,7 @@ export interface AnalysisEvent {
 export interface AnalysisOutput {
 	result: AnalysisResult;
 	events: AnalysisEvent[];
+	effectiveInput?: AnalysisInput;
 }
 
 export interface AnalysisValidation {
