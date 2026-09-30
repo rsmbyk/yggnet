@@ -219,8 +219,8 @@ export function revealProgress(
 	return Math.min(1, Math.max(0, elapsedMs / revealDuration(entityCount)));
 }
 
-export const RESULT_REVEAL_STEP_MS = 180;
-export const RESULT_REVEAL_PHASE_HOLD_MS = 300;
+export const RESULT_REVEAL_STEP_MS = 100;
+export const RESULT_REVEAL_PHASE_HOLD_MS = 200;
 
 export function analysisRevealDuration(timeline: AnalysisRevealTimeline): number {
 	const stepCount = analysisRevealStepCount(timeline);
