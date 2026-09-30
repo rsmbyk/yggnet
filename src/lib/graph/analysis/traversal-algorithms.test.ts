@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphDocument } from '../model/types';
+import type { AnalysisDefinition } from './contracts';
 import {
 	activeAnalysisFields,
 	analysisDefinitions,
@@ -49,6 +50,38 @@ function graph(edges: Array<[string, string, boolean?]>): GraphDocument {
 }
 
 describe('mode-capable traversal contracts', () => {
+	it('normalizes an unset enum to its first option without overriding an explicit value', () => {
+		const definition: AnalysisDefinition = {
+			id: 'enum-default',
+			name: 'Enum default',
+			category: 'Test',
+			description: 'Enum default test',
+			fields: [
+				{
+					kind: 'enum',
+					id: 'mode',
+					label: 'Mode',
+					options: [
+						{ value: 'traverse', label: 'Traverse' },
+						{ value: 'search', label: 'Search' }
+					]
+				}
+			],
+			execute: () => ({
+				result: { outcome: 'complete', summary: '', metrics: [], artifacts: [] },
+				events: []
+			})
+		};
+		const emptyDefinition = {
+			...definition,
+			fields: [{ ...definition.fields[0], options: [] }]
+		} as AnalysisDefinition;
+
+		expect(normalizeAnalysisInput(definition, {})).toEqual({ mode: 'traverse' });
+		expect(normalizeAnalysisInput(emptyDefinition, {})).toEqual({});
+		expect(normalizeAnalysisInput(definition, { mode: 'search' })).toEqual({ mode: 'search' });
+	});
+
 	it('defaults BFS to Traverse and excludes the hidden Target value', () => {
 		const bfs = analysisDefinitions.get('bfs')!;
 		expect(normalizeAnalysisInput(bfs, { start: 'A', target: 'B' })).toEqual({

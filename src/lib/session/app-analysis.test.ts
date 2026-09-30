@@ -14,7 +14,27 @@ const output: AnalysisOutput = {
 };
 
 describe('analysis result replay', () => {
-	afterEach(() => app.clearCurrentAnalysis());
+	afterEach(() => {
+		app.clearCurrentAnalysis();
+		app.analysis = {
+			algorithmId: 'bfs',
+			inputs: { bfs: {}, dijkstra: {} },
+			validation: null,
+			current: null
+		};
+	});
+
+	it('materializes the first Mode option once and preserves a remembered selection', () => {
+		app.analysis = { ...app.analysis, inputs: {} };
+
+		app.setAnalysisAlgorithm('dfs');
+		expect(app.analysis.inputs.dfs).toMatchObject({ mode: 'traverse' });
+
+		app.setAnalysisInput('mode', 'search');
+		app.setAnalysisAlgorithm('bfs');
+		app.setAnalysisAlgorithm('dfs');
+		expect(app.analysis.inputs.dfs).toMatchObject({ mode: 'search' });
+	});
 
 	it('replays only the reveal without requesting camera framing', () => {
 		const current = createCurrentAnalysis('bfs', { start: 'A' }, output, 0);

@@ -208,6 +208,15 @@ function analysisStructure(document: GraphDocument): string {
 	});
 }
 
+function initialAnalysisInputs(): Record<string, AnalysisInput> {
+	return Object.fromEntries(
+		[...analysisDefinitions.values()].map((definition) => [
+			definition.id,
+			normalizeAnalysisInput(definition, {})
+		])
+	);
+}
+
 class AppStore {
 	document = $state.raw<GraphDocument>(createEmptyDocument('Untitled graph'));
 	history = $state.raw<History>(createHistory());
@@ -218,7 +227,7 @@ class AppStore {
 	analyze = $state.raw<AnalyzeState>(emptyAnalyze());
 	analysis = $state.raw<AnalysisSessionState>({
 		algorithmId: 'bfs',
-		inputs: { bfs: {}, dijkstra: {} },
+		inputs: initialAnalysisInputs(),
 		validation: null,
 		current: null
 	});
@@ -307,8 +316,19 @@ class AppStore {
 	}
 
 	setAnalysisAlgorithm(algorithmId: string): void {
-		if (!analysisDefinitions.has(algorithmId)) return;
-		this.analysis = { ...this.analysis, algorithmId, validation: null };
+		const definition = analysisDefinitions.get(algorithmId);
+		if (!definition) return;
+		const existing = this.analysis.inputs[algorithmId] ?? {};
+		const normalized = normalizeAnalysisInput(definition, existing);
+		this.analysis = {
+			...this.analysis,
+			algorithmId,
+			inputs: {
+				...this.analysis.inputs,
+				[algorithmId]: { ...existing, ...normalized }
+			},
+			validation: null
+		};
 	}
 
 	setAnalysisInput(fieldId: string, value: AnalysisInput[string]): void {

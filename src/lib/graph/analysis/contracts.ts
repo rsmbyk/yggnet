@@ -143,15 +143,20 @@ function conditionMatches(
 	return input[condition.fieldId] === condition.equals;
 }
 
+function analysisFieldDefault(field: AnalysisField): AnalysisValue | undefined {
+	if (field.defaultValue !== undefined) return structuredClone(field.defaultValue);
+	return field.kind === 'enum' ? field.options[0]?.value : undefined;
+}
+
 export function normalizeAnalysisInput(
 	definition: AnalysisDefinition,
 	input: AnalysisInput
 ): AnalysisInput {
 	const withDefaults: AnalysisInput = { ...input };
 	for (const field of definition.fields) {
-		if (withDefaults[field.id] === undefined && field.defaultValue !== undefined) {
-			withDefaults[field.id] = structuredClone(field.defaultValue);
-		}
+		if (withDefaults[field.id] !== undefined) continue;
+		const fallback = analysisFieldDefault(field);
+		if (fallback !== undefined) withDefaults[field.id] = fallback;
 	}
 	return Object.fromEntries(
 		definition.fields
@@ -168,9 +173,9 @@ export function activeAnalysisFields(
 ): AnalysisField[] {
 	const normalized = { ...input };
 	for (const field of definition.fields) {
-		if (normalized[field.id] === undefined && field.defaultValue !== undefined) {
-			normalized[field.id] = field.defaultValue;
-		}
+		if (normalized[field.id] !== undefined) continue;
+		const fallback = analysisFieldDefault(field);
+		if (fallback !== undefined) normalized[field.id] = fallback;
 	}
 	return definition.fields.filter((field) => conditionMatches(field.when, normalized));
 }
