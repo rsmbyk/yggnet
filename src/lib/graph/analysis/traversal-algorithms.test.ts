@@ -103,6 +103,25 @@ describe('BFS Search', () => {
 		});
 		expect(structuredClone(output.result.reveal)).toEqual(output.result.reveal);
 	});
+
+	it('retains the explored footprint when the target is unreachable', () => {
+		const doc = graph([
+			['A', 'B'],
+			['C', 'D']
+		]);
+		const output = analysisDefinitions.get('bfs')!.execute(doc, {
+			mode: 'search',
+			start: 'A',
+			target: 'D'
+		});
+
+		expect(output.result.outcome).toBe('no-result');
+		expect(output.result.summary).toBe('Target was not reached.');
+		expect(output.result.artifacts.find((item) => item.id === 'explored')).toMatchObject({
+			nodeIds: ['A', 'B']
+		});
+		expect(output.result.artifacts.some((item) => item.kind === 'path')).toBe(false);
+	});
 });
 
 describe('depth-first definitions', () => {
@@ -160,6 +179,22 @@ describe('depth-first definitions', () => {
 			nodeIds: ['A', 'B', 'D'],
 			edgeIds: ['e0', 'e2']
 		});
+	});
+
+	it('DFS reports an unreachable Search target without inventing a path', () => {
+		const disconnected = graph([
+			['A', 'B'],
+			['C', 'D']
+		]);
+		const output = analysisDefinitions.get('dfs')!.execute(disconnected, {
+			mode: 'search',
+			start: 'A',
+			target: 'D'
+		});
+
+		expect(output.result.outcome).toBe('no-result');
+		expect(output.result.summary).toBe('Target was not reached.');
+		expect(output.result.artifacts.some((item) => item.kind === 'path')).toBe(false);
 	});
 
 	it('validates Depth-Limited DFS Max depth as a non-negative integer', () => {
@@ -247,6 +282,46 @@ describe('multi-frontier breadth-first definitions', () => {
 			]
 		});
 		expect(output.result.metrics).toContainEqual({ label: 'Length', value: 3 });
+	});
+
+	it('Bidirectional BFS handles identical endpoints and disconnected frontiers', () => {
+		const doc = graph([
+			['A', 'B'],
+			['C', 'D']
+		]);
+		const same = analysisDefinitions.get('bidirectional-bfs')!.execute(doc, {
+			start: 'A',
+			target: 'A'
+		});
+		expect(same.result.outcome).toBe('complete');
+		expect(same.result.metrics).toContainEqual({ label: 'Length', value: 0 });
+
+		const disconnected = analysisDefinitions.get('bidirectional-bfs')!.execute(doc, {
+			start: 'A',
+			target: 'D'
+		});
+		expect(disconnected.result.outcome).toBe('no-result');
+		expect(disconnected.result.summary).toBe('The frontiers did not meet.');
+		expect(disconnected.result.artifacts.some((item) => item.kind === 'path')).toBe(false);
+	});
+
+	it('Multi-source Search reports no result while preserving every explored source wave', () => {
+		const doc = graph([
+			['A', 'B'],
+			['C', 'D'],
+			['T', 'U']
+		]);
+		const output = analysisDefinitions.get('multi-source-bfs')!.execute(doc, {
+			mode: 'search',
+			starts: ['A', 'C'],
+			target: 'T'
+		});
+
+		expect(output.result.outcome).toBe('no-result');
+		expect(output.result.summary).toBe('No source reached the target.');
+		expect(output.result.artifacts.find((item) => item.id === 'explored')).toMatchObject({
+			nodeIds: ['A', 'C', 'B', 'D']
+		});
 	});
 });
 
@@ -338,5 +413,26 @@ describe('Random Walk', () => {
 		expect(seed).toBeLessThanOrEqual(0xffffffff);
 		expect(output.effectiveInput?.seed).toBe(seed);
 		expect(output.result.outcome).toBe('complete');
+	});
+
+	it('reports dead ends and a failed Search without hiding the starting footprint', () => {
+		const doc = graph([
+			['A', 'B', true],
+			['C', 'D']
+		]);
+		const output = analysisDefinitions.get('random-walk')!.execute(doc, {
+			mode: 'search',
+			start: 'B',
+			target: 'D',
+			maxSteps: 4,
+			seed: 1
+		});
+
+		expect(output.result.outcome).toBe('no-result');
+		expect(output.result.metrics).toContainEqual({ label: 'Target found', value: 'No' });
+		expect(output.events.some((event) => event.action === 'dead-end')).toBe(true);
+		expect(output.result.artifacts.find((item) => item.id === 'walk-order')).toMatchObject({
+			nodeIds: ['B']
+		});
 	});
 });
