@@ -174,3 +174,78 @@ describe('depth-first definitions', () => {
 		).toBe('Must be a whole number.');
 	});
 });
+
+describe('multi-frontier breadth-first definitions', () => {
+	it('Multi-source BFS reveals concurrent waves and uses source order to break path ties', () => {
+		const doc = graph([
+			['A', 'C'],
+			['B', 'D'],
+			['C', 'T'],
+			['D', 'T']
+		]);
+		const output = analysisDefinitions.get('multi-source-bfs')!.execute(doc, {
+			mode: 'search',
+			starts: ['B', 'A'],
+			target: 'T'
+		});
+
+		expect(output.result.artifacts.find((item) => item.kind === 'path')).toMatchObject({
+			nodeIds: ['B', 'D', 'T'],
+			edgeIds: ['e1', 'e3']
+		});
+		expect(output.result.reveal?.phases[0].steps[0]).toEqual({
+			actions: [
+				{ kind: 'reveal-node', nodeId: 'B', role: 'source' },
+				{ kind: 'reveal-node', nodeId: 'A', role: 'source' }
+			]
+		});
+		expect(output.result.reveal?.phases[0].steps[1].actions).toEqual(
+			expect.arrayContaining([
+				{ kind: 'reveal-node', nodeId: 'D', role: 'frontier' },
+				{ kind: 'reveal-node', nodeId: 'C', role: 'frontier' }
+			])
+		);
+	});
+
+	it('Multi-source BFS returns one combined forest in Traverse mode', () => {
+		const output = analysisDefinitions.get('multi-source-bfs')!.execute(
+			graph([
+				['A', 'C'],
+				['B', 'D']
+			]),
+			{ mode: 'traverse', starts: ['A', 'B'] }
+		);
+		expect(output.result.artifacts).toContainEqual({
+			kind: 'ordered-nodes',
+			id: 'traversal',
+			label: 'Traversal order',
+			nodeIds: ['A', 'B', 'C', 'D']
+		});
+		expect(output.result.artifacts.find((item) => item.kind === 'tree')).toMatchObject({
+			edgeIds: ['e0', 'e1']
+		});
+	});
+
+	it('Bidirectional BFS follows incoming directed edges from Target and reveals both sides together', () => {
+		const output = analysisDefinitions.get('bidirectional-bfs')!.execute(
+			graph([
+				['A', 'B', true],
+				['B', 'C', true],
+				['C', 'D', true]
+			]),
+			{ start: 'A', target: 'D' }
+		);
+
+		expect(output.result.artifacts.find((item) => item.kind === 'path')).toMatchObject({
+			nodeIds: ['A', 'B', 'C', 'D'],
+			edgeIds: ['e0', 'e1', 'e2']
+		});
+		expect(output.result.reveal?.phases[0].steps[0]).toEqual({
+			actions: [
+				{ kind: 'reveal-node', nodeId: 'A', role: 'start-side' },
+				{ kind: 'reveal-node', nodeId: 'D', role: 'target-side' }
+			]
+		});
+		expect(output.result.metrics).toContainEqual({ label: 'Length', value: 3 });
+	});
+});

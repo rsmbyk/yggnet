@@ -402,6 +402,299 @@ function runDepthLimitedDfs(snapshot: GraphDocument, input: AnalysisInput): Anal
 	return depthFirstResult('Depth-limited DFS', input, uniqueOrder, treeEdges, foundPath, events);
 }
 
+function runMultiSourceBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
+	const starts = [...new Set((input.starts as string[]) ?? [])];
+	const search = input.mode === 'search';
+	const target = search ? node(input, 'target') : undefined;
+	const events: AnalysisEvent[] = [];
+	const queue = [...starts];
+	const discovered = new Set(starts);
+	const owner = new Map(starts.map((id) => [id, id]));
+	const depths = new Map(starts.map((id) => [id, 0]));
+	const cameFrom = new Map<string, { prev: string; edgeId: string }>();
+	const order: string[] = [];
+	event(
+		events,
+		'initialize-sources',
+		{ sourceCount: starts.length },
+		[],
+		[
+			{ inspector: 'queue', operation: 'reset', kind: 'queue', value: starts },
+			{ inspector: 'visited', operation: 'reset', kind: 'ordered-list', value: [] },
+			{
+				inspector: 'source-ownership',
+				operation: 'reset',
+				kind: 'map',
+				value: Object.fromEntries(starts.map((id) => [id, id]))
+			}
+		]
+	);
+	while (queue.length) {
+		const current = queue.shift()!;
+		order.push(current);
+		event(
+			events,
+			'visit',
+			{ nodeId: current, depth: depths.get(current) ?? 0 },
+			[{ entity: 'node', id: current, role: 'current', operation: 'add' }],
+			[
+				{ inspector: 'queue', operation: 'dequeue' },
+				{ inspector: 'visited', operation: 'append', value: current }
+			]
+		);
+		if (current === target) {
+			event(events, 'target-found', { nodeId: current, sourceId: owner.get(current) ?? current });
+			break;
+		}
+		for (const neighbor of neighborsOf(snapshot, current)) {
+			if (discovered.has(neighbor.nodeId)) continue;
+			discovered.add(neighbor.nodeId);
+			queue.push(neighbor.nodeId);
+			cameFrom.set(neighbor.nodeId, { prev: current, edgeId: neighbor.edgeId });
+			owner.set(neighbor.nodeId, owner.get(current) ?? current);
+			depths.set(neighbor.nodeId, (depths.get(current) ?? 0) + 1);
+			event(
+				events,
+				'enqueue',
+				{
+					nodeId: neighbor.nodeId,
+					edgeId: neighbor.edgeId,
+					sourceId: owner.get(neighbor.nodeId)!
+				},
+				[{ entity: 'node', id: neighbor.nodeId, role: 'frontier', operation: 'add' }],
+				[
+					{ inspector: 'queue', operation: 'enqueue', value: neighbor.nodeId },
+					{
+						inspector: 'source-ownership',
+						operation: 'set',
+						key: neighbor.nodeId,
+						value: owner.get(neighbor.nodeId)!
+					}
+				]
+			);
+		}
+	}
+	const winningStart = target ? owner.get(target) : undefined;
+	const path = target && winningStart ? reconstructPath(cameFrom, winningStart, target) : null;
+	const treeEdges = order
+		.filter((id) => !starts.includes(id))
+		.map((id) => cameFrom.get(id)?.edgeId)
+		.filter((id): id is string => Boolean(id));
+	const steps: AnalysisRevealStep[] = [...new Set(order.map((id) => depths.get(id) ?? 0))].map(
+		(depth) => ({
+			actions: order
+				.filter((id) => (depths.get(id) ?? 0) === depth)
+				.flatMap((id) => {
+					const incoming = cameFrom.get(id)?.edgeId;
+					return [
+						...(incoming
+							? ([{ kind: 'reveal-edge', edgeId: incoming, role: 'frontier' }] as const)
+							: []),
+						{
+							kind: 'reveal-node' as const,
+							nodeId: id,
+							role: depth === 0 ? 'source' : 'frontier'
+						}
+					];
+				})
+		})
+	);
+	if (path) steps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }] });
+	const artifacts: AnalysisOutput['result']['artifacts'] = [
+		{
+			kind: 'ordered-nodes',
+			id: search ? 'explored' : 'traversal',
+			label: search ? 'Explored nodes' : 'Traversal order',
+			nodeIds: order
+		},
+		{ kind: 'tree', id: 'forest', label: 'BFS forest', nodeIds: order, edgeIds: treeEdges },
+		...(path ? [{ kind: 'path' as const, id: 'path', label: 'Found path', ...path }] : []),
+		{
+			kind: 'landmarks',
+			id: 'landmarks',
+			label: 'Important nodes',
+			entries: [
+				...starts.map((nodeId) => ({ nodeId, role: 'start' as const })),
+				...(target ? [{ nodeId: target, role: 'end' as const }] : [])
+			]
+		}
+	];
+	return {
+		result: {
+			outcome: search && !path ? 'no-result' : 'complete',
+			summary: search
+				? path
+					? `Source ${winningStart} reached the target in ${path.edgeIds.length} edges.`
+					: 'No source reached the target.'
+				: `Visited ${order.length} nodes from ${starts.length} sources.`,
+			metrics: [
+				{ label: 'Sources', value: starts.length },
+				{ label: 'Visited', value: order.length },
+				{ label: 'Maximum depth', value: Math.max(0, ...order.map((id) => depths.get(id) ?? 0)) },
+				...(path ? [{ label: 'Length', value: path.edgeIds.length }] : [])
+			],
+			artifacts,
+			reveal: { phases: [{ id: 'combined', steps }] }
+		},
+		events
+	};
+}
+
+function incomingNeighborsOf(snapshot: GraphDocument, nodeId: string) {
+	return Object.values(snapshot.edges).flatMap((edge) => {
+		if (edge.to === nodeId)
+			return [{ nodeId: edge.from, edgeId: edge.id, weight: edge.weight, edge }];
+		if (!edge.directed && edge.from === nodeId)
+			return [{ nodeId: edge.to, edgeId: edge.id, weight: edge.weight, edge }];
+		return [];
+	});
+}
+
+function runBidirectionalBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
+	const start = node(input, 'start');
+	const target = node(input, 'target');
+	const events: AnalysisEvent[] = [];
+	const startDepth = new Map<string, number>([[start, 0]]);
+	const targetDepth = new Map<string, number>([[target, 0]]);
+	const startParent = new Map<string, { prev: string; edgeId: string }>();
+	const targetParent = new Map<string, { next: string; edgeId: string }>();
+	let startFrontier = [start];
+	let targetFrontier = [target];
+	let meeting: string | undefined = start === target ? start : undefined;
+	const steps: AnalysisRevealStep[] = [
+		{
+			actions: [
+				{ kind: 'reveal-node', nodeId: start, role: 'start-side' },
+				{ kind: 'reveal-node', nodeId: target, role: 'target-side' }
+			]
+		}
+	];
+	event(
+		events,
+		'initialize-frontiers',
+		{ start, target },
+		[],
+		[
+			{ inspector: 'start-queue', operation: 'reset', kind: 'queue', value: [start] },
+			{ inspector: 'target-queue', operation: 'reset', kind: 'queue', value: [target] },
+			{ inspector: 'start-predecessors', operation: 'reset', kind: 'map', value: {} },
+			{ inspector: 'target-predecessors', operation: 'reset', kind: 'map', value: {} }
+		]
+	);
+	while (!meeting && startFrontier.length && targetFrontier.length) {
+		const nextStart: string[] = [];
+		const nextTarget: string[] = [];
+		const waveActions: AnalysisRevealStep['actions'] = [];
+		for (const current of startFrontier) {
+			event(events, 'expand-start-frontier', { nodeId: current });
+			for (const neighbor of neighborsOf(snapshot, current)) {
+				if (startDepth.has(neighbor.nodeId)) continue;
+				startDepth.set(neighbor.nodeId, (startDepth.get(current) ?? 0) + 1);
+				startParent.set(neighbor.nodeId, { prev: current, edgeId: neighbor.edgeId });
+				nextStart.push(neighbor.nodeId);
+				waveActions.push(
+					{ kind: 'reveal-edge', edgeId: neighbor.edgeId, role: 'start-side' },
+					{ kind: 'reveal-node', nodeId: neighbor.nodeId, role: 'start-side' }
+				);
+				event(events, 'discover-start-side', {
+					nodeId: neighbor.nodeId,
+					edgeId: neighbor.edgeId
+				});
+			}
+		}
+		for (const current of targetFrontier) {
+			event(events, 'expand-target-frontier', { nodeId: current });
+			for (const neighbor of incomingNeighborsOf(snapshot, current)) {
+				if (targetDepth.has(neighbor.nodeId)) continue;
+				targetDepth.set(neighbor.nodeId, (targetDepth.get(current) ?? 0) + 1);
+				targetParent.set(neighbor.nodeId, { next: current, edgeId: neighbor.edgeId });
+				nextTarget.push(neighbor.nodeId);
+				waveActions.push(
+					{ kind: 'reveal-edge', edgeId: neighbor.edgeId, role: 'target-side' },
+					{ kind: 'reveal-node', nodeId: neighbor.nodeId, role: 'target-side' }
+				);
+				event(events, 'discover-target-side', {
+					nodeId: neighbor.nodeId,
+					edgeId: neighbor.edgeId
+				});
+			}
+		}
+		if (waveActions.length) steps.push({ actions: waveActions });
+		const candidates = [...startDepth.keys()].filter((id) => targetDepth.has(id));
+		candidates.sort(
+			(a, b) =>
+				startDepth.get(a)! + targetDepth.get(a)! - (startDepth.get(b)! + targetDepth.get(b)!) ||
+				[...startDepth.keys()].indexOf(a) - [...startDepth.keys()].indexOf(b)
+		);
+		meeting = candidates[0];
+		startFrontier = nextStart;
+		targetFrontier = nextTarget;
+	}
+	let path: { nodeIds: string[]; edgeIds: string[] } | null = null;
+	if (meeting) {
+		const left = reconstructPath(startParent, start, meeting)!;
+		const nodeIds = [...left.nodeIds];
+		const edgeIds = [...left.edgeIds];
+		let current = meeting;
+		while (current !== target) {
+			const next = targetParent.get(current);
+			if (!next) break;
+			edgeIds.push(next.edgeId);
+			nodeIds.push(next.next);
+			current = next.next;
+		}
+		if (current === target) path = { nodeIds, edgeIds };
+	}
+	if (path) {
+		steps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }] });
+		event(events, 'frontiers-meet', { nodeId: meeting! });
+	}
+	const exploredNodes = [...new Set([...startDepth.keys(), ...targetDepth.keys()])];
+	const exploredEdges = [
+		...startParent.values().map((item) => item.edgeId),
+		...targetParent.values().map((item) => item.edgeId)
+	];
+	return {
+		result: {
+			outcome: path ? 'complete' : 'no-result',
+			summary: path
+				? `Frontiers found a path with ${path.edgeIds.length} edges.`
+				: 'The frontiers did not meet.',
+			metrics: [
+				{ label: 'Visited', value: exploredNodes.length },
+				...(path ? [{ label: 'Length', value: path.edgeIds.length }] : [])
+			],
+			artifacts: [
+				{
+					kind: 'ordered-nodes',
+					id: 'explored',
+					label: 'Explored nodes',
+					nodeIds: exploredNodes
+				},
+				{
+					kind: 'tree',
+					id: 'frontiers',
+					label: 'Search frontiers',
+					nodeIds: exploredNodes,
+					edgeIds: [...new Set(exploredEdges)]
+				},
+				...(path ? [{ kind: 'path' as const, id: 'path', label: 'Found path', ...path }] : []),
+				{
+					kind: 'landmarks',
+					id: 'landmarks',
+					label: 'Important nodes',
+					entries: [
+						{ nodeId: start, role: 'start' },
+						{ nodeId: target, role: 'end' }
+					]
+				}
+			],
+			reveal: { phases: [{ id: 'bidirectional', steps }] }
+		},
+		events
+	};
+}
+
 function reachableNegativeEdge(snapshot: GraphDocument, start: string): boolean {
 	const queue = [start];
 	const visited = new Set([start]);
@@ -614,6 +907,47 @@ export const depthLimitedDfsDefinition: AnalysisDefinition = {
 	execute: runDepthLimitedDfs
 };
 
+export const multiSourceBfsDefinition: AnalysisDefinition = {
+	id: 'multi-source-bfs',
+	name: 'Multi-source BFS',
+	category: 'Traversal',
+	description: 'Traverse or search in combined breadth waves from several starting nodes.',
+	fields: [
+		{
+			kind: 'enum',
+			id: 'mode',
+			label: 'Mode',
+			required: true,
+			defaultValue: 'traverse',
+			options: [
+				{ value: 'traverse', label: 'Traverse' },
+				{ value: 'search', label: 'Search' }
+			]
+		},
+		{ kind: 'node-set', id: 'starts', label: 'Starts', required: true },
+		{
+			kind: 'node',
+			id: 'target',
+			label: 'Target',
+			required: true,
+			when: { fieldId: 'mode', equals: 'search' }
+		}
+	],
+	execute: runMultiSourceBfs
+};
+
+export const bidirectionalBfsDefinition: AnalysisDefinition = {
+	id: 'bidirectional-bfs',
+	name: 'Bidirectional BFS',
+	category: 'Traversal',
+	description: 'Search from Start and Target in simultaneous breadth-first waves.',
+	fields: [
+		{ kind: 'node', id: 'start', label: 'Start', required: true },
+		{ kind: 'node', id: 'target', label: 'Target', required: true }
+	],
+	execute: runBidirectionalBfs
+};
+
 export const dijkstraDefinition: AnalysisDefinition = {
 	id: 'dijkstra',
 	name: 'Dijkstra Shortest Path',
@@ -634,5 +968,7 @@ export const analysisDefinitions = new Map<string, AnalysisDefinition>([
 	[bfsDefinition.id, bfsDefinition],
 	[dfsDefinition.id, dfsDefinition],
 	[depthLimitedDfsDefinition.id, depthLimitedDfsDefinition],
+	[multiSourceBfsDefinition.id, multiSourceBfsDefinition],
+	[bidirectionalBfsDefinition.id, bidirectionalBfsDefinition],
 	[dijkstraDefinition.id, dijkstraDefinition]
 ]);
