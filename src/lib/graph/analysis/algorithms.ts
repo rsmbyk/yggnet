@@ -134,17 +134,17 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 	const path = target ? reconstructPath(cameFrom, start, target) : null;
 	const revealSteps: AnalysisRevealStep[] = [
 		...new Set(order.map((id) => depths.get(id) ?? 0))
-	].map((depth) => ({
-		actions: order
+	].flatMap((depth) =>
+		order
 			.filter((id) => (depths.get(id) ?? 0) === depth)
 			.flatMap((id) => {
 				const incoming = cameFrom.get(id)?.edgeId;
 				return [
 					...(incoming ? ([{ kind: 'reveal-edge', edgeId: incoming }] as const) : []),
 					{ kind: 'reveal-node' as const, nodeId: id }
-				];
+				].map((action) => ({ actions: [action] }));
 			})
-	}));
+	);
 	if (path) appendPathReplay(revealSteps, path);
 
 	if (search) {
@@ -192,7 +192,8 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 					label: 'Important nodes',
 					entries: [{ nodeId: start, role: 'start' }]
 				}
-			]
+			],
+			reveal: { phases: [{ id: 'traversal', steps: revealSteps }] }
 		},
 		events
 	};

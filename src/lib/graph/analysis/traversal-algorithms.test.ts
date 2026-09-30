@@ -105,6 +105,24 @@ describe('mode-capable traversal contracts', () => {
 });
 
 describe('BFS Search', () => {
+	it('reveals exactly one node or edge per timed step', () => {
+		const output = analysisDefinitions.get('bfs')!.execute(
+			graph([
+				['A', 'B'],
+				['A', 'C']
+			]),
+			{ mode: 'traverse', start: 'A' }
+		);
+
+		expect(output.result.reveal?.phases[0].steps).toEqual([
+			{ actions: [{ kind: 'reveal-node', nodeId: 'A' }] },
+			{ actions: [{ kind: 'reveal-edge', edgeId: 'e0' }] },
+			{ actions: [{ kind: 'reveal-node', nodeId: 'B' }] },
+			{ actions: [{ kind: 'reveal-edge', edgeId: 'e1' }] },
+			{ actions: [{ kind: 'reveal-node', nodeId: 'C' }] }
+		]);
+	});
+
 	it('returns a fewest-edge path and a separate explored-footprint reveal', () => {
 		const output = analysisDefinitions.get('bfs')!.execute(
 			graph([
@@ -280,23 +298,21 @@ describe('multi-frontier breadth-first definitions', () => {
 		];
 
 		for (const output of outputs) {
+			const revealedEdgeIds = new Set<string>();
 			for (const phase of output.result.reveal?.phases ?? []) {
-				let firstContentStep = true;
 				for (const step of phase.steps) {
-					if (step.actions.some((action) => action.kind === 'reset-footprint')) {
-						firstContentStep = true;
-					}
-					if (step.actions.every((action) => action.kind === 'reset-footprint')) continue;
-					const visited = step.actions.some(
-						(action) => action.kind === 'reveal-node' || action.kind === 'revisit-node'
-					);
 					const edgeIds = step.actions.flatMap((action) =>
 						action.kind === 'reveal-edge' ? [action.edgeId] : []
 					);
-					if (visited && !firstContentStep) expect(edgeIds.length).toBeGreaterThan(0);
-					for (const edgeId of edgeIds) expect(doc.edges[edgeId]).toBeDefined();
-					firstContentStep = false;
+					for (const edgeId of edgeIds) {
+						expect(doc.edges[edgeId]).toBeDefined();
+						revealedEdgeIds.add(edgeId);
+					}
 				}
+			}
+			const tree = output.result.artifacts.find((artifact) => artifact.kind === 'tree');
+			if (tree?.kind === 'tree') {
+				for (const edgeId of tree.edgeIds) expect(revealedEdgeIds.has(edgeId)).toBe(true);
 			}
 		}
 	});
