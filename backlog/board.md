@@ -36,8 +36,9 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## Speccing
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
+| ID       | Title                                       | Summary                                                                | Type | Priority | Effort | Spec                                                                          | Bump  | Updated    |
+| -------- | ------------------------------------------- | ---------------------------------------------------------------------- | ---- | -------- | ------ | ----------------------------------------------------------------------------- | ----- | ---------- |
+| ITEM-071 | Clarify traversal results and reveal pacing | Clear endpoints, path replay, phase pacing, and Random Walk completion | fix  | P1       | M      | [063-traversal-result-clarity](../specs/063-traversal-result-clarity/spec.md) | patch | 2026-09-30 |
 
 ## Ready
 
