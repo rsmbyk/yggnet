@@ -1,6 +1,6 @@
 # Tasks 063: Traversal result clarity and pacing
 
-- **Status:** Draft
+- **Status:** Accepted
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -51,7 +51,7 @@
   - Verify: focused policy tests, focused Analyze E2E, then all repository gates
   - Files: `src/lib/world/analysis-decoration.ts`, focused tests, `e2e/analyze-laboratory.e2e.ts`
 
-- [ ] **T0g — Owner acceptance of 50 ms Reveal preview**
+- [x] **T0g — Owner acceptance of 50 ms Reveal preview**
   - Acceptance: project owner explicitly Accepts changing the provisional 100 ms Reveal step to
     50 ms while retaining the 200 ms IDDFS hold
   - Verify: `plan.md`, `spec.md`, and `tasks.md` return to Accepted before product-code work

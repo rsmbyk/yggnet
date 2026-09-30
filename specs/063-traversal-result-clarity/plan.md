@@ -1,6 +1,6 @@
 # Plan 063: Traversal result clarity and pacing
 
-- **Status:** Draft
+- **Status:** Accepted
 - **Spec:** [./spec.md](./spec.md)
 - **Tasks:** [./tasks.md](./tasks.md)
 - **Item:** ITEM-071

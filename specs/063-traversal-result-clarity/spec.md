@@ -4,7 +4,7 @@ item: ITEM-071
 type: fix
 feature_area: analyze
 bump: patch
-status: Draft
+status: Accepted
 title: 'Traversal result clarity and pacing'
 created: 2026-09-30
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Traversal result clarity and pacing
 
 - **ID:** 063
-- **Status:** Draft
+- **Status:** Accepted
 - **Item:** ITEM-071
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
