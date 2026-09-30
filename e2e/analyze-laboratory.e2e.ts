@@ -237,3 +237,43 @@ test('Multi-source preserves source order and Random Walk reports its optional s
 		/.+/
 	);
 });
+
+test('DFS, depth limits, and bidirectional Search run through the generated Analyze form', async ({
+	page
+}) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'grid', { rows: 2, columns: 3 });
+	await openTool(page, 'analyze');
+	const picker = page.getByTestId('analysis-picker');
+
+	await picker.selectOption('dfs');
+	await chooseNode(page, 'analysis-field-start');
+	await page.getByTestId('run-analysis').click();
+	await expect(page.getByTestId('analysis-result')).toContainText('Visited');
+	await page.getByTestId('close-analysis').click();
+	await page.getByTestId('analysis-field-mode').selectOption('search');
+	await chooseNode(page, 'analysis-field-target', 1);
+	await page.getByTestId('run-analysis').click();
+	await expect(page.getByTestId('analysis-result')).toContainText('Length');
+
+	await page.getByTestId('close-analysis').click();
+	await picker.selectOption('depth-limited-dfs');
+	await page.getByTestId('analysis-field-mode').selectOption('search');
+	await chooseNode(page, 'analysis-field-start');
+	await chooseNode(page, 'analysis-field-target', 1);
+	await page.getByTestId('analysis-field-maxDepth').fill('0');
+	await page.getByTestId('run-analysis').click();
+	await expect(page.getByTestId('analysis-result')).toContainText('Visited');
+	await expect(page.getByTestId('analysis-result')).not.toContainText('Length');
+
+	await page.getByTestId('close-analysis').click();
+	await picker.selectOption('bidirectional-bfs');
+	await chooseNode(page, 'analysis-field-start');
+	await chooseNode(page, 'analysis-field-target', 1);
+	await page.getByTestId('run-analysis').click();
+	await expect(page.getByTestId('analysis-result')).toContainText('Length');
+	await expect(page.getByTestId('analysis-result-panel')).toHaveAttribute(
+		'data-reveal-state',
+		/.+/
+	);
+});
