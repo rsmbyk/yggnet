@@ -1,6 +1,6 @@
 # Tasks 063: Traversal result clarity and pacing
 
-- **Status:** Draft
+- **Status:** Accepted
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -18,7 +18,7 @@
   - Verify: `plan.md`, `spec.md`, and `tasks.md` return to Accepted before revising product code
   - Files: `specs/063-traversal-result-clarity/{plan,spec,tasks}.md`; `backlog/items/ITEM-071.md`; `backlog/board.md`
 
-- [ ] **T0b — Owner acceptance of one-object Reveal steps**
+- [x] **T0b — Owner acceptance of one-object Reveal steps**
   - Acceptance: project owner explicitly Accepts the revision that makes every timed Reveal step
     mark exactly one node or one edge, superseding simultaneous multi-frontier Reveal grouping
   - Verify: `plan.md`, `spec.md`, and `tasks.md` return to Accepted before product-code work
