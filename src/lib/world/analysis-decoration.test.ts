@@ -56,12 +56,14 @@ describe('analysis decoration policy', () => {
 				}
 			]
 		};
+		const starting = analysisRevealFrame(timeline, 0.125);
 		const exploring = analysisRevealFrame(timeline, 0.4);
 		const replaying = analysisRevealFrame(timeline, 0.9);
 		const edgeRoles = [...exploring.edgeIds].map((id) => analysisResultEdgeRole(exploring, id));
 
 		expect(analysisResultNodeRole(exploring, 'A')).toBe('settled');
-		expect(analysisResultNodeMarker(exploring, 'A')).toBe('start-side');
+		expect(analysisResultNodeMarker(starting, 'A')).toBe('start-side');
+		expect(analysisResultNodeMarker(exploring, 'A')).toBeNull();
 		expect(analysisResultNodeRole(exploring, 'B')).toBe('active');
 		expect(edgeRoles).toEqual(['active']);
 		expect(edgeRoles).not.toEqual(

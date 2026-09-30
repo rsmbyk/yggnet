@@ -374,6 +374,54 @@ describe('multi-frontier breadth-first definitions', () => {
 		expect(output.result.metrics).toContainEqual({ label: 'Length', value: 3 });
 	});
 
+	it('Bidirectional BFS excludes its unexpanded final fringe and updates both live frontiers', () => {
+		const output = analysisDefinitions.get('bidirectional-bfs')!.execute(
+			graph([
+				['A', 'B'],
+				['A', 'X'],
+				['D', 'C'],
+				['D', 'Y'],
+				['B', 'M'],
+				['X', 'P'],
+				['C', 'M'],
+				['Y', 'Q']
+			]),
+			{ start: 'A', target: 'D' }
+		);
+
+		const explored = output.result.artifacts.find(
+			(artifact) => artifact.kind === 'ordered-nodes' && artifact.id === 'explored'
+		);
+		expect(explored).toMatchObject({
+			nodeIds: expect.arrayContaining(['A', 'D', 'B', 'X', 'C', 'Y', 'M'])
+		});
+		if (!explored || explored.kind !== 'ordered-nodes') throw new Error('Expected explored nodes');
+		expect(explored.nodeIds).not.toEqual(expect.arrayContaining(['P', 'Q']));
+
+		const revealActions = output.result.reveal!.phases[0].steps.flatMap((step) => step.actions);
+		expect(revealActions).not.toEqual(
+			expect.arrayContaining([
+				{ kind: 'reveal-node', nodeId: 'P', role: 'start-side' },
+				{ kind: 'reveal-node', nodeId: 'Q', role: 'target-side' }
+			])
+		);
+
+		const inspectorOperations = output.events.flatMap((event) => event.inspectors);
+		for (const inspector of [
+			'start-queue',
+			'target-queue',
+			'start-visited',
+			'target-visited',
+			'start-predecessors',
+			'target-predecessors',
+			'frontier-side',
+			'meeting-candidates',
+			'meeting-point'
+		]) {
+			expect(inspectorOperations.some((operation) => operation.inspector === inspector)).toBe(true);
+		}
+	});
+
 	it('Bidirectional BFS handles identical endpoints and disconnected frontiers', () => {
 		const doc = graph([
 			['A', 'B'],

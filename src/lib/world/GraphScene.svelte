@@ -365,10 +365,13 @@
 	});
 	const analysisNodeRoles = $derived.by(() => {
 		if (analysisFrame) return analysisFrame.roles.nodes;
+		const ids = new Set([...analysisResultNodeIds, ...Object.keys(resultLandmarks)]);
 		return Object.fromEntries(
-			[...analysisResultNodeIds].map((id) => {
+			[...ids].map((id) => {
 				const role = analysisTimelineFrame
-					? analysisResultNodeRole(analysisTimelineFrame, id)
+					? analysisTimelineFrame.nodeIds.has(id)
+						? analysisResultNodeRole(analysisTimelineFrame, id)
+						: 'landmark-only'
 					: 'result';
 				return [id, [role] as AnalysisRole[]];
 			})
@@ -2111,6 +2114,17 @@
 				: null}
 			{@const glyphScale = analysisGlyphScale(app.camera.distance)}
 			{@const color = analysisRoleColor(role)}
+			{#if landmark && analysisResultNodeIds.has(nodeId)}
+				<T.Mesh
+					position={[pos.x, pos.y, pos.z]}
+					rotation={[Math.PI / 2, 0, 0]}
+					scale={glyphScale}
+					oncreate={attachAnalysisGlyph}
+				>
+					<T.TorusGeometry args={[NODE_RADIUS * 3.05, 0.09, 10, 48]} />
+					<T.MeshBasicMaterial {color} transparent opacity={0.98} depthWrite={false} />
+				</T.Mesh>
+			{/if}
 			{#if role === 'revisited'}
 				<T.Mesh
 					position={[pos.x, pos.y, pos.z]}

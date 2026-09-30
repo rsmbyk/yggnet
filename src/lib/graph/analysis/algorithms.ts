@@ -803,6 +803,8 @@ function runBidirectionalBfs(snapshot: GraphDocument, input: AnalysisInput): Ana
 	const targetParent = new Map<string, { next: string; edgeId: string }>();
 	let startFrontier = [start];
 	let targetFrontier = [target];
+	const traversedNodes = new Set([start, target]);
+	const traversalOrder = start === target ? [start] : [start, target];
 	let meeting: string | undefined = start === target ? start : undefined;
 	const steps: AnalysisRevealStep[] = [
 		{
@@ -820,49 +822,107 @@ function runBidirectionalBfs(snapshot: GraphDocument, input: AnalysisInput): Ana
 		[
 			{ inspector: 'start-queue', operation: 'reset', kind: 'queue', value: [start] },
 			{ inspector: 'target-queue', operation: 'reset', kind: 'queue', value: [target] },
+			{ inspector: 'start-visited', operation: 'reset', kind: 'set', value: [start] },
+			{ inspector: 'target-visited', operation: 'reset', kind: 'set', value: [target] },
 			{ inspector: 'start-predecessors', operation: 'reset', kind: 'map', value: {} },
-			{ inspector: 'target-predecessors', operation: 'reset', kind: 'map', value: {} }
+			{ inspector: 'target-predecessors', operation: 'reset', kind: 'map', value: {} },
+			{ inspector: 'meeting-candidates', operation: 'reset', kind: 'ordered-list', value: [] }
 		]
 	);
+	let initialWave = true;
 	while (!meeting && startFrontier.length && targetFrontier.length) {
 		const nextStart: string[] = [];
 		const nextTarget: string[] = [];
-		const waveActions: AnalysisRevealStep['actions'] = [];
+		if (!initialWave) {
+			const waveActions: AnalysisRevealStep['actions'] = [];
+			for (const nodeId of startFrontier) {
+				const incoming = startParent.get(nodeId)?.edgeId;
+				if (incoming) waveActions.push({ kind: 'reveal-edge', edgeId: incoming });
+				waveActions.push({ kind: 'reveal-node', nodeId, role: 'start-side' });
+				if (!traversedNodes.has(nodeId)) {
+					traversedNodes.add(nodeId);
+					traversalOrder.push(nodeId);
+				}
+			}
+			for (const nodeId of targetFrontier) {
+				const incoming = targetParent.get(nodeId)?.edgeId;
+				if (incoming) waveActions.push({ kind: 'reveal-edge', edgeId: incoming });
+				waveActions.push({ kind: 'reveal-node', nodeId, role: 'target-side' });
+				if (!traversedNodes.has(nodeId)) {
+					traversedNodes.add(nodeId);
+					traversalOrder.push(nodeId);
+				}
+			}
+			if (waveActions.length) steps.push({ actions: waveActions });
+		}
 		for (const current of startFrontier) {
-			event(events, 'expand-start-frontier', { nodeId: current });
+			event(
+				events,
+				'expand-start-frontier',
+				{ nodeId: current },
+				[],
+				[
+					{ inspector: 'start-queue', operation: 'dequeue' },
+					{ inspector: 'start-visited', operation: 'add', value: current },
+					{ inspector: 'frontier-side', operation: 'set', value: 'Start' }
+				]
+			);
 			for (const neighbor of neighborsOf(snapshot, current)) {
 				if (startDepth.has(neighbor.nodeId)) continue;
 				startDepth.set(neighbor.nodeId, (startDepth.get(current) ?? 0) + 1);
 				startParent.set(neighbor.nodeId, { prev: current, edgeId: neighbor.edgeId });
 				nextStart.push(neighbor.nodeId);
-				waveActions.push(
-					{ kind: 'reveal-edge', edgeId: neighbor.edgeId, role: 'start-side' },
-					{ kind: 'reveal-node', nodeId: neighbor.nodeId, role: 'start-side' }
+				event(
+					events,
+					'discover-start-side',
+					{ nodeId: neighbor.nodeId, edgeId: neighbor.edgeId },
+					[],
+					[
+						{ inspector: 'start-queue', operation: 'enqueue', value: neighbor.nodeId },
+						{
+							inspector: 'start-predecessors',
+							operation: 'set',
+							key: neighbor.nodeId,
+							value: current
+						}
+					]
 				);
-				event(events, 'discover-start-side', {
-					nodeId: neighbor.nodeId,
-					edgeId: neighbor.edgeId
-				});
 			}
 		}
 		for (const current of targetFrontier) {
-			event(events, 'expand-target-frontier', { nodeId: current });
+			event(
+				events,
+				'expand-target-frontier',
+				{ nodeId: current },
+				[],
+				[
+					{ inspector: 'target-queue', operation: 'dequeue' },
+					{ inspector: 'target-visited', operation: 'add', value: current },
+					{ inspector: 'frontier-side', operation: 'set', value: 'Target' }
+				]
+			);
 			for (const neighbor of incomingNeighborsOf(snapshot, current)) {
 				if (targetDepth.has(neighbor.nodeId)) continue;
 				targetDepth.set(neighbor.nodeId, (targetDepth.get(current) ?? 0) + 1);
 				targetParent.set(neighbor.nodeId, { next: current, edgeId: neighbor.edgeId });
 				nextTarget.push(neighbor.nodeId);
-				waveActions.push(
-					{ kind: 'reveal-edge', edgeId: neighbor.edgeId, role: 'target-side' },
-					{ kind: 'reveal-node', nodeId: neighbor.nodeId, role: 'target-side' }
+				event(
+					events,
+					'discover-target-side',
+					{ nodeId: neighbor.nodeId, edgeId: neighbor.edgeId },
+					[],
+					[
+						{ inspector: 'target-queue', operation: 'enqueue', value: neighbor.nodeId },
+						{
+							inspector: 'target-predecessors',
+							operation: 'set',
+							key: neighbor.nodeId,
+							value: current
+						}
+					]
 				);
-				event(events, 'discover-target-side', {
-					nodeId: neighbor.nodeId,
-					edgeId: neighbor.edgeId
-				});
 			}
 		}
-		if (waveActions.length) steps.push({ actions: waveActions });
 		const candidates = [...startDepth.keys()].filter((id) => targetDepth.has(id));
 		candidates.sort(
 			(a, b) =>
@@ -870,8 +930,35 @@ function runBidirectionalBfs(snapshot: GraphDocument, input: AnalysisInput): Ana
 				[...startDepth.keys()].indexOf(a) - [...startDepth.keys()].indexOf(b)
 		);
 		meeting = candidates[0];
+		event(
+			events,
+			'meeting-candidates',
+			{ count: candidates.length },
+			[],
+			[
+				{
+					inspector: 'meeting-candidates',
+					operation: 'reset',
+					kind: 'ordered-list',
+					value: candidates
+				}
+			]
+		);
+		if (meeting && !traversedNodes.has(meeting)) {
+			const meetingActions: AnalysisRevealStep['actions'] = [];
+			const startEdge = startParent.get(meeting)?.edgeId;
+			const targetEdge = targetParent.get(meeting)?.edgeId;
+			if (startEdge) meetingActions.push({ kind: 'reveal-edge', edgeId: startEdge });
+			if (targetEdge && targetEdge !== startEdge)
+				meetingActions.push({ kind: 'reveal-edge', edgeId: targetEdge });
+			meetingActions.push({ kind: 'reveal-node', nodeId: meeting, role: 'start-side' });
+			steps.push({ actions: meetingActions });
+			traversedNodes.add(meeting);
+			traversalOrder.push(meeting);
+		}
 		startFrontier = nextStart;
 		targetFrontier = nextTarget;
+		initialWave = false;
 	}
 	let path: { nodeIds: string[]; edgeIds: string[] } | null = null;
 	if (meeting) {
@@ -890,12 +977,26 @@ function runBidirectionalBfs(snapshot: GraphDocument, input: AnalysisInput): Ana
 	}
 	if (path) {
 		appendPathReplay(steps, path);
-		event(events, 'frontiers-meet', { nodeId: meeting! });
+		event(
+			events,
+			'frontiers-meet',
+			{ nodeId: meeting! },
+			[],
+			[
+				{ inspector: 'meeting-point', operation: 'set', value: meeting! },
+				{ inspector: 'start-visited', operation: 'add', value: meeting! },
+				{ inspector: 'target-visited', operation: 'add', value: meeting! }
+			]
+		);
 	}
-	const exploredNodes = [...new Set([...startDepth.keys(), ...targetDepth.keys()])];
+	const exploredNodes = traversalOrder;
 	const exploredEdges = [
-		...startParent.values().map((item) => item.edgeId),
-		...targetParent.values().map((item) => item.edgeId)
+		...new Set(
+			exploredNodes.flatMap((nodeId) => [
+				...(startParent.get(nodeId) ? [startParent.get(nodeId)!.edgeId] : []),
+				...(targetParent.get(nodeId) ? [targetParent.get(nodeId)!.edgeId] : [])
+			])
+		)
 	];
 	return {
 		result: {

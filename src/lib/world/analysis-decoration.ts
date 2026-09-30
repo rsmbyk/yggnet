@@ -142,6 +142,7 @@ export function analysisResultNodeMarker(
 	frame: AnalysisRevealFrame,
 	nodeId: string
 ): 'start-side' | 'target-side' | null {
+	if (!frame.activeNodeIds.has(nodeId)) return null;
 	const role = frame.nodeRoles.get(nodeId);
 	if (role === 'start-side' || role === 'source') return 'start-side';
 	return role === 'target-side' ? 'target-side' : null;
