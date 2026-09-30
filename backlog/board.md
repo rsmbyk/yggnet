@@ -41,9 +41,8 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## Ready
 
-| ID       | Title                           | Summary                                                                   | Type | Priority | Effort | Spec                                                                  | Bump  | Updated    |
-| -------- | ------------------------------- | ------------------------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------- | ----- | ---------- |
-| ITEM-070 | Traversal and search algorithms | Traverse/Search modes, concurrent waves, IDDFS restarts, and seeded walks | feat | P1       | L      | [062-traversal-algorithms](../specs/062-traversal-algorithms/spec.md) | minor | 2026-09-30 |
+| ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
+| -- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
 
 ## In progress
 
@@ -52,8 +51,9 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In review
 
-| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
-| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
+| ID       | Title                           | Summary                                                                   | Type | Priority | Effort | Spec                                                                  | Bump  | PR  | Updated    |
+| -------- | ------------------------------- | ------------------------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------- | ----- | --- | ---------- |
+| ITEM-070 | Traversal and search algorithms | Traverse/Search modes, concurrent waves, IDDFS restarts, and seeded walks | feat | P1       | L      | [062-traversal-algorithms](../specs/062-traversal-algorithms/spec.md) | minor | #38 | 2026-09-30 |
 
 ## Done
 

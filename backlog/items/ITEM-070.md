@@ -1,6 +1,6 @@
 ---
 id: ITEM-070
-status: ready
+status: in_review
 title: 'Traversal and search algorithms'
 type: feat
 priority: P1
@@ -9,7 +9,7 @@ created: 2026-09-30
 updated: 2026-09-30
 spec: specs/062-traversal-algorithms
 branch: feat/062-traversal-algorithms
-pr:
+pr: 38
 archived_at:
 archive_reason:
 bump: minor

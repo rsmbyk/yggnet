@@ -55,7 +55,7 @@
   - Verify: focused `npm run test:e2e -- e2e/analyze-laboratory.e2e.ts`, then full `npm run test:e2e`
   - Files: `e2e/analyze-laboratory.e2e.ts` and focused fixtures/helpers if needed
 
-- [ ] **T8 — Quality and delivery records**
+- [x] **T8 — Quality and delivery records**
   - Verify: `npm run check`
   - Verify: `npm run lint`
   - Verify: `npm run test:coverage` with `src/lib/graph/**` at least 90%
@@ -71,4 +71,4 @@
 - [x] Search reveals retain traversed footprints and emphasize valid paths without changing final metrics
 - [x] Concurrent waves, IDDFS restarts, and Random Walk revisits remain clear with and without motion
 - [x] No product implementation began before explicit owner acceptance
-- [ ] Full verification is green and delivery records are complete in the same PR
+- [x] Full verification is green and delivery records are complete in the same PR
