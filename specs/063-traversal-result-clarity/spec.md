@@ -4,7 +4,7 @@ item: ITEM-071
 type: fix
 feature_area: analyze
 bump: patch
-status: Accepted
+status: Draft
 title: 'Traversal result clarity and pacing'
 created: 2026-09-30
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Traversal result clarity and pacing
 
 - **ID:** 063
-- **Status:** Accepted
+- **Status:** Draft
 - **Item:** ITEM-071
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -32,9 +32,9 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 - Common traversal reveal roles for orange traversed objects and a green final path replay
 - Removal of purple Multi-source edge overlays and green target-side Bidirectional edge overlays
 - Prominent no-result Result status
-- A fixed 180 ms reveal-step interval shared by every traversal algorithm, with exactly one
+- A fixed 100 ms reveal-step interval shared by every traversal algorithm, with exactly one
   node or edge action per step
-- A shorter shared 300 ms pause between IDDFS result-reveal phases
+- A shared 200 ms pause between IDDFS result-reveal phases
 - Random Walk early termination on Target found or complete outgoing-reachable coverage
 - Actual Random Walk step metric and summaries
 - Regression tests and visible acceptance flows
@@ -96,7 +96,7 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 
 ### Reveal pacing and IDDFS
 
-- Every traversal algorithm uses the same fixed 180 ms interval per generic Reveal step.
+- Every traversal algorithm uses the same fixed 100 ms interval per generic Reveal step.
 - Each timed Reveal step contains exactly one visual action: reveal/emphasize one node, or
   reveal/emphasize one edge. A node and its incoming edge therefore occupy two consecutive
   steps rather than appearing together.
@@ -105,7 +105,7 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 - Result size does not compress or expand that per-step interval.
 
 - Each IDDFS depth remains a separate generic reveal phase beginning with a footprint reset after depth 0.
-- A 300 ms hold occurs between the completion of one phase and the reset/start of the next.
+- A 200 ms hold occurs between the completion of one phase and the reset/start of the next.
 - There is no hold before depth 0 or after the final phase.
 - The final Found depth or Explored depth metric remains immutable throughout playback.
 - Reduced-motion mode resolves the complete result immediately without timed holds while preserving the final phase's footprint and path.
@@ -171,7 +171,7 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 
 - **Given** IDDFS requires more than one depth iteration
 - **When** Result reveal moves from depth N to depth N+1
-- **Then** the completed depth-N footprint holds for 300 ms
+- **Then** the completed depth-N footprint holds for 200 ms
 - **And** the next phase resets and begins after that hold
 - **And** the final depth metric never changes during playback
 - **But when** reduced motion is active
@@ -199,7 +199,7 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 
 - **Given** any traversal Result contains nodes and edges to reveal
 - **When** timed Reveal playback advances
-- **Then** each 180 ms step marks exactly one node or exactly one edge
+- **Then** each 100 ms step marks exactly one node or exactly one edge
 - **And** no step marks a node and edge together
 - **And** breadth-first levels and multi-frontier waves use deterministic one-object ordering
 - **And** Trace grouping and playback remain unchanged
@@ -207,7 +207,7 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 ## Boundaries
 
 - **Always:** keep reveal actions structured-clone-safe; use generic roles and scheduling; keep each timed Reveal step to one node or edge action; keep graph coverage at least 90%; add Playwright for visible behavior.
-- **Ask first:** change the 180 ms reveal interval, change the 300 ms phase hold, change the shared palette meanings, remove Random Walk Max steps, or change Trace speed.
+- **Ask first:** change the 100 ms reveal interval, change the 200 ms phase hold, change the shared palette meanings, remove Random Walk Max steps, or change Trace speed.
 - **Never:** add algorithm-specific UI/world components, fabricate graph edges, persist reveal decoration, hide explored Search footprints, or use color as the only endpoint/frontier distinction.
 
 ## Commands

@@ -1,6 +1,6 @@
 # Tasks 063: Traversal result clarity and pacing
 
-- **Status:** Accepted
+- **Status:** Draft
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -38,6 +38,19 @@
   - Verify: focused Analyze E2E, then the full serial E2E suite
   - Files: `e2e/analyze-laboratory.e2e.ts`
 
+- [ ] **T0e — Owner acceptance of faster Reveal timing**
+  - Acceptance: project owner explicitly Accepts the revision from a 180 ms Reveal step and
+    300 ms IDDFS hold to a 100 ms Reveal step and 200 ms IDDFS hold
+  - Verify: `plan.md`, `spec.md`, and `tasks.md` return to Accepted before product-code work
+  - Files: `specs/063-traversal-result-clarity/{plan,spec,tasks}.md`
+
+- [ ] **T0f — Apply and verify faster Reveal timing**
+  - Red: policy and visible acceptance tests expect 100 ms per Reveal step and 200 ms between
+    IDDFS phases while Trace timing remains unchanged
+  - Green: update the shared Reveal timing constants only
+  - Verify: focused policy tests, focused Analyze E2E, then all repository gates
+  - Files: `src/lib/world/analysis-decoration.ts`, focused tests, `e2e/analyze-laboratory.e2e.ts`
+
 - [x] **T1 — Enum initialization and Random Walk termination**
   - Red: tests cover first-option enum normalization, remembered values, Target visibility, outgoing-reachable coverage, Target-first stopping, unreachable Target completion, dead ends, Max steps, exact step counts, and reproducibility
   - Green: update generic Analyze input normalization and Random Walk stopping/metrics
@@ -62,18 +75,18 @@
   - Verify: `npm run test:e2e -- e2e/analyze-laboratory.e2e.ts --workers=1`, then full serial E2E
   - Files: `e2e/analyze-laboratory.e2e.ts`
 
-- [x] **T5 — Quality and delivery records**
+- [ ] **T5 — Quality and delivery records**
   - Verify: `npm run check`; `npm run lint`; `npm run test:coverage`; `npm run test:e2e -- --workers=1`; `npm run build`
   - Acceptance: fill final Traceability; update ITEM/board/tasks and PR #38 metadata; record ITEM-071 under shared release `0.40.0`
   - Files: spec pack, ITEM/board, changelog if wording changes, and PR metadata
 
 ## Done when
 
-- [x] Every acceptance scenario in `spec.md` holds
+- [ ] Every acceptance scenario in `spec.md` holds
 - [x] Search traversal remains orange before an ordered green final-path replay
 - [x] Endpoints and no-result outcomes are unmistakable without color-only meaning
 - [x] IDDFS phase boundaries are readable with and without motion
 - [x] Random Walk terminates early and reports exact traversed steps
 - [x] Multi-frontier overlays never resemble fabricated edges
 - [x] No product implementation began before explicit owner acceptance
-- [x] Full verification and delivery records are complete in PR #38
+- [ ] Full verification and delivery records are complete in PR #38
