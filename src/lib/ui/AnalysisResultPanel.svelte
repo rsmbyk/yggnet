@@ -4,6 +4,8 @@
 	import { frameAt } from '$lib/graph';
 	import { SvelteSet } from 'svelte/reactivity';
 	import {
+		RESULT_REVEAL_PHASE_HOLD_MS,
+		RESULT_REVEAL_STEP_MS,
 		analysisLandmarkScale,
 		analysisRevealDuration,
 		analysisRevealStepCount,
@@ -203,10 +205,15 @@
 		data-reveal-state={current.reveal}
 		data-reveal-phase-count={current.result.reveal?.phases.length ?? 1}
 		data-reveal-duration-ms={resultRevealDuration}
+		data-reveal-step-ms={RESULT_REVEAL_STEP_MS}
+		data-reveal-phase-hold-ms={RESULT_REVEAL_PHASE_HOLD_MS}
 		data-path-replay-order={pathReplayOrder}
 		data-landmark-start-scale={analysisLandmarkScale('start')}
 		data-landmark-end-scale={analysisLandmarkScale('end')}
+		data-landmark-style="solid-high-contrast"
 		data-exploration-edge-roles="active settled"
+		data-traversal-palette="orange"
+		data-path-palette="green"
 		bind:this={panelElement}
 	>
 		<header class="panel-header">
@@ -727,7 +734,7 @@
 		transform: rotate(45deg);
 	}
 	.legend-mark--end {
-		border: 1.5px solid #31864e;
+		border: 1.5px solid #b83280;
 		border-radius: 50%;
 	}
 	.legend-mark--end::after {
@@ -735,7 +742,7 @@
 		width: 0.38rem;
 		height: 0.38rem;
 		place-self: center;
-		border: 1px solid #31864e;
+		border: 1px solid #b83280;
 		border-radius: 50%;
 	}
 	.legend-mark--rejected::before,

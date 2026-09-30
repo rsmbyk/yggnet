@@ -203,6 +203,8 @@ test('traversal catalog exposes conditional Search fields and final IDDFS depth'
 	const iddfsPanel = page.getByTestId('analysis-result-panel');
 	expect(Number(await iddfsPanel.getAttribute('data-reveal-phase-count'))).toBeGreaterThan(1);
 	expect(Number(await iddfsPanel.getAttribute('data-reveal-duration-ms'))).toBeGreaterThan(1300);
+	await expect(iddfsPanel).toHaveAttribute('data-reveal-step-ms', '180');
+	await expect(iddfsPanel).toHaveAttribute('data-reveal-phase-hold-ms', '300');
 });
 
 test('Multi-source preserves source order and Random Walk reports its optional seed', async ({
@@ -268,9 +270,12 @@ test('DFS, depth limits, and bidirectional Search run through the generated Anal
 	await expect(page.getByTestId('analysis-result')).toContainText('Length');
 	const searchPanel = page.getByTestId('analysis-result-panel');
 	await expect(searchPanel).toHaveAttribute('data-path-replay-order', /^node:.+,edge:.+,node:.+/);
-	await expect(searchPanel).toHaveAttribute('data-landmark-start-scale', '1.4');
-	await expect(searchPanel).toHaveAttribute('data-landmark-end-scale', '1.4');
+	await expect(searchPanel).toHaveAttribute('data-landmark-start-scale', '1.9');
+	await expect(searchPanel).toHaveAttribute('data-landmark-end-scale', '1.9');
+	await expect(searchPanel).toHaveAttribute('data-landmark-style', 'solid-high-contrast');
 	await expect(searchPanel).toHaveAttribute('data-exploration-edge-roles', 'active settled');
+	await expect(searchPanel).toHaveAttribute('data-traversal-palette', 'orange');
+	await expect(searchPanel).toHaveAttribute('data-path-palette', 'green');
 
 	await page.getByTestId('close-analysis').click();
 	await picker.selectOption('depth-limited-dfs');

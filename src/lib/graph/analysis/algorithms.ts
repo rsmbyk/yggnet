@@ -440,12 +440,18 @@ function runIddfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput
 		const iteration = runDepthLimitedDfs(snapshot, { ...input, maxDepth: depth });
 		for (const item of iteration.events) events.push({ ...item, sequence: events.length });
 		const iterationSteps = iteration.result.reveal?.phases[0]?.steps ?? [];
+		const [firstIterationStep, ...remainingIterationSteps] = iterationSteps;
 		phases.push({
 			id: `depth-${depth}`,
-			steps: [
-				...(depth > 0 ? [{ actions: [{ kind: 'reset-footprint' as const }] }] : []),
-				...iterationSteps
-			]
+			steps:
+				depth > 0 && firstIterationStep
+					? [
+							{
+								actions: [{ kind: 'reset-footprint' as const }, ...firstIterationStep.actions]
+							},
+							...remainingIterationSteps
+						]
+					: iterationSteps
 		});
 		finalOutput = iteration;
 		finalDepth = depth;

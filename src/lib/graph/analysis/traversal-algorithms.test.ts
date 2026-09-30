@@ -256,6 +256,51 @@ describe('depth-first definitions', () => {
 });
 
 describe('multi-frontier breadth-first definitions', () => {
+	it('retains a real discovery edge for every visited node after each phase root', () => {
+		const doc = graph([
+			['A', 'B'],
+			['A', 'C'],
+			['B', 'D'],
+			['C', 'D']
+		]);
+		const outputs = [
+			analysisDefinitions.get('bfs')!.execute(doc, { mode: 'traverse', start: 'A' }),
+			analysisDefinitions.get('dfs')!.execute(doc, { mode: 'traverse', start: 'A' }),
+			analysisDefinitions
+				.get('depth-limited-dfs')!
+				.execute(doc, { mode: 'traverse', start: 'A', maxDepth: 3 }),
+			analysisDefinitions.get('iddfs')!.execute(doc, { mode: 'traverse', start: 'A' }),
+			analysisDefinitions
+				.get('multi-source-bfs')!
+				.execute(doc, { mode: 'traverse', starts: ['A', 'D'] }),
+			analysisDefinitions.get('bidirectional-bfs')!.execute(doc, { start: 'A', target: 'D' }),
+			analysisDefinitions
+				.get('random-walk')!
+				.execute(doc, { mode: 'traverse', start: 'A', maxSteps: 20, seed: 7 })
+		];
+
+		for (const output of outputs) {
+			for (const phase of output.result.reveal?.phases ?? []) {
+				let firstContentStep = true;
+				for (const step of phase.steps) {
+					if (step.actions.some((action) => action.kind === 'reset-footprint')) {
+						firstContentStep = true;
+					}
+					if (step.actions.every((action) => action.kind === 'reset-footprint')) continue;
+					const visited = step.actions.some(
+						(action) => action.kind === 'reveal-node' || action.kind === 'revisit-node'
+					);
+					const edgeIds = step.actions.flatMap((action) =>
+						action.kind === 'reveal-edge' ? [action.edgeId] : []
+					);
+					if (visited && !firstContentStep) expect(edgeIds.length).toBeGreaterThan(0);
+					for (const edgeId of edgeIds) expect(doc.edges[edgeId]).toBeDefined();
+					firstContentStep = false;
+				}
+			}
+		}
+	});
+
 	it('Multi-source BFS reveals concurrent waves and uses source order to break path ties', () => {
 		const doc = graph([
 			['A', 'C'],
@@ -390,7 +435,7 @@ describe('Iterative Deepening DFS', () => {
 			'depth-3'
 		]);
 		expect(output.result.reveal?.phases[1].steps[0]).toEqual({
-			actions: [{ kind: 'reset-footprint' }]
+			actions: [{ kind: 'reset-footprint' }, { kind: 'reveal-node', nodeId: 'A' }]
 		});
 		expect(output.result.artifacts.find((item) => item.kind === 'path')).toMatchObject({
 			nodeIds: ['A', 'B', 'C', 'D']

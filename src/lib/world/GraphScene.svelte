@@ -31,8 +31,10 @@
 		analysisRevealFrame,
 		analysisRevealProgress as timelineRevealProgress,
 		analysisRevealStepCount,
+		analysisResultEdgeEndpoints,
 		analysisResultEdgeRole,
 		analysisResultLandmarks,
+		analysisResultNodeMarker,
 		analysisResultNodeRole,
 		analysisResultSequence,
 		analysisRoleColor,
@@ -276,25 +278,6 @@
 			? analysisResultLandmarks(activeAnalysis.result.artifacts)
 			: {}
 	);
-	const analysisResultEdgeDirections = $derived.by(() => {
-		const directions: Record<string, { from: string; to: string }> = {};
-		if (activeAnalysis?.panel !== 'result') return directions;
-		for (const artifact of activeAnalysis.result.artifacts) {
-			if (artifact.kind !== 'path' && artifact.kind !== 'tree') continue;
-			artifact.edgeIds.forEach((edgeId, index) => {
-				const to = artifact.nodeIds[index + 1];
-				const edge = app.document.edges[edgeId];
-				const from =
-					artifact.kind === 'tree' && edge && to
-						? edge.from === to
-							? edge.to
-							: edge.from
-						: artifact.nodeIds[index];
-				if (from && to) directions[edgeId] = { from, to };
-			});
-		}
-		return directions;
-	});
 	let analysisRevealProgress = $state(1);
 
 	$effect(() => {
@@ -2123,6 +2106,9 @@
 			{@const role = primaryAnalysisRole(roles)}
 			{@const landmarks = resultLandmarks[nodeId] ?? []}
 			{@const landmark = landmarkGlyph(landmarks)}
+			{@const frontierMarker = analysisTimelineFrame
+				? analysisResultNodeMarker(analysisTimelineFrame, nodeId)
+				: null}
 			{@const glyphScale = analysisGlyphScale(app.camera.distance)}
 			{@const color = analysisRoleColor(role)}
 			{#if role === 'revisited'}
@@ -2143,20 +2129,25 @@
 					oncreate={attachAnalysisGlyph}
 				>
 					<T.OctahedronGeometry args={[NODE_RADIUS * 1.45, 0]} />
-					<T.MeshBasicMaterial
-						color="#67e8f9"
-						wireframe
-						transparent
-						opacity={0.96}
-						depthWrite={false}
-					/>
+					<T.MeshBasicMaterial color="#67e8f9" transparent opacity={0.82} depthWrite={false} />
 				</T.Mesh>
 			{:else if landmark === 'end'}
 				<Billboard position={[pos.x, pos.y, pos.z]} scale={analysisLandmarkScale(landmark)}>
 					<T.Mesh oncreate={attachAnalysisGlyph}>
+						<T.CircleGeometry args={[NODE_RADIUS * 0.58, 40]} />
+						<T.MeshBasicMaterial
+							color="#f472b6"
+							transparent
+							opacity={0.7}
+							depthTest={false}
+							depthWrite={false}
+							side={THREE.DoubleSide}
+						/>
+					</T.Mesh>
+					<T.Mesh oncreate={attachAnalysisGlyph}>
 						<T.RingGeometry args={[NODE_RADIUS * 1.12, NODE_RADIUS * 1.22, 40]} />
 						<T.MeshBasicMaterial
-							color="#4ade80"
+							color="#f472b6"
 							transparent
 							opacity={0.96}
 							depthTest={false}
@@ -2167,7 +2158,7 @@
 					<T.Mesh oncreate={attachAnalysisGlyph}>
 						<T.RingGeometry args={[NODE_RADIUS * 1.4, NODE_RADIUS * 1.5, 40]} />
 						<T.MeshBasicMaterial
-							color="#4ade80"
+							color="#f472b6"
 							transparent
 							opacity={0.96}
 							depthTest={false}
@@ -2183,19 +2174,13 @@
 					oncreate={attachAnalysisGlyph}
 				>
 					<T.OctahedronGeometry args={[NODE_RADIUS * 1.45, 0]} />
-					<T.MeshBasicMaterial
-						color="#e8c56a"
-						wireframe
-						transparent
-						opacity={0.96}
-						depthWrite={false}
-					/>
+					<T.MeshBasicMaterial color="#f8fafc" transparent opacity={0.82} depthWrite={false} />
 				</T.Mesh>
 				<Billboard position={[pos.x, pos.y, pos.z]} scale={analysisLandmarkScale(landmark)}>
 					<T.Mesh oncreate={attachAnalysisGlyph}>
 						<T.RingGeometry args={[NODE_RADIUS * 1.38, NODE_RADIUS * 1.5, 40]} />
 						<T.MeshBasicMaterial
-							color="#e8c56a"
+							color="#f8fafc"
 							transparent
 							opacity={0.96}
 							depthTest={false}
@@ -2204,6 +2189,16 @@
 						/>
 					</T.Mesh>
 				</Billboard>
+			{:else if frontierMarker === 'start-side'}
+				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+					<T.IcosahedronGeometry args={[NODE_RADIUS * 1.3, 1]} />
+					<T.MeshBasicMaterial {color} wireframe transparent opacity={0.95} depthWrite={false} />
+				</T.Mesh>
+			{:else if frontierMarker === 'target-side'}
+				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+					<T.OctahedronGeometry args={[NODE_RADIUS * 1.35, 0]} />
+					<T.MeshBasicMaterial {color} wireframe transparent opacity={0.95} depthWrite={false} />
+				</T.Mesh>
 			{:else if role === 'current'}
 				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
 					<T.IcosahedronGeometry args={[NODE_RADIUS * 1.3, 1]} />
@@ -2232,9 +2227,9 @@
 	{#each Object.entries(analysisEdgeRoles) as [edgeId, roles] (edgeId)}
 		{@const edge = app.document.edges[edgeId]}
 		{#if edge}
-			{@const direction = analysisResultEdgeDirections[edgeId]}
-			{@const from = nodePos(direction?.from ?? edge.from)}
-			{@const fullTo = nodePos(direction?.to ?? edge.to)}
+			{@const endpoints = analysisResultEdgeEndpoints(edge)}
+			{@const from = nodePos(endpoints.from)}
+			{@const fullTo = nodePos(endpoints.to)}
 			{@const to = partialEdgeEnd(from, fullTo, resultEntityProgress('edge', edgeId))}
 			{@const geo = edgeObject(from, to)}
 			{@const role = primaryAnalysisRole(roles)}
@@ -2259,9 +2254,9 @@
 		{#each [...analysisTimelineFrame.emphasizedEdgeIds] as edgeId (edgeId)}
 			{@const edge = app.document.edges[edgeId]}
 			{#if edge}
-				{@const direction = analysisResultEdgeDirections[edgeId]}
-				{@const from = nodePos(direction?.from ?? edge.from)}
-				{@const fullTo = nodePos(direction?.to ?? edge.to)}
+				{@const endpoints = analysisResultEdgeEndpoints(edge)}
+				{@const from = nodePos(endpoints.from)}
+				{@const fullTo = nodePos(endpoints.to)}
 				{@const to = partialEdgeEnd(from, fullTo, emphasizedEdgeProgress(edgeId))}
 				{@const geo = edgeObject(from, to)}
 				<T.Mesh

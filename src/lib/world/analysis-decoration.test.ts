@@ -5,7 +5,9 @@ import {
 	analysisRevealProgress,
 	analysisRevealStepCount,
 	analysisLandmarkScale,
+	analysisResultEdgeEndpoints,
 	analysisResultEdgeRole,
+	analysisResultNodeMarker,
 	analysisResultNodeRole,
 	analysisRoleColor,
 	analysisResultSequence,
@@ -30,7 +32,7 @@ describe('analysis decoration policy', () => {
 		expect(analysisGlyphScale(20)).toBe(1);
 	});
 
-	it('uses orange for active traversal, green for its footprint, and gold for path replay', () => {
+	it('keeps traversal orange and uses green only for the returned path', () => {
 		const timeline: AnalysisRevealTimeline = {
 			phases: [
 				{
@@ -58,23 +60,32 @@ describe('analysis decoration policy', () => {
 		const replaying = analysisRevealFrame(timeline, 0.9);
 		const edgeRoles = [...exploring.edgeIds].map((id) => analysisResultEdgeRole(exploring, id));
 
-		expect(analysisResultNodeRole(exploring, 'A')).toBe('start-side');
+		expect(analysisResultNodeRole(exploring, 'A')).toBe('settled');
+		expect(analysisResultNodeMarker(exploring, 'A')).toBe('start-side');
 		expect(analysisResultNodeRole(exploring, 'B')).toBe('active');
 		expect(edgeRoles).toEqual(['active']);
 		expect(edgeRoles).not.toEqual(
 			expect.arrayContaining(['frontier', 'start-side', 'target-side'])
 		);
 		expect(analysisRoleColor('active')).toBe('#f0a65a');
-		expect(analysisRoleColor('settled')).toBe('#4f9d69');
+		expect(analysisRoleColor('settled')).toBe('#f0a65a');
 		expect(analysisResultEdgeRole(replaying, 'e0')).toBe('settled');
-		expect(analysisRoleColor('result')).toBe('#e8c56a');
+		expect(analysisRoleColor('result')).toBe('#4ade80');
 		expect([...replaying.edgeIds].every((id) => ['e0'].includes(id))).toBe(true);
 	});
 
 	it('makes endpoint landmarks larger than ordinary analysis rings', () => {
-		expect(analysisLandmarkScale('start')).toBeGreaterThan(analysisGlyphScale(20));
-		expect(analysisLandmarkScale('end')).toBeGreaterThan(analysisGlyphScale(20));
-		expect(analysisLandmarkScale('combined')).toBeGreaterThan(analysisGlyphScale(20));
+		expect(analysisLandmarkScale('start')).toBeGreaterThanOrEqual(1.8);
+		expect(analysisLandmarkScale('end')).toBeGreaterThanOrEqual(1.8);
+		expect(analysisLandmarkScale('combined')).toBeGreaterThanOrEqual(1.8);
+		expect(analysisGlyphScale(20)).toBe(1);
+	});
+
+	it('uses a revealed edge stored endpoints instead of traversal-order neighbors', () => {
+		expect(analysisResultEdgeEndpoints({ from: 'A', to: 'C' })).toEqual({
+			from: 'A',
+			to: 'C'
+		});
 	});
 
 	it('bounds result reveal and supports immediate reduced motion', () => {
@@ -84,7 +95,7 @@ describe('analysis decoration policy', () => {
 		expect(revealProgress(0, 10, true)).toBe(1);
 	});
 
-	it('holds for 600 ms between reveal phases without delaying a single phase', () => {
+	it('uses 180 ms per step and holds for 300 ms only between reveal phases', () => {
 		const timeline: AnalysisRevealTimeline = {
 			phases: ['depth-0', 'depth-1', 'depth-2'].map((id, index) => ({
 				id,
@@ -92,11 +103,10 @@ describe('analysis decoration policy', () => {
 			}))
 		};
 		const singlePhase: AnalysisRevealTimeline = { phases: [timeline.phases[0]] };
-		const stepDuration = revealDuration(3) / 3;
 
-		expect(analysisRevealDuration(singlePhase)).toBe(revealDuration(1));
-		expect(analysisRevealDuration(timeline)).toBe(revealDuration(3) + 1200);
-		expect(analysisRevealProgress(timeline, stepDuration + 300, false)).toBeCloseTo(1 / 3);
+		expect(analysisRevealDuration(singlePhase)).toBe(180);
+		expect(analysisRevealDuration(timeline)).toBe(1140);
+		expect(analysisRevealProgress(timeline, 180 + 150, false)).toBeCloseTo(1 / 3);
 		expect(analysisRevealProgress(timeline, 0, true)).toBe(1);
 	});
 

@@ -113,25 +113,38 @@ export function analysisGlyphScale(_cameraDistance: number): number {
 export function analysisLandmarkScale(
 	landmark: Exclude<ReturnType<typeof landmarkGlyph>, null>
 ): number {
-	return landmark === 'combined' ? 1.55 : 1.4;
+	return landmark === 'combined' ? 2.05 : 1.9;
 }
 
 export function analysisRoleColor(role: AnalysisRole | null): string {
-	if (role === 'result') return '#e8c56a';
+	if (role === 'result') return '#4ade80';
 	if (role === 'active' || role === 'inspecting' || role === 'revisited') return '#f0a65a';
 	if (role === 'start-side' || role === 'source' || role === 'current') return '#67e8f9';
-	if (role === 'target-side') return '#4ade80';
-	if (role === 'settled') return '#4f9d69';
+	if (role === 'target-side') return '#f472b6';
+	if (role === 'settled') return '#f0a65a';
 	return '#ef6b73';
+}
+
+export function analysisResultEdgeEndpoints(edge: { from: string; to: string }): {
+	from: string;
+	to: string;
+} {
+	return { from: edge.from, to: edge.to };
 }
 
 export function analysisResultNodeRole(frame: AnalysisRevealFrame, nodeId: string): AnalysisRole {
 	if (frame.revisitedNodeIds.has(nodeId)) return 'revisited';
 	if (frame.emphasizedNodeIds.has(nodeId)) return 'result';
-	const semanticRole = frame.nodeRoles.get(nodeId);
-	if (semanticRole === 'start-side' || semanticRole === 'target-side' || semanticRole === 'source')
-		return semanticRole;
 	return frame.activeNodeIds.has(nodeId) ? 'active' : 'settled';
+}
+
+export function analysisResultNodeMarker(
+	frame: AnalysisRevealFrame,
+	nodeId: string
+): 'start-side' | 'target-side' | null {
+	const role = frame.nodeRoles.get(nodeId);
+	if (role === 'start-side' || role === 'source') return 'start-side';
+	return role === 'target-side' ? 'target-side' : null;
 }
 
 export function analysisResultEdgeRole(frame: AnalysisRevealFrame, edgeId: string): AnalysisRole {
@@ -205,13 +218,14 @@ export function revealProgress(
 	return Math.min(1, Math.max(0, elapsedMs / revealDuration(entityCount)));
 }
 
-export const RESULT_REVEAL_PHASE_HOLD_MS = 600;
+export const RESULT_REVEAL_STEP_MS = 180;
+export const RESULT_REVEAL_PHASE_HOLD_MS = 300;
 
 export function analysisRevealDuration(timeline: AnalysisRevealTimeline): number {
 	const stepCount = analysisRevealStepCount(timeline);
 	if (stepCount === 0) return 0;
 	return (
-		revealDuration(stepCount) +
+		stepCount * RESULT_REVEAL_STEP_MS +
 		Math.max(0, timeline.phases.length - 1) * RESULT_REVEAL_PHASE_HOLD_MS
 	);
 }
@@ -223,7 +237,7 @@ export function analysisRevealProgress(
 ): number {
 	const stepCount = analysisRevealStepCount(timeline);
 	if (reducedMotion || stepCount === 0) return 1;
-	const stepDuration = revealDuration(stepCount) / stepCount;
+	const stepDuration = RESULT_REVEAL_STEP_MS;
 	let remaining = Math.max(0, elapsedMs);
 	let completedSteps = 0;
 
