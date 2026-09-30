@@ -224,7 +224,9 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 - Renderer policy and tests: `src/lib/world/analysis-decoration.ts`, `src/lib/world/analysis-decoration.test.ts`, `src/lib/world/GraphScene.svelte`
 - Result and generated-form UI: `src/lib/ui/ManagerPanel.svelte`, `src/lib/ui/AnalysisResultPanel.svelte`, `src/lib/ui/analysis-panel-policy.ts`, `src/lib/ui/analysis-panel-policy.test.ts`
 - Acceptance flow: `e2e/analyze-laboratory.e2e.ts`
-- Final verification: `npm run check`; `npm run lint`; `npm run test:coverage` (441 passed, 90.33% branches); `npm run test:e2e -- --workers=1` (58 passed); `npm run build`
+- Final verification: `npm run check` (0 errors, 33 existing warnings); `npm run lint`;
+  `npm run test:coverage` (443 passed, 90.29% branches);
+  `npm run test:e2e -- --workers=1` (58 passed); `npm run build`
 
 ## Relationship to SPEC-062
 

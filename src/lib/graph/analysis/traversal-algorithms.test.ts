@@ -316,9 +316,7 @@ describe('traversal Reveal pacing', () => {
 		for (const output of outputs) {
 			for (const phase of output.result.reveal?.phases ?? []) {
 				for (const step of phase.steps) {
-					const visualActions = step.actions.filter(
-						(action) => action.kind !== 'reset-footprint'
-					);
+					const visualActions = step.actions.filter((action) => action.kind !== 'reset-footprint');
 					expect(visualActions).toHaveLength(1);
 					expect(visualActions[0].kind).toMatch(/^(reveal|revisit|emphasize)-(node|edge)$/);
 				}
