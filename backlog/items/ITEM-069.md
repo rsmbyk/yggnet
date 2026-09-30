@@ -1,6 +1,6 @@
 ---
 id: ITEM-069
-status: in_review
+status: done
 title: 'Unified Analyze algorithm laboratory'
 type: feat
 priority: P0

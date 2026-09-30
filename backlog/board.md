@@ -51,14 +51,14 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## In review
 
-| ID       | Title                                | Summary                                                            | Type | Priority | Effort | Spec                                                        | Bump  | PR                                              | Updated    |
-| -------- | ------------------------------------ | ------------------------------------------------------------------ | ---- | -------- | ------ | ----------------------------------------------------------- | ----- | ----------------------------------------------- | ---------- |
-| ITEM-069 | Unified Analyze algorithm laboratory | One generic Analyze tool with BFS/Dijkstra result and trace replay | feat | P0       | L      | [061-unified-analyze](../specs/061-unified-analyze/spec.md) | minor | [#37](https://github.com/rsmbyk/yggnet/pull/37) | 2026-09-29 |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | PR  | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | --- | ------- |
 
 ## Done
 
 | ID       | Title                                                | Summary                                                                | Type | Priority | Effort | Spec                                                                                                | Bump  | Merged     | Updated    |
 | -------- | ---------------------------------------------------- | ---------------------------------------------------------------------- | ---- | -------- | ------ | --------------------------------------------------------------------------------------------------- | ----- | ---------- | ---------- |
+| ITEM-069 | Unified Analyze algorithm laboratory                 | One generic Analyze tool with BFS/Dijkstra result and trace replay     | feat | P0       | L      | [061-unified-analyze](../specs/061-unified-analyze/spec.md)                                         | minor | 2026-09-30 | 2026-09-30 |
 | ITEM-068 | Restore normal edge opacity                          | Keep normal edges opaque; dim only non-matches during active focus     | fix  | P1       | S      | [060-restore-normal-edge-opacity](../specs/060-restore-normal-edge-opacity/spec.md)                 | patch | 2026-09-29 | 2026-09-29 |
 | ITEM-067 | Reconcile delivery records through PR 34             | Align merged-work metadata and agent attribution guidance              | docs | P1       | S      | [059-delivery-record-remediation](../specs/059-delivery-record-remediation/spec.md)                 | none  | 2026-09-29 | 2026-09-29 |
 | ITEM-065 | Remove Diff tool                                     | Drop Diff tool/state/E2E; deprecate SPEC-018                           | feat | P2       | S      | [057-remove-diff-tool](../specs/057-remove-diff-tool/spec.md)                                       | minor | 2026-09-26 | 2026-09-26 |
