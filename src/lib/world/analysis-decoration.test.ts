@@ -97,7 +97,7 @@ describe('analysis decoration policy', () => {
 		expect(revealProgress(0, 10, true)).toBe(1);
 	});
 
-	it('uses 100 ms per step and holds for 200 ms only between reveal phases', () => {
+	it('uses 50 ms per step and holds for 200 ms only between reveal phases', () => {
 		const timeline: AnalysisRevealTimeline = {
 			phases: ['depth-0', 'depth-1', 'depth-2'].map((id, index) => ({
 				id,
@@ -106,9 +106,9 @@ describe('analysis decoration policy', () => {
 		};
 		const singlePhase: AnalysisRevealTimeline = { phases: [timeline.phases[0]] };
 
-		expect(analysisRevealDuration(singlePhase)).toBe(100);
-		expect(analysisRevealDuration(timeline)).toBe(700);
-		expect(analysisRevealProgress(timeline, 100 + 100, false)).toBeCloseTo(1 / 3);
+		expect(analysisRevealDuration(singlePhase)).toBe(50);
+		expect(analysisRevealDuration(timeline)).toBe(550);
+		expect(analysisRevealProgress(timeline, 50 + 100, false)).toBeCloseTo(1 / 3);
 		expect(analysisRevealProgress(timeline, 0, true)).toBe(1);
 	});
 

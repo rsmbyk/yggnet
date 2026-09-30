@@ -65,11 +65,11 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 	await expect(page.getByTestId('analysis-result').locator('.legend-mark--start')).toHaveText('');
 	await expect(page.getByTestId('analysis-result-panel')).toHaveAttribute(
 		'data-reveal-step-ms',
-		'100'
+		'50'
 	);
 	await expect(page.getByTestId('analysis-result-panel')).toHaveAttribute(
 		'data-reveal-duration-ms',
-		'1700'
+		'850'
 	);
 	await expect(page.getByRole('button', { name: 'Replay' })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Analyze steps' })).toHaveCount(0);
@@ -211,7 +211,7 @@ test('traversal catalog exposes conditional Search fields and final IDDFS depth'
 	const iddfsPanel = page.getByTestId('analysis-result-panel');
 	expect(Number(await iddfsPanel.getAttribute('data-reveal-phase-count'))).toBeGreaterThan(1);
 	expect(Number(await iddfsPanel.getAttribute('data-reveal-duration-ms'))).toBeGreaterThan(1300);
-	await expect(iddfsPanel).toHaveAttribute('data-reveal-step-ms', '100');
+	await expect(iddfsPanel).toHaveAttribute('data-reveal-step-ms', '50');
 	await expect(iddfsPanel).toHaveAttribute('data-reveal-phase-hold-ms', '200');
 });
 
