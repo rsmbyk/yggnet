@@ -537,8 +537,11 @@ function runRandomWalk(snapshot: GraphDocument, input: AnalysisInput): AnalysisO
 	);
 	let current = start;
 	let found = current === target;
-	let termination: 'target-found' | 'coverage-complete' | 'dead-end' | 'max-steps' | null =
-		found ? 'target-found' : visitCounts.size === reachable.size ? 'coverage-complete' : null;
+	let termination: 'target-found' | 'coverage-complete' | 'dead-end' | 'max-steps' | null = found
+		? 'target-found'
+		: visitCounts.size === reachable.size
+			? 'coverage-complete'
+			: null;
 	if (termination) event(events, termination, { nodeId: current, step: 0 });
 	for (let step = 1; step <= maxSteps && !termination; step += 1) {
 		const neighbors = neighborsOf(snapshot, current);
