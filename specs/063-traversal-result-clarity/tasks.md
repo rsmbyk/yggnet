@@ -1,6 +1,6 @@
 # Tasks 063: Traversal result clarity and pacing
 
-- **Status:** Draft
+- **Status:** Accepted
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -13,7 +13,7 @@
   - Verify: `plan.md`, `spec.md`, and `tasks.md` all say Accepted before product-code work
     - Files: `specs/063-traversal-result-clarity/{plan,spec,tasks}.md`; `backlog/items/ITEM-071.md`; `backlog/board.md`
 
-- [ ] **T0a — Owner acceptance of revised visual contract**
+- [x] **T0a — Owner acceptance of revised visual contract**
   - Acceptance: project owner explicitly Accepts the revised orange traversal, green path, fixed 180 ms step interval, 300 ms IDDFS hold, endpoint prominence, and real-edge geometry rules
   - Verify: `plan.md`, `spec.md`, and `tasks.md` return to Accepted before revising product code
   - Files: `specs/063-traversal-result-clarity/{plan,spec,tasks}.md`; `backlog/items/ITEM-071.md`; `backlog/board.md`
