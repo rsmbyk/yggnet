@@ -131,9 +131,21 @@ describe('BFS Search', () => {
 			nodeIds: ['A', 'B', 'C', 'D']
 		});
 		expect(output.result.reveal?.phases).toHaveLength(1);
-		expect(output.result.reveal?.phases[0].steps.at(-1)).toEqual({
-			actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }]
-		});
+		expect(output.result.reveal?.phases[0].steps.slice(-3)).toEqual([
+			{ actions: [{ kind: 'emphasize-node', nodeId: 'A' }] },
+			{
+				actions: [
+					{ kind: 'emphasize-edge', edgeId: 'e0' },
+					{ kind: 'emphasize-node', nodeId: 'B' }
+				]
+			},
+			{
+				actions: [
+					{ kind: 'emphasize-edge', edgeId: 'e2' },
+					{ kind: 'emphasize-node', nodeId: 'D' }
+				]
+			}
+		]);
 		expect(structuredClone(output.result.reveal)).toEqual(output.result.reveal);
 	});
 
@@ -504,6 +516,15 @@ describe('Random Walk', () => {
 
 		expect(metric(search, 'Steps taken')).toBe(1);
 		expect(search.result.outcome).toBe('complete');
+		expect(search.result.reveal?.phases[0].steps.slice(-2)).toEqual([
+			{ actions: [{ kind: 'emphasize-node', nodeId: 'A' }] },
+			{
+				actions: [
+					{ kind: 'emphasize-edge', edgeId: 'e0' },
+					{ kind: 'emphasize-node', nodeId: 'B' }
+				]
+			}
+		]);
 		expect(metric(traverse, 'Steps taken')).toBe(2);
 		expect(traverse.events.at(-1)?.action).toBe('coverage-complete');
 	});

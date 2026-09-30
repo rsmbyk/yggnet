@@ -69,6 +69,8 @@ export type AnalysisRevealAction =
 	| { kind: 'reveal-edge'; edgeId: string; role?: string }
 	| { kind: 'reset-footprint' }
 	| { kind: 'revisit-node'; nodeId: string; viaEdgeId?: string }
+	| { kind: 'emphasize-node'; nodeId: string }
+	| { kind: 'emphasize-edge'; edgeId: string }
 	| { kind: 'emphasize-artifact'; artifactId: string };
 
 export interface AnalysisRevealStep {

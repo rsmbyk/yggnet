@@ -29,6 +29,23 @@ function node(input: AnalysisInput, id: string): string {
 	return String(input[id]);
 }
 
+function appendPathReplay(
+	steps: AnalysisRevealStep[],
+	path: { nodeIds: string[]; edgeIds: string[] }
+): void {
+	const [start, ...remainingNodes] = path.nodeIds;
+	if (start) steps.push({ actions: [{ kind: 'emphasize-node', nodeId: start }] });
+	path.edgeIds.forEach((edgeId, index) => {
+		const nodeId = remainingNodes[index];
+		steps.push({
+			actions: [
+				{ kind: 'emphasize-edge', edgeId },
+				...(nodeId ? [{ kind: 'emphasize-node' as const, nodeId }] : [])
+			]
+		});
+	});
+}
+
 function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 	const start = node(input, 'start');
 	const search = input.mode === 'search';
@@ -128,7 +145,7 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 				];
 			})
 	}));
-	if (path) revealSteps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }] });
+	if (path) appendPathReplay(revealSteps, path);
 
 	if (search) {
 		const artifacts: AnalysisOutput['result']['artifacts'] = [
@@ -246,7 +263,7 @@ function depthFirstResult(
 			{ kind: 'reveal-node', nodeId }
 		]
 	}));
-	if (path) revealSteps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }] });
+	if (path) appendPathReplay(revealSteps, path);
 	return {
 		result: {
 			outcome: search && !path ? 'no-result' : 'complete',
@@ -578,7 +595,7 @@ function runRandomWalk(snapshot: GraphDocument, input: AnalysisInput): AnalysisO
 		edgeIds
 	};
 	if (search && found) {
-		revealSteps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'walk' }] });
+		appendPathReplay(revealSteps, walkArtifact);
 	}
 	return {
 		effectiveInput: { ...input, maxSteps, seed },
@@ -716,7 +733,7 @@ function runMultiSourceBfs(snapshot: GraphDocument, input: AnalysisInput): Analy
 				})
 		})
 	);
-	if (path) steps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }] });
+	if (path) appendPathReplay(steps, path);
 	const artifacts: AnalysisOutput['result']['artifacts'] = [
 		{
 			kind: 'ordered-nodes',
@@ -863,7 +880,7 @@ function runBidirectionalBfs(snapshot: GraphDocument, input: AnalysisInput): Ana
 		if (current === target) path = { nodeIds, edgeIds };
 	}
 	if (path) {
-		steps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }] });
+		appendPathReplay(steps, path);
 		event(events, 'frontiers-meet', { nodeId: meeting! });
 	}
 	const exploredNodes = [...new Set([...startDepth.keys(), ...targetDepth.keys()])];

@@ -11,7 +11,11 @@ export interface AnalysisRevealFrame {
 	nodeRoles: Map<string, string>;
 	edgeRoles: Map<string, string>;
 	revisitedNodeIds: Set<string>;
+	activeNodeIds: Set<string>;
 	activeEdgeIds: Map<string, number>;
+	emphasizedNodeIds: Set<string>;
+	emphasizedEdgeIds: Set<string>;
+	activeEmphasizedEdgeIds: Map<string, number>;
 	emphasizedArtifactIds: Set<string>;
 }
 
@@ -39,7 +43,11 @@ export function analysisRevealFrame(
 		nodeRoles: new Map(),
 		edgeRoles: new Map(),
 		revisitedNodeIds: new Set(),
+		activeNodeIds: new Set(),
 		activeEdgeIds: new Map(),
+		emphasizedNodeIds: new Set(),
+		emphasizedEdgeIds: new Set(),
+		activeEmphasizedEdgeIds: new Map(),
 		emphasizedArtifactIds: new Set()
 	};
 	steps.slice(0, visibleCount).forEach((step, stepIndex) => {
@@ -49,21 +57,32 @@ export function analysisRevealFrame(
 				frame.edgeIds.clear();
 				frame.nodeRoles.clear();
 				frame.edgeRoles.clear();
+				frame.emphasizedNodeIds.clear();
+				frame.emphasizedEdgeIds.clear();
 				frame.emphasizedArtifactIds.clear();
 			} else if (action.kind === 'reveal-node') {
 				frame.nodeIds.add(action.nodeId);
 				frame.nodeRoles.set(action.nodeId, action.role ?? 'result');
+				if (stepIndex === activeIndex) frame.activeNodeIds.add(action.nodeId);
 			} else if (action.kind === 'reveal-edge') {
 				frame.edgeIds.add(action.edgeId);
 				frame.edgeRoles.set(action.edgeId, action.role ?? 'result');
 				if (stepIndex === activeIndex) frame.activeEdgeIds.set(action.edgeId, localProgress);
 			} else if (action.kind === 'revisit-node') {
 				frame.nodeIds.add(action.nodeId);
+				if (stepIndex === activeIndex) frame.activeNodeIds.add(action.nodeId);
 				if (stepIndex === activeIndex && bounded < 1) frame.revisitedNodeIds.add(action.nodeId);
 				if (action.viaEdgeId) {
 					frame.edgeIds.add(action.viaEdgeId);
 					if (stepIndex === activeIndex) frame.activeEdgeIds.set(action.viaEdgeId, localProgress);
 				}
+			} else if (action.kind === 'emphasize-node') {
+				frame.emphasizedNodeIds.add(action.nodeId);
+				if (stepIndex === activeIndex) frame.activeNodeIds.add(action.nodeId);
+			} else if (action.kind === 'emphasize-edge') {
+				frame.emphasizedEdgeIds.add(action.edgeId);
+				if (stepIndex === activeIndex)
+					frame.activeEmphasizedEdgeIds.set(action.edgeId, localProgress);
 			} else {
 				frame.emphasizedArtifactIds.add(action.artifactId);
 			}
@@ -156,4 +175,41 @@ export function revealProgress(
 ): number {
 	if (reducedMotion) return 1;
 	return Math.min(1, Math.max(0, elapsedMs / revealDuration(entityCount)));
+}
+
+export const RESULT_REVEAL_PHASE_HOLD_MS = 600;
+
+export function analysisRevealDuration(timeline: AnalysisRevealTimeline): number {
+	const stepCount = analysisRevealStepCount(timeline);
+	if (stepCount === 0) return 0;
+	return (
+		revealDuration(stepCount) +
+		Math.max(0, timeline.phases.length - 1) * RESULT_REVEAL_PHASE_HOLD_MS
+	);
+}
+
+export function analysisRevealProgress(
+	timeline: AnalysisRevealTimeline,
+	elapsedMs: number,
+	reducedMotion: boolean
+): number {
+	const stepCount = analysisRevealStepCount(timeline);
+	if (reducedMotion || stepCount === 0) return 1;
+	const stepDuration = revealDuration(stepCount) / stepCount;
+	let remaining = Math.max(0, elapsedMs);
+	let completedSteps = 0;
+
+	for (const [phaseIndex, phase] of timeline.phases.entries()) {
+		const phaseDuration = phase.steps.length * stepDuration;
+		if (remaining < phaseDuration) {
+			return Math.min(1, (completedSteps + remaining / stepDuration) / stepCount);
+		}
+		remaining -= phaseDuration;
+		completedSteps += phase.steps.length;
+		if (phaseIndex < timeline.phases.length - 1) {
+			if (remaining < RESULT_REVEAL_PHASE_HOLD_MS) return completedSteps / stepCount;
+			remaining -= RESULT_REVEAL_PHASE_HOLD_MS;
+		}
+	}
+	return 1;
 }
