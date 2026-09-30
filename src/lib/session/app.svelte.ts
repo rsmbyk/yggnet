@@ -6,6 +6,7 @@ import {
 	addEdge,
 	addNode,
 	analysisDefinitions,
+	normalizeAnalysisInput,
 	addRun,
 	annotateStep,
 	clear as clearHistory,
@@ -324,7 +325,7 @@ class AppStore {
 	runAnalysis(): boolean {
 		const definition = analysisDefinitions.get(this.analysis.algorithmId);
 		if (!definition) return false;
-		const input = this.analysis.inputs[definition.id] ?? {};
+		const input = normalizeAnalysisInput(definition, this.analysis.inputs[definition.id] ?? {});
 		const validation = validateAnalysisInput(definition, this.document, input);
 		if (!validation.valid) {
 			this.analysis = { ...this.analysis, validation };

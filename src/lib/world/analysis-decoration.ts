@@ -1,8 +1,75 @@
-import type { AnalysisArtifact, AnalysisRole } from '$lib/graph';
+import type { AnalysisArtifact, AnalysisRevealTimeline, AnalysisRole } from '$lib/graph';
 
 export interface AnalysisResultEntity {
 	kind: 'node' | 'edge';
 	id: string;
+}
+
+export interface AnalysisRevealFrame {
+	nodeIds: Set<string>;
+	edgeIds: Set<string>;
+	nodeRoles: Map<string, string>;
+	edgeRoles: Map<string, string>;
+	revisitedNodeIds: Set<string>;
+	activeEdgeIds: Map<string, number>;
+	emphasizedArtifactIds: Set<string>;
+}
+
+function revealSteps(timeline: AnalysisRevealTimeline) {
+	return timeline.phases.flatMap((phase) => phase.steps);
+}
+
+export function analysisRevealStepCount(timeline: AnalysisRevealTimeline): number {
+	return revealSteps(timeline).length;
+}
+
+export function analysisRevealFrame(
+	timeline: AnalysisRevealTimeline,
+	progress: number
+): AnalysisRevealFrame {
+	const steps = revealSteps(timeline);
+	const bounded = Math.min(1, Math.max(0, progress));
+	const scaled = bounded * steps.length;
+	const visibleCount = bounded === 0 ? 0 : Math.min(steps.length, Math.ceil(scaled));
+	const localProgress = scaled - Math.floor(scaled);
+	const activeIndex = localProgress > 0 ? Math.min(steps.length - 1, Math.floor(scaled)) : -1;
+	const frame: AnalysisRevealFrame = {
+		nodeIds: new Set(),
+		edgeIds: new Set(),
+		nodeRoles: new Map(),
+		edgeRoles: new Map(),
+		revisitedNodeIds: new Set(),
+		activeEdgeIds: new Map(),
+		emphasizedArtifactIds: new Set()
+	};
+	steps.slice(0, visibleCount).forEach((step, stepIndex) => {
+		for (const action of step.actions) {
+			if (action.kind === 'reset-footprint') {
+				frame.nodeIds.clear();
+				frame.edgeIds.clear();
+				frame.nodeRoles.clear();
+				frame.edgeRoles.clear();
+				frame.emphasizedArtifactIds.clear();
+			} else if (action.kind === 'reveal-node') {
+				frame.nodeIds.add(action.nodeId);
+				frame.nodeRoles.set(action.nodeId, action.role ?? 'result');
+			} else if (action.kind === 'reveal-edge') {
+				frame.edgeIds.add(action.edgeId);
+				frame.edgeRoles.set(action.edgeId, action.role ?? 'result');
+				if (stepIndex === activeIndex) frame.activeEdgeIds.set(action.edgeId, localProgress);
+			} else if (action.kind === 'revisit-node') {
+				frame.nodeIds.add(action.nodeId);
+				if (stepIndex === activeIndex && bounded < 1) frame.revisitedNodeIds.add(action.nodeId);
+				if (action.viaEdgeId) {
+					frame.edgeIds.add(action.viaEdgeId);
+					if (stepIndex === activeIndex) frame.activeEdgeIds.set(action.viaEdgeId, localProgress);
+				}
+			} else {
+				frame.emphasizedArtifactIds.add(action.artifactId);
+			}
+		}
+	});
+	return frame;
 }
 
 export type AnalysisLandmarkRole = 'start' | 'end';

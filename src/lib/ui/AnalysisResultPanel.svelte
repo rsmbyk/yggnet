@@ -4,6 +4,7 @@
 	import { frameAt } from '$lib/graph';
 	import { SvelteSet } from 'svelte/reactivity';
 	import {
+		analysisRevealStepCount,
 		analysisResultLandmarks,
 		analysisResultSequence,
 		revealDuration
@@ -77,7 +78,9 @@
 
 	$effect(() => {
 		if (!current || current.panel !== 'result' || current.reveal !== 'playing') return;
-		const count = analysisResultSequence(current.result.artifacts).length;
+		const count = current.result.reveal
+			? analysisRevealStepCount(current.result.reveal)
+			: analysisResultSequence(current.result.artifacts).length;
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		const timer = window.setTimeout(
 			() => app.skipAnalysisReveal(),

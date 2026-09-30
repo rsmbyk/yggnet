@@ -27,6 +27,8 @@
 	import { createNodeSphereGeometry } from './node-sphere';
 	import {
 		analysisGlyphScale,
+		analysisRevealFrame,
+		analysisRevealStepCount,
 		analysisResultLandmarks,
 		analysisResultSequence,
 		landmarkGlyph,
@@ -261,6 +263,9 @@
 		if (activeAnalysis?.panel !== 'result') return [];
 		return analysisResultSequence(activeAnalysis.result.artifacts);
 	});
+	const analysisRevealTimeline = $derived(
+		activeAnalysis?.panel === 'result' ? activeAnalysis.result.reveal : undefined
+	);
 	const resultLandmarks = $derived(
 		activeAnalysis?.panel === 'result'
 			? analysisResultLandmarks(activeAnalysis.result.artifacts)
@@ -308,11 +313,10 @@
 		const startAfterCamera = () => {
 			const started = performance.now();
 			const animate = (now: number) => {
-				analysisRevealProgress = revealProgress(
-					now - started,
-					analysisResultEntities.length,
-					false
-				);
+				const count = analysisRevealTimeline
+					? analysisRevealStepCount(analysisRevealTimeline)
+					: analysisResultEntities.length;
+				analysisRevealProgress = revealProgress(now - started, count, false);
 				if (analysisRevealProgress < 1) frameId = requestAnimationFrame(animate);
 			};
 			frameId = requestAnimationFrame(animate);
@@ -323,9 +327,21 @@
 			cancelAnimationFrame(frameId);
 		};
 	});
+	const analysisTimelineFrame = $derived(
+		analysisRevealTimeline
+			? analysisRevealFrame(analysisRevealTimeline, analysisRevealProgress)
+			: null
+	);
 
 	function resultEntityProgress(kind: 'node' | 'edge', id: string): number {
 		if (activeAnalysis?.panel !== 'result') return 1;
+		if (analysisTimelineFrame) {
+			if (kind === 'node') return analysisTimelineFrame.nodeIds.has(id) ? 1 : 0;
+			return (
+				analysisTimelineFrame.activeEdgeIds.get(id) ??
+				(analysisTimelineFrame.edgeIds.has(id) ? 1 : 0)
+			);
+		}
 		const index = analysisResultEntities.findIndex(
 			(entity) => entity.kind === kind && entity.id === id
 		);
@@ -335,6 +351,7 @@
 	const analysisResultNodeIds = $derived.by(() => {
 		const ids = new SvelteSet<string>();
 		if (activeAnalysis?.panel !== 'result') return ids;
+		if (analysisTimelineFrame) return new SvelteSet(analysisTimelineFrame.nodeIds);
 		for (const entity of analysisResultEntities) {
 			if (entity.kind === 'node' && resultEntityProgress('node', entity.id) > 0) ids.add(entity.id);
 		}
@@ -343,19 +360,51 @@
 	const analysisResultEdgeIds = $derived.by(() => {
 		const ids = new SvelteSet<string>();
 		if (activeAnalysis?.panel !== 'result') return ids;
+		if (analysisTimelineFrame) return new SvelteSet(analysisTimelineFrame.edgeIds);
 		for (const entity of analysisResultEntities) {
 			if (entity.kind === 'edge' && resultEntityProgress('edge', entity.id) > 0) ids.add(entity.id);
 		}
 		return ids;
 	});
-	const analysisNodeRoles = $derived(
-		analysisFrame?.roles.nodes ??
-			Object.fromEntries([...analysisResultNodeIds].map((id) => [id, ['result'] as AnalysisRole[]]))
-	);
-	const analysisEdgeRoles = $derived(
-		analysisFrame?.roles.edges ??
-			Object.fromEntries([...analysisResultEdgeIds].map((id) => [id, ['result'] as AnalysisRole[]]))
-	);
+	const emphasizedResultEntities = $derived.by(() => {
+		const nodes = new Set<string>();
+		const edges = new Set<string>();
+		if (!analysisTimelineFrame) return { nodes, edges };
+		for (const artifact of activeAnalysis?.result.artifacts ?? []) {
+			if (!analysisTimelineFrame.emphasizedArtifactIds.has(artifact.id)) continue;
+			if ('nodeIds' in artifact) artifact.nodeIds.forEach((id) => nodes.add(id));
+			if ('edgeIds' in artifact) artifact.edgeIds.forEach((id) => edges.add(id));
+		}
+		return { nodes, edges };
+	});
+	const analysisNodeRoles = $derived.by(() => {
+		if (analysisFrame) return analysisFrame.roles.nodes;
+		return Object.fromEntries(
+			[...analysisResultNodeIds].map((id) => {
+				const role = analysisTimelineFrame?.revisitedNodeIds.has(id)
+					? 'revisited'
+					: emphasizedResultEntities.nodes.has(id)
+						? 'result'
+						: analysisTimelineFrame?.emphasizedArtifactIds.size
+							? 'settled'
+							: (analysisTimelineFrame?.nodeRoles.get(id) ?? 'result');
+				return [id, [role] as AnalysisRole[]];
+			})
+		);
+	});
+	const analysisEdgeRoles = $derived.by(() => {
+		if (analysisFrame) return analysisFrame.roles.edges;
+		return Object.fromEntries(
+			[...analysisResultEdgeIds].map((id) => {
+				const role = emphasizedResultEntities.edges.has(id)
+					? 'result'
+					: analysisTimelineFrame?.emphasizedArtifactIds.size
+						? 'settled'
+						: (analysisTimelineFrame?.edgeRoles.get(id) ?? 'result');
+				return [id, [role] as AnalysisRole[]];
+			})
+		);
+	});
 	const effectiveEdgeSet = $derived(
 		activeAnalysis ? new Set(Object.keys(analysisEdgeRoles)) : overlayEdgeSet
 	);
@@ -538,6 +587,11 @@
 
 	function analysisColor(role: AnalysisRole | null): string {
 		if (role === 'result') return '#e8c56a';
+		if (role === 'revisited') return '#fb923c';
+		if (role === 'start-side') return '#67e8f9';
+		if (role === 'target-side') return '#4ade80';
+		if (role === 'source') return '#67e8f9';
+		if (role === 'walk') return '#a78bfa';
 		if (role === 'current') return '#67e8f9';
 		if (role === 'inspecting') return '#f0a65a';
 		if (role === 'frontier') return '#a78bfa';
@@ -2089,6 +2143,17 @@
 			{@const landmark = landmarkGlyph(landmarks)}
 			{@const glyphScale = analysisGlyphScale(app.camera.distance)}
 			{@const color = analysisColor(role)}
+			{#if role === 'revisited'}
+				<T.Mesh
+					position={[pos.x, pos.y, pos.z]}
+					rotation={[Math.PI / 2, 0, 0]}
+					scale={glyphScale}
+					oncreate={attachAnalysisGlyph}
+				>
+					<T.TorusGeometry args={[NODE_RADIUS * 1.65, 0.09, 10, 36]} />
+					<T.MeshBasicMaterial color="#fb923c" transparent opacity={0.98} depthWrite={false} />
+				</T.Mesh>
+			{/if}
 			{#if landmark === 'start'}
 				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
 					<T.OctahedronGeometry args={[NODE_RADIUS * 1.45, 0]} />

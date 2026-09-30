@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+	analysisRevealFrame,
+	analysisRevealStepCount,
 	analysisResultSequence,
 	analysisResultLandmarks,
 	analysisGlyphScale,
@@ -8,6 +10,7 @@ import {
 	revealDuration,
 	revealProgress
 } from './analysis-decoration';
+import type { AnalysisRevealTimeline } from '$lib/graph';
 
 describe('analysis decoration policy', () => {
 	it('uses deterministic role priority', () => {
@@ -75,5 +78,62 @@ describe('analysis decoration policy', () => {
 			{ kind: 'edge', id: 'B-E' },
 			{ kind: 'node', id: 'E' }
 		]);
+	});
+
+	it('reduces generic reveal phases with concurrent steps and resets', () => {
+		const timeline: AnalysisRevealTimeline = {
+			phases: [
+				{
+					id: 'depth-0',
+					steps: [
+						{ actions: [{ kind: 'reveal-node', nodeId: 'A' }] },
+						{ actions: [{ kind: 'reveal-node', nodeId: 'B' }] }
+					]
+				},
+				{
+					id: 'depth-1',
+					steps: [
+						{ actions: [{ kind: 'reset-footprint' }] },
+						{
+							actions: [
+								{ kind: 'reveal-node', nodeId: 'A' },
+								{ kind: 'reveal-node', nodeId: 'C' }
+							]
+						},
+						{ actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }] }
+					]
+				}
+			]
+		};
+
+		expect(analysisRevealStepCount(timeline)).toBe(5);
+		expect([...analysisRevealFrame(timeline, 0.4).nodeIds]).toEqual(['A', 'B']);
+		expect([...analysisRevealFrame(timeline, 0.6).nodeIds]).toEqual([]);
+		expect([...analysisRevealFrame(timeline, 0.8).nodeIds]).toEqual(['A', 'C']);
+		expect([...analysisRevealFrame(timeline, 1).emphasizedArtifactIds]).toEqual(['path']);
+	});
+
+	it('exposes only the active revisit pulse while retaining its footprint', () => {
+		const timeline: AnalysisRevealTimeline = {
+			phases: [
+				{
+					id: 'walk',
+					steps: [
+						{ actions: [{ kind: 'reveal-node', nodeId: 'A' }] },
+						{
+							actions: [
+								{ kind: 'reveal-edge', edgeId: 'e0' },
+								{ kind: 'revisit-node', nodeId: 'A', viaEdgeId: 'e0' }
+							]
+						}
+					]
+				}
+			]
+		};
+		const frame = analysisRevealFrame(timeline, 0.75);
+		expect([...frame.nodeIds]).toEqual(['A']);
+		expect([...frame.edgeIds]).toEqual(['e0']);
+		expect([...frame.revisitedNodeIds]).toEqual(['A']);
+		expect(frame.activeEdgeIds.get('e0')).toBeCloseTo(0.5);
 	});
 });

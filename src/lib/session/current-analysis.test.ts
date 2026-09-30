@@ -35,6 +35,16 @@ describe('current analysis lifecycle', () => {
 		expect(ANALYSIS_PLAYBACK_INTERVAL_MS).toBe(300);
 	});
 
+	it('retains effective generated inputs returned by the algorithm', () => {
+		const current = createCurrentAnalysis(
+			'random-walk',
+			{ mode: 'traverse', start: 'A', maxSteps: 100 },
+			{ ...output, effectiveInput: { mode: 'traverse', start: 'A', maxSteps: 100, seed: 73 } },
+			1
+		);
+		expect(current.input).toEqual({ mode: 'traverse', start: 'A', maxSteps: 100, seed: 73 });
+	});
+
 	it('closes without discarding and resumes in result or trace mode', () => {
 		const current = createCurrentAnalysis('bfs', { start: 'A' }, output, 1);
 		expect(closeAnalysis(current)?.panel).toBe('closed');

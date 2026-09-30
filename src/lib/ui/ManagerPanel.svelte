@@ -4,6 +4,7 @@
 		ARCHIMEDEAN_LABELS,
 		ARCHIMEDEAN_SOLIDS,
 		ATTACHMENTS_FIELD_HELP,
+		activeAnalysisFields,
 		BRANCHING_FIELD_HELP,
 		CHORD_FIELD_HELP,
 		COMMUNITY_P_BETWEEN_HELP,
@@ -47,6 +48,7 @@
 	import { cssLengthToPx, toolsPanelMaxHeight, toolsPanelOverflows } from './tools-panel-limit';
 	import TagPicker from './TagPicker.svelte';
 	import NodeSearchSelect from './NodeSearchSelect.svelte';
+	import NodeSetSearchSelect from './NodeSetSearchSelect.svelte';
 
 	let { section }: { section: PanelSection } = $props();
 
@@ -196,6 +198,11 @@
 		app.analysisDefinitions.find((definition) => definition.id === app.analysis.algorithmId)
 	);
 	const activeAnalysisInput = $derived(app.analysis.inputs[app.analysis.algorithmId] ?? {});
+	const visibleAnalysisFields = $derived(
+		activeAnalysisDefinition
+			? activeAnalysisFields(activeAnalysisDefinition, activeAnalysisInput)
+			: []
+	);
 
 	const listSearchActive = $derived(section === 'nodes' || section === 'edges');
 	const listSearchQuery = $derived(section === 'edges' ? edgeSearchQuery : nodeSearchQuery);
@@ -2096,7 +2103,7 @@
 					</select>
 				</label>
 				<p class="hint">{activeAnalysisDefinition?.description}</p>
-				{#each activeAnalysisDefinition?.fields ?? [] as field (field.id)}
+				{#each visibleAnalysisFields as field (field.id)}
 					<label>
 						{field.label}
 						{#if field.kind === 'node'}
@@ -2108,11 +2115,21 @@
 								placeholder="Choose…"
 								onChange={(id) => app.setAnalysisInput(field.id, id)}
 							/>
+						{:else if field.kind === 'node-set'}
+							<NodeSetSearchSelect
+								nodes={nodePickerOptions}
+								value={Array.isArray(activeAnalysisInput[field.id])
+									? (activeAnalysisInput[field.id] as string[])
+									: []}
+								testid={`analysis-field-${field.id}`}
+								ariaLabel={field.label}
+								onChange={(ids) => app.setAnalysisInput(field.id, ids)}
+							/>
 						{:else if field.kind === 'edge'}
 							<select
 								class="slot-name-input"
 								data-testid={`analysis-field-${field.id}`}
-								value={String(activeAnalysisInput[field.id] ?? '')}
+								value={String(activeAnalysisInput[field.id] ?? field.defaultValue ?? '')}
 								onchange={(event) =>
 									app.setAnalysisInput(field.id, event.currentTarget.value || undefined)}
 							>
@@ -2133,9 +2150,10 @@
 							<input
 								class="slot-name-input"
 								type="number"
+								data-testid={`analysis-field-${field.id}`}
 								min={field.min}
 								max={field.max}
-								value={String(activeAnalysisInput[field.id] ?? '')}
+								value={String(activeAnalysisInput[field.id] ?? field.defaultValue ?? '')}
 								onchange={(event) =>
 									app.setAnalysisInput(
 										field.id,
@@ -2145,6 +2163,7 @@
 						{:else if field.kind === 'enum'}
 							<select
 								class="slot-name-input"
+								data-testid={`analysis-field-${field.id}`}
 								value={String(activeAnalysisInput[field.id] ?? '')}
 								onchange={(event) => app.setAnalysisInput(field.id, event.currentTarget.value)}
 							>
