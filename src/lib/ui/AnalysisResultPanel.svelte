@@ -220,10 +220,10 @@
 					<div class="legend legend--result" aria-label="Analysis legend">
 						<span><i class="legend-mark legend-mark--result"></i>Result</span>
 						{#if resultLandmarkRoles.has('start')}
-							<span><i class="legend-mark legend-mark--landmark">S</i>Start</span>
+							<span><i class="legend-mark legend-mark--start"></i>Start</span>
 						{/if}
 						{#if resultLandmarkRoles.has('end')}
-							<span><i class="legend-mark legend-mark--landmark">E</i>End</span>
+							<span><i class="legend-mark legend-mark--end"></i>End</span>
 						{/if}
 					</div>
 				</section>
@@ -679,16 +679,25 @@
 		border: 0.2rem solid transparent;
 		border-left-color: #b28b26;
 	}
-	.legend-mark--landmark {
-		place-items: center;
-		border: 1px solid #527d89;
+	.legend-mark--start {
+		width: 0.62rem;
+		height: 0.62rem;
+		margin-inline: 0.14rem;
+		border: 1.5px solid #3b8998;
+		background: rgba(103, 232, 249, 0.12);
+		transform: rotate(45deg);
+	}
+	.legend-mark--end {
+		border: 1.5px solid #31864e;
 		border-radius: 50%;
-		background: rgba(82, 125, 137, 0.12);
-		color: #315f69;
-		font-size: 0.55rem;
-		font-style: normal;
-		font-weight: 700;
-		line-height: 1;
+	}
+	.legend-mark--end::after {
+		content: '';
+		width: 0.38rem;
+		height: 0.38rem;
+		place-self: center;
+		border: 1px solid #31864e;
+		border-radius: 50%;
 	}
 	.legend-mark--rejected::before,
 	.legend-mark--rejected::after {

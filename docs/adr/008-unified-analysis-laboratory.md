@@ -12,7 +12,7 @@ Pathfinder, Analyze, stored runs, and comparison each owned overlapping path-sha
 
 Yggnet has one Analyze tool. Framework-agnostic `AnalysisDefinition` values declare fields, validation, and execution over serializable snapshots. Executions return composable artifacts and immutable semantic events. A reducer reconstructs reversible frames with checkpoints every 100 events and retains at most 50,000 events without limiting result computation.
 
-The session retains one analysis only. The right-side Result/Trace panel owns playback state and blocks graph editing while leaving camera controls available. The world renders semantic roles through a temporary, non-interactive glyph layer; algorithms never own meshes, colors, or animation timing. Algorithms may emit semantic landmark artifacts for important result nodes, while the shared renderer owns their badge geometry, labels, colors, and combined-role treatment.
+The session retains one analysis only. The right-side Result/Trace panel owns playback state and blocks graph editing while leaving camera controls available. The world renders semantic roles through a temporary, non-interactive glyph layer; algorithms never own meshes, colors, or animation timing. Algorithms may emit semantic landmark artifacts for important result nodes, while the shared renderer owns their glyph geometry, colors, legend swatches, and combined-role treatment.
 
 BFS traversal and Dijkstra shortest path are the initial definitions. Pathfinder, Travel, A*, path enumeration, stored runs, comparison, and annotations are superseded.
 

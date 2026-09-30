@@ -49,7 +49,7 @@ describe('analysis panel policy', () => {
 		});
 		expect(analysisTransportState(3, 4, false)).toEqual({
 			primary: 'restart',
-			resetDisabled: true
+			resetDisabled: false
 		});
 	});
 });

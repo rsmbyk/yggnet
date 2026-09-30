@@ -3,7 +3,7 @@ import {
 	analysisResultSequence,
 	analysisResultLandmarks,
 	analysisGlyphScale,
-	landmarkBadge,
+	landmarkGlyph,
 	primaryAnalysisRole,
 	revealDuration,
 	revealProgress
@@ -41,9 +41,10 @@ describe('analysis decoration policy', () => {
 			}
 		]);
 		expect(landmarks).toEqual({ A: ['start'], B: ['end'] });
-		expect(landmarkBadge(['start'])).toBe('S');
-		expect(landmarkBadge(['end'])).toBe('E');
-		expect(landmarkBadge(['start', 'end'])).toBe('S/E');
+		expect(landmarkGlyph(['start'])).toBe('start');
+		expect(landmarkGlyph(['end'])).toBe('end');
+		expect(landmarkGlyph(['start', 'end'])).toBe('combined');
+		expect(landmarkGlyph([])).toBeNull();
 	});
 
 	it('interleaves BFS tree edges with the nodes they discover', () => {

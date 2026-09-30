@@ -70,12 +70,12 @@ export function analysisResultLandmarks(
 	return landmarks;
 }
 
-export function landmarkBadge(roles: AnalysisLandmarkRole[]): string {
+export function landmarkGlyph(roles: AnalysisLandmarkRole[]): 'start' | 'end' | 'combined' | null {
 	const start = roles.includes('start');
 	const end = roles.includes('end');
-	if (start && end) return 'S/E';
-	if (start) return 'S';
-	return end ? 'E' : '';
+	if (start && end) return 'combined';
+	if (start) return 'start';
+	return end ? 'end' : null;
 }
 
 export function revealDuration(entityCount: number): number {

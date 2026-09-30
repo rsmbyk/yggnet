@@ -29,7 +29,7 @@
 		analysisGlyphScale,
 		analysisResultLandmarks,
 		analysisResultSequence,
-		landmarkBadge,
+		landmarkGlyph,
 		primaryAnalysisRole,
 		revealProgress
 	} from './analysis-decoration';
@@ -534,17 +534,6 @@
 	function attachAnalysisGlyph(object: THREE.Object3D) {
 		(object as THREE.Mesh).raycast = () => {};
 		object.renderOrder = 12;
-	}
-
-	function attachAnalysisLabel(object: THREE.Object3D) {
-		(object as THREE.Mesh).raycast = () => {};
-		makeLabelPassThrough(object);
-		object.renderOrder = 13;
-	}
-
-	function landmarkColor(roles: Array<'start' | 'end'>): string {
-		if (roles.includes('start') && roles.includes('end')) return '#e8c56a';
-		return roles.includes('start') ? '#67e8f9' : '#4ade80';
 	}
 
 	function analysisColor(role: AnalysisRole | null): string {
@@ -2097,9 +2086,70 @@
 			{@const pos = displayPosition(node)}
 			{@const role = primaryAnalysisRole(roles)}
 			{@const landmarks = resultLandmarks[nodeId] ?? []}
+			{@const landmark = landmarkGlyph(landmarks)}
 			{@const glyphScale = analysisGlyphScale(app.camera.distance)}
 			{@const color = analysisColor(role)}
-			{#if role === 'current'}
+			{#if landmark === 'start'}
+				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+					<T.OctahedronGeometry args={[NODE_RADIUS * 1.45, 0]} />
+					<T.MeshBasicMaterial
+						color="#67e8f9"
+						wireframe
+						transparent
+						opacity={0.96}
+						depthWrite={false}
+					/>
+				</T.Mesh>
+			{:else if landmark === 'end'}
+				<Billboard position={[pos.x, pos.y, pos.z]}>
+					<T.Mesh oncreate={attachAnalysisGlyph}>
+						<T.RingGeometry args={[NODE_RADIUS * 1.12, NODE_RADIUS * 1.22, 40]} />
+						<T.MeshBasicMaterial
+							color="#4ade80"
+							transparent
+							opacity={0.96}
+							depthTest={false}
+							depthWrite={false}
+							side={THREE.DoubleSide}
+						/>
+					</T.Mesh>
+					<T.Mesh oncreate={attachAnalysisGlyph}>
+						<T.RingGeometry args={[NODE_RADIUS * 1.4, NODE_RADIUS * 1.5, 40]} />
+						<T.MeshBasicMaterial
+							color="#4ade80"
+							transparent
+							opacity={0.96}
+							depthTest={false}
+							depthWrite={false}
+							side={THREE.DoubleSide}
+						/>
+					</T.Mesh>
+				</Billboard>
+			{:else if landmark === 'combined'}
+				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+					<T.OctahedronGeometry args={[NODE_RADIUS * 1.45, 0]} />
+					<T.MeshBasicMaterial
+						color="#e8c56a"
+						wireframe
+						transparent
+						opacity={0.96}
+						depthWrite={false}
+					/>
+				</T.Mesh>
+				<Billboard position={[pos.x, pos.y, pos.z]}>
+					<T.Mesh oncreate={attachAnalysisGlyph}>
+						<T.RingGeometry args={[NODE_RADIUS * 1.38, NODE_RADIUS * 1.5, 40]} />
+						<T.MeshBasicMaterial
+							color="#e8c56a"
+							transparent
+							opacity={0.96}
+							depthTest={false}
+							depthWrite={false}
+							side={THREE.DoubleSide}
+						/>
+					</T.Mesh>
+				</Billboard>
+			{:else if role === 'current'}
 				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
 					<T.IcosahedronGeometry args={[NODE_RADIUS * 1.3, 1]} />
 					<T.MeshBasicMaterial {color} wireframe transparent opacity={0.95} depthWrite={false} />
@@ -2121,32 +2171,6 @@
 					/>
 					<T.MeshBasicMaterial {color} transparent opacity={0.92} depthWrite={false} />
 				</T.Mesh>
-			{/if}
-			{#if landmarks.length > 0}
-				<Billboard position={[pos.x, pos.y, pos.z]}>
-					<T.Mesh
-						position={[NODE_RADIUS * 1.55, NODE_RADIUS * 1.1, 0]}
-						oncreate={attachAnalysisGlyph}
-					>
-						<T.CircleGeometry args={[0.4, 24]} />
-						<T.MeshBasicMaterial
-							color={landmarkColor(landmarks)}
-							transparent
-							opacity={0.96}
-							depthTest={false}
-							depthWrite={false}
-						/>
-					</T.Mesh>
-					<Text
-						position={[NODE_RADIUS * 1.55, NODE_RADIUS * 1.1, 0.01]}
-						text={landmarkBadge(landmarks)}
-						fontSize={landmarks.length > 1 ? 0.21 : 0.3}
-						anchorX="center"
-						anchorY="middle"
-						color="#16242a"
-						oncreate={attachAnalysisLabel}
-					/>
-				</Billboard>
 			{/if}
 		{/if}
 	{/each}

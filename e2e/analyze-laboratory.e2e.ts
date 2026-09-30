@@ -62,6 +62,7 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 	await expect(page.getByTestId('analysis-result').getByLabel('Analysis legend')).toContainText(
 		'Start'
 	);
+	await expect(page.getByTestId('analysis-result').locator('.legend-mark--start')).toHaveText('');
 	await expect(page.getByRole('button', { name: 'Replay' })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Analyze steps' })).toHaveCount(0);
 	await expect(page.getByTestId('skip-reveal')).toHaveCount(0);
@@ -127,7 +128,7 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 	}, lastAction);
 	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Restart playback');
 	await expect(page.getByTestId('trace-play')).toHaveAttribute('data-icon', 'restart');
-	await expect(page.getByTestId('trace-reset')).toBeDisabled();
+	await expect(page.getByTestId('trace-reset')).toBeEnabled();
 	await page.getByTestId('trace-play').click();
 	await expect(page.getByTestId('trace-scrubber')).toHaveValue('0');
 	await expect(page.getByTestId('trace-play')).toHaveAttribute('aria-label', 'Pause playback');
@@ -163,6 +164,7 @@ test('Dijkstra reports edge length and total cost', async ({ page }) => {
 	await expect(page.getByTestId('analysis-result').getByLabel('Analysis legend')).toContainText(
 		'End'
 	);
+	await expect(page.getByTestId('analysis-result').locator('.legend-mark--end')).toHaveText('');
 	const metricRows = page.getByTestId('analysis-result').locator('.metrics > div');
 	await expect(metricRows).toHaveCount(2);
 	await expect(metricRows.nth(0).locator('dt')).toHaveCount(1);

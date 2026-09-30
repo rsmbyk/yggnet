@@ -12,7 +12,7 @@ export function analysisTransportState(
 	const atEnd = cursor >= last;
 	return {
 		primary: playing ? 'pause' : atEnd ? 'restart' : 'play',
-		resetDisabled: atStart || atEnd
+		resetDisabled: atStart
 	};
 }
 
