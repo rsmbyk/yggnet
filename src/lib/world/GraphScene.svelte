@@ -3,10 +3,11 @@
 	import { Billboard, OrbitControls, Text, interactivity } from '@threlte/extras';
 	import { app } from '$lib/session/app.svelte';
 	import { onDestroy } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import * as THREE from 'three';
 	import { MOUSE } from 'three';
 	import type { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-	import type { GraphNode } from '$lib/graph';
+	import { frameAt, type AnalysisRole, type GraphNode } from '$lib/graph';
 	import { WORLD, defaultCameraPosition } from './world-config';
 	import { clampToFloor, resolveMoveAgainstNodes, snapToGrid } from './node-physics';
 	import {
@@ -24,6 +25,14 @@
 	} from './edge-pose';
 	import { partitionEdgesByDimming } from './edge-partition';
 	import { createNodeSphereGeometry } from './node-sphere';
+	import {
+		analysisGlyphScale,
+		analysisResultLandmarks,
+		analysisResultSequence,
+		landmarkGlyph,
+		primaryAnalysisRole,
+		revealProgress
+	} from './analysis-decoration';
 
 	interactivity();
 
@@ -76,7 +85,6 @@
 	const _connectNormal = new THREE.Vector3();
 	const _snapPoint = new THREE.Vector3();
 
-	let travelRaf = 0;
 	/** Free end of the in-progress connect rubber-band (world space). */
 	let connectCursor = $state<{ x: number; y: number; z: number } | null>(null);
 	/**
@@ -243,6 +251,117 @@
 	const edges = $derived(Object.values(app.document.edges));
 	const overlayNodeSet = $derived(new Set(app.overlay.nodeIds));
 	const overlayEdgeSet = $derived(new Set(app.overlay.edgeIds));
+	const activeAnalysis = $derived(
+		app.analysis.current && app.analysis.current.panel !== 'closed' ? app.analysis.current : null
+	);
+	const analysisFrame = $derived(
+		activeAnalysis?.panel === 'trace' ? frameAt(activeAnalysis.trace, activeAnalysis.cursor) : null
+	);
+	const analysisResultEntities = $derived.by(() => {
+		if (activeAnalysis?.panel !== 'result') return [];
+		return analysisResultSequence(activeAnalysis.result.artifacts);
+	});
+	const resultLandmarks = $derived(
+		activeAnalysis?.panel === 'result'
+			? analysisResultLandmarks(activeAnalysis.result.artifacts)
+			: {}
+	);
+	const analysisResultEdgeDirections = $derived.by(() => {
+		const directions: Record<string, { from: string; to: string }> = {};
+		if (activeAnalysis?.panel !== 'result') return directions;
+		for (const artifact of activeAnalysis.result.artifacts) {
+			if (artifact.kind !== 'path' && artifact.kind !== 'tree') continue;
+			artifact.edgeIds.forEach((edgeId, index) => {
+				const to = artifact.nodeIds[index + 1];
+				const edge = app.document.edges[edgeId];
+				const from =
+					artifact.kind === 'tree' && edge && to
+						? edge.from === to
+							? edge.to
+							: edge.from
+						: artifact.nodeIds[index];
+				if (from && to) directions[edgeId] = { from, to };
+			});
+		}
+		return directions;
+	});
+	let analysisRevealProgress = $state(1);
+
+	$effect(() => {
+		const analysis = activeAnalysis;
+		if (!analysis || analysis.panel !== 'result') {
+			analysisRevealProgress = 1;
+			return;
+		}
+		if (analysis.reveal === 'complete') {
+			analysisRevealProgress = 1;
+			return;
+		}
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (reduced) {
+			analysisRevealProgress = 1;
+			return;
+		}
+		analysisRevealProgress = 0;
+		let frameId = 0;
+		let delayId = 0;
+		const startAfterCamera = () => {
+			const started = performance.now();
+			const animate = (now: number) => {
+				analysisRevealProgress = revealProgress(
+					now - started,
+					analysisResultEntities.length,
+					false
+				);
+				if (analysisRevealProgress < 1) frameId = requestAnimationFrame(animate);
+			};
+			frameId = requestAnimationFrame(animate);
+		};
+		delayId = window.setTimeout(startAfterCamera, 300);
+		return () => {
+			window.clearTimeout(delayId);
+			cancelAnimationFrame(frameId);
+		};
+	});
+
+	function resultEntityProgress(kind: 'node' | 'edge', id: string): number {
+		if (activeAnalysis?.panel !== 'result') return 1;
+		const index = analysisResultEntities.findIndex(
+			(entity) => entity.kind === kind && entity.id === id
+		);
+		if (index < 0) return 0;
+		return Math.min(1, Math.max(0, analysisRevealProgress * analysisResultEntities.length - index));
+	}
+	const analysisResultNodeIds = $derived.by(() => {
+		const ids = new SvelteSet<string>();
+		if (activeAnalysis?.panel !== 'result') return ids;
+		for (const entity of analysisResultEntities) {
+			if (entity.kind === 'node' && resultEntityProgress('node', entity.id) > 0) ids.add(entity.id);
+		}
+		return ids;
+	});
+	const analysisResultEdgeIds = $derived.by(() => {
+		const ids = new SvelteSet<string>();
+		if (activeAnalysis?.panel !== 'result') return ids;
+		for (const entity of analysisResultEntities) {
+			if (entity.kind === 'edge' && resultEntityProgress('edge', entity.id) > 0) ids.add(entity.id);
+		}
+		return ids;
+	});
+	const analysisNodeRoles = $derived(
+		analysisFrame?.roles.nodes ??
+			Object.fromEntries([...analysisResultNodeIds].map((id) => [id, ['result'] as AnalysisRole[]]))
+	);
+	const analysisEdgeRoles = $derived(
+		analysisFrame?.roles.edges ??
+			Object.fromEntries([...analysisResultEdgeIds].map((id) => [id, ['result'] as AnalysisRole[]]))
+	);
+	const effectiveEdgeSet = $derived(
+		activeAnalysis ? new Set(Object.keys(analysisEdgeRoles)) : overlayEdgeSet
+	);
+	const effectiveNodeSet = $derived(
+		activeAnalysis ? new Set(Object.keys(analysisNodeRoles)) : overlayNodeSet
+	);
 	const compareSeriesANodes = $derived(
 		app.overlay.kind === 'compare' && app.overlay.seriesA
 			? new Set(app.overlay.seriesA.nodeIds)
@@ -264,7 +383,9 @@
 			: null
 	);
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
-	const dimOthers = $derived(app.overlay.dimOthers && app.overlay.kind !== 'none');
+	const dimOthers = $derived(
+		Boolean(activeAnalysis) || (app.overlay.dimOthers && app.overlay.kind !== 'none')
+	);
 
 	const visibleNodes = $derived(nodes);
 
@@ -308,7 +429,7 @@
 
 	function nodeOpacity(id: string): number {
 		if (!dimOthers) return 1;
-		return overlayNodeSet.has(id) ? 1 : 0.22;
+		return effectiveNodeSet.has(id) ? 1 : 0.22;
 	}
 
 	/**
@@ -362,6 +483,7 @@
 	}
 
 	function edgeColor(id: string): string {
+		if (activeAnalysis && analysisEdgeRoles[id]) return '#e8c56a';
 		if (app.overlay.kind === 'compare') {
 			const inA = compareSeriesAEdges?.has(id);
 			const inB = compareSeriesBEdges?.has(id);
@@ -380,6 +502,18 @@
 		return edgePose(from, to);
 	}
 
+	function partialEdgeEnd(
+		from: { x: number; y: number; z: number },
+		to: { x: number; y: number; z: number },
+		progress: number
+	) {
+		return {
+			x: from.x + (to.x - from.x) * progress,
+			y: from.y + (to.y - from.y) * progress,
+			z: from.z + (to.z - from.z) * progress
+		};
+	}
+
 	function edgeArrowHead(
 		to: { x: number; y: number; z: number },
 		geo: ReturnType<typeof edgeObject>
@@ -395,6 +529,20 @@
 
 	function skipInstanceRaycast(mesh: THREE.InstancedMesh) {
 		mesh.raycast = () => {};
+	}
+
+	function attachAnalysisGlyph(object: THREE.Object3D) {
+		(object as THREE.Mesh).raycast = () => {};
+		object.renderOrder = 12;
+	}
+
+	function analysisColor(role: AnalysisRole | null): string {
+		if (role === 'result') return '#e8c56a';
+		if (role === 'current') return '#67e8f9';
+		if (role === 'inspecting') return '#f0a65a';
+		if (role === 'frontier') return '#a78bfa';
+		if (role === 'settled') return '#4ade80';
+		return '#ef6b73';
 	}
 
 	function attachShaftMesh(mesh: THREE.InstancedMesh) {
@@ -467,7 +615,7 @@
 		const visibleEdges = edges.filter((edge) => !edgeIsHidden(edge.from, edge.to));
 		const { opaque: matchEdges, dimmed: dimEdges } = partitionEdgesByDimming(
 			visibleEdges,
-			overlayEdgeSet,
+			effectiveEdgeSet,
 			dimOthers
 		);
 
@@ -1048,6 +1196,7 @@
 	}
 
 	function onNodePointerDown(node: GraphNode, ev: PointerLike) {
+		if (app.analysisBlocking) return;
 		const button = ev.nativeEvent?.button ?? ev.button ?? 0;
 		if (button !== 0) return;
 		if (pan) return;
@@ -1207,6 +1356,7 @@
 	}
 
 	function maybeClearSelectionOnSpaceClick(ev: PointerEvent) {
+		if (app.analysisBlocking) return;
 		const press = spacePress;
 		spacePress = null;
 		const hitNode = pointerHitNode;
@@ -1232,6 +1382,7 @@
 	}
 
 	function onSpacePointerDown(ev: PointerEvent) {
+		if (app.analysisBlocking) return;
 		if (ev.button !== 0) return;
 		if (pan || drag) return;
 		const mods = eventMods(ev);
@@ -1432,7 +1583,7 @@
 	$effect(() => {
 		const t = app.camera.target;
 		const d = app.camera.distance;
-		if (!controls || app.directions.traveling || pan || orbiting || viewModeAnimating) return;
+		if (!controls || pan || orbiting || viewModeAnimating) return;
 		if (performance.now() < camInteractiveUntil) return;
 		const synced = lastSyncedFromControls;
 		const eps = cameraSyncEps(d, t);
@@ -1467,7 +1618,7 @@
 		const epoch = app.revealEpoch;
 		const pos = app.revealPosition;
 		if (!controls || !pos || epoch === 0 || epoch === appliedRevealEpoch) return;
-		if (app.directions.traveling || viewModeAnimating) return;
+		if (viewModeAnimating) return;
 		const cam = camera.current;
 		if (!(cam instanceof THREE.PerspectiveCamera)) return;
 		const el = renderer.domElement;
@@ -1788,7 +1939,9 @@
 		const cam = camera.current;
 		if (!(cam instanceof THREE.PerspectiveCamera)) return;
 		const el = renderer.domElement;
-		const aspect = el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 16 / 9;
+		const reservedWidth = app.analysisBlocking ? app.analysisPanelWidth + 2 * 12 : 0;
+		const availableWidth = Math.max(160, el.clientWidth - reservedWidth);
+		const aspect = el.clientHeight > 0 ? availableWidth / el.clientHeight : 16 / 9;
 		captureFromPose();
 		const t = WORLD.camera.defaultTarget;
 		const is2d = app.ui.viewMode === '2d';
@@ -1830,6 +1983,16 @@
 			});
 			_toEye.set(look.x + dir.x * fitted, look.y + dir.y * fitted, look.z + dir.z * fitted);
 		}
+		if (reservedWidth > 0 && el.clientWidth > 0 && el.clientHeight > 0) {
+			const viewAxis = _toEye.clone().sub(_toTarget).normalize();
+			const rightAxis = _toUp.clone().cross(viewAxis).normalize();
+			const distance = _toEye.distanceTo(_toTarget);
+			const fullAspect = el.clientWidth / el.clientHeight;
+			const tanHalf = Math.tan((cam.fov * Math.PI) / 360);
+			const shift = (reservedWidth / el.clientWidth) * distance * tanHalf * fullAspect;
+			_toTarget.addScaledVector(rightAxis, shift);
+			_toEye.addScaledVector(rightAxis, shift);
+		}
 		prepareToQuat();
 		startCamPoseTween(app.ui.viewMode);
 	}
@@ -1837,46 +2000,13 @@
 	$effect(() => {
 		const epoch = app.frameGraphEpoch;
 		void Object.keys(app.document.nodes).length;
+		void app.analysisPanelWidth;
 		if (!controls || epoch === 0 || epoch === appliedFrameEpoch) return;
-		if (app.directions.traveling) return;
 		appliedFrameEpoch = epoch;
 		animateFrameGraph();
 	});
 
-	$effect(() => {
-		if (!app.directions.traveling) {
-			if (travelRaf) cancelAnimationFrame(travelRaf);
-			travelRaf = 0;
-			return;
-		}
-		let last = performance.now();
-		const tick = (now: number) => {
-			const dt = (now - last) / 1000;
-			last = now;
-			const next = app.directions.travelProgress + dt * 0.15;
-			if (next >= 1) {
-				app.setTravelProgress(1);
-				app.stopTravel();
-				return;
-			}
-			app.setTravelProgress(next);
-			const pos = app.travelPosition();
-			if (pos && controls) {
-				controls.target.set(pos.x, 0, pos.z);
-				controls.object.position.set(pos.x + 6, 8, pos.z + 6);
-				controls.update();
-				app.setCamera({ target: { x: pos.x, y: 0, z: pos.z }, distance: 12 });
-			}
-			travelRaf = requestAnimationFrame(tick);
-		};
-		travelRaf = requestAnimationFrame(tick);
-		return () => {
-			if (travelRaf) cancelAnimationFrame(travelRaf);
-		};
-	});
-
 	onDestroy(() => {
-		if (travelRaf) cancelAnimationFrame(travelRaf);
 		viewAnim = null;
 		gridTexture.dispose();
 		groundMaterial.dispose();
@@ -1947,6 +2077,130 @@
 		</Billboard>
 	{/if}
 {/each}
+
+<!-- Analysis-only, non-interactive glyph layer. Base node spheres remain unchanged. -->
+{#if activeAnalysis}
+	{#each Object.entries(analysisNodeRoles) as [nodeId, roles] (nodeId)}
+		{@const node = app.document.nodes[nodeId]}
+		{#if node}
+			{@const pos = displayPosition(node)}
+			{@const role = primaryAnalysisRole(roles)}
+			{@const landmarks = resultLandmarks[nodeId] ?? []}
+			{@const landmark = landmarkGlyph(landmarks)}
+			{@const glyphScale = analysisGlyphScale(app.camera.distance)}
+			{@const color = analysisColor(role)}
+			{#if landmark === 'start'}
+				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+					<T.OctahedronGeometry args={[NODE_RADIUS * 1.45, 0]} />
+					<T.MeshBasicMaterial
+						color="#67e8f9"
+						wireframe
+						transparent
+						opacity={0.96}
+						depthWrite={false}
+					/>
+				</T.Mesh>
+			{:else if landmark === 'end'}
+				<Billboard position={[pos.x, pos.y, pos.z]}>
+					<T.Mesh oncreate={attachAnalysisGlyph}>
+						<T.RingGeometry args={[NODE_RADIUS * 1.12, NODE_RADIUS * 1.22, 40]} />
+						<T.MeshBasicMaterial
+							color="#4ade80"
+							transparent
+							opacity={0.96}
+							depthTest={false}
+							depthWrite={false}
+							side={THREE.DoubleSide}
+						/>
+					</T.Mesh>
+					<T.Mesh oncreate={attachAnalysisGlyph}>
+						<T.RingGeometry args={[NODE_RADIUS * 1.4, NODE_RADIUS * 1.5, 40]} />
+						<T.MeshBasicMaterial
+							color="#4ade80"
+							transparent
+							opacity={0.96}
+							depthTest={false}
+							depthWrite={false}
+							side={THREE.DoubleSide}
+						/>
+					</T.Mesh>
+				</Billboard>
+			{:else if landmark === 'combined'}
+				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+					<T.OctahedronGeometry args={[NODE_RADIUS * 1.45, 0]} />
+					<T.MeshBasicMaterial
+						color="#e8c56a"
+						wireframe
+						transparent
+						opacity={0.96}
+						depthWrite={false}
+					/>
+				</T.Mesh>
+				<Billboard position={[pos.x, pos.y, pos.z]}>
+					<T.Mesh oncreate={attachAnalysisGlyph}>
+						<T.RingGeometry args={[NODE_RADIUS * 1.38, NODE_RADIUS * 1.5, 40]} />
+						<T.MeshBasicMaterial
+							color="#e8c56a"
+							transparent
+							opacity={0.96}
+							depthTest={false}
+							depthWrite={false}
+							side={THREE.DoubleSide}
+						/>
+					</T.Mesh>
+				</Billboard>
+			{:else if role === 'current'}
+				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+					<T.IcosahedronGeometry args={[NODE_RADIUS * 1.3, 1]} />
+					<T.MeshBasicMaterial {color} wireframe transparent opacity={0.95} depthWrite={false} />
+				</T.Mesh>
+			{:else}
+				<T.Mesh
+					position={[pos.x, pos.y, pos.z]}
+					rotation={[Math.PI / 2, 0, 0]}
+					scale={glyphScale}
+					oncreate={attachAnalysisGlyph}
+				>
+					<T.TorusGeometry
+						args={[
+							NODE_RADIUS * (role === 'inspecting' ? 1.42 : 1.2),
+							0.055,
+							8,
+							role === 'inspecting' ? 12 : 32
+						]}
+					/>
+					<T.MeshBasicMaterial {color} transparent opacity={0.92} depthWrite={false} />
+				</T.Mesh>
+			{/if}
+		{/if}
+	{/each}
+	{#each Object.entries(analysisEdgeRoles) as [edgeId, roles] (edgeId)}
+		{@const edge = app.document.edges[edgeId]}
+		{#if edge}
+			{@const direction = analysisResultEdgeDirections[edgeId]}
+			{@const from = nodePos(direction?.from ?? edge.from)}
+			{@const fullTo = nodePos(direction?.to ?? edge.to)}
+			{@const to = partialEdgeEnd(from, fullTo, resultEntityProgress('edge', edgeId))}
+			{@const geo = edgeObject(from, to)}
+			{@const role = primaryAnalysisRole(roles)}
+			<T.Mesh
+				position={[geo.mid.x, geo.mid.y, geo.mid.z]}
+				quaternion={geo.quaternion}
+				oncreate={attachAnalysisGlyph}
+			>
+				<T.CylinderGeometry
+					args={[EDGE_SHAFT_RADIUS * 2.2, EDGE_SHAFT_RADIUS * 2.2, geo.len, 10]}
+				/>
+				<T.MeshBasicMaterial
+					color={analysisColor(role)}
+					transparent
+					opacity={0.82}
+					depthWrite={false}
+				/>
+			</T.Mesh>
+		{/if}
+	{/each}
+{/if}
 
 {#key shaftCap}
 	<T.InstancedMesh
@@ -2045,15 +2299,5 @@
 				/>
 			</T.Mesh>
 		{/if}
-	{/if}
-{/if}
-
-{#if app.directions.traveling}
-	{@const pos = app.travelPosition()}
-	{#if pos}
-		<T.Mesh position={[pos.x, pos.y, pos.z]}>
-			<T.SphereGeometry args={[0.28, 16, 16]} />
-			<T.MeshStandardMaterial color="#e8c56a" emissive="#6a5420" emissiveIntensity={0.25} />
-		</T.Mesh>
 	{/if}
 {/if}

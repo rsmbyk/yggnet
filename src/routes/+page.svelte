@@ -3,6 +3,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import ManagerPanel from '$lib/ui/ManagerPanel.svelte';
 	import Toolbar from '$lib/ui/Toolbar.svelte';
+	import AnalysisResultPanel from '$lib/ui/AnalysisResultPanel.svelte';
 	import { app } from '$lib/session/app.svelte';
 	import { applyBeforeUnloadGuard } from '$lib/session/work-busy';
 	import { tabTitleFromGraph } from '$lib/session/tab-title';
@@ -54,6 +55,11 @@
 			target &&
 			(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 		const meta = e.ctrlKey || e.metaKey;
+		if (app.analysisBlocking) {
+			if (e.key === 'Escape') app.closeAnalysisPanel();
+			if (e.key !== 'Escape') e.preventDefault();
+			return;
+		}
 		if (meta && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
 			app.openPalette(!app.ui.paletteOpen);
@@ -204,6 +210,8 @@
 			</div>
 		{/if}
 	</main>
+
+	<AnalysisResultPanel />
 
 	{#if app.ui.openTool}
 		<button

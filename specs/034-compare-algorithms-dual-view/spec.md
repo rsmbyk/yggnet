@@ -4,13 +4,15 @@ item: ITEM-034
 type: feat
 feature_area: analyze
 bump: minor
-status: done
+status: deprecated
 title: 'Compare algorithms dual view'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-034: Compare algorithms dual view
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). Algorithm comparison was removed.
 
 ## Problem
 

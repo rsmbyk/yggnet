@@ -28,10 +28,8 @@
 		JUMPS_FIELD_HELP,
 		NEIGHBORS_FIELD_HELP,
 		PALEY_ORDERS,
-		pathSeriesMetrics,
 		PLATONIC_LABELS,
 		PLATONIC_SOLIDS,
-		PROBABILITY_RANGE_HELP,
 		REWIRE_FIELD_HELP,
 		RINGS_FIELD_HELP,
 		RUNGS_FIELD_HELP,
@@ -66,7 +64,6 @@
 
 	let tagsSearchQuery = $state('');
 	let tagEditDraft = $state('');
-	let stepNote = $state('');
 	let nodeSearchQuery = $state('');
 	let nodeSearchTags = $state<string[]>([]);
 	let nodeSearchKeyword = $state('');
@@ -94,9 +91,6 @@
 		app.applyGeneratedGraph(kind, options);
 	}
 
-	let compareAlgo = $state('dijkstra');
-	let compareRunIdA = $state('');
-	let compareRunIdB = $state('');
 	let saveSlotName = $state('');
 	let panelEl = $state<HTMLElement | undefined>(undefined);
 	let headerEl = $state<HTMLElement | undefined>(undefined);
@@ -198,6 +192,10 @@
 	const focusTags = $derived(app.filters.tags);
 	const focusActive = $derived(focusTags.length > 0);
 	const edges = $derived(Object.values(app.document.edges));
+	const activeAnalysisDefinition = $derived(
+		app.analysisDefinitions.find((definition) => definition.id === app.analysis.algorithmId)
+	);
+	const activeAnalysisInput = $derived(app.analysis.inputs[app.analysis.algorithmId] ?? {});
 
 	const listSearchActive = $derived(section === 'nodes' || section === 'edges');
 	const listSearchQuery = $derived(section === 'edges' ? edgeSearchQuery : nodeSearchQuery);
@@ -262,7 +260,6 @@
 		})
 	);
 	const nodePickerOptions = $derived(nodes.map((n) => ({ id: n.id, label: n.label })));
-	const storedRuns = $derived(Object.values(app.runStore.runs));
 	const selectedId = $derived(app.selection.nodeIds[0] ?? null);
 	const selectedIds = $derived(new Set(app.selection.nodeIds));
 	const selectedCount = $derived(app.selection.nodeIds.length);
@@ -274,60 +271,6 @@
 	const selectedEdgeIds = $derived(new Set(app.selection.edgeIds));
 	const selectedEdgeCount = $derived(app.selection.edgeIds.length);
 	const selectedEdge = $derived(selectedEdgeId ? app.document.edges[selectedEdgeId] : null);
-	const lastRun = $derived(app.analyze.lastRunId ? app.runStore.runs[app.analyze.lastRunId] : null);
-	const traceLen = $derived(lastRun?.trace.length ?? 0);
-	const currentStepAnnotation = $derived(lastRun?.annotations?.[app.analyze.stepIndex] ?? '');
-
-	$effect(() => {
-		if (!app.analyze.playback || !lastRun || traceLen < 2) return;
-		const maxStep = Math.max(0, traceLen - 1);
-		if (app.analyze.stepIndex >= maxStep) {
-			app.setPlayback(false);
-			return;
-		}
-		const handle = setInterval(() => {
-			const idx = app.analyze.stepIndex;
-			if (idx >= maxStep) {
-				app.setPlayback(false);
-				return;
-			}
-			app.setStepIndex(idx + 1);
-		}, 400);
-		return () => clearInterval(handle);
-	});
-
-	const compareRunA = $derived(
-		app.analyze.compareRunIds[0] ? app.runStore.runs[app.analyze.compareRunIds[0]] : null
-	);
-	const compareRunB = $derived(
-		app.analyze.compareRunIds[1] ? app.runStore.runs[app.analyze.compareRunIds[1]] : null
-	);
-
-	const edgeWeights = $derived(
-		Object.fromEntries(Object.values(app.document.edges).map((e) => [e.id, e.weight]))
-	);
-
-	function compareMetrics(run: typeof compareRunA) {
-		if (!run || run.result.kind !== 'path') return { hops: 0, cost: 0, nodes: 0 };
-		const { hops, cost } = pathSeriesMetrics(run.result.edgeIds, edgeWeights);
-		return { hops, cost, nodes: run.result.nodeIds.length };
-	}
-
-	function runLabel(run: (typeof storedRuns)[number]): string {
-		const stale = run.stale ? ' (stale)' : '';
-		return `${run.algorithmId} · ${run.id.slice(0, 8)}…${stale}`;
-	}
-
-	$effect(() => {
-		const ids = storedRuns.map((r) => r.id);
-		if (ids.length === 0) {
-			compareRunIdA = '';
-			compareRunIdB = '';
-			return;
-		}
-		if (!ids.includes(compareRunIdA)) compareRunIdA = ids[0];
-		if (!ids.includes(compareRunIdB)) compareRunIdB = ids.length > 1 ? ids[1] : ids[0];
-	});
 
 	const selectionTestId = $derived(
 		selectedCount > 1
@@ -371,6 +314,7 @@
 
 	const footerHasActions = $derived(
 		section === 'generate' ||
+			section === 'analyze' ||
 			(section === 'nodes' && selectedCount > 1) ||
 			(section === 'edges' && selectedEdgeCount > 1) ||
 			(section === 'selection' && Boolean(selectedNode && selectedCount === 1))
@@ -703,6 +647,12 @@
 						/>
 					</svg>
 				</button>
+			{:else if section === 'analyze' && app.analysis.current?.panel === 'closed'}
+				<button
+					type="button"
+					data-testid="view-last-analysis"
+					onclick={() => app.viewLastAnalysis()}>Last result</button
+				>
 			{/if}
 		</div>
 		{#if section === 'tags'}
@@ -2040,7 +1990,7 @@
 			</section>
 		{/if}
 
-		{#if section === 'pathfinder'}
+		<!-- Superseded Pathfinder markup retained only in git history.
 			<section class="block" data-testid="directions-panel">
 				<h2>Pathfinder</h2>
 				<div class="row">
@@ -2128,9 +2078,95 @@
 					</label>
 				{/if}
 			</section>
-		{/if}
+		-->
 
 		{#if section === 'analyze'}
+			<section class="block" data-testid="analyze-panel">
+				<label>
+					Algorithm
+					<select
+						class="slot-name-input"
+						data-testid="analysis-picker"
+						value={app.analysis.algorithmId}
+						onchange={(event) => app.setAnalysisAlgorithm(event.currentTarget.value)}
+					>
+						{#each app.analysisDefinitions as definition (definition.id)}
+							<option value={definition.id}>{definition.name}</option>
+						{/each}
+					</select>
+				</label>
+				<p class="hint">{activeAnalysisDefinition?.description}</p>
+				{#each activeAnalysisDefinition?.fields ?? [] as field (field.id)}
+					<label>
+						{field.label}
+						{#if field.kind === 'node'}
+							<NodeSearchSelect
+								nodes={nodePickerOptions}
+								value={String(activeAnalysisInput[field.id] ?? '')}
+								testid={`analysis-field-${field.id}`}
+								ariaLabel={field.label}
+								placeholder="Choose…"
+								onChange={(id) => app.setAnalysisInput(field.id, id)}
+							/>
+						{:else if field.kind === 'edge'}
+							<select
+								class="slot-name-input"
+								data-testid={`analysis-field-${field.id}`}
+								value={String(activeAnalysisInput[field.id] ?? '')}
+								onchange={(event) =>
+									app.setAnalysisInput(field.id, event.currentTarget.value || undefined)}
+							>
+								<option value="">Choose…</option>
+								{#each edges as entity (entity.id)}
+									<option value={entity.id}
+										>{'label' in entity && entity.label ? entity.label : entity.id}</option
+									>
+								{/each}
+							</select>
+						{:else if field.kind === 'boolean'}
+							<input
+								type="checkbox"
+								checked={Boolean(activeAnalysisInput[field.id])}
+								onchange={(event) => app.setAnalysisInput(field.id, event.currentTarget.checked)}
+							/>
+						{:else if field.kind === 'number'}
+							<input
+								class="slot-name-input"
+								type="number"
+								min={field.min}
+								max={field.max}
+								value={String(activeAnalysisInput[field.id] ?? '')}
+								onchange={(event) =>
+									app.setAnalysisInput(
+										field.id,
+										event.currentTarget.value === '' ? undefined : Number(event.currentTarget.value)
+									)}
+							/>
+						{:else if field.kind === 'enum'}
+							<select
+								class="slot-name-input"
+								value={String(activeAnalysisInput[field.id] ?? '')}
+								onchange={(event) => app.setAnalysisInput(field.id, event.currentTarget.value)}
+							>
+								{#each field.options as option (option.value)}<option value={option.value}
+										>{option.label}</option
+									>{/each}
+							</select>
+						{:else}
+							<p class="hint">This input type is ready for a future picker.</p>
+						{/if}
+						{#if app.analysis.validation?.fieldErrors[field.id]}<span class="field-helper error"
+								>{app.analysis.validation.fieldErrors[field.id]}</span
+							>{/if}
+					</label>
+				{/each}
+				{#if app.analysis.validation?.formError}<p class="field-helper error">
+						{app.analysis.validation.formError}
+					</p>{/if}
+			</section>
+		{/if}
+
+		<!-- Superseded path-specific Analyze markup retained only in git history.
 			<section class="block" data-testid="analyze-panel">
 				<h2>Analyze</h2>
 				<label>
@@ -2172,8 +2208,8 @@
 						<h3>Compare</h3>
 						<div class="diff">
 							<div data-testid="compare-series-a">
-								<strong class="series-a">{compareRunA.algorithmId}</strong>
-								{#if compareRunA.stale}<span class="tag">stale</span>{/if}
+								<strong class="series-a">{compareRunA?.algorithmId}</strong>
+								{#if compareRunA?.stale}<span class="tag">stale</span>{/if}
 								<p class="muted">
 									{compareMetrics(compareRunA).nodes} nodes · {compareMetrics(compareRunA).hops} hops
 									· cost
@@ -2181,8 +2217,8 @@
 								</p>
 							</div>
 							<div data-testid="compare-series-b">
-								<strong class="series-b">{compareRunB.algorithmId}</strong>
-								{#if compareRunB.stale}<span class="tag">stale</span>{/if}
+								<strong class="series-b">{compareRunB?.algorithmId}</strong>
+								{#if compareRunB?.stale}<span class="tag">stale</span>{/if}
 								<p class="muted">
 									{compareMetrics(compareRunB).nodes} nodes · {compareMetrics(compareRunB).hops} hops
 									· cost
@@ -2197,8 +2233,8 @@
 				{/if}
 				{#if lastRun}
 					<p class="hint" data-testid="run-status">
-						Run {lastRun.id.slice(0, 8)}… {lastRun.stale ? '(stale)' : ''}
-						— {lastRun.result.kind}
+						Run {lastRun?.id.slice(0, 8)}… {lastRun?.stale ? '(stale)' : ''}
+						— {lastRun?.result.kind}
 					</p>
 					<label class="check">
 						<input
@@ -2325,7 +2361,7 @@
 					</details>
 				{/if}
 			</section>
-		{/if}
+		-->
 	</div>
 
 	{#if footerHasActions || overflowing}
@@ -2353,6 +2389,15 @@
 					class="generate-submit"
 					data-testid="generate-submit"
 					disabled={app.busyKind !== null}>Generate</button
+				>
+			{/if}
+			{#if section === 'analyze'}
+				<button
+					type="button"
+					class="generate-submit"
+					data-testid="run-analysis"
+					disabled={app.busyKind !== null}
+					onclick={() => app.runAnalysis()}>Run analysis</button
 				>
 			{/if}
 			{#if section === 'nodes' && selectedCount > 1}

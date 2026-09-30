@@ -4,13 +4,15 @@ item: ITEM-006
 type: feat
 feature_area: directions
 bump: minor
-status: done
+status: deprecated
 title: 'Pathfinder A to B'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-006: Pathfinder A to B
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). Pathfinder and Travel were replaced by the unified Analyze laboratory.
 
 ## Problem
 

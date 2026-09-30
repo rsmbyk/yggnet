@@ -4,13 +4,15 @@ item: ITEM-007
 type: feat
 feature_area: directions
 bump: minor
-status: done
+status: deprecated
 title: 'Directions guided travel'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-007: Directions guided travel
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). Travel is deferred and is not part of the unified Analyze tool.
 
 ## Problem
 

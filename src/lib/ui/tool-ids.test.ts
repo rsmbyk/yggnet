@@ -24,7 +24,7 @@ describe('nextOpenTool', () => {
 
 describe('toolLabel', () => {
 	it('returns the section title', () => {
-		expect(toolLabel('pathfinder')).toBe('Pathfinder');
+		expect(toolLabel('analyze')).toBe('Analyze');
 		expect(toolLabel('tags')).toBe('Tags');
 	});
 });

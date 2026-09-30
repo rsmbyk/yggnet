@@ -4,13 +4,15 @@ item: ITEM-008
 type: feat
 feature_area: directions
 bump: patch
-status: done
+status: deprecated
 title: 'Follow edge'
 created: 2026-07-30
 updated: 2026-07-30
 ---
 
 # SPEC-008: Follow edge
+
+> Deprecated by [SPEC-061](../061-unified-analyze/spec.md). Follow-edge Travel behavior was removed.
 
 ## Problem
 

@@ -15,8 +15,6 @@
 			case 'tags':
 				return 'M3 5h18l-7 8v5l-4 2v-7L3 5z';
 
-			case 'pathfinder':
-				return 'M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6z';
 			case 'analyze':
 				return 'M4 20V10h3v10H4zm6.5 0V4h3v16h-3zM17 20v-7h3v7h-3z';
 		}
@@ -32,6 +30,7 @@
 	{#each TOOLS as tool (tool.id)}
 		<button
 			type="button"
+			disabled={app.analysisBlocking}
 			class="icon-btn"
 			class:active={app.ui.openTool === tool.id}
 			data-testid={`tool-${tool.id}`}
@@ -127,5 +126,10 @@
 		background: var(--yg-accent-soft);
 		color: var(--yg-accent);
 		border-color: color-mix(in srgb, var(--yg-accent) 40%, var(--yg-border));
+	}
+
+	.icon-btn:disabled {
+		cursor: not-allowed;
+		opacity: 0.35;
 	}
 </style>

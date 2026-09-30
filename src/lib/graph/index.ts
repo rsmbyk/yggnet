@@ -6,6 +6,7 @@ export type {
 	NodeId,
 	EdgeId
 } from './model/types';
+export * from './analysis';
 export { createEmptyDocument, nodeCount, edgeCount } from './model/document';
 export {
 	createSelection,

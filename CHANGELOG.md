@@ -10,6 +10,25 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.39.0] - 2026-09-29
+
+### Added
+
+- Replace Pathfinder and the path-specific Analyze flow with one definition-driven Analyze laboratory.
+- Add BFS traversal and Dijkstra shortest path results, semantic trace playback, generic inspectors, and reversible checkpoints.
+- Add a temporary hybrid world glyph layer with bounded result reveal and a blocking Result/Trace panel.
+
+### Fixed
+
+- Align Analyze Result/Trace with the app chrome, animate result artifacts, center zoom-stable node rings, fit the camera around the panel, and simplify trace playback and inspectors.
+- Make result replay wait for true user inactivity without moving the camera, reveal BFS edges in traversal order, and refine inspector empty states, hover, expansion motion, and trace sizing.
+- Align the Analyze setup panel with Generate controls, add searchable node inputs, and show contextual Last result access in the manager header.
+- Distinguish important result nodes with geometric Start/End glyphs, quicken result reveals, preserve expanded trace inspectors during playback, and clarify Play/Pause/Restart/Reset transport states.
+
+### Removed
+
+- Remove the Pathfinder toolbar entry, Travel experience, A* selection, path enumeration, stored-run comparison, and step annotations from the product UI.
+
 ## [0.38.1] - 2026-09-29
 
 ### Fixed
