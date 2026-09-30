@@ -104,3 +104,73 @@ describe('BFS Search', () => {
 		expect(structuredClone(output.result.reveal)).toEqual(output.result.reveal);
 	});
 });
+
+describe('depth-first definitions', () => {
+	const doc = graph([
+		['A', 'B'],
+		['A', 'C'],
+		['B', 'D'],
+		['C', 'E']
+	]);
+
+	it('DFS traverses deterministically and Search returns the first DFS path', () => {
+		const dfs = analysisDefinitions.get('dfs')!;
+		expect(dfs).toBeDefined();
+		expect(dfs.execute(doc, { mode: 'traverse', start: 'A' }).result.artifacts).toContainEqual({
+			kind: 'ordered-nodes',
+			id: 'traversal',
+			label: 'Traversal order',
+			nodeIds: ['A', 'B', 'D', 'C', 'E']
+		});
+
+		const search = dfs.execute(doc, { mode: 'search', start: 'A', target: 'E' });
+		expect(search.result.artifacts).toContainEqual({
+			kind: 'path',
+			id: 'path',
+			label: 'Found path',
+			nodeIds: ['A', 'C', 'E'],
+			edgeIds: ['e1', 'e3']
+		});
+		expect(search.result.metrics).toContainEqual({ label: 'Visited', value: 5 });
+	});
+
+	it('Depth-Limited DFS records cutoffs and finds only in-limit paths', () => {
+		const dls = analysisDefinitions.get('depth-limited-dfs')!;
+		expect(dls).toBeDefined();
+		const shallow = dls.execute(doc, {
+			mode: 'search',
+			start: 'A',
+			target: 'D',
+			maxDepth: 1
+		});
+		expect(shallow.result.outcome).toBe('no-result');
+		expect(shallow.events.filter((event) => event.action === 'cutoff')).toHaveLength(2);
+		expect(shallow.result.artifacts.find((item) => item.id === 'explored')).toMatchObject({
+			nodeIds: ['A', 'B', 'C']
+		});
+
+		const found = dls.execute(doc, {
+			mode: 'search',
+			start: 'A',
+			target: 'D',
+			maxDepth: 2
+		});
+		expect(found.result.outcome).toBe('complete');
+		expect(found.result.artifacts.find((item) => item.kind === 'path')).toMatchObject({
+			nodeIds: ['A', 'B', 'D'],
+			edgeIds: ['e0', 'e2']
+		});
+	});
+
+	it('validates Depth-Limited DFS Max depth as a non-negative integer', () => {
+		const dls = analysisDefinitions.get('depth-limited-dfs')!;
+		expect(
+			validateAnalysisInput(dls, doc, { mode: 'traverse', start: 'A', maxDepth: -1 }).fieldErrors
+				.maxDepth
+		).toBe('Must be at least 0.');
+		expect(
+			validateAnalysisInput(dls, doc, { mode: 'traverse', start: 'A', maxDepth: 1.5 }).fieldErrors
+				.maxDepth
+		).toBe('Must be a whole number.');
+	});
+});

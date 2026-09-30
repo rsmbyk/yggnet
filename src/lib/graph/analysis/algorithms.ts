@@ -181,6 +181,227 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 	};
 }
 
+function traversalModeFields(
+	extra: AnalysisDefinition['fields'] = []
+): AnalysisDefinition['fields'] {
+	return [
+		{
+			kind: 'enum',
+			id: 'mode',
+			label: 'Mode',
+			required: true,
+			defaultValue: 'traverse',
+			options: [
+				{ value: 'traverse', label: 'Traverse' },
+				{ value: 'search', label: 'Search' }
+			]
+		},
+		{ kind: 'node', id: 'start', label: 'Start', required: true },
+		...extra,
+		{
+			kind: 'node',
+			id: 'target',
+			label: 'Target',
+			required: true,
+			when: { fieldId: 'mode', equals: 'search' }
+		}
+	];
+}
+
+function depthFirstResult(
+	name: string,
+	input: AnalysisInput,
+	order: string[],
+	treeEdges: string[],
+	path: { nodeIds: string[]; edgeIds: string[] } | null,
+	events: AnalysisEvent[]
+): AnalysisOutput {
+	const start = node(input, 'start');
+	const search = input.mode === 'search';
+	const target = search ? node(input, 'target') : undefined;
+	const artifacts: AnalysisOutput['result']['artifacts'] = [
+		{
+			kind: 'ordered-nodes',
+			id: search ? 'explored' : 'traversal',
+			label: search ? 'Explored nodes' : 'Traversal order',
+			nodeIds: order
+		},
+		{ kind: 'tree', id: 'tree', label: `${name} tree`, nodeIds: order, edgeIds: treeEdges },
+		...(path ? [{ kind: 'path' as const, id: 'path', label: 'Found path', ...path }] : []),
+		{
+			kind: 'landmarks',
+			id: 'landmarks',
+			label: 'Important nodes',
+			entries: [
+				{ nodeId: start, role: 'start' },
+				...(target ? [{ nodeId: target, role: 'end' as const }] : [])
+			]
+		}
+	];
+	const revealSteps: AnalysisRevealStep[] = order.map((nodeId, index) => ({
+		actions: [
+			...(index > 0 && treeEdges[index - 1]
+				? ([{ kind: 'reveal-edge', edgeId: treeEdges[index - 1] }] as const)
+				: []),
+			{ kind: 'reveal-node', nodeId }
+		]
+	}));
+	if (path) revealSteps.push({ actions: [{ kind: 'emphasize-artifact', artifactId: 'path' }] });
+	return {
+		result: {
+			outcome: search && !path ? 'no-result' : 'complete',
+			summary: search
+				? path
+					? `Found a path with ${path.edgeIds.length} edges.`
+					: 'Target was not reached.'
+				: `Visited ${order.length} node${order.length === 1 ? '' : 's'}.`,
+			metrics: [
+				{ label: 'Visited', value: order.length },
+				...(path ? [{ label: 'Length', value: path.edgeIds.length }] : [])
+			],
+			artifacts,
+			reveal: { phases: [{ id: 'search', steps: revealSteps }] }
+		},
+		events
+	};
+}
+
+function runDfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
+	const start = node(input, 'start');
+	const target = input.mode === 'search' ? node(input, 'target') : undefined;
+	const events: AnalysisEvent[] = [];
+	const visited = new Set<string>();
+	const order: string[] = [];
+	const treeEdges: string[] = [];
+	const cameFrom = new Map<string, { prev: string; edgeId: string }>();
+	event(
+		events,
+		'initialize',
+		{ nodeId: start },
+		[],
+		[
+			{ inspector: 'stack', operation: 'reset', kind: 'stack', value: [] },
+			{ inspector: 'visited', operation: 'reset', kind: 'ordered-list', value: [] }
+		]
+	);
+	const visit = (current: string): boolean => {
+		visited.add(current);
+		order.push(current);
+		event(
+			events,
+			'visit',
+			{ nodeId: current },
+			[{ entity: 'node', id: current, role: 'current', operation: 'add' }],
+			[
+				{ inspector: 'stack', operation: 'push', value: current },
+				{ inspector: 'visited', operation: 'append', value: current }
+			]
+		);
+		if (current === target) {
+			event(events, 'target-found', { nodeId: current });
+			return true;
+		}
+		for (const neighbor of neighborsOf(snapshot, current)) {
+			event(events, 'inspect', { nodeId: neighbor.nodeId, edgeId: neighbor.edgeId });
+			if (visited.has(neighbor.nodeId)) continue;
+			cameFrom.set(neighbor.nodeId, { prev: current, edgeId: neighbor.edgeId });
+			treeEdges.push(neighbor.edgeId);
+			event(events, 'accept-tree-edge', {
+				nodeId: neighbor.nodeId,
+				edgeId: neighbor.edgeId
+			});
+			if (visit(neighbor.nodeId)) return true;
+		}
+		event(
+			events,
+			'backtrack',
+			{ nodeId: current },
+			[{ entity: 'node', id: current, role: 'settled', operation: 'add' }],
+			[{ inspector: 'stack', operation: 'pop' }]
+		);
+		return false;
+	};
+	visit(start);
+	const path = target ? reconstructPath(cameFrom, start, target) : null;
+	const exploredEdges = order
+		.slice(1)
+		.map((id) => cameFrom.get(id)?.edgeId)
+		.filter((id): id is string => Boolean(id));
+	return depthFirstResult('DFS', input, order, exploredEdges, path, events);
+}
+
+function runDepthLimitedDfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
+	const start = node(input, 'start');
+	const target = input.mode === 'search' ? node(input, 'target') : undefined;
+	const maxDepth = Number(input.maxDepth);
+	const events: AnalysisEvent[] = [];
+	const uniqueOrder: string[] = [];
+	const seen = new Set<string>();
+	const firstIncoming = new Map<string, string>();
+	let foundPath: { nodeIds: string[]; edgeIds: string[] } | null = null;
+	event(
+		events,
+		'initialize',
+		{ nodeId: start, maxDepth },
+		[],
+		[
+			{ inspector: 'stack', operation: 'reset', kind: 'stack', value: [] },
+			{ inspector: 'visited', operation: 'reset', kind: 'ordered-list', value: [] },
+			{ inspector: 'depth-limit', operation: 'reset', kind: 'scalar', value: maxDepth }
+		]
+	);
+	const visit = (current: string, pathNodes: string[], pathEdges: string[]): boolean => {
+		const depth = pathEdges.length;
+		if (!seen.has(current)) {
+			seen.add(current);
+			uniqueOrder.push(current);
+			if (pathEdges.length) firstIncoming.set(current, pathEdges[pathEdges.length - 1]);
+		}
+		event(
+			events,
+			'visit',
+			{ nodeId: current, depth },
+			[{ entity: 'node', id: current, role: 'current', operation: 'add' }],
+			[
+				{ inspector: 'stack', operation: 'push', value: current },
+				{ inspector: 'visited', operation: 'append', value: current }
+			]
+		);
+		if (current === target) {
+			foundPath = { nodeIds: [...pathNodes, current], edgeIds: [...pathEdges] };
+			event(events, 'target-found', { nodeId: current, depth });
+			return true;
+		}
+		const next = neighborsOf(snapshot, current).filter(
+			(neighbor) => !pathNodes.includes(neighbor.nodeId) && neighbor.nodeId !== current
+		);
+		if (depth === maxDepth) {
+			if (next.length) event(events, 'cutoff', { nodeId: current, depth, maxDepth });
+			event(
+				events,
+				'backtrack',
+				{ nodeId: current },
+				[],
+				[{ inspector: 'stack', operation: 'pop' }]
+			);
+			return false;
+		}
+		for (const neighbor of next) {
+			event(events, 'inspect', { nodeId: neighbor.nodeId, edgeId: neighbor.edgeId, depth });
+			if (visit(neighbor.nodeId, [...pathNodes, current], [...pathEdges, neighbor.edgeId]))
+				return true;
+		}
+		event(events, 'backtrack', { nodeId: current }, [], [{ inspector: 'stack', operation: 'pop' }]);
+		return false;
+	};
+	visit(start, [], []);
+	const treeEdges = uniqueOrder
+		.slice(1)
+		.map((id) => firstIncoming.get(id))
+		.filter((id): id is string => Boolean(id));
+	return depthFirstResult('Depth-limited DFS', input, uniqueOrder, treeEdges, foundPath, events);
+}
+
 function reachableNegativeEdge(snapshot: GraphDocument, start: string): boolean {
 	const queue = [start];
 	const visited = new Set([start]);
@@ -366,6 +587,33 @@ export const bfsDefinition: AnalysisDefinition = {
 	execute: runBfs
 };
 
+export const dfsDefinition: AnalysisDefinition = {
+	id: 'dfs',
+	name: 'Depth-First Search',
+	category: 'Traversal',
+	description: 'Traverse or search by following one branch as deeply as possible.',
+	fields: traversalModeFields(),
+	execute: runDfs
+};
+
+export const depthLimitedDfsDefinition: AnalysisDefinition = {
+	id: 'depth-limited-dfs',
+	name: 'Depth-Limited DFS',
+	category: 'Traversal',
+	description: 'Traverse or search depth-first without expanding beyond a fixed depth.',
+	fields: traversalModeFields([
+		{
+			kind: 'number',
+			id: 'maxDepth',
+			label: 'Max depth',
+			required: true,
+			min: 0,
+			integer: true
+		}
+	]),
+	execute: runDepthLimitedDfs
+};
+
 export const dijkstraDefinition: AnalysisDefinition = {
 	id: 'dijkstra',
 	name: 'Dijkstra Shortest Path',
@@ -384,5 +632,7 @@ export const dijkstraDefinition: AnalysisDefinition = {
 
 export const analysisDefinitions = new Map<string, AnalysisDefinition>([
 	[bfsDefinition.id, bfsDefinition],
+	[dfsDefinition.id, dfsDefinition],
+	[depthLimitedDfsDefinition.id, depthLimitedDfsDefinition],
 	[dijkstraDefinition.id, dijkstraDefinition]
 ]);
