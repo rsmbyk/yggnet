@@ -402,6 +402,48 @@ function runDepthLimitedDfs(snapshot: GraphDocument, input: AnalysisInput): Anal
 	return depthFirstResult('Depth-limited DFS', input, uniqueOrder, treeEdges, foundPath, events);
 }
 
+function runIddfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
+	const phases: NonNullable<AnalysisOutput['result']['reveal']>['phases'] = [];
+	const events: AnalysisEvent[] = [];
+	const maximumSimpleDepth = Math.max(0, Object.keys(snapshot.nodes).length - 1);
+	let finalOutput: AnalysisOutput | null = null;
+	let finalDepth = 0;
+	for (let depth = 0; depth <= maximumSimpleDepth; depth += 1) {
+		if (depth > 0) event(events, 'restart-depth', { depth });
+		const iteration = runDepthLimitedDfs(snapshot, { ...input, maxDepth: depth });
+		for (const item of iteration.events) events.push({ ...item, sequence: events.length });
+		const iterationSteps = iteration.result.reveal?.phases[0]?.steps ?? [];
+		phases.push({
+			id: `depth-${depth}`,
+			steps: [
+				...(depth > 0 ? [{ actions: [{ kind: 'reset-footprint' as const }] }] : []),
+				...iterationSteps
+			]
+		});
+		finalOutput = iteration;
+		finalDepth = depth;
+		const found = iteration.result.outcome === 'complete' && input.mode === 'search';
+		const cutOff = iteration.events.some((item) => item.action === 'cutoff');
+		if (found || !cutOff) break;
+	}
+	if (!finalOutput) throw new Error('IDDFS requires a valid start node.');
+	const depthMetric = {
+		label:
+			input.mode === 'search' && finalOutput.result.outcome === 'complete'
+				? 'Found depth'
+				: 'Explored depth',
+		value: finalDepth
+	};
+	return {
+		result: {
+			...finalOutput.result,
+			metrics: [depthMetric, ...finalOutput.result.metrics],
+			reveal: { phases }
+		},
+		events
+	};
+}
+
 function runMultiSourceBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 	const starts = [...new Set((input.starts as string[]) ?? [])];
 	const search = input.mode === 'search';
@@ -907,6 +949,15 @@ export const depthLimitedDfsDefinition: AnalysisDefinition = {
 	execute: runDepthLimitedDfs
 };
 
+export const iddfsDefinition: AnalysisDefinition = {
+	id: 'iddfs',
+	name: 'Iterative Deepening DFS',
+	category: 'Traversal',
+	description: 'Repeat depth-limited DFS with increasing limits until found or exhausted.',
+	fields: traversalModeFields(),
+	execute: runIddfs
+};
+
 export const multiSourceBfsDefinition: AnalysisDefinition = {
 	id: 'multi-source-bfs',
 	name: 'Multi-source BFS',
@@ -968,6 +1019,7 @@ export const analysisDefinitions = new Map<string, AnalysisDefinition>([
 	[bfsDefinition.id, bfsDefinition],
 	[dfsDefinition.id, dfsDefinition],
 	[depthLimitedDfsDefinition.id, depthLimitedDfsDefinition],
+	[iddfsDefinition.id, iddfsDefinition],
 	[multiSourceBfsDefinition.id, multiSourceBfsDefinition],
 	[bidirectionalBfsDefinition.id, bidirectionalBfsDefinition],
 	[dijkstraDefinition.id, dijkstraDefinition]

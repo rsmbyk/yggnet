@@ -249,3 +249,46 @@ describe('multi-frontier breadth-first definitions', () => {
 		expect(output.result.metrics).toContainEqual({ label: 'Length', value: 3 });
 	});
 });
+
+describe('Iterative Deepening DFS', () => {
+	it('restarts the reveal for every depth while keeping the final found depth metric', () => {
+		const output = analysisDefinitions.get('iddfs')!.execute(
+			graph([
+				['A', 'B'],
+				['B', 'C'],
+				['C', 'D']
+			]),
+			{ mode: 'search', start: 'A', target: 'D' }
+		);
+
+		expect(output.result.outcome).toBe('complete');
+		expect(output.result.metrics).toContainEqual({ label: 'Found depth', value: 3 });
+		expect(output.result.reveal?.phases.map((phase) => phase.id)).toEqual([
+			'depth-0',
+			'depth-1',
+			'depth-2',
+			'depth-3'
+		]);
+		expect(output.result.reveal?.phases[1].steps[0]).toEqual({
+			actions: [{ kind: 'reset-footprint' }]
+		});
+		expect(output.result.artifacts.find((item) => item.kind === 'path')).toMatchObject({
+			nodeIds: ['A', 'B', 'C', 'D']
+		});
+		expect(output.events.filter((event) => event.action === 'restart-depth')).toHaveLength(3);
+	});
+
+	it('Traverse stops when an iteration exhausts the reachable graph', () => {
+		const output = analysisDefinitions.get('iddfs')!.execute(
+			graph([
+				['A', 'B'],
+				['B', 'C'],
+				['C', 'A']
+			]),
+			{ mode: 'traverse', start: 'A' }
+		);
+		expect(output.result.outcome).toBe('complete');
+		expect(output.result.metrics).toContainEqual({ label: 'Explored depth', value: 2 });
+		expect(output.result.reveal?.phases).toHaveLength(3);
+	});
+});
