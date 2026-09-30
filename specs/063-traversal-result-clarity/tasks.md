@@ -1,6 +1,6 @@
 # Tasks 063: Traversal result clarity and pacing
 
-- **Status:** Draft
+- **Status:** Accepted
 - **Plan:** [./plan.md](./plan.md)
 - **Spec:** [./spec.md](./spec.md)
 
@@ -38,7 +38,7 @@
   - Verify: focused Analyze E2E, then the full serial E2E suite
   - Files: `e2e/analyze-laboratory.e2e.ts`
 
-- [ ] **T0e — Owner acceptance of faster Reveal timing**
+- [x] **T0e — Owner acceptance of faster Reveal timing**
   - Acceptance: project owner explicitly Accepts the revision from a 180 ms Reveal step and
     300 ms IDDFS hold to a 100 ms Reveal step and 200 ms IDDFS hold
   - Verify: `plan.md`, `spec.md`, and `tasks.md` return to Accepted before product-code work
