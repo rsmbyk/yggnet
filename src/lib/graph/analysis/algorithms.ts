@@ -46,6 +46,17 @@ function appendPathReplay(
 	});
 }
 
+function oneObjectRevealSteps(steps: AnalysisRevealStep[]): AnalysisRevealStep[] {
+	return steps.flatMap((step) => {
+		const resets = step.actions.filter((action) => action.kind === 'reset-footprint');
+		const visualActions = step.actions.filter((action) => action.kind !== 'reset-footprint');
+		if (!visualActions.length) return [{ actions: resets }];
+		return visualActions.map((action, index) => ({
+			actions: [...(index === 0 ? resets : []), action]
+		}));
+	});
+}
+
 function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 	const start = node(input, 'start');
 	const search = input.mode === 'search';
@@ -173,7 +184,7 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 					...(path ? [{ label: 'Length', value: path.edgeIds.length }] : [])
 				],
 				artifacts,
-				reveal: { phases: [{ id: 'search', steps: revealSteps }] }
+				reveal: { phases: [{ id: 'search', steps: oneObjectRevealSteps(revealSteps) }] }
 			},
 			events
 		};
@@ -193,7 +204,7 @@ function runBfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 					entries: [{ nodeId: start, role: 'start' }]
 				}
 			],
-			reveal: { phases: [{ id: 'traversal', steps: revealSteps }] }
+			reveal: { phases: [{ id: 'traversal', steps: oneObjectRevealSteps(revealSteps) }] }
 		},
 		events
 	};
@@ -278,7 +289,7 @@ function depthFirstResult(
 				...(path ? [{ label: 'Length', value: path.edgeIds.length }] : [])
 			],
 			artifacts,
-			reveal: { phases: [{ id: 'search', steps: revealSteps }] }
+			reveal: { phases: [{ id: 'search', steps: oneObjectRevealSteps(revealSteps) }] }
 		},
 		events
 	};
@@ -478,7 +489,12 @@ function runIddfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput
 		result: {
 			...finalOutput.result,
 			metrics: [depthMetric, ...finalOutput.result.metrics],
-			reveal: { phases }
+			reveal: {
+				phases: phases.map((phase) => ({
+					...phase,
+					steps: oneObjectRevealSteps(phase.steps)
+				}))
+			}
 		},
 		events
 	};
@@ -640,7 +656,7 @@ function runRandomWalk(snapshot: GraphDocument, input: AnalysisInput): AnalysisO
 					]
 				}
 			],
-			reveal: { phases: [{ id: 'walk', steps: revealSteps }] }
+			reveal: { phases: [{ id: 'walk', steps: oneObjectRevealSteps(revealSteps) }] }
 		},
 		events
 	};
@@ -778,7 +794,7 @@ function runMultiSourceBfs(snapshot: GraphDocument, input: AnalysisInput): Analy
 				...(path ? [{ label: 'Length', value: path.edgeIds.length }] : [])
 			],
 			artifacts,
-			reveal: { phases: [{ id: 'combined', steps }] }
+			reveal: { phases: [{ id: 'combined', steps: oneObjectRevealSteps(steps) }] }
 		},
 		events
 	};
@@ -1034,7 +1050,7 @@ function runBidirectionalBfs(snapshot: GraphDocument, input: AnalysisInput): Ana
 					]
 				}
 			],
-			reveal: { phases: [{ id: 'bidirectional', steps }] }
+			reveal: { phases: [{ id: 'bidirectional', steps: oneObjectRevealSteps(steps) }] }
 		},
 		events
 	};

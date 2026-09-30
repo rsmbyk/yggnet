@@ -149,20 +149,12 @@ describe('BFS Search', () => {
 			nodeIds: ['A', 'B', 'C', 'D']
 		});
 		expect(output.result.reveal?.phases).toHaveLength(1);
-		expect(output.result.reveal?.phases[0].steps.slice(-3)).toEqual([
+		expect(output.result.reveal?.phases[0].steps.slice(-5)).toEqual([
 			{ actions: [{ kind: 'emphasize-node', nodeId: 'A' }] },
-			{
-				actions: [
-					{ kind: 'emphasize-edge', edgeId: 'e0' },
-					{ kind: 'emphasize-node', nodeId: 'B' }
-				]
-			},
-			{
-				actions: [
-					{ kind: 'emphasize-edge', edgeId: 'e2' },
-					{ kind: 'emphasize-node', nodeId: 'D' }
-				]
-			}
+			{ actions: [{ kind: 'emphasize-edge', edgeId: 'e0' }] },
+			{ actions: [{ kind: 'emphasize-node', nodeId: 'B' }] },
+			{ actions: [{ kind: 'emphasize-edge', edgeId: 'e2' }] },
+			{ actions: [{ kind: 'emphasize-node', nodeId: 'D' }] }
 		]);
 		expect(structuredClone(output.result.reveal)).toEqual(output.result.reveal);
 	});
@@ -273,6 +265,68 @@ describe('depth-first definitions', () => {
 	});
 });
 
+describe('traversal Reveal pacing', () => {
+	it('marks exactly one node or edge in every timed step for every traversal algorithm', () => {
+		const doc = graph([
+			['A', 'B'],
+			['A', 'C'],
+			['B', 'D'],
+			['C', 'D']
+		]);
+		const outputs = [
+			analysisDefinitions.get('bfs')!.execute(doc, {
+				mode: 'search',
+				start: 'A',
+				target: 'D'
+			}),
+			analysisDefinitions.get('dfs')!.execute(doc, {
+				mode: 'search',
+				start: 'A',
+				target: 'D'
+			}),
+			analysisDefinitions.get('depth-limited-dfs')!.execute(doc, {
+				mode: 'search',
+				start: 'A',
+				target: 'D',
+				maxDepth: 3
+			}),
+			analysisDefinitions.get('iddfs')!.execute(doc, {
+				mode: 'search',
+				start: 'A',
+				target: 'D'
+			}),
+			analysisDefinitions.get('multi-source-bfs')!.execute(doc, {
+				mode: 'search',
+				starts: ['A', 'C'],
+				target: 'D'
+			}),
+			analysisDefinitions.get('bidirectional-bfs')!.execute(doc, {
+				start: 'A',
+				target: 'D'
+			}),
+			analysisDefinitions.get('random-walk')!.execute(doc, {
+				mode: 'search',
+				start: 'A',
+				target: 'D',
+				maxSteps: 20,
+				seed: 7
+			})
+		];
+
+		for (const output of outputs) {
+			for (const phase of output.result.reveal?.phases ?? []) {
+				for (const step of phase.steps) {
+					const visualActions = step.actions.filter(
+						(action) => action.kind !== 'reset-footprint'
+					);
+					expect(visualActions).toHaveLength(1);
+					expect(visualActions[0].kind).toMatch(/^(reveal|revisit|emphasize)-(node|edge)$/);
+				}
+			}
+		}
+	});
+});
+
 describe('multi-frontier breadth-first definitions', () => {
 	it('retains a real discovery edge for every visited node after each phase root', () => {
 		const doc = graph([
@@ -317,7 +371,7 @@ describe('multi-frontier breadth-first definitions', () => {
 		}
 	});
 
-	it('Multi-source BFS reveals concurrent waves and uses source order to break path ties', () => {
+	it('Multi-source BFS reveals interleaved objects and uses source order to break path ties', () => {
 		const doc = graph([
 			['A', 'C'],
 			['B', 'D'],
@@ -335,17 +389,17 @@ describe('multi-frontier breadth-first definitions', () => {
 			edgeIds: ['e1', 'e3']
 		});
 		expect(output.result.reveal?.phases[0].steps[0]).toEqual({
-			actions: [
-				{ kind: 'reveal-node', nodeId: 'B', role: 'source' },
-				{ kind: 'reveal-node', nodeId: 'A', role: 'source' }
-			]
+			actions: [{ kind: 'reveal-node', nodeId: 'B', role: 'source' }]
 		});
-		expect(output.result.reveal?.phases[0].steps[1].actions).toEqual(
-			expect.arrayContaining([
-				{ kind: 'reveal-node', nodeId: 'D', role: 'frontier' },
-				{ kind: 'reveal-node', nodeId: 'C', role: 'frontier' }
-			])
-		);
+		expect(output.result.reveal?.phases[0].steps[1]).toEqual({
+			actions: [{ kind: 'reveal-node', nodeId: 'A', role: 'source' }]
+		});
+		expect(output.result.reveal?.phases[0].steps.slice(2, 6)).toEqual([
+			{ actions: [{ kind: 'reveal-edge', edgeId: 'e1', role: 'frontier' }] },
+			{ actions: [{ kind: 'reveal-node', nodeId: 'D', role: 'frontier' }] },
+			{ actions: [{ kind: 'reveal-edge', edgeId: 'e0', role: 'frontier' }] },
+			{ actions: [{ kind: 'reveal-node', nodeId: 'C', role: 'frontier' }] }
+		]);
 	});
 
 	it('Multi-source BFS returns one combined forest in Traverse mode', () => {
@@ -367,7 +421,7 @@ describe('multi-frontier breadth-first definitions', () => {
 		});
 	});
 
-	it('Bidirectional BFS follows incoming directed edges from Target and reveals both sides together', () => {
+	it('Bidirectional BFS follows incoming directed edges and interleaves both sides', () => {
 		const output = analysisDefinitions.get('bidirectional-bfs')!.execute(
 			graph([
 				['A', 'B', true],
@@ -382,10 +436,10 @@ describe('multi-frontier breadth-first definitions', () => {
 			edgeIds: ['e0', 'e1', 'e2']
 		});
 		expect(output.result.reveal?.phases[0].steps[0]).toEqual({
-			actions: [
-				{ kind: 'reveal-node', nodeId: 'A', role: 'start-side' },
-				{ kind: 'reveal-node', nodeId: 'D', role: 'target-side' }
-			]
+			actions: [{ kind: 'reveal-node', nodeId: 'A', role: 'start-side' }]
+		});
+		expect(output.result.reveal?.phases[0].steps[1]).toEqual({
+			actions: [{ kind: 'reveal-node', nodeId: 'D', role: 'target-side' }]
 		});
 		expect(output.result.metrics).toContainEqual({ label: 'Length', value: 3 });
 	});
@@ -625,14 +679,10 @@ describe('Random Walk', () => {
 
 		expect(metric(search, 'Steps taken')).toBe(1);
 		expect(search.result.outcome).toBe('complete');
-		expect(search.result.reveal?.phases[0].steps.slice(-2)).toEqual([
+		expect(search.result.reveal?.phases[0].steps.slice(-3)).toEqual([
 			{ actions: [{ kind: 'emphasize-node', nodeId: 'A' }] },
-			{
-				actions: [
-					{ kind: 'emphasize-edge', edgeId: 'e0' },
-					{ kind: 'emphasize-node', nodeId: 'B' }
-				]
-			}
+			{ actions: [{ kind: 'emphasize-edge', edgeId: 'e0' }] },
+			{ actions: [{ kind: 'emphasize-node', nodeId: 'B' }] }
 		]);
 		expect(metric(traverse, 'Steps taken')).toBe(2);
 		expect(traverse.events.at(-1)?.action).toBe('coverage-complete');
