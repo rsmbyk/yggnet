@@ -2109,7 +2109,7 @@
 						{#if field.kind === 'node'}
 							<NodeSearchSelect
 								nodes={nodePickerOptions}
-								value={String(activeAnalysisInput[field.id] ?? '')}
+								value={String(activeAnalysisInput[field.id] ?? field.defaultValue ?? '')}
 								testid={`analysis-field-${field.id}`}
 								ariaLabel={field.label}
 								placeholder="Choose…"
@@ -2164,7 +2164,7 @@
 							<select
 								class="slot-name-input"
 								data-testid={`analysis-field-${field.id}`}
-								value={String(activeAnalysisInput[field.id] ?? '')}
+								value={String(activeAnalysisInput[field.id] ?? field.defaultValue ?? '')}
 								onchange={(event) => app.setAnalysisInput(field.id, event.currentTarget.value)}
 							>
 								{#each field.options as option (option.value)}<option value={option.value}

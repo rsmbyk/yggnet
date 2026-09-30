@@ -405,6 +405,16 @@ function runDepthLimitedDfs(snapshot: GraphDocument, input: AnalysisInput): Anal
 function runIddfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput {
 	const phases: NonNullable<AnalysisOutput['result']['reveal']>['phases'] = [];
 	const events: AnalysisEvent[] = [];
+	const reachable = new Set([node(input, 'start')]);
+	const reachableQueue = [...reachable];
+	while (reachableQueue.length) {
+		const current = reachableQueue.shift()!;
+		for (const neighbor of neighborsOf(snapshot, current)) {
+			if (reachable.has(neighbor.nodeId)) continue;
+			reachable.add(neighbor.nodeId);
+			reachableQueue.push(neighbor.nodeId);
+		}
+	}
 	const maximumSimpleDepth = Math.max(0, Object.keys(snapshot.nodes).length - 1);
 	let finalOutput: AnalysisOutput | null = null;
 	let finalDepth = 0;
@@ -424,7 +434,13 @@ function runIddfs(snapshot: GraphDocument, input: AnalysisInput): AnalysisOutput
 		finalDepth = depth;
 		const found = iteration.result.outcome === 'complete' && input.mode === 'search';
 		const cutOff = iteration.events.some((item) => item.action === 'cutoff');
-		if (found || !cutOff) break;
+		const visitedArtifact = iteration.result.artifacts.find(
+			(artifact) => artifact.kind === 'ordered-nodes'
+		);
+		const exploredAllReachable =
+			visitedArtifact?.kind === 'ordered-nodes' &&
+			new Set(visitedArtifact.nodeIds).size === reachable.size;
+		if (found || exploredAllReachable || !cutOff) break;
 	}
 	if (!finalOutput) throw new Error('IDDFS requires a valid start node.');
 	const depthMetric = {

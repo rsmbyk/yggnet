@@ -288,8 +288,8 @@ describe('Iterative Deepening DFS', () => {
 			{ mode: 'traverse', start: 'A' }
 		);
 		expect(output.result.outcome).toBe('complete');
-		expect(output.result.metrics).toContainEqual({ label: 'Explored depth', value: 2 });
-		expect(output.result.reveal?.phases).toHaveLength(3);
+		expect(output.result.metrics).toContainEqual({ label: 'Explored depth', value: 1 });
+		expect(output.result.reveal?.phases).toHaveLength(2);
 	});
 });
 

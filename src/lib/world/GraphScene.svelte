@@ -367,8 +367,8 @@
 		return ids;
 	});
 	const emphasizedResultEntities = $derived.by(() => {
-		const nodes = new Set<string>();
-		const edges = new Set<string>();
+		const nodes = new SvelteSet<string>();
+		const edges = new SvelteSet<string>();
 		if (!analysisTimelineFrame) return { nodes, edges };
 		for (const artifact of activeAnalysis?.result.artifacts ?? []) {
 			if (!analysisTimelineFrame.emphasizedArtifactIds.has(artifact.id)) continue;

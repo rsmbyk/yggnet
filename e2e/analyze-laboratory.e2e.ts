@@ -44,7 +44,7 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 			})
 		)
 		.toEqual(generateButtonStyle);
-	await expect(page.getByTestId('analysis-picker')).toContainText('BFS Traversal');
+	await expect(page.getByTestId('analysis-picker')).toContainText('Breadth-First Search');
 	await expect(page.getByTestId('analysis-picker')).toContainText('Dijkstra Shortest Path');
 	await expect(page.getByTestId('analysis-field-start-open')).toContainText('Choose…');
 	await page.getByTestId('analysis-field-start-open').click();
@@ -57,7 +57,7 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 	await expect(page.getByTestId('analysis-result-panel')).toBeVisible();
 	await expect(
 		page.getByTestId('analysis-result-panel').getByRole('heading', { level: 2 })
-	).toHaveText('BFS Traversal');
+	).toHaveText('Breadth-First Search');
 	await expect(page.getByTestId('analysis-result')).toContainText('Visited');
 	await expect(page.getByTestId('analysis-result').getByLabel('Analysis legend')).toContainText(
 		'Start'
@@ -169,4 +169,71 @@ test('Dijkstra reports edge length and total cost', async ({ page }) => {
 	await expect(metricRows).toHaveCount(2);
 	await expect(metricRows.nth(0).locator('dt')).toHaveCount(1);
 	await expect(metricRows.nth(0).locator('dd')).toHaveCount(1);
+});
+
+test('traversal catalog exposes conditional Search fields and final IDDFS depth', async ({
+	page
+}) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'grid', { rows: 2, columns: 3 });
+	await openTool(page, 'analyze');
+	const picker = page.getByTestId('analysis-picker');
+	for (const name of [
+		'Breadth-First Search',
+		'Depth-First Search',
+		'Multi-source BFS',
+		'Depth-Limited DFS',
+		'Iterative Deepening DFS',
+		'Bidirectional BFS',
+		'Random Walk',
+		'Dijkstra Shortest Path'
+	]) {
+		await expect(picker).toContainText(name);
+	}
+
+	await picker.selectOption('iddfs');
+	await expect(page.getByTestId('analysis-field-mode')).toHaveValue('traverse');
+	await expect(page.getByTestId('analysis-field-target')).toHaveCount(0);
+	await page.getByTestId('analysis-field-mode').selectOption('search');
+	await expect(page.getByTestId('analysis-field-target')).toBeVisible();
+	await chooseNode(page, 'analysis-field-start');
+	await chooseNode(page, 'analysis-field-target', 1);
+	await page.getByTestId('run-analysis').click();
+	await expect(page.getByTestId('analysis-result')).toContainText('Found depth');
+});
+
+test('Multi-source preserves source order and Random Walk reports its optional seed', async ({
+	page
+}) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'grid', { rows: 2, columns: 3 });
+	await openTool(page, 'analyze');
+	await page.getByTestId('analysis-picker').selectOption('multi-source-bfs');
+	for (let index = 0; index < 2; index += 1) {
+		await page.getByTestId('analysis-field-starts-add-open').click();
+		await page.getByTestId('analysis-field-starts-add').getByRole('option').first().click();
+	}
+	await expect(page.getByTestId('analysis-field-starts').locator('li')).toHaveCount(2);
+	await expect(
+		page.getByTestId('analysis-field-starts').locator('li').nth(0).locator('b')
+	).toHaveText('1');
+	await expect(
+		page.getByTestId('analysis-field-starts').locator('li').nth(1).locator('b')
+	).toHaveText('2');
+	await page.getByTestId('run-analysis').click();
+	await expect(page.getByTestId('analysis-result')).toContainText('Sources');
+	await expect(page.getByTestId('analysis-result')).toContainText('2');
+
+	await page.getByTestId('close-analysis').click();
+	await page.getByTestId('analysis-picker').selectOption('random-walk');
+	await chooseNode(page, 'analysis-field-start');
+	await page.getByTestId('analysis-field-maxSteps').fill('3');
+	await page.getByTestId('analysis-field-seed').fill('7');
+	await page.getByTestId('run-analysis').click();
+	await expect(page.getByTestId('analysis-result')).toContainText('Seed');
+	await expect(page.getByTestId('analysis-result')).toContainText('7');
+	await expect(page.getByTestId('analysis-result-panel')).toHaveAttribute(
+		'data-reveal-state',
+		/.+/
+	);
 });
