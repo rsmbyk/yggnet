@@ -2,6 +2,13 @@ export const RESULT_IDLE_REPLAY_MS = 10_000;
 
 export type AnalysisPrimaryTransport = 'play' | 'pause' | 'restart';
 
+export function analysisResultStatus(
+	outcome: 'complete' | 'no-result',
+	summary: string
+): { heading: string; summary: string } | null {
+	return outcome === 'no-result' ? { heading: 'No result', summary } : null;
+}
+
 export function analysisTransportState(
 	cursor: number,
 	eventCount: number,

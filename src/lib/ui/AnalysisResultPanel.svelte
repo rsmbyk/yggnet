@@ -4,12 +4,14 @@
 	import { frameAt } from '$lib/graph';
 	import { SvelteSet } from 'svelte/reactivity';
 	import {
+		analysisRevealDuration,
 		analysisRevealStepCount,
 		analysisResultLandmarks,
 		analysisResultSequence,
 		revealDuration
 	} from '$lib/world/analysis-decoration';
 	import {
+		analysisResultStatus,
 		analysisTransportState,
 		formatInspectorValue,
 		inspectorValueSummary,
@@ -30,6 +32,9 @@
 		current ? analysisResultLandmarks(current.result.artifacts) : {}
 	);
 	const resultLandmarkRoles = $derived(new Set(Object.values(resultLandmarks).flat()));
+	const resultStatus = $derived(
+		current ? analysisResultStatus(current.result.outcome, current.result.summary) : null
+	);
 	const transport = $derived(
 		current
 			? analysisTransportState(current.cursor, current.trace.events.length, current.playing)
@@ -82,10 +87,10 @@
 			? analysisRevealStepCount(current.result.reveal)
 			: analysisResultSequence(current.result.artifacts).length;
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		const timer = window.setTimeout(
-			() => app.skipAnalysisReveal(),
-			reduced ? 0 : 300 + revealDuration(count)
-		);
+		const duration = current.result.reveal
+			? analysisRevealDuration(current.result.reveal)
+			: revealDuration(count);
+		const timer = window.setTimeout(() => app.skipAnalysisReveal(), reduced ? 0 : 300 + duration);
 		return () => window.clearTimeout(timer);
 	});
 
@@ -207,6 +212,12 @@
 
 		{#if current.panel === 'result'}
 			<section class="panel-content" data-testid="analysis-result">
+				{#if resultStatus}
+					<section class="result-status" role="status" data-testid="analysis-no-result">
+						<h3>{resultStatus.heading}</h3>
+						<p>{resultStatus.summary}</p>
+					</section>
+				{/if}
 				{#if current.result.metrics.length > 0}
 					<dl class="metrics">
 						{#each current.result.metrics as metric (metric.label)}
@@ -217,7 +228,6 @@
 						{/each}
 					</dl>
 				{/if}
-				{#if current.result.outcome === 'no-result'}<p class="notice">No result was found.</p>{/if}
 				<section class="trace-section result-legend">
 					<h3>Legend</h3>
 					<div class="legend legend--result" aria-label="Analysis legend">
@@ -719,6 +729,29 @@
 		margin: 0;
 		color: #7b5721;
 		font-size: 0.78rem;
+	}
+	.result-status {
+		display: grid;
+		gap: 0.3rem;
+		margin: 0 0 0.85rem;
+		padding: 0.8rem 0.9rem;
+		border: 1px solid rgba(239, 107, 115, 0.55);
+		border-left-width: 4px;
+		border-radius: 0.45rem;
+		background: rgba(239, 107, 115, 0.12);
+		color: #f7d2d5;
+	}
+	.result-status h3,
+	.result-status p {
+		margin: 0;
+	}
+	.result-status h3 {
+		font-size: 0.95rem;
+		letter-spacing: 0.02em;
+	}
+	.result-status p {
+		font-size: 0.8rem;
+		line-height: 1.4;
 	}
 
 	@media (prefers-reduced-motion: reduce) {

@@ -27,10 +27,15 @@
 	import { createNodeSphereGeometry } from './node-sphere';
 	import {
 		analysisGlyphScale,
+		analysisLandmarkScale,
 		analysisRevealFrame,
+		analysisRevealProgress as timelineRevealProgress,
 		analysisRevealStepCount,
+		analysisResultEdgeRole,
 		analysisResultLandmarks,
+		analysisResultNodeRole,
 		analysisResultSequence,
+		analysisRoleColor,
 		landmarkGlyph,
 		primaryAnalysisRole,
 		revealProgress
@@ -316,7 +321,9 @@
 				const count = analysisRevealTimeline
 					? analysisRevealStepCount(analysisRevealTimeline)
 					: analysisResultEntities.length;
-				analysisRevealProgress = revealProgress(now - started, count, false);
+				analysisRevealProgress = analysisRevealTimeline
+					? timelineRevealProgress(analysisRevealTimeline, now - started, false)
+					: revealProgress(now - started, count, false);
 				if (analysisRevealProgress < 1) frameId = requestAnimationFrame(animate);
 			};
 			frameId = requestAnimationFrame(animate);
@@ -348,6 +355,13 @@
 		if (index < 0) return 0;
 		return Math.min(1, Math.max(0, analysisRevealProgress * analysisResultEntities.length - index));
 	}
+	function emphasizedEdgeProgress(id: string): number {
+		if (!analysisTimelineFrame) return 0;
+		return (
+			analysisTimelineFrame.activeEmphasizedEdgeIds.get(id) ??
+			(analysisTimelineFrame.emphasizedEdgeIds.has(id) ? 1 : 0)
+		);
+	}
 	const analysisResultNodeIds = $derived.by(() => {
 		const ids = new SvelteSet<string>();
 		if (activeAnalysis?.panel !== 'result') return ids;
@@ -366,28 +380,13 @@
 		}
 		return ids;
 	});
-	const emphasizedResultEntities = $derived.by(() => {
-		const nodes = new SvelteSet<string>();
-		const edges = new SvelteSet<string>();
-		if (!analysisTimelineFrame) return { nodes, edges };
-		for (const artifact of activeAnalysis?.result.artifacts ?? []) {
-			if (!analysisTimelineFrame.emphasizedArtifactIds.has(artifact.id)) continue;
-			if ('nodeIds' in artifact) artifact.nodeIds.forEach((id) => nodes.add(id));
-			if ('edgeIds' in artifact) artifact.edgeIds.forEach((id) => edges.add(id));
-		}
-		return { nodes, edges };
-	});
 	const analysisNodeRoles = $derived.by(() => {
 		if (analysisFrame) return analysisFrame.roles.nodes;
 		return Object.fromEntries(
 			[...analysisResultNodeIds].map((id) => {
-				const role = analysisTimelineFrame?.revisitedNodeIds.has(id)
-					? 'revisited'
-					: emphasizedResultEntities.nodes.has(id)
-						? 'result'
-						: analysisTimelineFrame?.emphasizedArtifactIds.size
-							? 'settled'
-							: (analysisTimelineFrame?.nodeRoles.get(id) ?? 'result');
+				const role = analysisTimelineFrame
+					? analysisResultNodeRole(analysisTimelineFrame, id)
+					: 'result';
 				return [id, [role] as AnalysisRole[]];
 			})
 		);
@@ -396,11 +395,9 @@
 		if (analysisFrame) return analysisFrame.roles.edges;
 		return Object.fromEntries(
 			[...analysisResultEdgeIds].map((id) => {
-				const role = emphasizedResultEntities.edges.has(id)
-					? 'result'
-					: analysisTimelineFrame?.emphasizedArtifactIds.size
-						? 'settled'
-						: (analysisTimelineFrame?.edgeRoles.get(id) ?? 'result');
+				const role = analysisTimelineFrame
+					? analysisResultEdgeRole(analysisTimelineFrame, id)
+					: 'result';
 				return [id, [role] as AnalysisRole[]];
 			})
 		);
@@ -532,7 +529,6 @@
 	}
 
 	function edgeColor(id: string): string {
-		if (activeAnalysis && analysisEdgeRoles[id]) return '#e8c56a';
 		if (app.overlay.kind === 'compare') {
 			const inA = compareSeriesAEdges?.has(id);
 			const inB = compareSeriesBEdges?.has(id);
@@ -583,20 +579,6 @@
 	function attachAnalysisGlyph(object: THREE.Object3D) {
 		(object as THREE.Mesh).raycast = () => {};
 		object.renderOrder = 12;
-	}
-
-	function analysisColor(role: AnalysisRole | null): string {
-		if (role === 'result') return '#e8c56a';
-		if (role === 'revisited') return '#fb923c';
-		if (role === 'start-side') return '#67e8f9';
-		if (role === 'target-side') return '#4ade80';
-		if (role === 'source') return '#67e8f9';
-		if (role === 'walk') return '#a78bfa';
-		if (role === 'current') return '#67e8f9';
-		if (role === 'inspecting') return '#f0a65a';
-		if (role === 'frontier') return '#a78bfa';
-		if (role === 'settled') return '#4ade80';
-		return '#ef6b73';
 	}
 
 	function attachShaftMesh(mesh: THREE.InstancedMesh) {
@@ -2142,7 +2124,7 @@
 			{@const landmarks = resultLandmarks[nodeId] ?? []}
 			{@const landmark = landmarkGlyph(landmarks)}
 			{@const glyphScale = analysisGlyphScale(app.camera.distance)}
-			{@const color = analysisColor(role)}
+			{@const color = analysisRoleColor(role)}
 			{#if role === 'revisited'}
 				<T.Mesh
 					position={[pos.x, pos.y, pos.z]}
@@ -2155,7 +2137,11 @@
 				</T.Mesh>
 			{/if}
 			{#if landmark === 'start'}
-				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+				<T.Mesh
+					position={[pos.x, pos.y, pos.z]}
+					scale={analysisLandmarkScale(landmark)}
+					oncreate={attachAnalysisGlyph}
+				>
 					<T.OctahedronGeometry args={[NODE_RADIUS * 1.45, 0]} />
 					<T.MeshBasicMaterial
 						color="#67e8f9"
@@ -2166,7 +2152,7 @@
 					/>
 				</T.Mesh>
 			{:else if landmark === 'end'}
-				<Billboard position={[pos.x, pos.y, pos.z]}>
+				<Billboard position={[pos.x, pos.y, pos.z]} scale={analysisLandmarkScale(landmark)}>
 					<T.Mesh oncreate={attachAnalysisGlyph}>
 						<T.RingGeometry args={[NODE_RADIUS * 1.12, NODE_RADIUS * 1.22, 40]} />
 						<T.MeshBasicMaterial
@@ -2191,7 +2177,11 @@
 					</T.Mesh>
 				</Billboard>
 			{:else if landmark === 'combined'}
-				<T.Mesh position={[pos.x, pos.y, pos.z]} scale={glyphScale} oncreate={attachAnalysisGlyph}>
+				<T.Mesh
+					position={[pos.x, pos.y, pos.z]}
+					scale={analysisLandmarkScale(landmark)}
+					oncreate={attachAnalysisGlyph}
+				>
 					<T.OctahedronGeometry args={[NODE_RADIUS * 1.45, 0]} />
 					<T.MeshBasicMaterial
 						color="#e8c56a"
@@ -2201,7 +2191,7 @@
 						depthWrite={false}
 					/>
 				</T.Mesh>
-				<Billboard position={[pos.x, pos.y, pos.z]}>
+				<Billboard position={[pos.x, pos.y, pos.z]} scale={analysisLandmarkScale(landmark)}>
 					<T.Mesh oncreate={attachAnalysisGlyph}>
 						<T.RingGeometry args={[NODE_RADIUS * 1.38, NODE_RADIUS * 1.5, 40]} />
 						<T.MeshBasicMaterial
@@ -2257,7 +2247,7 @@
 					args={[EDGE_SHAFT_RADIUS * 2.2, EDGE_SHAFT_RADIUS * 2.2, geo.len, 10]}
 				/>
 				<T.MeshBasicMaterial
-					color={analysisColor(role)}
+					color={analysisRoleColor(role)}
 					transparent
 					opacity={0.82}
 					depthWrite={false}
@@ -2265,6 +2255,33 @@
 			</T.Mesh>
 		{/if}
 	{/each}
+	{#if analysisTimelineFrame}
+		{#each [...analysisTimelineFrame.emphasizedEdgeIds] as edgeId (edgeId)}
+			{@const edge = app.document.edges[edgeId]}
+			{#if edge}
+				{@const direction = analysisResultEdgeDirections[edgeId]}
+				{@const from = nodePos(direction?.from ?? edge.from)}
+				{@const fullTo = nodePos(direction?.to ?? edge.to)}
+				{@const to = partialEdgeEnd(from, fullTo, emphasizedEdgeProgress(edgeId))}
+				{@const geo = edgeObject(from, to)}
+				<T.Mesh
+					position={[geo.mid.x, geo.mid.y, geo.mid.z]}
+					quaternion={geo.quaternion}
+					oncreate={attachAnalysisGlyph}
+				>
+					<T.CylinderGeometry
+						args={[EDGE_SHAFT_RADIUS * 2.7, EDGE_SHAFT_RADIUS * 2.7, geo.len, 10]}
+					/>
+					<T.MeshBasicMaterial
+						color={analysisRoleColor('result')}
+						transparent
+						opacity={0.96}
+						depthWrite={false}
+					/>
+				</T.Mesh>
+			{/if}
+		{/each}
+	{/if}
 {/if}
 
 {#key shaftCap}

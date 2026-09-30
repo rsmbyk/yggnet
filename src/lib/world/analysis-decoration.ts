@@ -110,6 +110,34 @@ export function analysisGlyphScale(_cameraDistance: number): number {
 	return 1;
 }
 
+export function analysisLandmarkScale(
+	landmark: Exclude<ReturnType<typeof landmarkGlyph>, null>
+): number {
+	return landmark === 'combined' ? 1.55 : 1.4;
+}
+
+export function analysisRoleColor(role: AnalysisRole | null): string {
+	if (role === 'result') return '#e8c56a';
+	if (role === 'active' || role === 'inspecting' || role === 'revisited') return '#f0a65a';
+	if (role === 'start-side' || role === 'source' || role === 'current') return '#67e8f9';
+	if (role === 'target-side') return '#4ade80';
+	if (role === 'settled') return '#4f9d69';
+	return '#ef6b73';
+}
+
+export function analysisResultNodeRole(frame: AnalysisRevealFrame, nodeId: string): AnalysisRole {
+	if (frame.revisitedNodeIds.has(nodeId)) return 'revisited';
+	if (frame.emphasizedNodeIds.has(nodeId)) return 'result';
+	const semanticRole = frame.nodeRoles.get(nodeId);
+	if (semanticRole === 'start-side' || semanticRole === 'target-side' || semanticRole === 'source')
+		return semanticRole;
+	return frame.activeNodeIds.has(nodeId) ? 'active' : 'settled';
+}
+
+export function analysisResultEdgeRole(frame: AnalysisRevealFrame, edgeId: string): AnalysisRole {
+	return frame.activeEdgeIds.has(edgeId) ? 'active' : 'settled';
+}
+
 export function analysisResultSequence(artifacts: AnalysisArtifact[]): AnalysisResultEntity[] {
 	const entities: AnalysisResultEntity[] = [];
 	const seen = new Set<string>();

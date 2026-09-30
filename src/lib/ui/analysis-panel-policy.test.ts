@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	RESULT_IDLE_REPLAY_MS,
+	analysisResultStatus,
 	analysisTransportState,
 	formatInspectorValue,
 	inspectorValueSummary,
@@ -51,5 +52,13 @@ describe('analysis panel policy', () => {
 			primary: 'restart',
 			resetDisabled: false
 		});
+	});
+
+	it('provides a prominent status heading and the algorithm summary only for no-result', () => {
+		expect(analysisResultStatus('no-result', 'Target was not reached.')).toEqual({
+			heading: 'No result',
+			summary: 'Target was not reached.'
+		});
+		expect(analysisResultStatus('complete', 'Found a path.')).toBeNull();
 	});
 });
