@@ -4,6 +4,7 @@
 	import { frameAt } from '$lib/graph';
 	import { SvelteSet } from 'svelte/reactivity';
 	import {
+		analysisLandmarkScale,
 		analysisRevealDuration,
 		analysisRevealStepCount,
 		analysisResultLandmarks,
@@ -35,6 +36,25 @@
 	const resultStatus = $derived(
 		current ? analysisResultStatus(current.result.outcome, current.result.summary) : null
 	);
+	const resultRevealDuration = $derived(
+		current?.result.reveal
+			? analysisRevealDuration(current.result.reveal)
+			: current
+				? revealDuration(analysisResultSequence(current.result.artifacts).length)
+				: 0
+	);
+	const pathReplayOrder = $derived.by(() => {
+		if (!current?.result.reveal) return '';
+		return current.result.reveal.phases
+			.flatMap((phase) => phase.steps)
+			.flatMap((step) => step.actions)
+			.flatMap((action) => {
+				if (action.kind === 'emphasize-node') return [`node:${action.nodeId}`];
+				if (action.kind === 'emphasize-edge') return [`edge:${action.edgeId}`];
+				return [];
+			})
+			.join(',');
+	});
 	const transport = $derived(
 		current
 			? analysisTransportState(current.cursor, current.trace.events.length, current.playing)
@@ -181,6 +201,12 @@
 		aria-modal="true"
 		aria-label={`${definition?.name ?? 'Analysis'} ${current.panel}`}
 		data-reveal-state={current.reveal}
+		data-reveal-phase-count={current.result.reveal?.phases.length ?? 1}
+		data-reveal-duration-ms={resultRevealDuration}
+		data-path-replay-order={pathReplayOrder}
+		data-landmark-start-scale={analysisLandmarkScale('start')}
+		data-landmark-end-scale={analysisLandmarkScale('end')}
+		data-exploration-edge-roles="active settled"
 		bind:this={panelElement}
 	>
 		<header class="panel-header">

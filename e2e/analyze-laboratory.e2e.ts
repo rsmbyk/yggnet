@@ -197,9 +197,12 @@ test('traversal catalog exposes conditional Search fields and final IDDFS depth'
 	await page.getByTestId('analysis-field-mode').selectOption('search');
 	await expect(page.getByTestId('analysis-field-target')).toBeVisible();
 	await chooseNode(page, 'analysis-field-start');
-	await chooseNode(page, 'analysis-field-target', 1);
+	await chooseNode(page, 'analysis-field-target', 5);
 	await page.getByTestId('run-analysis').click();
 	await expect(page.getByTestId('analysis-result')).toContainText('Found depth');
+	const iddfsPanel = page.getByTestId('analysis-result-panel');
+	expect(Number(await iddfsPanel.getAttribute('data-reveal-phase-count'))).toBeGreaterThan(1);
+	expect(Number(await iddfsPanel.getAttribute('data-reveal-duration-ms'))).toBeGreaterThan(1300);
 });
 
 test('Multi-source preserves source order and Random Walk reports its optional seed', async ({
@@ -227,11 +230,19 @@ test('Multi-source preserves source order and Random Walk reports its optional s
 	await page.getByTestId('close-analysis').click();
 	await page.getByTestId('analysis-picker').selectOption('random-walk');
 	await chooseNode(page, 'analysis-field-start');
-	await page.getByTestId('analysis-field-maxSteps').fill('3');
+	await page.getByTestId('analysis-field-maxSteps').fill('50');
 	await page.getByTestId('analysis-field-seed').fill('7');
 	await page.getByTestId('run-analysis').click();
 	await expect(page.getByTestId('analysis-result')).toContainText('Seed');
 	await expect(page.getByTestId('analysis-result')).toContainText('7');
+	const stepsRow = page
+		.getByTestId('analysis-result')
+		.locator('.metrics > div')
+		.filter({
+			has: page.locator('dt', { hasText: 'Steps taken' })
+		});
+	await expect(stepsRow).toHaveCount(1);
+	expect(Number(await stepsRow.locator('dd').textContent())).toBeLessThan(50);
 	await expect(page.getByTestId('analysis-result-panel')).toHaveAttribute(
 		'data-reveal-state',
 		/.+/
@@ -255,6 +266,11 @@ test('DFS, depth limits, and bidirectional Search run through the generated Anal
 	await chooseNode(page, 'analysis-field-target', 1);
 	await page.getByTestId('run-analysis').click();
 	await expect(page.getByTestId('analysis-result')).toContainText('Length');
+	const searchPanel = page.getByTestId('analysis-result-panel');
+	await expect(searchPanel).toHaveAttribute('data-path-replay-order', /^node:.+,edge:.+,node:.+/);
+	await expect(searchPanel).toHaveAttribute('data-landmark-start-scale', '1.4');
+	await expect(searchPanel).toHaveAttribute('data-landmark-end-scale', '1.4');
+	await expect(searchPanel).toHaveAttribute('data-exploration-edge-roles', 'active settled');
 
 	await page.getByTestId('close-analysis').click();
 	await picker.selectOption('depth-limited-dfs');
@@ -265,6 +281,9 @@ test('DFS, depth limits, and bidirectional Search run through the generated Anal
 	await page.getByTestId('run-analysis').click();
 	await expect(page.getByTestId('analysis-result')).toContainText('Visited');
 	await expect(page.getByTestId('analysis-result')).not.toContainText('Length');
+	const noResult = page.getByTestId('analysis-no-result');
+	await expect(noResult.getByRole('heading', { name: 'No result' })).toBeVisible();
+	await expect(noResult).toContainText('Target was not reached.');
 
 	await page.getByTestId('close-analysis').click();
 	await picker.selectOption('bidirectional-bfs');
@@ -275,5 +294,9 @@ test('DFS, depth limits, and bidirectional Search run through the generated Anal
 	await expect(page.getByTestId('analysis-result-panel')).toHaveAttribute(
 		'data-reveal-state',
 		/.+/
+	);
+	await expect(page.getByTestId('analysis-result-panel')).toHaveAttribute(
+		'data-exploration-edge-roles',
+		'active settled'
 	);
 });
