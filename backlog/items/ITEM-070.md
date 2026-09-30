@@ -1,6 +1,6 @@
 ---
 id: ITEM-070
-status: speccing
+status: ready
 title: 'Traversal and search algorithms'
 type: feat
 priority: P1

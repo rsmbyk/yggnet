@@ -4,7 +4,7 @@ item: ITEM-070
 type: feat
 feature_area: analyze
 bump: minor
-status: Draft
+status: Accepted
 title: 'Traversal and search algorithms'
 created: 2026-09-30
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Traversal and search algorithms
 
 - **ID:** 062
-- **Status:** Draft
+- **Status:** Accepted
 - **Item:** ITEM-070
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
