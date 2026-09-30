@@ -4,7 +4,7 @@ item: ITEM-071
 type: fix
 feature_area: analyze
 bump: patch
-status: Accepted
+status: Draft
 title: 'Traversal result clarity and pacing'
 created: 2026-09-30
 updated: 2026-09-30
@@ -13,7 +13,7 @@ updated: 2026-09-30
 # Spec: Traversal result clarity and pacing
 
 - **ID:** 063
-- **Status:** Accepted
+- **Status:** Draft
 - **Item:** ITEM-071
 - **Plan:** [./plan.md](./plan.md)
 - **Tasks:** [./tasks.md](./tasks.md)
@@ -29,10 +29,11 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 
 - Generic first-option initialization for unset Analyze enum fields
 - More prominent shared Start, End, and combined landmark glyphs
-- Common traversal reveal roles for active exploration, completed footprint, and final path replay
+- Common traversal reveal roles for orange traversed objects and a green final path replay
 - Removal of purple Multi-source edge overlays and green target-side Bidirectional edge overlays
 - Prominent no-result Result status
-- A shared 600 ms pause between result-reveal phases
+- A fixed 180 ms reveal-step interval shared by every traversal algorithm
+- A shorter shared 300 ms pause between IDDFS result-reveal phases
 - Random Walk early termination on Target found or complete outgoing-reachable coverage
 - Actual Random Walk step metric and summaries
 - Regression tests and visible acceptance flows
@@ -56,28 +57,29 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 
 ### Reveal color and ordering semantics
 
-- The currently advancing traversal node or edge uses the shared active-exploration role rendered in orange.
-- Once an exploration step completes, its retained footprint uses the shared completed-exploration role rendered in muted green.
-- Traverse mode finishes with its whole retained footprint in the completed-exploration role; no final entity remains orange.
-- A successful Search first completes exploration through the Target, then replays the returned path in order from Start to Target using the shared final-path role rendered in gold.
-- The final frame retains the explored footprint as subordinate muted green and keeps the complete returned path gold.
-- A no-result Search retains only its completed explored footprint and never emits path-replay steps.
+- Every traversed node and every edge actually used to discover, revisit, or reach it uses orange.
+- An active step may use a brighter orange pulse, but completed traversal remains orange rather than changing to green.
+- Traverse mode finishes with its whole retained traversal footprint orange and introduces no final-path color.
+- A successful Search first reveals the orange traversal through the Target, then replays the returned path in order from Start to Target using green.
+- The final frame retains non-path explored objects in orange and keeps the complete returned path green.
+- A no-result Search retains only its orange explored footprint and never emits path-replay steps.
 - Color names define the semantic palette; exact accessible color values remain renderer-owned.
 
 ### Endpoints
 
 - Start and End landmarks are shared across algorithms and remain visible above footprint and path decoration.
-- Their world glyphs are materially larger and higher contrast than ordinary traversal rings.
+- Their world glyphs are at least 1.8 times the ordinary traversal-ring scale, higher contrast, and use a solid visual element rather than only a thin wireframe.
 - Start and End use different geometry, not color alone. A node serving both roles uses a distinct combined marker.
 - Endpoint glyphs remain legible with reduced motion and when the graph is viewed at supported zoom distances.
 
 ### Multi-frontier edges
 
 - Multi-source and Bidirectional BFS retain simultaneous same-wave reveal steps.
-- Every revealed line references an existing graph edge and uses that edge's actual endpoints; analysis never fabricates a connection.
+- Every revealed line references an existing graph edge and is drawn strictly between that edge's stored `from` and `to` endpoints; analysis never infers endpoints from traversal-order indexes or fabricates a connection.
+- Whenever a non-start node becomes visited, the real discovery/walk edge that reached it is highlighted in the same reveal step and remains in the traversal footprint.
 - Multi-source edges do not use a purple frontier line.
 - Bidirectional target-side edges do not use a green line.
-- All exploration edges use the common active/completed traversal palette.
+- All exploration edges use the common orange traversal palette.
 - Source-side and target-side identity is carried by distinct node-frontier markers while those waves are active.
 - The analysis overlay aligns with the underlying edge and must not read as a second offset or detached line.
 
@@ -88,10 +90,13 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 - Status is conveyed through text and structure, not color alone, and is announced accessibly when the Result opens.
 - The explored footprint remains visible behind the Result panel.
 
-### IDDFS pacing
+### Reveal pacing and IDDFS
+
+- Every traversal algorithm uses the same fixed 180 ms interval per generic reveal step; concurrent actions inside one step still appear together.
+- Result size does not compress or expand that per-step interval.
 
 - Each IDDFS depth remains a separate generic reveal phase beginning with a footprint reset after depth 0.
-- A 600 ms hold occurs between the completion of one phase and the reset/start of the next.
+- A 300 ms hold occurs between the completion of one phase and the reset/start of the next.
 - There is no hold before depth 0 or after the final phase.
 - The final Found depth or Explored depth metric remains immutable throughout playback.
 - Reduced-motion mode resolves the complete result immediately without timed holds while preserving the final phase's footprint and path.
@@ -120,28 +125,27 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 - **And** the control never appears empty
 - **And** switching to Search still reveals and requires Target
 
-### Scenario: Traverse settles into one completed footprint
+### Scenario: Traverse finishes in orange
 
 - **Given** any systematic traversal runs in Traverse mode
 - **When** its Result reveal reaches the final step
-- **Then** the active step was orange only while advancing
-- **And** every retained visited node and edge is muted green in the completed frame
-- **And** no final node or edge remains orange
+- **Then** every retained visited node and every discovery/walk edge is orange
+- **And** no green final-path decoration is introduced
 
 ### Scenario: Search replays the found path
 
 - **Given** a traversal Search reaches its Target after exploring one or more branches
 - **When** exploration through the Target finishes
-- **Then** the explored footprint settles to muted green
+- **Then** the explored footprint remains orange
 - **And** the returned path replays again from Start to Target in order
-- **And** replayed path nodes and edges are gold
-- **And** the final frame keeps the footprint subordinate and the full path gold
+- **And** replayed path nodes and edges are green
+- **And** the final frame keeps non-path traversal orange and the full path green
 
 ### Scenario: Endpoints dominate result decoration
 
 - **Given** a traversal Result is revealing or complete
 - **When** Start and End are visible in the world
-- **Then** their distinct larger glyphs remain recognizable above footprint and path decoration
+- **Then** their distinct solid, high-contrast glyphs remain recognizable above footprint and path decoration at at least 1.8 times ordinary traversal-ring scale
 - **And** a shared Start/End node receives the combined glyph
 - **And** meaning does not depend on color alone
 
@@ -152,13 +156,13 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 - **Then** a prominent `No result` status surface appears before metrics and legend
 - **And** it includes the explanatory summary
 - **And** assistive technology receives the status
-- **And** the explored footprint remains visible without gold path decoration
+- **And** the explored footprint remains visible without green path decoration
 
 ### Scenario: IDDFS separates depth iterations
 
 - **Given** IDDFS requires more than one depth iteration
 - **When** Result reveal moves from depth N to depth N+1
-- **Then** the completed depth-N footprint holds for 600 ms
+- **Then** the completed depth-N footprint holds for 300 ms
 - **And** the next phase resets and begins after that hold
 - **And** the final depth metric never changes during playback
 - **But when** reduced motion is active
@@ -176,15 +180,16 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 
 - **Given** Multi-source or Bidirectional BFS reveals simultaneous frontier waves
 - **When** exploration edges appear
-- **Then** every line aligns with a real graph edge
-- **And** edges use the common orange-to-muted-green traversal palette
+- **Then** every line uses the stored endpoints of a real graph edge
+- **And** every visited non-start node retains the real edge that reached it
+- **And** edges remain orange unless they belong to the green returned path
 - **And** no purple Multi-source edge or green target-side edge appears
 - **And** distinct node-frontier markers still communicate which side is expanding
 
 ## Boundaries
 
 - **Always:** keep reveal actions structured-clone-safe; use generic roles and scheduling; preserve simultaneous wave steps; keep graph coverage at least 90%; add Playwright for visible behavior.
-- **Ask first:** change the 600 ms phase hold, change the shared palette meanings, remove Random Walk Max steps, or change Trace speed.
+- **Ask first:** change the 180 ms reveal interval, change the 300 ms phase hold, change the shared palette meanings, remove Random Walk Max steps, or change Trace speed.
 - **Never:** add algorithm-specific UI/world components, fabricate graph edges, persist reveal decoration, hide explored Search footprints, or use color as the only endpoint/frontier distinction.
 
 ## Commands

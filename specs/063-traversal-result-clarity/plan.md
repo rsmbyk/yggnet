@@ -1,6 +1,6 @@
 # Plan 063: Traversal result clarity and pacing
 
-- **Status:** Accepted
+- **Status:** Draft
 - **Spec:** [./spec.md](./spec.md)
 - **Tasks:** [./tasks.md](./tasks.md)
 - **Item:** ITEM-071
@@ -16,10 +16,11 @@ The traversal algorithms in draft PR #38 are functionally correct, but several p
 
 - Materialize the first enum option as the generic default when an Analyze enum field is unset
 - Strengthen Start and End world landmarks without changing the underlying graph
-- Use one consistent reveal language: orange active step, muted-green completed footprint, gold successful path replay
+- Use one consistent reveal language: orange traversed objects and a green successful path replay; Traverse finishes entirely orange
 - Remove side-specific purple/green edge lines from Multi-source and Bidirectional BFS while retaining simultaneous frontier meaning on nodes
 - Present no-result as a prominent accessible status panel
-- Add a generic 600 ms pause between reveal phases, used by IDDFS between depth iterations
+- Use one fixed 180 ms reveal-step interval for every traversal algorithm
+- Use a shorter generic 300 ms pause between IDDFS depth iterations
 - Stop Random Walk at Target found, full outgoing-reachable coverage, dead end, or Max steps, whichever occurs first
 - Report actual traversed edge count as `Steps taken`
 - Domain, renderer-policy, UI, and Playwright regression coverage
@@ -35,23 +36,23 @@ The traversal algorithms in draft PR #38 are functionally correct, but several p
 ## Approach
 
 1. Normalize an unset enum field from its first declared option and keep the generated select synchronized with that normalized value. Remembered explicit selections remain unchanged.
-2. Extend the generic result-reveal schedule so phase boundaries have a renderer-owned 600 ms hold. Reveal actions remain semantic and do not encode colors or wall-clock timing.
-3. Treat exploration and path replay as two visual layers. The currently advancing entity is orange; completed exploration settles to muted green; a successful Search appends ordered path-replay steps in gold while leaving the footprint subordinate.
-4. Keep multi-frontier concurrency in reveal steps, but express source-side identity on node glyphs only. Edge decoration always follows a real graph edge, uses the common traversal palette, and aligns with the base edge rather than resembling a duplicate connection.
-5. Strengthen endpoint glyph size, contrast, and depth behavior through the shared landmark renderer. Promote no-result from a small paragraph to a labeled status surface.
+2. Extend the generic result-reveal schedule so every algorithm advances at one fixed 180 ms interval and IDDFS phase boundaries have a renderer-owned 300 ms hold. Reveal actions remain semantic and do not encode colors or wall-clock timing.
+3. Treat exploration and path replay as two visual layers. Traversed nodes and discovery/walk edges remain orange; a successful Search appends ordered path-replay steps in green. Traverse and unsuccessful Search never introduce a second result color.
+4. Keep multi-frontier concurrency in reveal steps, but express source-side identity on node glyph geometry only. Derive every overlay line from the referenced graph edge's real `from`/`to` endpoints; never infer forest geometry by pairing edge and traversal-order indexes.
+5. Strengthen endpoint glyph size, contrast, fill, and depth behavior through the shared landmark renderer so Start/End dominate ordinary traversal rings. Promote no-result from a small paragraph to a labeled status surface.
 6. Precompute the nodes reachable from Random Walk's Start under outgoing-edge semantics. Terminate immediately when the Target is found or every reachable node has been visited, while retaining dead-end and Max steps termination.
 
 ## TDD
 
 - Domain/app: enum first-option normalization; Search reveal ordering; Random Walk termination reasons and exact step counts
-- World policy: phase-gap schedule; active/settled/path roles; endpoint prominence policy; no duplicate or fabricated edge directions
+- World policy: fixed reveal interval; shorter phase gap; orange traversal/green path roles; endpoint prominence; no duplicate or fabricated edge directions
 - UI: prominent no-result semantics and synchronized Mode selection
 - E2E: Mode default, endpoint/result presentation, path replay state, IDDFS pacing, Multi-source/Bidirectional edge palette, Random Walk early termination
 - Commands: `npm run check`; `npm run lint`; `npm run test:coverage`; `npm run test:e2e -- --workers=1`; `npm run build`
 
 ## Risks
 
-- A phase pause can accidentally slow ordinary one-phase reveals; apply it only between phases, never before the first or after the last.
+- Fixed step timing can make very large results lengthy; keep one explicit interval for semantic consistency and apply the phase pause only between phases.
 - Random Walk full coverage is only meaningful over nodes reachable through legal outgoing moves; use that exact set and keep Max steps as a safety bound.
 - Removing side colors from edges could hide bidirectional concurrency; preserve side identity with distinct node-frontier markers and simultaneous reveal steps.
 - Base and analysis edge layers can visually diverge; assert that every revealed edge references a real edge and shares its endpoints.

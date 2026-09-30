@@ -1,6 +1,6 @@
 ---
 id: ITEM-071
-status: ready
+status: speccing
 title: 'Clarify traversal results and reveal pacing'
 type: fix
 priority: P1
@@ -24,7 +24,8 @@ Refine the traversal work already under review so generated enum inputs never ap
 
 ## Notes
 
-- Active traversal steps use orange, completed exploration uses muted green, and a successful path replays in gold.
+- Traversed nodes and used edges remain orange; successful Search paths replay in green; Traverse stays entirely orange.
+- All traversal algorithms share a fixed 180 ms reveal-step interval, with a shorter 300 ms hold between IDDFS depths.
 - Multi-source and bidirectional edge overlays must not look like extra graph edges. Frontier side identity belongs on node markers rather than purple or green edge lines.
 - Random Walk keeps Max steps as a safety bound while stopping earlier on Target, full reachable coverage, or dead end.
 - This item refines SPEC-062 in the same draft PR. Its patch intent is subsumed by that PR's existing minor `0.40.0` release.
@@ -33,7 +34,7 @@ Refine the traversal work already under review so generated enum inputs never ap
 
 - Mode begins on its first option in both UI and normalized analysis state.
 - Start/End landmarks remain obvious throughout Result reveal.
-- Successful Search reveals exploration first, then replays only the found path in a distinct color.
+- Successful Search reveals orange exploration first, then replays only the found path in green.
 - No result is presented as a prominent status panel.
 - IDDFS visibly pauses between depth iterations.
 - Random Walk reports actual traversed steps and stops at the earliest valid termination condition.
