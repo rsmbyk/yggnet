@@ -63,6 +63,14 @@ test('one Analyze tool runs BFS and exposes reversible trace playback', async ({
 		'Start'
 	);
 	await expect(page.getByTestId('analysis-result').locator('.legend-mark--start')).toHaveText('');
+	await expect(page.getByTestId('analysis-result-panel')).toHaveAttribute(
+		'data-reveal-step-ms',
+		'180'
+	);
+	await expect(page.getByTestId('analysis-result-panel')).toHaveAttribute(
+		'data-reveal-duration-ms',
+		'3060'
+	);
 	await expect(page.getByRole('button', { name: 'Replay' })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Analyze steps' })).toHaveCount(0);
 	await expect(page.getByTestId('skip-reveal')).toHaveCount(0);
