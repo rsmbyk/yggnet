@@ -19,6 +19,10 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 - Add seeded Random Walk with an optional seed, reproducible walks, reported seed metrics, and clear revisit animation without badges.
 - Preserve explored search footprints in Result reveals, animate multi-source waves concurrently, and replay every IDDFS depth while keeping final metrics immutable.
 
+### Fixed
+
+- Clarify traversal Results with prominent endpoints, orange traversal footprints, green returned paths, real-edge Multi-source overlays, consistent reveal timing, and shorter IDDFS depth pauses.
+
 ## [0.39.0] - 2026-09-29
 
 ### Added

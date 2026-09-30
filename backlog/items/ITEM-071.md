@@ -1,6 +1,6 @@
 ---
 id: ITEM-071
-status: ready
+status: in_review
 title: 'Clarify traversal results and reveal pacing'
 type: fix
 priority: P1
@@ -13,7 +13,7 @@ pr: 38
 archived_at:
 archive_reason:
 bump: patch
-release_version:
+release_version: 0.40.0
 ---
 
 # ITEM-071: Clarify traversal results and reveal pacing

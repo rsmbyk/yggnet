@@ -202,10 +202,11 @@ Make traversal Result reveals immediately understandable. Inputs begin in a vali
 
 ## Traceability
 
-- Planned domain/app tests: `src/lib/graph/analysis/**`, `src/lib/session/**`
-- Planned renderer policy/tests: `src/lib/world/analysis-decoration.ts`, `src/lib/world/analysis-decoration.test.ts`, `src/lib/world/GraphScene.svelte`
-- Planned UI: `src/lib/ui/ManagerPanel.svelte`, `src/lib/ui/AnalysisResultPanel.svelte`
-- Planned acceptance flow: `e2e/analyze-laboratory.e2e.ts`
+- Domain/app implementation and tests: `src/lib/graph/analysis/algorithms.ts`, `src/lib/graph/analysis/contracts.ts`, `src/lib/graph/analysis/traversal-algorithms.test.ts`, `src/lib/session/app.svelte.ts`, `src/lib/session/app.test.ts`
+- Renderer policy and tests: `src/lib/world/analysis-decoration.ts`, `src/lib/world/analysis-decoration.test.ts`, `src/lib/world/GraphScene.svelte`
+- Result and generated-form UI: `src/lib/ui/ManagerPanel.svelte`, `src/lib/ui/AnalysisResultPanel.svelte`, `src/lib/ui/analysis-panel-policy.ts`, `src/lib/ui/analysis-panel-policy.test.ts`
+- Acceptance flow: `e2e/analyze-laboratory.e2e.ts`
+- Final verification: `npm run check`; `npm run lint`; `npm run test:coverage` (440 passed, 90.67% branches); `npm run test:e2e -- --workers=1` (58 passed); `npm run build`
 
 ## Relationship to SPEC-062
 
