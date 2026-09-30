@@ -41,8 +41,8 @@ Status moves follow [`docs/PROCESS.md`](../docs/PROCESS.md) (Draft â†’ Accept â†
 
 ## Ready
 
-| ID | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
-| -- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
+| ID  | Title | Summary | Type | Priority | Effort | Spec | Bump | Updated |
+| --- | ----- | ------- | ---- | -------- | ------ | ---- | ---- | ------- |
 
 ## In progress
 
