@@ -28,7 +28,7 @@ export function createCurrentAnalysis(
 ): CurrentAnalysis {
 	return {
 		algorithmId,
-		input: structuredClone(input),
+		input: structuredClone(output.effectiveInput ?? input),
 		result: structuredClone(output.result),
 		trace: buildAnalysisTrace(output.events),
 		sourceRevision,

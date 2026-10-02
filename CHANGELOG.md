@@ -10,6 +10,36 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 -
 
+## [0.41.0] - 2026-10-02
+
+### Added
+
+- Add 0–1 BFS, Bellman–Ford, DAG shortest paths, A*, bidirectional Dijkstra, connectivity analysis,
+  spanning trees, centrality, coloring, matching, and flow analysis to Analyze.
+- Add exact routes and graph-set optimization, graph metrics and structure detection, community
+  detection, and planarity testing/embedding.
+- Add score-scaled centrality rings, accessible rankings, and camera-facing rank tooltips.
+
+### Changed
+
+- Define shared Analyze visualization roles and improve grouped, tabular, expandable Result
+  presentation with pinned controls and readable status surfaces.
+- Group related Generate fields, remove stale direction cones after graph replacement, and refine
+  the Last result and Tags focus/hover affordances.
+
+## [0.40.0] - 2026-09-30
+
+### Added
+
+- Add Traverse and Search modes for breadth-first, depth-first, depth-limited, iterative-deepening, and multi-source graph traversal.
+- Add search-only Bidirectional BFS with simultaneous start-side and target-side result reveals.
+- Add seeded Random Walk with an optional seed, reproducible walks, reported seed metrics, and clear revisit animation without badges.
+- Preserve explored search footprints in Result reveals, animate multi-source waves concurrently, and replay every IDDFS depth while keeping final metrics immutable.
+
+### Fixed
+
+- Clarify traversal Results with prominent endpoints, orange traversal footprints, green returned paths, real-edge Multi-source overlays, consistent reveal timing, and shorter IDDFS depth pauses.
+
 ## [0.39.0] - 2026-09-29
 
 ### Added

@@ -2,6 +2,15 @@ export const RESULT_IDLE_REPLAY_MS = 10_000;
 
 export type AnalysisPrimaryTransport = 'play' | 'pause' | 'restart';
 
+export function analysisResultStatus(
+	outcome: 'complete' | 'no-result' | 'rejected',
+	summary: string
+): { heading: string; summary: string; kind: 'no-result' | 'rejected' } | null {
+	if (outcome === 'no-result') return { heading: 'No result', summary, kind: 'no-result' };
+	if (outcome === 'rejected') return { heading: 'Rejected', summary, kind: 'rejected' };
+	return null;
+}
+
 export function analysisTransportState(
 	cursor: number,
 	eventCount: number,

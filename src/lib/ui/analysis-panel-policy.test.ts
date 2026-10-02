@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	RESULT_IDLE_REPLAY_MS,
+	analysisResultStatus,
 	analysisTransportState,
 	formatInspectorValue,
 	inspectorValueSummary,
@@ -51,5 +52,19 @@ describe('analysis panel policy', () => {
 			primary: 'restart',
 			resetDisabled: false
 		});
+	});
+
+	it('distinguishes eligible no-result from rejected analyses', () => {
+		expect(analysisResultStatus('no-result', 'Target was not reached.')).toEqual({
+			heading: 'No result',
+			summary: 'Target was not reached.',
+			kind: 'no-result'
+		});
+		expect(analysisResultStatus('rejected', 'This graph has directed edges.')).toEqual({
+			heading: 'Rejected',
+			summary: 'This graph has directed edges.',
+			kind: 'rejected'
+		});
+		expect(analysisResultStatus('complete', 'Found a path.')).toBeNull();
 	});
 });

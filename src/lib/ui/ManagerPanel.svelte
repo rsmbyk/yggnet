@@ -4,6 +4,7 @@
 		ARCHIMEDEAN_LABELS,
 		ARCHIMEDEAN_SOLIDS,
 		ATTACHMENTS_FIELD_HELP,
+		activeAnalysisFields,
 		BRANCHING_FIELD_HELP,
 		CHORD_FIELD_HELP,
 		COMMUNITY_P_BETWEEN_HELP,
@@ -47,6 +48,7 @@
 	import { cssLengthToPx, toolsPanelMaxHeight, toolsPanelOverflows } from './tools-panel-limit';
 	import TagPicker from './TagPicker.svelte';
 	import NodeSearchSelect from './NodeSearchSelect.svelte';
+	import NodeSetSearchSelect from './NodeSetSearchSelect.svelte';
 
 	let { section }: { section: PanelSection } = $props();
 
@@ -196,6 +198,23 @@
 		app.analysisDefinitions.find((definition) => definition.id === app.analysis.algorithmId)
 	);
 	const activeAnalysisInput = $derived(app.analysis.inputs[app.analysis.algorithmId] ?? {});
+	const visibleAnalysisFields = $derived(
+		activeAnalysisDefinition
+			? activeAnalysisFields(activeAnalysisDefinition, activeAnalysisInput)
+			: []
+	);
+	const analysisDefinitionGroups = $derived.by(() => {
+		const groups: { category: string; definitions: typeof app.analysisDefinitions }[] = [];
+		for (const definition of app.analysisDefinitions) {
+			let group = groups.find((candidate) => candidate.category === definition.category);
+			if (!group) {
+				group = { category: definition.category, definitions: [] };
+				groups.push(group);
+			}
+			group.definitions.push(definition);
+		}
+		return groups;
+	});
 
 	const listSearchActive = $derived(section === 'nodes' || section === 'edges');
 	const listSearchQuery = $derived(section === 'edges' ? edgeSearchQuery : nodeSearchQuery);
@@ -650,9 +669,18 @@
 			{:else if section === 'analyze' && app.analysis.current?.panel === 'closed'}
 				<button
 					type="button"
+					class="btn-with-icon"
 					data-testid="view-last-analysis"
-					onclick={() => app.viewLastAnalysis()}>Last result</button
+					onclick={() => app.viewLastAnalysis()}
 				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path
+							fill="currentColor"
+							d="M12 4a8 8 0 1 0 7.45 5.1h-2.2A6 6 0 1 1 12 6V9l4-4-4-4v3zm-1 3v6l5 3 1-1.7-4-2.3V7z"
+						/>
+					</svg>
+					Last result
+				</button>
 			{/if}
 		</div>
 		{#if section === 'tags'}
@@ -1259,7 +1287,7 @@
 							</label>
 						{/if}
 						{#if genFields.includes('density')}
-							<label>
+							<label class:generate-field-full-row={app.generateForm.kind === 'bipartite'}>
 								Density
 								<input
 									class="slot-name-input"
@@ -1332,27 +1360,27 @@
 								<p class="hint" id="generate-branching-help">{BRANCHING_FIELD_HELP}</p>
 							</label>
 						{/if}
-						{#if genFields.includes('left')}
-							<label>
-								Left
-								<input
-									class="slot-name-input"
-									type="number"
-									min={fieldLimit('left')?.min}
-									bind:value={app.generateForm.left}
-								/>
-							</label>
-						{/if}
-						{#if genFields.includes('right')}
-							<label>
-								Right
-								<input
-									class="slot-name-input"
-									type="number"
-									min={fieldLimit('right')?.min}
-									bind:value={app.generateForm.right}
-								/>
-							</label>
+						{#if genFields.includes('left') && genFields.includes('right')}
+							<div class="generate-field-pair" data-testid="generate-pair-left-right">
+								<label>
+									Left
+									<input
+										class="slot-name-input"
+										type="number"
+										min={fieldLimit('left')?.min}
+										bind:value={app.generateForm.left}
+									/>
+								</label>
+								<label>
+									Right
+									<input
+										class="slot-name-input"
+										type="number"
+										min={fieldLimit('right')?.min}
+										bind:value={app.generateForm.right}
+									/>
+								</label>
+							</div>
 						{/if}
 						{#if genFields.includes('attachments')}
 							<label>
@@ -1444,7 +1472,32 @@
 								</p>
 							</label>
 						{/if}
-						{#if genFields.includes('rows')}
+						{#if genFields.includes('rows') && genFields.includes('columns')}
+							<div class="generate-field-pair" data-testid="generate-pair-rows-columns">
+								<label>
+									Rows
+									<input
+										class="slot-name-input"
+										type="number"
+										min={fieldLimit('rows')?.min}
+										max={fieldLimit('rows')?.max}
+										data-testid="generate-rows"
+										bind:value={app.generateForm.rows}
+									/>
+								</label>
+								<label>
+									Columns
+									<input
+										class="slot-name-input"
+										type="number"
+										min={fieldLimit('columns')?.min}
+										max={fieldLimit('columns')?.max}
+										data-testid="generate-columns"
+										bind:value={app.generateForm.columns}
+									/>
+								</label>
+							</div>
+						{:else if genFields.includes('rows')}
 							<label>
 								Rows
 								<input
@@ -1456,8 +1509,7 @@
 									bind:value={app.generateForm.rows}
 								/>
 							</label>
-						{/if}
-						{#if genFields.includes('columns')}
+						{:else if genFields.includes('columns')}
 							<label>
 								Columns
 								<input
@@ -1609,33 +1661,33 @@
 								<p class="hint" id="generate-extent-help">{EXTENT_FIELD_HELP}</p>
 							</label>
 						{/if}
-						{#if genFields.includes('turns')}
-							<label>
-								Turns
-								<input
-									class="slot-name-input"
-									type="number"
-									min={fieldLimit('turns')?.min}
-									step="0.5"
-									aria-describedby="generate-turns-help"
-									bind:value={app.generateForm.turns}
-								/>
-								<p class="hint" id="generate-turns-help">{TURNS_FIELD_HELP}</p>
-							</label>
-						{/if}
-						{#if genFields.includes('chord')}
-							<label>
-								Chord
-								<input
-									class="slot-name-input"
-									type="number"
-									min={fieldLimit('chord')?.min}
-									max={fieldLimit('chord')?.max}
-									aria-describedby="generate-chord-help"
-									bind:value={app.generateForm.chord}
-								/>
-								<p class="hint" id="generate-chord-help">{CHORD_FIELD_HELP}</p>
-							</label>
+						{#if genFields.includes('turns') && genFields.includes('chord')}
+							<div class="generate-field-pair" data-testid="generate-pair-turns-chord">
+								<label>
+									Turns
+									<input
+										class="slot-name-input"
+										type="number"
+										min={fieldLimit('turns')?.min}
+										step="0.5"
+										aria-describedby="generate-turns-help"
+										bind:value={app.generateForm.turns}
+									/>
+									<p class="hint" id="generate-turns-help">{TURNS_FIELD_HELP}</p>
+								</label>
+								<label>
+									Chord
+									<input
+										class="slot-name-input"
+										type="number"
+										min={fieldLimit('chord')?.min}
+										max={fieldLimit('chord')?.max}
+										aria-describedby="generate-chord-help"
+										bind:value={app.generateForm.chord}
+									/>
+									<p class="hint" id="generate-chord-help">{CHORD_FIELD_HELP}</p>
+								</label>
+							</div>
 						{/if}
 						{#if genFields.includes('rings')}
 							<label>
@@ -2090,29 +2142,43 @@
 						value={app.analysis.algorithmId}
 						onchange={(event) => app.setAnalysisAlgorithm(event.currentTarget.value)}
 					>
-						{#each app.analysisDefinitions as definition (definition.id)}
-							<option value={definition.id}>{definition.name}</option>
+						{#each analysisDefinitionGroups as group (group.category)}
+							<optgroup label={group.category}>
+								{#each group.definitions as definition (definition.id)}
+									<option value={definition.id}>{definition.name}</option>
+								{/each}
+							</optgroup>
 						{/each}
 					</select>
 				</label>
 				<p class="hint">{activeAnalysisDefinition?.description}</p>
-				{#each activeAnalysisDefinition?.fields ?? [] as field (field.id)}
+				{#each visibleAnalysisFields as field (field.id)}
 					<label>
 						{field.label}
 						{#if field.kind === 'node'}
 							<NodeSearchSelect
 								nodes={nodePickerOptions}
-								value={String(activeAnalysisInput[field.id] ?? '')}
+								value={String(activeAnalysisInput[field.id] ?? field.defaultValue ?? '')}
 								testid={`analysis-field-${field.id}`}
 								ariaLabel={field.label}
 								placeholder="Choose…"
 								onChange={(id) => app.setAnalysisInput(field.id, id)}
 							/>
+						{:else if field.kind === 'node-set'}
+							<NodeSetSearchSelect
+								nodes={nodePickerOptions}
+								value={Array.isArray(activeAnalysisInput[field.id])
+									? (activeAnalysisInput[field.id] as string[])
+									: []}
+								testid={`analysis-field-${field.id}`}
+								ariaLabel={field.label}
+								onChange={(ids) => app.setAnalysisInput(field.id, ids)}
+							/>
 						{:else if field.kind === 'edge'}
 							<select
 								class="slot-name-input"
 								data-testid={`analysis-field-${field.id}`}
-								value={String(activeAnalysisInput[field.id] ?? '')}
+								value={String(activeAnalysisInput[field.id] ?? field.defaultValue ?? '')}
 								onchange={(event) =>
 									app.setAnalysisInput(field.id, event.currentTarget.value || undefined)}
 							>
@@ -2133,9 +2199,10 @@
 							<input
 								class="slot-name-input"
 								type="number"
+								data-testid={`analysis-field-${field.id}`}
 								min={field.min}
 								max={field.max}
-								value={String(activeAnalysisInput[field.id] ?? '')}
+								value={String(activeAnalysisInput[field.id] ?? field.defaultValue ?? '')}
 								onchange={(event) =>
 									app.setAnalysisInput(
 										field.id,
@@ -2145,7 +2212,8 @@
 						{:else if field.kind === 'enum'}
 							<select
 								class="slot-name-input"
-								value={String(activeAnalysisInput[field.id] ?? '')}
+								data-testid={`analysis-field-${field.id}`}
+								value={String(activeAnalysisInput[field.id] ?? field.defaultValue ?? '')}
 								onchange={(event) => app.setAnalysisInput(field.id, event.currentTarget.value)}
 							>
 								{#each field.options as option (option.value)}<option value={option.value}
@@ -2874,13 +2942,36 @@
 		min-width: 0;
 	}
 
+	.generate-field-pair {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: start;
+		gap: 0.35rem 0.45rem;
+		min-width: 0;
+		grid-column: 1 / -1;
+	}
+
+	.generate-field-pair label {
+		margin-bottom: 0;
+		min-width: 0;
+	}
+
 	.generate-fields .slot-name-input,
 	.generate-form > label .slot-name-input {
 		flex: 0 0 auto;
 	}
 
-	.generate-fields label:last-child:nth-child(odd) {
+	.generate-fields > label:last-child {
 		grid-column: 1 / -1;
+	}
+
+	.generate-field-full-row {
+		grid-column: 1 / -1;
+		grid-row: 2;
+	}
+
+	.generate-fields:has(.generate-field-full-row) > .generate-field-pair {
+		grid-row: 1;
 	}
 
 	.generate-form input[type='number'] {
@@ -2901,50 +2992,38 @@
 		flex: 0 0 auto;
 	}
 
-	.generate-form > button {
-		flex: 0 0 auto;
-	}
-
-	.generate-form > button.generate-submit {
-		align-self: stretch;
-		padding: 0.55rem 1rem;
-		font-weight: 600;
-		letter-spacing: 0.02em;
-		background: var(--yg-accent);
-		color: #f4f8f9;
-		border-color: color-mix(in srgb, var(--yg-accent) 70%, #062e34);
-	}
-
-	.generate-form > button.generate-submit:hover:not(:disabled) {
-		background: color-mix(in srgb, var(--yg-accent) 88%, #062e34);
-		border-color: color-mix(in srgb, var(--yg-accent) 55%, #062e34);
-		color: #f4f8f9;
-	}
-
-	.generate-form > button:disabled {
-		opacity: 0.45;
-		cursor: not-allowed;
-	}
-
 	.manager__footer > button.generate-submit {
 		align-self: stretch;
 		padding: 0.55rem 1rem;
 		font-weight: 600;
 		letter-spacing: 0.02em;
-		background: var(--yg-accent);
+		background: color-mix(in srgb, var(--yg-accent) 72%, #062e34);
 		color: #f4f8f9;
 		border-color: color-mix(in srgb, var(--yg-accent) 70%, #062e34);
 	}
 
 	.manager__footer > button.generate-submit:hover:not(:disabled) {
-		background: color-mix(in srgb, var(--yg-accent) 88%, #062e34);
-		border-color: color-mix(in srgb, var(--yg-accent) 55%, #062e34);
+		background: color-mix(in srgb, var(--yg-accent) 58%, #062e34);
+		border-color: color-mix(in srgb, var(--yg-accent) 45%, #062e34);
 		color: #f4f8f9;
+	}
+
+	.manager__footer > button.generate-submit:focus-visible {
+		background: color-mix(in srgb, var(--yg-accent) 58%, #062e34);
+		color: #f4f8f9;
+		outline: 3px solid #f4f8f9;
+		outline-offset: 2px;
 	}
 
 	.manager__footer > button.generate-submit:disabled {
 		opacity: 0.45;
 		cursor: not-allowed;
+	}
+
+	@media (max-width: 420px) {
+		.generate-field-pair {
+			grid-template-columns: minmax(0, 1fr);
+		}
 	}
 
 	.generate-checks .check {
@@ -2998,7 +3077,9 @@
 	   catcher whose hover is drawn by `.tags-tool-row` itself. Letting the generic
 	   button hover paint it would stack a second translucent layer over the card
 	   and make the text band read lighter than the gap between the rows. */
-	button:hover:not(:disabled):not(.active):not(.selected):not(.tags-tool-row-main) {
+	button:hover:not(:disabled):not(.active):not(.selected):not(.tags-tool-row-main):not(
+			.generate-submit
+		) {
 		background: rgba(255, 255, 255, 0.72);
 	}
 
@@ -3668,13 +3749,9 @@
 		outline: none;
 	}
 
-	/* The ring means "this tag is in focus" — never "the editor is open", so
-	   opening the editor must not outline the row. :focus-visible is kept as a
-	   second trigger so keyboard users can still see where they are; both share
-	   one declaration so the ring never changes appearance between them. */
-	.tags-tool-row.focused,
+	/* Keep keyboard focus distinct from the row's active tag-filter state. */
 	.tags-tool-row:has(:focus-visible) {
-		outline: 2px solid color-mix(in srgb, var(--yg-accent) 65%, transparent);
+		outline: 2px solid color-mix(in srgb, #0b6e7a 82%, var(--yg-fg));
 		outline-offset: 1px;
 	}
 
@@ -3683,6 +3760,10 @@
 	   fill. The chip under the pointer still lifts via the generic button hover. */
 	.tags-tool-row:hover {
 		background: rgba(255, 255, 255, 0.72);
+	}
+
+	.tags-tool-row.focused:hover {
+		background: color-mix(in srgb, var(--yg-accent-soft) 55%, var(--yg-chip));
 	}
 
 	.tags-tool-row:hover .tags-tool-actions .icon-btn {

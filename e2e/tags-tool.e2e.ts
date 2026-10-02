@@ -203,7 +203,9 @@ test('SPEC-054 panel header row polish', async ({ page }) => {
 	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
 });
 
-test('tag row ring marks focus, not the open editor', async ({ page }) => {
+test('focused tag rows avoid the green ring and white hover while keyboard focus stays visible', async ({
+	page
+}) => {
 	await page.goto('/');
 	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
 
@@ -240,7 +242,13 @@ test('tag row ring marks focus, not the open editor', async ({ page }) => {
 	// Adding the tag to focus rings the row.
 	await page.getByTestId('tags-toggle-focus-alpha').click();
 	await expect(row).toHaveClass(/focused/);
-	await expect(row).toHaveCSS('outline-style', 'solid');
+	await expect(row).toHaveCSS('outline-style', 'none');
+	await row.hover();
+	const hoverBackground = await row.evaluate(
+		(element) => getComputedStyle(element).backgroundColor
+	);
+	expect(hoverBackground).not.toBe('rgba(255, 255, 255, 0.72)');
+	await expect(row.locator('.tags-tool-label')).toBeVisible();
 });
 
 test('Nodes list search shows Tags optgroup and keyword row', async ({ page }) => {
