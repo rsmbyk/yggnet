@@ -6,20 +6,59 @@ the shared world renderer owns those decisions.
 
 ## Role contract
 
-| Semantic role          | Meaning                                        | Result/Trace treatment                                                 |
-| ---------------------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
-| `current`              | Node currently being processed                 | Bright cyan, solid pulsing glyph                                       |
-| `frontier`             | Discovered work waiting to be processed        | Violet, thin wireframe glyph                                           |
-| `inspecting`           | Node or stored edge currently being considered | Amber, brief pulse on the real node/edge                               |
-| `revisited`            | A walk reaches an already visited node         | Orange, double-ring pulse                                              |
-| `settled`              | Completed exploration footprint                | Muted orange, static glyph                                             |
-| explicit path emphasis | Returned successful path                       | Green only                                                             |
-| `component-N`          | Persistent numbered component membership       | Stable shared palette slot `N`                                         |
-| `color-N`              | Persistent numbered color-class membership     | Stable shared color-class palette slot `N`                             |
-| `critical`             | Bridge or articulation-point finding           | Dedicated red/pink warning treatment                                   |
-| ranking result         | Relative node importance                       | Shared result ring with score-driven scale and an exact Result ranking |
+| Semantic role  | Meaning                                           | Result/Trace treatment                                                 |
+| -------------- | ------------------------------------------------- | ---------------------------------------------------------------------- |
+| `current`      | Node currently being processed                    | Bright cyan, solid pulsing glyph                                       |
+| `frontier`     | Discovered work waiting to be processed           | Violet, thin wireframe glyph                                           |
+| `inspecting`   | Node or stored edge currently being considered    | Amber, brief pulse on the real node/edge                               |
+| `revisited`    | A walk reaches an already visited node            | Orange, double-ring pulse                                              |
+| `settled`      | Completed exploration footprint                   | Muted orange, static glyph                                             |
+| `active`       | The node/edge for the currently timed Reveal step | Muted orange; transient, then settles                                  |
+| `result`       | Explicit successful-result role in Trace          | Green; only explicit Reveal emphasis replays a path in green           |
+| `component-N`  | Persistent numbered component membership          | Stable shared palette slot `N`                                         |
+| `color-N`      | Persistent numbered color-class membership        | Stable shared color-class palette slot `N`                             |
+| `critical`     | Critical finding or warning edge/node             | Dedicated red/pink warning treatment                                   |
+| `rejected`     | Rejected candidate in Trace                       | Muted red/pink, temporary only                                         |
+| ranking result | Relative node importance                          | Shared result ring with score-driven scale and an exact Result ranking |
 
 Start and End landmarks always render above every role and remain distinct by geometry, not color alone.
+
+### Role resolution, colors, and precedence
+
+- The renderer's Trace role priority is `result` > `current` > `inspecting` > `frontier` >
+  `settled` > `rejected`. Roles outside that list retain their emitted order. Start/End landmark
+  glyphs are drawn in a separate layer above this priority.
+- For Reveal, the node or edge belonging to the currently timed step is transient `active` orange;
+  after the step it retains its explicit persistent role (if any) or resolves to `settled` orange.
+  `revisit-node` temporarily resolves to `revisited`, then returns to the accumulated settled
+  footprint. Explicit path-emphasis actions resolve to green `result`.
+- Shared role colors are: current/start-side/source `#67e8f9`, frontier `#a78bfa`, inspecting
+  `#fbbf24`, settled/active/revisited `#f0a65a`, result `#4ade80`, target-side `#f472b6`, critical
+  `#f43f5e`, and rejected/fallback warning `#ef6b73`. The revisit pulse's outer ring uses
+  `#fb923c`.
+- Component and color-class roles share the same six-color palette, in role-suffix order:
+  `#60a5fa`, `#a78bfa`, `#34d399`, `#fbbf24`, `#fb7185`, `#22d3ee`, repeating every six slots.
+  The numeric role suffix is zero-based: `component-0` / `color-0` is displayed as Component 1 /
+  Color 1 and selects the first palette color. Display numbering is one-based; keep that mapping
+  consistent in world decorations, Result swatches, and accessible labels.
+- The `walk`, `start-side`, and `target-side` Reveal action roles are animation cues, not new
+  persistent result categories. `walk` resolves to the ordinary settled footprint; start-side and
+  target-side distinguish the two active Bidirectional BFS waves (cyan and pink respectively).
+- Do not introduce undeclared algorithm-specific colors or geometry. Add new semantic roles here
+  and to renderer-policy tests before using them.
+
+### Landmarks and ranking scale
+
+- Start is a cyan octahedron; End is a camera-facing pink filled center with two concentric rings.
+  A node serving as both is a white combined octahedron/ring marker. Their larger glyph scales are
+  1.9 for Start or End and 2.05 for the combined marker. These shapes and high contrast, not color
+  alone, identify endpoints.
+- Ranking scores are clamped to `[0, 1]`. Ring scale is `1 + 0.9 × score`, so it ranges from 1.0
+  to 1.9. Ring color interpolates in two equal score intervals: dark red `#7f1d1d` at 0, yellow
+  `#facc15` at 0.5, and bright green `#4ade80` at 1.
+- The hovered ranking card is camera-facing at the node center, layered in front of the ring, and
+  content-fitted. It shows `label · Rank N · score`, formatting the hover score to four decimal
+  places; the accessible Result ranking table retains the artifact's exact score value.
 
 ## Persistent-result rules
 
@@ -40,13 +79,31 @@ Start and End landmarks always render above every role and remain distinct by ge
   color are never the sole meaning.
 - Ranking order is score descending, with stored node order as the deterministic tie-breaker.
 - Hovering a ranked node in Result shows a non-interactive, camera-facing card at the node center
-  with its label, ordinal rank, and exact score. Its dark, content-fitted background is rendered in
-  front of the ranking ring; it disappears on pointer leave.
+  with its label, ordinal rank, and score to four decimal places. Its dark, content-fitted
+  background is rendered in front of the ranking ring; it disappears on pointer leave. The Result
+  table preserves the exact ranking artifact values.
 - Persistent result roles do not change the graph's base mesh, edge data, selection, persistence, or
   undo history.
 
 ## Reveal rules
 
+- Mode-capable DFS and Depth-Limited DFS name their single Reveal phase `traverse` in Traverse mode
+  and `search` in Search mode. These phase IDs are traceability metadata only; they do not change
+  visual treatment. IDDFS names each repeated depth pass `depth-N`, matching the visible restart
+  sequence; its final Result metrics remain those of the found depth or completed exploration, not
+  the currently animated pass.
+- Every Reveal step is one node or one real edge at 50 ms per step. Separate phases pause for
+  200 ms; this is how IDDFS makes each depth restart perceptible. Reduced motion skips timing and
+  pulse animation but retains the final correct roles, path, landmarks, and memberships.
+- Multi-source BFS starts all selected roots in the same initial wave; Bidirectional BFS shows the
+  Start-side and Target-side roots/waves concurrently. Their active wave markers are cyan and pink,
+  while accumulated exploration remains orange and a found path is replayed in green.
+- IDDFS clears the visible footprint between depth passes and replays the traversal from depth 0
+  upward. The Result remains immutable during this animation. Random Walk reveals each actual step;
+  revisits replay the incoming real edge and show the transient double-ring pulse, without a visit
+  badge. The revealed footprint remains orange unless a successful Search path is explicitly replayed.
+- Single-mode BFS retains its existing `traversal` phase ID; DFS and Depth-Limited DFS use the
+  mode-valued `traverse` / `search` IDs above. Do not infer a different palette from phase names.
 - A generic `reveal-node` or `reveal-edge` without an explicit role resolves to `settled`.
 - Generic Reveal is orange throughout; it must never turn green merely because a generic action is complete.
 - Green is reserved for explicit returned-path emphasis actions.
