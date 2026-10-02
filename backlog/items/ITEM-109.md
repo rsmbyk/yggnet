@@ -1,6 +1,6 @@
 ---
 id: ITEM-109
-status: in_review
+status: done
 title: 'Organize Analyze selection and preserve shared inputs'
 type: fix
 priority: P1

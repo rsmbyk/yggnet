@@ -1,6 +1,6 @@
 ---
 id: ITEM-074
-status: in_review
+status: done
 title: 'Acyclic shortest path'
 type: feat
 priority: P1

@@ -1,6 +1,6 @@
 ---
 id: ITEM-098
-status: in_review
+status: done
 title: 'Graph density'
 type: feat
 priority: P1

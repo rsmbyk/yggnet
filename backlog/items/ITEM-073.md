@@ -1,6 +1,6 @@
 ---
 id: ITEM-073
-status: in_review
+status: done
 title: 'Negative-weight shortest path'
 type: feat
 priority: P1

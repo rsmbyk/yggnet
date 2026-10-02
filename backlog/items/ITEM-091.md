@@ -1,6 +1,6 @@
 ---
 id: ITEM-091
-status: in_review
+status: done
 title: 'Maximum independent set analysis'
 type: feat
 priority: P1

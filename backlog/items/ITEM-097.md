@@ -1,6 +1,6 @@
 ---
 id: ITEM-097
-status: in_review
+status: done
 title: 'Graph girth'
 type: feat
 priority: P1

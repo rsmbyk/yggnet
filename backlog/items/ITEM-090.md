@@ -1,6 +1,6 @@
 ---
 id: ITEM-090
-status: in_review
+status: done
 title: 'Maximum clique analysis'
 type: feat
 priority: P1

@@ -1,6 +1,6 @@
 ---
 id: ITEM-101
-status: in_review
+status: done
 title: 'Louvain community detection'
 type: feat
 priority: P1

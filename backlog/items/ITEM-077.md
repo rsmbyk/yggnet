@@ -1,6 +1,6 @@
 ---
 id: ITEM-077
-status: in_review
+status: done
 title: 'Connectivity criticality analysis'
 type: feat
 priority: P1

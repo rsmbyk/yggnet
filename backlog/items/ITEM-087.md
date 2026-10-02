@@ -1,6 +1,6 @@
 ---
 id: ITEM-087
-status: in_review
+status: done
 title: 'Flow network analysis'
 type: feat
 priority: P1

@@ -1,6 +1,6 @@
 ---
 id: ITEM-110
-status: in_review
+status: done
 title: 'Improve Analyze result panel hierarchy'
 type: fix
 priority: P1

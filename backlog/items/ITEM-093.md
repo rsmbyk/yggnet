@@ -1,6 +1,6 @@
 ---
 id: ITEM-093
-status: in_review
+status: done
 title: 'Node eccentricity'
 type: feat
 priority: P1

@@ -1,6 +1,6 @@
 ---
 id: ITEM-082
-status: in_review
+status: done
 title: 'PageRank centrality'
 type: feat
 priority: P1

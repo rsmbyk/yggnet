@@ -1,6 +1,6 @@
 ---
 id: ITEM-079
-status: in_review
+status: done
 title: 'Minimum spanning trees'
 type: feat
 priority: P1

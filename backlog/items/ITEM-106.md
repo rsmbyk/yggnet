@@ -1,6 +1,6 @@
 ---
 id: ITEM-106
-status: in_review
+status: done
 title: 'Planar Embedding analysis'
 type: feat
 priority: P1

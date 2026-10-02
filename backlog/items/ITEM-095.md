@@ -1,6 +1,6 @@
 ---
 id: ITEM-095
-status: in_review
+status: done
 title: 'Graph radius'
 type: feat
 priority: P1

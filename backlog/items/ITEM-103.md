@@ -1,6 +1,6 @@
 ---
 id: ITEM-103
-status: in_review
+status: done
 title: 'Traveling Salesman analysis'
 type: feat
 priority: P1

@@ -1,6 +1,6 @@
 ---
 id: ITEM-083
-status: in_review
+status: done
 title: 'Betweenness centrality'
 type: feat
 priority: P1

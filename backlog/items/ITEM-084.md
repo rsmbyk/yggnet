@@ -1,6 +1,6 @@
 ---
 id: ITEM-084
-status: in_review
+status: done
 title: 'Centrality ranking presentation'
 type: fix
 priority: P1

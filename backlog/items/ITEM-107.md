@@ -1,6 +1,6 @@
 ---
 id: ITEM-107
-status: in_review
+status: done
 title: 'Improve primary control affordances'
 type: fix
 priority: P1

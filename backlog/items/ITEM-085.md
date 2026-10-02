@@ -1,6 +1,6 @@
 ---
 id: ITEM-085
-status: in_review
+status: done
 title: 'Graph coloring analysis'
 type: feat
 priority: P1

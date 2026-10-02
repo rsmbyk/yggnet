@@ -1,6 +1,6 @@
 ---
 id: ITEM-092
-status: in_review
+status: done
 title: 'Minimum vertex cover analysis'
 type: feat
 priority: P1

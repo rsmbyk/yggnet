@@ -1,6 +1,6 @@
 ---
 id: ITEM-080
-status: in_review
+status: done
 title: 'DAG utilities'
 type: feat
 priority: P1

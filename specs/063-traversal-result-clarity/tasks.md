@@ -44,10 +44,10 @@
   - Verify: `plan.md`, `spec.md`, and `tasks.md` return to Accepted before product-code work
   - Files: `specs/063-traversal-result-clarity/{plan,spec,tasks}.md`
 
-- [ ] **T0f — Apply and verify faster Reveal timing**
-  - Red: policy and visible acceptance tests expect 100 ms per Reveal step and 200 ms between
+- [x] **T0f — Apply and verify final Reveal timing**
+  - Red: policy and visible acceptance tests expect 50 ms per Reveal step and 200 ms between
     IDDFS phases while Trace timing remains unchanged
-  - Green: update the shared Reveal timing constants only
+  - Green: apply and verify the accepted 50 ms / 200 ms Reveal timing
   - Verify: focused policy tests, focused Analyze E2E, then all repository gates
   - Files: `src/lib/world/analysis-decoration.ts`, focused tests, `e2e/analyze-laboratory.e2e.ts`
 
@@ -64,7 +64,7 @@
   - Files: `src/lib/graph/analysis/contracts.ts`, focused algorithm modules/tests, `src/lib/session/**`
 
 - [x] **T2 — Scheduled reveal roles and IDDFS phase holds**
-  - Red: policy tests cover retained orange traversal, ordered green path replay, no-result absence of path replay, a fixed 180 ms step interval, 300 ms inter-phase holds, no leading/trailing hold, completed frames, and reduced motion
+  - Red: policy tests cover retained orange traversal, ordered green path replay, no-result absence of path replay, a fixed 50 ms step interval, 200 ms inter-phase holds, no leading/trailing hold, completed frames, and reduced motion
   - Green: add generic reveal scheduling/role transitions without algorithm-specific renderer branches
   - Verify: focused analysis/world tests
   - Files: `src/lib/graph/analysis/**`, `src/lib/world/analysis-decoration.ts`, `src/lib/world/analysis-decoration.test.ts`
@@ -81,18 +81,18 @@
   - Verify: `npm run test:e2e -- e2e/analyze-laboratory.e2e.ts --workers=1`, then full serial E2E
   - Files: `e2e/analyze-laboratory.e2e.ts`
 
-- [ ] **T5 — Quality and delivery records**
-  - Verify: `npm run check`; `npm run lint`; `npm run test:coverage`; `npm run test:e2e -- --workers=1`; `npm run build`
+- [x] **T5 — Quality and delivery records**
+  - Verify: `npm run check` (0 errors, 29 warnings); `npm run lint`; `npm run test:coverage` (510 passed; 97.6% graph-analysis statements); `npm run test:e2e -- --workers=1` (75 passed); `npm run build`
   - Acceptance: fill final Traceability; update ITEM/board/tasks and PR #38 metadata; record ITEM-071 under shared release `0.40.0`
   - Files: spec pack, ITEM/board, changelog if wording changes, and PR metadata
 
 ## Done when
 
-- [ ] Every acceptance scenario in `spec.md` holds
+- [x] Every acceptance scenario in `spec.md` holds
 - [x] Search traversal remains orange before an ordered green final-path replay
 - [x] Endpoints and no-result outcomes are unmistakable without color-only meaning
 - [x] IDDFS phase boundaries are readable with and without motion
 - [x] Random Walk terminates early and reports exact traversed steps
 - [x] Multi-frontier overlays never resemble fabricated edges
 - [x] No product implementation began before explicit owner acceptance
-- [ ] Full verification and delivery records are complete in PR #38
+- [x] Full verification and delivery records are complete in PR #38

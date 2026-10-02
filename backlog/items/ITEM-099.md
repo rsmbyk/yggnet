@@ -1,6 +1,6 @@
 ---
 id: ITEM-099
-status: in_review
+status: done
 title: 'Degree distribution'
 type: feat
 priority: P1

@@ -1,6 +1,6 @@
 ---
 id: ITEM-113
-status: in_review
+status: done
 title: 'Clear stale direction cones on graph replacement'
 type: fix
 priority: P1

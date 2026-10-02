@@ -1,6 +1,6 @@
 ---
 id: ITEM-094
-status: in_review
+status: done
 title: 'Graph diameter'
 type: feat
 priority: P1

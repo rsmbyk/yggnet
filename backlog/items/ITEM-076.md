@@ -1,6 +1,6 @@
 ---
 id: ITEM-076
-status: in_review
+status: done
 title: 'Connectivity region analysis'
 type: feat
 priority: P1

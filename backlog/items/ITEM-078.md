@@ -1,6 +1,6 @@
 ---
 id: ITEM-078
-status: in_review
+status: done
 title: 'Analysis role visual rules'
 type: fix
 priority: P1

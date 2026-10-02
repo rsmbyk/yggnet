@@ -1,6 +1,6 @@
 ---
 id: ITEM-105
-status: in_review
+status: done
 title: 'Planarity Test'
 type: feat
 priority: P1

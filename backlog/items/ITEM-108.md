@@ -1,6 +1,6 @@
 ---
 id: ITEM-108
-status: in_review
+status: done
 title: 'Group related generator fields'
 type: fix
 priority: P2

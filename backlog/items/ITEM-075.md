@@ -1,6 +1,6 @@
 ---
 id: ITEM-075
-status: in_review
+status: done
 title: 'Informed point-to-point shortest paths'
 type: feat
 priority: P1

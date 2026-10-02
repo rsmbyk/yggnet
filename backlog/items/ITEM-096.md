@@ -1,6 +1,6 @@
 ---
 id: ITEM-096
-status: in_review
+status: done
 title: 'Graph center'
 type: feat
 priority: P1

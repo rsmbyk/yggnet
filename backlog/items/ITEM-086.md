@@ -1,6 +1,6 @@
 ---
 id: ITEM-086
-status: in_review
+status: done
 title: 'Bipartite maximum matching analysis'
 type: feat
 priority: P1

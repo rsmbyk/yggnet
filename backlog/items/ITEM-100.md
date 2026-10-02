@@ -1,6 +1,6 @@
 ---
 id: ITEM-100
-status: in_review
+status: done
 title: 'Tree and forest detection'
 type: feat
 priority: P1

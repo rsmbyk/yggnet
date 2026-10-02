@@ -1,12 +1,12 @@
 ---
 id: ITEM-071
-status: in_review
+status: done
 title: 'Clarify traversal results and reveal pacing'
 type: fix
 priority: P1
 effort: M
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-02
 spec: specs/063-traversal-result-clarity
 branch: feat/062-traversal-algorithms
 pr: 38
@@ -25,7 +25,7 @@ Refine the traversal work already under review so generated enum inputs never ap
 ## Notes
 
 - Traversed nodes and used edges remain orange; successful Search paths replay in green; Traverse stays entirely orange.
-- All traversal algorithms share a fixed 180 ms reveal-step interval, with a shorter 300 ms hold between IDDFS depths.
+- All traversal algorithms share a fixed 50 ms reveal-step interval, with a 200 ms hold between IDDFS depths.
 - Multi-source and bidirectional edge overlays must not look like extra graph edges. Frontier side identity belongs on node markers rather than purple or green edge lines.
 - Random Walk keeps Max steps as a safety bound while stopping earlier on Target, full reachable coverage, or dead end.
 - This item refines SPEC-062 in the same draft PR. Its patch intent is subsumed by that PR's existing minor `0.40.0` release.

@@ -1,6 +1,6 @@
 ---
 id: ITEM-112
-status: in_review
+status: done
 title: 'Use full row for an unmatched Generate field'
 type: fix
 priority: P2

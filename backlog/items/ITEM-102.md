@@ -1,6 +1,6 @@
 ---
 id: ITEM-102
-status: in_review
+status: done
 title: 'Label Propagation community detection'
 type: feat
 priority: P1

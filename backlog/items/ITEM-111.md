@@ -1,6 +1,6 @@
 ---
 id: ITEM-111
-status: in_review
+status: done
 title: 'Improve Analyze result presentation'
 type: fix
 priority: P1

@@ -1,6 +1,6 @@
 ---
 id: ITEM-072
-status: in_review
+status: done
 title: 'Binary-weight shortest path'
 type: feat
 priority: P1

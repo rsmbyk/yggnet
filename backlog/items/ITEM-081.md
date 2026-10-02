@@ -1,6 +1,6 @@
 ---
 id: ITEM-081
-status: in_review
+status: done
 title: 'Degree centrality'
 type: feat
 priority: P1

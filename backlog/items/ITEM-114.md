@@ -1,6 +1,6 @@
 ---
 id: ITEM-114
-status: in_review
+status: done
 title: 'Refine focused Tags row interaction states'
 type: fix
 priority: P2
