@@ -1,15 +1,15 @@
 ---
 id: ITEM-026
 status: archived
-title: "Notes and attachments"
+title: 'Notes and attachments'
 type: feat
 priority: P2
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-026
-branch: 
-pr: 
+spec: specs/026-notes-and-attachments
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ Related: ITEM-001, ITEM-018.
 
 ## Links
 
-- Spec: [SPEC-026](../../docs/specs/SPEC-026/spec.md)
+- Spec: [026-notes-and-attachments](../../specs/026-notes-and-attachments/spec.md)
 - Related items: ITEM-001, ITEM-018.

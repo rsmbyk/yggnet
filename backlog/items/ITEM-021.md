@@ -1,15 +1,15 @@
 ---
 id: ITEM-021
 status: archived
-title: "Save / load graph"
+title: 'Save / load graph'
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-021
-branch: 
-pr: 
+spec: specs/021-save-load-graph
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -32,5 +32,5 @@ Related: ITEM-022, ITEM-023.
 
 ## Links
 
-- Spec: [SPEC-021](../../docs/specs/SPEC-021/spec.md)
+- Spec: [021-save-load-graph](../../specs/021-save-load-graph/spec.md)
 - Related items: ITEM-022, ITEM-023.

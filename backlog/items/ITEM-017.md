@@ -1,15 +1,15 @@
 ---
 id: ITEM-017
 status: archived
-title: "Filters by type/tag"
+title: 'Filters by type/tag'
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-017
-branch: 
-pr: 
+spec: specs/017-filters-by-type-tag
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ Related: ITEM-004, ITEM-016, ITEM-025.
 
 ## Links
 
-- Spec: [SPEC-017](../../docs/specs/SPEC-017/spec.md)
+- Spec: [017-filters-by-type-tag](../../specs/017-filters-by-type-tag/spec.md)
 - Related items: ITEM-004, ITEM-016, ITEM-025.

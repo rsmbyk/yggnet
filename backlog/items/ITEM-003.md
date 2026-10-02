@@ -7,9 +7,9 @@ priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-003
-branch: 
-pr: 
+spec: specs/003-explore-bird-s-eye-camera
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ Not FPS/cockpit. Overview vs street is the same camera at different height. Rela
 
 ## Links
 
-- Spec: [SPEC-003](../../docs/specs/SPEC-003/spec.md)
+- Spec: [003-explore-bird-s-eye-camera](../../specs/003-explore-bird-s-eye-camera/spec.md)
 - Related items: ITEM-004, ITEM-007, ITEM-019, ITEM-020.

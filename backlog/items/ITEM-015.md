@@ -1,15 +1,15 @@
 ---
 id: ITEM-015
 status: archived
-title: "Pin / anchor nodes"
+title: 'Pin / anchor nodes'
 type: feat
 priority: P1
 effort: S
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-015
-branch: 
-pr: 
+spec: specs/015-pin-anchor-nodes
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -32,5 +32,5 @@ Related: ITEM-004, ITEM-001.
 
 ## Links
 
-- Spec: [SPEC-015](../../docs/specs/SPEC-015/spec.md)
+- Spec: [015-pin-anchor-nodes](../../specs/015-pin-anchor-nodes/spec.md)
 - Related items: ITEM-004, ITEM-001.

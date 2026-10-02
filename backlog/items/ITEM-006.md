@@ -1,15 +1,15 @@
 ---
 id: ITEM-006
 status: archived
-title: "Pathfinder A to B"
+title: 'Pathfinder A to B'
 type: feat
 priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-006
-branch: 
-pr: 
+spec: specs/006-pathfinder-a-to-b
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ Candidates faint, selected bright; dim context. Related: ITEM-002, ITEM-007, ITE
 
 ## Links
 
-- Spec: [SPEC-006](../../docs/specs/SPEC-006/spec.md)
+- Spec: [006-pathfinder-a-to-b](../../specs/006-pathfinder-a-to-b/spec.md)
 - Related items: ITEM-002, ITEM-007, ITEM-009, ITEM-010.

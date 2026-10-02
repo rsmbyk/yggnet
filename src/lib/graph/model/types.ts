@@ -29,6 +29,7 @@ export interface GraphEdge {
 	directed: boolean;
 	label?: string;
 	weight: number;
+	tags: string[];
 	notes?: string;
 	attachments: GraphAttachment[];
 	data: Record<string, unknown>;
@@ -42,6 +43,6 @@ export interface GraphDocument {
 	edges: Record<EdgeId, GraphEdge>;
 	createdAt: string;
 	updatedAt: string;
+	/** Monotonic counter for auto-generated Group-N tags. Never decreases. */
+	groupTagCounter: number;
 }
-
-export type AppMode = 'explore' | 'directions' | 'analyze';

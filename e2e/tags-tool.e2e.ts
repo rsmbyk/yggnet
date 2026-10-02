@@ -1,0 +1,345 @@
+import { expect, test } from '@playwright/test';
+import { applyGeneratedGraph, openTool } from './open-tool';
+
+async function addTagOnSelectedNode(page: import('@playwright/test').Page, tag: string) {
+	const sheet = page.getByTestId('world-node-sheet');
+	await sheet.getByLabel('Add tags').click();
+	await sheet.getByPlaceholder('Search or create…').fill(tag);
+	await page.keyboard.press('Enter');
+	await expect(sheet).toContainText(tag);
+	await page.keyboard.press('Escape');
+	await expect(sheet.getByTestId('node-tags-search')).toHaveCount(0);
+}
+
+test('Tags tool lists usage, focuses, renames, and deletes', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+
+	await openTool(page, 'nodes');
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'alpha');
+	await page.getByTestId('node-list').locator('button.list-item').nth(1).click();
+	await addTagOnSelectedNode(page, 'beta');
+
+	await openTool(page, 'tags');
+	await expect(page.getByTestId('tags-section')).toBeVisible();
+	await expect(page.getByTestId('tags-list')).toBeVisible();
+	await expect(page.getByTestId('tags-row-alpha')).toBeVisible();
+	await expect(page.getByTestId('tags-row-beta')).toBeVisible();
+	await expect(page.getByTestId('tags-focus-reset')).toBeDisabled();
+
+	const tagsSearch = page.getByTestId('tags-search');
+	await expect(tagsSearch.locator('xpath=ancestor::header')).toHaveClass(/manager__header/);
+	const tagsSearchField = page.getByTestId('tags-search-field');
+	await expect(tagsSearchField).toHaveCSS('border-top-width', '1px');
+	await expect(tagsSearchField).toHaveCSS('padding-top', '4px');
+	const idleSearchBorder = await tagsSearchField.evaluate(
+		(element) => getComputedStyle(element).borderTopColor
+	);
+	await tagsSearch.fill('beta');
+	await expect(page.getByTestId('tags-row-beta')).toBeVisible();
+	await expect(page.getByTestId('tags-row-alpha')).toHaveCount(0);
+	await tagsSearch.clear();
+	await tagsSearch.focus();
+	await expect(tagsSearchField).toHaveCSS('border-top-width', '1px');
+	await expect
+		.poll(() => tagsSearchField.evaluate((element) => getComputedStyle(element).borderTopColor))
+		.not.toBe(idleSearchBorder);
+
+	await page.getByTestId('tags-toggle-focus-alpha').click();
+	await expect(page.getByTestId('tags-row-alpha')).toHaveClass(/focused/);
+	await expect(page.getByTestId('tags-row-beta')).toHaveClass(/dimmed/);
+	await expect(page.getByTestId('tags-focus-reset')).toBeEnabled();
+	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
+
+	await page.getByTestId('tags-show-only-beta').click();
+	await expect(page.getByTestId('tags-row-beta')).toHaveClass(/focused/);
+	await expect(page.getByTestId('tags-row-alpha')).toHaveClass(/dimmed/);
+	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
+
+	// Focus ring is keyboard-only, so reach this row via the keyboard (a bare
+	// .focus() after the click above would be treated as a pointer interaction).
+	await page.keyboard.press('Tab');
+	await page.getByTestId('tags-row-open-beta').focus();
+	await expect(page.getByTestId('tags-row-open-beta')).toBeFocused();
+	await expect(page.getByTestId('tags-row-beta')).toHaveCSS('outline-style', 'solid');
+	await page.keyboard.press('Enter');
+	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('beta');
+	await openTool(page, 'tags');
+
+	await page.getByTestId('tags-row-alpha').click({ position: { x: 2, y: 2 } });
+	await expect(page.getByTestId('tag-edit-panel')).toBeVisible();
+	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('alpha');
+	await expect(page.getByTestId('tag-edit-helper')).toContainText(/letters, digits, and hyphens/i);
+	await expect(page.getByTestId('tag-edit-helper')).not.toContainText(/same as original/i);
+	await expect(page.getByTestId('tag-edit-helper')).toHaveCSS('margin-top', '2px');
+	await expect(page.getByTestId('tag-edit-helper')).toHaveCSS('margin-bottom', '2px');
+	await page.getByTestId('tag-edit-input').fill('beta');
+	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('alpha');
+	await expect(page.getByTestId('tag-edit-helper')).toContainText(/already exists/i);
+	await expect(page.getByTestId('tag-edit-save')).toBeDisabled();
+
+	await page.getByTestId('tag-edit-input').fill('gamma');
+	await expect(page.getByTestId('tag-edit-helper')).toContainText(/available/i);
+	await page.getByTestId('tag-edit-save').click();
+	await expect(page.getByTestId('tags-row-gamma')).toBeVisible();
+	await expect(page.getByTestId('tags-row-alpha')).toHaveCount(0);
+	await page.getByTestId('tags-row-gamma').locator('.tags-tool-label').click();
+	await expect(page.getByTestId('tag-edit-panel').locator('.brand')).toHaveText('gamma');
+	await page.keyboard.press('Escape');
+	await openTool(page, 'tags');
+	await page.getByTestId('tags-delete-beta').click();
+	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
+	await expect(page.getByTestId('tags-row-beta')).toHaveCount(0);
+	await expect(page.getByTestId('tags-focus-reset')).toBeDisabled();
+});
+
+test('SPEC-051 manager layout polish', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+
+	await openTool(page, 'nodes');
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'alpha');
+	await page.getByTestId('node-list').locator('button.list-item').nth(1).click();
+	await addTagOnSelectedNode(page, 'beta');
+
+	await openTool(page, 'tags');
+
+	// ITEM-054: search sits in its own full-width row below the title row.
+	const headerRow = page.locator('header.manager__header .manager__header-row');
+	const searchField = page.getByTestId('tags-search-field');
+	const headerRowBox = await headerRow.boundingBox();
+	const searchBox = await searchField.boundingBox();
+	expect(searchBox!.y).toBeGreaterThanOrEqual(headerRowBox!.y + headerRowBox!.height - 2);
+
+	// ITEM-055: label/meta do not overlap the row action buttons.
+	const label = page.getByTestId('tags-row-alpha').locator('.tags-tool-label');
+	const actions = page.getByTestId('tags-row-alpha').locator('.tags-tool-actions');
+	const labelBox = await label.boundingBox();
+	const actionsBox = await actions.boundingBox();
+	expect(labelBox!.y + labelBox!.height).toBeLessThanOrEqual(actionsBox!.y + 1);
+
+	// ITEM-057: Nodes/Edges header rows share one height so filters align.
+	await openTool(page, 'nodes');
+	const nodesHeaderBox = await page
+		.locator('header.manager__header .manager__header-row')
+		.boundingBox();
+	await openTool(page, 'edges');
+	const edgesHeaderBox = await page
+		.locator('header.manager__header .manager__header-row')
+		.boundingBox();
+	expect(Math.abs(nodesHeaderBox!.height - edgesHeaderBox!.height)).toBeLessThanOrEqual(1);
+
+	// ITEM-059 + ITEM-060: helper spacing and success color.
+	await openTool(page, 'tags');
+	await page.getByTestId('tags-row-open-alpha').click();
+	const helper = page.getByTestId('tag-edit-helper');
+	const input = page.getByTestId('tag-edit-input');
+	const save = page.getByTestId('tag-edit-save');
+	const inputBox = await input.boundingBox();
+	const helperBox = await helper.boundingBox();
+	const saveBox = await save.boundingBox();
+	expect(helperBox!.y - (inputBox!.y + inputBox!.height)).toBeLessThanOrEqual(8);
+	expect(saveBox!.y - (helperBox!.y + helperBox!.height)).toBeLessThanOrEqual(10);
+	await input.fill('gamma-new');
+	await expect(helper).toContainText(/available/i);
+	await expect(helper).toHaveCSS('color', 'rgb(30, 122, 100)');
+});
+
+test('SPEC-054 panel header row polish', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+
+	await openTool(page, 'nodes');
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'alpha');
+
+	await openTool(page, 'tags');
+
+	// ITEM-061: tight header→content gaps.
+	const headerRow = page.locator('header.manager__header .manager__header-row');
+	const headerRowBox = await headerRow.boundingBox();
+	const searchBox = await page.getByTestId('tags-search-field').boundingBox();
+	expect(searchBox!.y - (headerRowBox!.y + headerRowBox!.height)).toBeLessThanOrEqual(5);
+	await openTool(page, 'nodes');
+	const nodesHeaderBox = await page
+		.locator('header.manager__header .manager__header-row')
+		.boundingBox();
+	const nodesFilterBox = await page.getByTestId('nodes-search-open').boundingBox();
+	expect(nodesFilterBox!.y - (nodesHeaderBox!.y + nodesHeaderBox!.height)).toBeLessThanOrEqual(5);
+	// ITEM-057 alignment still holds.
+	await openTool(page, 'edges');
+	const edgesHeaderBox = await page
+		.locator('header.manager__header .manager__header-row')
+		.boundingBox();
+	expect(Math.abs(nodesHeaderBox!.height - edgesHeaderBox!.height)).toBeLessThanOrEqual(1);
+
+	// ITEM-062: the editor target covers the whole card.
+	await openTool(page, 'tags');
+	const row = page.getByTestId('tags-row-alpha');
+	const main = page.getByTestId('tags-row-open-alpha');
+	// Keyboard-only focus ring: reach the row through a Tab first.
+	await page.keyboard.press('Tab');
+	await main.focus();
+	await expect(main).toBeFocused();
+	await expect(row).toHaveCSS('outline-style', 'solid');
+	const rowBox = await row.boundingBox();
+	// Clicking the gap between two action buttons still opens the editor.
+	const showOnlyBox = await page.getByTestId('tags-show-only-alpha').boundingBox();
+	const toggleBox = await page.getByTestId('tags-toggle-focus-alpha').boundingBox();
+	const gapX = Math.round((showOnlyBox!.x + showOnlyBox!.width + toggleBox!.x) / 2 - rowBox!.x);
+	const gapY = Math.round(showOnlyBox!.y + showOnlyBox!.height / 2 - rowBox!.y);
+	await row.click({ position: { x: gapX, y: gapY } });
+	await expect(page.getByTestId('tag-edit-panel')).toBeVisible();
+	await page.keyboard.press('Escape');
+	await openTool(page, 'tags');
+	// No overlap: label stays above the actions.
+	const labelBox = await row.locator('.tags-tool-label').boundingBox();
+	const actionsBox = await row.locator('.tags-tool-actions').boundingBox();
+	expect(labelBox!.y + labelBox!.height).toBeLessThanOrEqual(actionsBox!.y + 1);
+	// Row actions stay independent.
+	await page.getByTestId('tags-toggle-focus-alpha').click();
+	await expect(page.getByTestId('tag-edit-panel')).toHaveCount(0);
+});
+
+test('focused tag rows avoid the green ring and white hover while keyboard focus stays visible', async ({
+	page
+}) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+
+	await openTool(page, 'nodes');
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'alpha');
+
+	await openTool(page, 'tags');
+	const row = page.getByTestId('tags-row-alpha');
+	const main = page.getByTestId('tags-row-open-alpha');
+
+	// Idle: no ring.
+	await expect(row).not.toHaveClass(/focused/);
+	await expect(row).toHaveCSS('outline-style', 'none');
+
+	// A keyboard user still gets the ring.
+	await page.keyboard.press('Tab');
+	await main.focus();
+	await expect(main).toBeFocused();
+	await expect(row).toHaveCSS('outline-style', 'solid');
+	await page.keyboard.press('Escape');
+	await openTool(page, 'tags');
+	await expect(row).toHaveCSS('outline-style', 'none');
+
+	// Opening the tag editor must not ring a row that is not in focus.
+	await main.click();
+	await expect(page.getByTestId('tag-edit-panel')).toBeVisible();
+	await expect(row).toHaveClass(/editing/);
+	await expect(row).not.toHaveClass(/focused/);
+	await expect(row).toHaveCSS('outline-style', 'none');
+	await page.keyboard.press('Escape');
+	await openTool(page, 'tags');
+
+	// Adding the tag to focus rings the row.
+	await page.getByTestId('tags-toggle-focus-alpha').click();
+	await expect(row).toHaveClass(/focused/);
+	await expect(row).toHaveCSS('outline-style', 'none');
+	await row.hover();
+	const hoverBackground = await row.evaluate(
+		(element) => getComputedStyle(element).backgroundColor
+	);
+	expect(hoverBackground).not.toBe('rgba(255, 255, 255, 0.72)');
+	await expect(row.locator('.tags-tool-label')).toBeVisible();
+});
+
+test('Nodes list search shows Tags optgroup and keyword row', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+	await openTool(page, 'nodes');
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'shared');
+
+	await page.getByTestId('nodes-search-open').click();
+	await expect(page.getByTestId('nodes-search')).toBeVisible();
+	// Spec: with suggestions shown, only the Tags section appears (SPEC-055:
+	// exact nodes are found through the keyword pill instead).
+	await expect(page.getByTestId('nodes-search-group-nodes')).toHaveCount(0);
+	await expect(page.getByTestId('nodes-search-group-tags')).toBeVisible();
+	await expect(page.getByTestId('list-search-tag-shared')).toContainText('Tag');
+
+	// Typing narrows to matching suggestions; the shared tag stays reachable.
+	await page.getByTestId('nodes-search').fill('shared');
+	await expect(page.getByTestId('list-search-tag-shared')).toBeVisible();
+	await expect(page.getByTestId('list-search-tag-shared')).toContainText('Tag');
+	// Exact tag match wins over the keyword row.
+	await expect(page.getByTestId('nodes-search-keyword')).toHaveCount(0);
+
+	// No exact match: the keyword row appears at the top.
+	await page.getByTestId('nodes-search').fill('zzz-no-match');
+	await expect(page.getByTestId('nodes-search-keyword')).toBeVisible();
+});
+
+test('SPEC-055 Nodes keyword filter pill', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+	await openTool(page, 'nodes');
+
+	const items = page.getByTestId('node-list').locator('button.list-item');
+	const firstLabel = ((await items.first().locator('.node-list-label').textContent()) ?? '').trim();
+	const secondLabel = ((await items.nth(1).locator('.node-list-label').textContent()) ?? '').trim();
+	expect(firstLabel).toBeTruthy();
+
+	await page.getByTestId('nodes-search-open').click();
+	await page.getByTestId('nodes-search').fill(firstLabel);
+	await expect(page.getByTestId('nodes-search-keyword')).toBeVisible();
+	await expect(page.getByTestId('nodes-search-keyword')).toContainText(firstLabel);
+	await page.getByTestId('nodes-search-keyword').click();
+
+	const pill = page.getByTestId('nodes-keyword-pill');
+	await expect(pill).toBeVisible();
+	await expect(pill).toContainText(firstLabel);
+	await expect(pill).toHaveClass(/list-search-chip--keyword/);
+	await expect(page.getByTestId('node-list').locator('li')).toHaveCount(1);
+	await expect(page.getByTestId('node-list')).toContainText(firstLabel);
+	await expect(page.getByTestId('node-list')).not.toContainText(secondLabel);
+	await page.keyboard.press('Escape');
+
+	// Reopening prefills the query with the keyword.
+	await page.getByTestId('nodes-search-open').click();
+	await expect(page.getByTestId('nodes-search')).toHaveValue(firstLabel);
+	// Backspace on an emptied query clears the pill.
+	await page.getByTestId('nodes-search').fill('');
+	await page.keyboard.press('Backspace');
+	await expect(pill).toHaveCount(0);
+	await expect(page.getByTestId('node-list').locator('li')).toHaveCount(3);
+	await page.keyboard.press('Escape');
+
+	// Enter on an exact tag match adds the tag; Enter otherwise creates the keyword.
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'kwtag');
+	await openTool(page, 'nodes');
+	await page.getByTestId('nodes-search-open').click();
+	await page.getByTestId('nodes-search').fill('kwtag');
+	await page.keyboard.press('Enter');
+	await expect(page.getByTestId('list-search-tag-remove-kwtag')).toBeVisible();
+	await expect(page.getByTestId('nodes-keyword-pill')).toHaveCount(0);
+	await page.keyboard.press('Escape');
+	await page.getByTestId('nodes-search-open').click();
+	await page.getByTestId('nodes-search').fill('zzz-enter');
+	await page.keyboard.press('Enter');
+	await expect(page.getByTestId('nodes-keyword-pill')).toContainText('zzz-enter');
+});
+
+test('TagPicker shares suggestions across nodes and edges', async ({ page }) => {
+	await page.goto('/');
+	await applyGeneratedGraph(page, 'cycle', { nodes: 3 });
+	await openTool(page, 'nodes');
+	await page.getByTestId('node-list').locator('button.list-item').first().click();
+	await addTagOnSelectedNode(page, 'pool-tag');
+
+	await openTool(page, 'edges');
+	await page.getByTestId('edge-list').locator('button.list-item').first().click();
+	const edgeSheet = page.getByTestId('world-edge-sheet');
+	await expect(edgeSheet.getByTestId('edge-editor')).toBeVisible();
+	await edgeSheet.getByTestId('node-tags-open').click();
+	await expect(edgeSheet.getByTestId('node-tag-option-pool-tag')).toBeVisible();
+});

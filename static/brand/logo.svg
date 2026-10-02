@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Yggnet">
+	<!-- Placeholder mark — replace this file (or swap the path in WorldHud) with the real logo. -->
+	<circle cx="16" cy="16" r="16" fill="#0b6e7a"/>
+	<circle cx="16" cy="11" r="3.2" fill="#e8eef4"/>
+	<circle cx="10" cy="21" r="2.4" fill="#e8eef4" opacity="0.9"/>
+	<circle cx="22" cy="21" r="2.4" fill="#e8eef4" opacity="0.9"/>
+	<path d="M16 14.2V18M16 18l-4.2 2.2M16 18l4.2 2.2" stroke="#e8eef4" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+</svg>

@@ -35,12 +35,15 @@ describe('overlays', () => {
 		expect(o.seriesA).toEqual({ nodeIds: ['a', 'b'], edgeIds: ['e1'] });
 		expect(o.seriesB).toEqual({ nodeIds: ['b', 'c'], edgeIds: ['e2'] });
 		o.seriesA?.nodeIds.push('z');
-		expect(compareOverlay({ nodeIds: ['a'], edgeIds: [] }, { nodeIds: ['c'], edgeIds: [] }).seriesA)
-			.toEqual({ nodeIds: ['a'], edgeIds: [] });
+		expect(
+			compareOverlay({ nodeIds: ['a'], edgeIds: [] }, { nodeIds: ['c'], edgeIds: [] }).seriesA
+		).toEqual({ nodeIds: ['a'], edgeIds: [] });
 	});
 
 	it('pathSeriesMetrics sums hops and edge weights', () => {
 		expect(pathSeriesMetrics(['e1', 'e2'], { e1: 2, e2: 3 })).toEqual({ hops: 2, cost: 5 });
 		expect(pathSeriesMetrics([], {})).toEqual({ hops: 0, cost: 0 });
+		expect(pathSeriesMetrics(['missing'], {})).toEqual({ hops: 1, cost: 0 });
+		expect(pathSeriesMetrics(['e1'], { e1: undefined })).toEqual({ hops: 1, cost: 0 });
 	});
 });

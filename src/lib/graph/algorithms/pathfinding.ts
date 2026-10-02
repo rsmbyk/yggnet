@@ -7,7 +7,11 @@ export interface PathParams {
 	to: string;
 }
 
-function startDone(algorithmId: string, result: AlgorithmResult, mid: TraceEvent[]): AlgorithmOutput {
+function startDone(
+	algorithmId: string,
+	result: AlgorithmResult,
+	mid: TraceEvent[]
+): AlgorithmOutput {
 	return {
 		result,
 		trace: [{ type: 'start', algorithmId }, ...mid, { type: 'done', result }]

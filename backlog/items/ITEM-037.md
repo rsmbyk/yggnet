@@ -1,15 +1,15 @@
 ---
 id: ITEM-037
 status: archived
-title: "Attachments on nodes and edges"
+title: 'Attachments on nodes and edges'
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-037
-branch: 
-pr: 
+spec: specs/037-attachments-on-nodes-and-edges
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.30.0
@@ -35,6 +35,6 @@ Hardening after 0.21.1; prior card archived as released but incomplete. Model ha
 
 ## Links
 
-- Spec: [SPEC-037](../../docs/specs/SPEC-037/spec.md)
+- Spec: [037-attachments-on-nodes-and-edges](../../specs/037-attachments-on-nodes-and-edges/spec.md)
 - Related items: ITEM-026
-- Prior SPEC: [SPEC-026](../../docs/specs/SPEC-026/spec.md)
+- Prior SPEC: [026-notes-and-attachments](../../specs/026-notes-and-attachments/spec.md)

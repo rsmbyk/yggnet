@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { openTool } from './open-tool';
 
 test('set node position via manager inputs', async ({ page }) => {
 	await page.goto('/');
-	await expect(page.getByTestId('yggnet-manager')).toBeVisible();
+	await openTool(page, 'nodes');
 
 	await page.getByTestId('add-node').click();
-	await expect(page.getByTestId('node-editor')).toBeVisible();
+	await expect(page.getByTestId('world-node-sheet')).toBeVisible();
 
 	const posX = page.getByTestId('node-pos-x');
 	await posX.fill('5');

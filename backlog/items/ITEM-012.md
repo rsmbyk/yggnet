@@ -1,15 +1,15 @@
 ---
 id: ITEM-012
 status: archived
-title: "Algo compare"
+title: 'Algo compare'
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-012
-branch: 
-pr: 
+spec: specs/012-algo-compare
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ Related: ITEM-009, ITEM-013.
 
 ## Links
 
-- Spec: [SPEC-012](../../docs/specs/SPEC-012/spec.md)
+- Spec: [012-algo-compare](../../specs/012-algo-compare/spec.md)
 - Related items: ITEM-009, ITEM-013.

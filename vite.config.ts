@@ -5,11 +5,13 @@ import adapterStatic from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 /** Vercel sets VERCEL=1; use adapter-vercel there. Local Windows uses static (no symlink). */
-const adapter = process.env.VERCEL
-	? adapterVercel()
-	: adapterStatic({ fallback: 'index.html' });
+const adapter = process.env.VERCEL ? adapterVercel() : adapterStatic({ fallback: 'index.html' });
 
 export default defineConfig({
+	server: {
+		port: 5174,
+		strictPort: true
+	},
 	plugins: [
 		sveltekit({
 			compilerOptions: {
@@ -56,7 +58,7 @@ export default defineConfig({
 				test: {
 					name: 'server',
 					environment: 'node',
-					include: ['src/**/*.{test,spec}.{js,ts}'],
+					include: ['src/**/*.{test,spec}.{js,ts}', 'scripts/**/*.{test,spec}.{js,ts,mjs}'],
 					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
 				}
 			}

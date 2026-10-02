@@ -1,15 +1,15 @@
 ---
 id: ITEM-013
 status: archived
-title: "Compare runs"
+title: 'Compare runs'
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-013
-branch: 
-pr: 
+spec: specs/013-compare-runs
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -32,5 +32,5 @@ Related: ITEM-010, ITEM-012.
 
 ## Links
 
-- Spec: [SPEC-013](../../docs/specs/SPEC-013/spec.md)
+- Spec: [013-compare-runs](../../specs/013-compare-runs/spec.md)
 - Related items: ITEM-010, ITEM-012.

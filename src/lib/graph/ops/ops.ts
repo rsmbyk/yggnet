@@ -1,4 +1,5 @@
 import type { EdgeId, GraphDocument, GraphEdge, GraphNode, NodeId } from '../model/types';
+import { normalizeTags } from '../tags';
 
 export type NodePatch = Partial<Omit<GraphNode, 'id'>>;
 export type EdgePatch = Partial<Omit<GraphEdge, 'id'>>;
@@ -9,6 +10,7 @@ export interface AddEdgeInput {
 	directed?: boolean;
 	weight?: number;
 	label?: string;
+	tags?: string[];
 }
 
 /** Bump `updatedAt` to now. */
@@ -41,7 +43,7 @@ export function addNode(
 		label: partial.label ?? 'Node',
 		position: partial.position ?? { x: 0, y: 0, z: 0 },
 		pinned: partial.pinned ?? false,
-		tags: partial.tags ?? [],
+		tags: normalizeTags(partial.tags),
 		attachments: partial.attachments ?? [],
 		data: partial.data ?? {},
 		...(partial.groupId !== undefined ? { groupId: partial.groupId } : {}),
@@ -66,7 +68,7 @@ export function updateNode(doc: GraphDocument, id: NodeId, patch: NodePatch): Gr
 		...patch,
 		id,
 		position: patch.position ? { ...prev.position, ...patch.position } : prev.position,
-		tags: patch.tags ?? prev.tags,
+		tags: patch.tags !== undefined ? normalizeTags(patch.tags) : prev.tags,
 		attachments: patch.attachments ?? prev.attachments,
 		data: patch.data ?? prev.data
 	};
@@ -91,7 +93,7 @@ export function removeNode(doc: GraphDocument, id: NodeId): GraphDocument {
 
 /**
  * Add an edge between existing endpoints.
- * Defaults: undirected, weight 1, empty attachments/data.
+ * Defaults: undirected, weight 1, empty tags/attachments/data.
  */
 export function addEdge(
 	doc: GraphDocument,
@@ -106,6 +108,7 @@ export function addEdge(
 		to: input.to,
 		directed: input.directed ?? false,
 		weight: input.weight ?? 1,
+		tags: normalizeTags(input.tags),
 		attachments: [],
 		data: {},
 		...(input.label !== undefined ? { label: input.label } : {})
@@ -133,6 +136,7 @@ export function updateEdge(doc: GraphDocument, id: EdgeId, patch: EdgePatch): Gr
 		id,
 		from,
 		to,
+		tags: patch.tags !== undefined ? normalizeTags(patch.tags) : prev.tags,
 		attachments: patch.attachments ?? prev.attachments,
 		data: patch.data ?? prev.data
 	};
@@ -146,4 +150,53 @@ export function removeEdge(doc: GraphDocument, id: EdgeId): GraphDocument {
 	assertEdgeExists(doc, id);
 	const { [id]: _removed, ...edges } = doc.edges;
 	return touch({ ...doc, edges });
+}
+
+/**
+ * Find the next available Group-N tag name by incrementing the document counter
+ * until we find a name not currently used in the document.
+ * The counter is persisted on the document and never decreases.
+ */
+export function nextGroupTagName(doc: GraphDocument): string {
+	const existing = new Set<string>();
+	for (const node of Object.values(doc.nodes)) {
+		for (const tag of node.tags) {
+			if (tag.startsWith('Group-')) existing.add(tag);
+		}
+	}
+	for (const edge of Object.values(doc.edges)) {
+		for (const tag of edge.tags) {
+			if (tag.startsWith('Group-')) existing.add(tag);
+		}
+	}
+	let n = doc.groupTagCounter + 1;
+	while (existing.has(`Group-${n}`)) n += 1;
+	return `Group-${n}`;
+}
+
+/**
+ * Apply the next Group-N tag to a set of node IDs, incrementing the document counter.
+ * Returns the updated document and the tag name that was applied.
+ */
+export function autoTagGroup(
+	doc: GraphDocument,
+	nodeIds: NodeId[]
+): { doc: GraphDocument; tag: string } {
+	if (nodeIds.length === 0) return { doc, tag: '' };
+	const tag = nextGroupTagName(doc);
+	const updatedNodes: typeof doc.nodes = { ...doc.nodes };
+	for (const id of nodeIds) {
+		const node = doc.nodes[id];
+		if (!node) continue;
+		const tags = node.tags.includes(tag) ? node.tags : [...node.tags, tag];
+		updatedNodes[id] = { ...node, tags };
+	}
+	return {
+		doc: touch({
+			...doc,
+			nodes: updatedNodes,
+			groupTagCounter: Math.max(doc.groupTagCounter, parseInt(tag.replace('Group-', ''), 10))
+		}),
+		tag
+	};
 }

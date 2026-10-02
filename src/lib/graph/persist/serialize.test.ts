@@ -40,7 +40,7 @@ describe('serialize', () => {
 	});
 
 	it('cloneDocument returns a deep copy', () => {
-		let doc = createEmptyDocument();
+		const doc = createEmptyDocument();
 		const { doc: withNode, nodeId } = addNode(doc, { label: 'A', data: { n: 1 } });
 		const clone = cloneDocument(withNode);
 		expect(clone).toEqual(withNode);
@@ -53,9 +53,7 @@ describe('serialize', () => {
 		expect(() => parseDocument('{')).toThrow(/Invalid JSON/i);
 		expect(() => parseDocument('null')).toThrow(/expected object/i);
 		expect(() => parseDocument('[]')).toThrow(/expected object/i);
-		expect(() => parseDocument(JSON.stringify({ schemaVersion: 2 }))).toThrow(
-			/schemaVersion/i
-		);
+		expect(() => parseDocument(JSON.stringify({ schemaVersion: 2 }))).toThrow(/schemaVersion/i);
 		expect(() =>
 			parseDocument(
 				JSON.stringify({
@@ -91,5 +89,42 @@ describe('serialize', () => {
 				})
 			)
 		).toThrow(/timestamps/i);
+	});
+
+	it('parseDocument silently strips invalid tags', () => {
+		const parsed = parseDocument(
+			JSON.stringify({
+				schemaVersion: 1,
+				id: 'x',
+				title: 't',
+				nodes: {
+					n1: {
+						id: 'n1',
+						label: 'A',
+						position: { x: 0, y: 0, z: 0 },
+						pinned: false,
+						tags: ['ok', 'bad tag!', 'also_bad'],
+						attachments: [],
+						data: {}
+					}
+				},
+				edges: {
+					e1: {
+						id: 'e1',
+						from: 'n1',
+						to: 'n1',
+						directed: false,
+						weight: 1,
+						tags: ['edge-ok', 'nope!'],
+						attachments: [],
+						data: {}
+					}
+				},
+				createdAt: 'a',
+				updatedAt: 'b'
+			})
+		);
+		expect(parsed.nodes.n1.tags).toEqual(['ok']);
+		expect(parsed.edges.e1.tags).toEqual(['edge-ok']);
 	});
 });

@@ -1,27 +1,30 @@
 # Contributing to Yggnet
 
+Locked process: [`docs/PROCESS.md`](./docs/PROCESS.md). Permission gate: [`docs/rules/SDD-GATE.md`](./docs/rules/SDD-GATE.md). Adopt/sync: [`docs/ADOPT.md`](./docs/ADOPT.md).
+
 ## Branching (Git Flow)
 
-| Branch                 | Role                          |
-| ---------------------- | ----------------------------- |
-| `main`                 | Production (Vercel prod)      |
-| `develop`              | Integration / staging         |
-| `feat/SPEC-XXX-slug`   | Feature work (from `develop`) |
-| `hotfix/SPEC-XXX-slug` | Hotfix (from `main`)          |
-| `release/X.Y.Z`        | Release cut                   |
+| Branch              | Role                          |
+| ------------------- | ----------------------------- |
+| `main`              | Production (Vercel prod)      |
+| `develop`           | Integration / staging         |
+| `feat/NNN-slug`     | Feature work (from `develop`) |
+| `fix/NNN-slug`      | Fix (from `develop`)          |
+| `hotfix/NNN-slug`   | Hotfix (from `main`)          |
+| `docs/*`, `chore/*` | Process / chore branches      |
 
-Default PR target for features: **`develop`**.
+Default PR target for features: **`develop`**. Never create `cursor/` or other vendor-named branches.
 
 ## Specs & backlog
 
 1. Capture ideas as `ITEM-XXX` on the [board](./backlog/board.md).
-2. Authorized owner asks to **spec** → write `docs/specs/SPEC-XXX/{spec,plan,tasks}.md`.
-3. Owner marks **Ready**.
-4. Owner says **`execute SPEC-XXX`** → implement with TDD.
-5. PR → **In review**; owner OK → merge.
-6. Owner **`release`** → version + `main` + archive.
+2. Draft `specs/NNN-slug/{plan,spec,tasks}.md` **before** code (SDD).
+3. Owner **Accepts** the Draft → Ready.
+4. Owner authorizes execute → implement with TDD on a feature branch.
+5. Open a **draft** PR (Summary / Spec / Test plan). Board, tasks, and version bump (if any) land in **that same PR**.
+6. Owner OK → merge to `develop`. When `bump` ≠ `none`, tag `vX.Y.Z` on `main` in the same session the owner cuts production (see PROCESS Git Flow notes).
 
-Process changes (items/specs/Ready): one PR per meaningful unit. **No SemVer bump** on process merges.
+Process-only changes: `bump: none`; no `VERSION` change.
 
 ## Testing
 
@@ -37,15 +40,18 @@ npm run test:e2e
 
 ## Versioning
 
-- No bump on merge to `develop`.
-- On **release:** apply each included SPEC’s `bump` (`major` \| `minor` \| `patch` \| `none`) in **merge-to-`develop` order**.
-- Hotfixes bump from current `main` via a (tiny) SPEC.
+- Canonical: repo-root [`VERSION`](./VERSION) (mirrored in `package.json`).
+- ITEM/spec `bump` decides the SemVer step — **not** Conventional Commit type.
+- When `bump` ≠ `none`: bump `VERSION` + changelog `## [X.Y.Z]` + ITEM `release_version` in **the same PR** as the work.
+- When `bump` is `none`: leave `VERSION` unchanged; no tag.
+- Git Flow: feature PR targets `develop` (already versioned). Tag on the `main` cut; merge back so `VERSION` matches.
 
 ## Architecture boundaries
 
 - `src/lib/graph/**` must **not** import Svelte, `$app/*`, `three`, or `@threlte/*`.
 - UI/world call the graph public API (`$lib/graph`).
 - Algorithms run via `AlgorithmRunner` on serializable snapshots (worker-ready).
+- See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Deploy (Vercel)
 

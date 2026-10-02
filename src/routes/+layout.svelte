@@ -6,7 +6,6 @@
 </script>
 
 <svelte:head>
-	<title>Yggnet</title>
 	<meta
 		name="description"
 		content="Yggnet (IG-net) — 3D open-world abstract graph explorer and pathfinder"

@@ -1,15 +1,15 @@
 ---
 id: ITEM-024
 status: archived
-title: "Undo / redo"
+title: 'Undo / redo'
 type: feat
 priority: P0
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-024
-branch: 
-pr: 
+spec: specs/024-undo-redo
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ Related: ITEM-001, ITEM-011.
 
 ## Links
 
-- Spec: [SPEC-024](../../docs/specs/SPEC-024/spec.md)
+- Spec: [024-undo-redo](../../specs/024-undo-redo/spec.md)
 - Related items: ITEM-001, ITEM-011.

@@ -40,9 +40,9 @@ Then open [http://localhost:8080](http://localhost:8080). See [docs/docker.md](.
 
 ## Process
 
-Spec-driven (`SPEC-XXX`) · TDD · Git Flow (`develop` / `main`) · in-repo Kanban (`backlog/`)
+[vexbook](./docs/ADOPT.md)-aligned SDD · `specs/NNN-slug/` · TDD · Git Flow · Kanban (`backlog/`) · SemVer (`VERSION`)
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md), [AGENTS.md](./AGENTS.md), and [docs/vision.md](./docs/vision.md).
+See [docs/PROCESS.md](./docs/PROCESS.md), [CONTRIBUTING.md](./CONTRIBUTING.md), [AGENTS.md](./AGENTS.md), and [docs/vision.md](./docs/vision.md).
 
 ## License
 

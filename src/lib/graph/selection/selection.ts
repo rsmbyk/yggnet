@@ -48,14 +48,26 @@ export function selectEdge(state: SelectionState, id: EdgeId): SelectionState {
 	return createSelection([], [id]);
 }
 
+/** Add an edge if missing; clears nodes so edge and node selection stay exclusive. */
+export function addEdgeToSelection(state: SelectionState, id: EdgeId): SelectionState {
+	if (state.edgeIds.includes(id)) return createSelection([], [...state.edgeIds]);
+	return createSelection([], [...state.edgeIds, id]);
+}
+
+/** Remove an edge from selection (keeps other edges; drops nodes). */
+export function removeEdgeFromSelection(state: SelectionState, id: EdgeId): SelectionState {
+	return createSelection(
+		[],
+		state.edgeIds.filter((e) => e !== id)
+	);
+}
+
+/** Toggle edge membership; always clears nodes. */
 export function toggleEdgeInSelection(state: SelectionState, id: EdgeId): SelectionState {
-	if (state.edgeIds.includes(id)) {
-		return createSelection(
-			[...state.nodeIds],
-			state.edgeIds.filter((e) => e !== id)
-		);
-	}
-	return createSelection([...state.nodeIds], [...state.edgeIds, id]);
+	const edgesOnly = createSelection([], [...state.edgeIds]);
+	return edgesOnly.edgeIds.includes(id)
+		? removeEdgeFromSelection(edgesOnly, id)
+		: addEdgeToSelection(edgesOnly, id);
 }
 
 export function clearSelection(_state: SelectionState): SelectionState {

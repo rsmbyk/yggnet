@@ -1,15 +1,15 @@
 ---
 id: ITEM-028
 status: archived
-title: "Simple clean modern chrome"
+title: 'Simple clean modern chrome'
 type: feat
 priority: P2
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-028
-branch: 
-pr: 
+spec: specs/028-simple-clean-modern-chrome
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ UI/UX lock: simple, clean, modern. Related: ITEM-001, ITEM-007, ITEM-009.
 
 ## Links
 
-- Spec: [SPEC-028](../../docs/specs/SPEC-028/spec.md)
+- Spec: [028-simple-clean-modern-chrome](../../specs/028-simple-clean-modern-chrome/spec.md)
 - Related items: ITEM-001, ITEM-007, ITEM-009.

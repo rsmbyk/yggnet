@@ -1,15 +1,15 @@
 ---
 id: ITEM-009
 status: archived
-title: "Algorithm registry + picker"
+title: 'Algorithm registry + picker'
 type: feat
 priority: P1
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-009
-branch: 
-pr: 
+spec: specs/009-algorithm-registry-picker
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ Worker-ready via AlgorithmRunner. Related: ITEM-006, ITEM-010, ITEM-012.
 
 ## Links
 
-- Spec: [SPEC-009](../../docs/specs/SPEC-009/spec.md)
+- Spec: [009-algorithm-registry-picker](../../specs/009-algorithm-registry-picker/spec.md)
 - Related items: ITEM-006, ITEM-010, ITEM-012.

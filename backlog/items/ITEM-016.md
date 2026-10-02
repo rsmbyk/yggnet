@@ -1,15 +1,15 @@
 ---
 id: ITEM-016
 status: archived
-title: "Groups / containers"
+title: 'Groups / containers'
 type: feat
 priority: P1
 effort: L
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-016
-branch: 
-pr: 
+spec: specs/016-groups-containers
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ Related: ITEM-004, ITEM-017.
 
 ## Links
 
-- Spec: [SPEC-016](../../docs/specs/SPEC-016/spec.md)
+- Spec: [016-groups-containers](../../specs/016-groups-containers/spec.md)
 - Related items: ITEM-004, ITEM-017.

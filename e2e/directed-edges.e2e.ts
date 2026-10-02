@@ -1,35 +1,30 @@
 import { expect, test } from '@playwright/test';
+import { applyGeneratedGraph, openTool } from './open-tool';
 
 test('toggle directed on edge keeps world visible', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await applyGeneratedGraph(page, 'cycle', { nodes: 4 });
 
-	const nodeList = page.getByTestId('node-list');
+	await openTool(page, 'edges');
 	const edgeList = page.getByTestId('edge-list');
+	await expect(edgeList.locator('[data-testid^="edge-item-"]')).not.toHaveCount(0);
 
-	const nodeCount = await nodeList.locator('li').count();
-	if (nodeCount < 2) {
-		await page.getByTestId('add-node').click();
-		await page.getByTestId('add-node').click();
-	}
+	await edgeList.locator('[data-testid^="edge-item-"]').first().click();
+	await expect(page.getByTestId('edge-editor')).toBeVisible();
 
-	const nodes = nodeList.locator('li');
-	const fromLabel = (await nodes.nth(0).innerText()).trim();
-	const toLabel = (await nodes.nth(1).innerText()).trim();
-
-	await page.getByTestId('edge-from').selectOption({ label: fromLabel });
-	await page.getByTestId('edge-to').selectOption({ label: toLabel });
-	await page.getByTestId('add-edge').click();
-
-	const edgeTestId = await edgeList.locator('[data-testid^="edge-item-"]').first().getAttribute('data-testid');
-	expect(edgeTestId).toMatch(/^edge-item-/);
-	const id = edgeTestId!.slice('edge-item-'.length);
-
-	await page.getByTestId(`toggle-directed-${id}`).click();
-	await expect(page.getByTestId('yggnet-world')).toBeVisible();
-	await expect(page.getByTestId('yggnet-world').locator('canvas')).toBeVisible();
-
-	await page.getByTestId(`toggle-directed-${id}`).click();
+	const direction = page.getByTestId('edge-direction');
+	const source = page.getByTestId('edge-source');
+	const destination = page.getByTestId('edge-destination');
+	await direction.selectOption('forward');
+	const fromId = await source.getAttribute('data-value');
+	const toId = await destination.getAttribute('data-value');
+	expect(fromId).toBeTruthy();
+	expect(toId).toBeTruthy();
+	await direction.selectOption('reverse');
+	await expect(source).toHaveAttribute('data-value', toId!);
+	await expect(destination).toHaveAttribute('data-value', fromId!);
+	await expect(direction).toHaveValue('forward');
 	await expect(page.getByTestId('yggnet-world')).toBeVisible();
 	await expect(page.getByTestId('yggnet-world').locator('canvas')).toBeVisible();
 });

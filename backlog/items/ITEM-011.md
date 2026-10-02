@@ -1,15 +1,15 @@
 ---
 id: ITEM-011
 status: archived
-title: "Stale-run invalidation"
+title: 'Stale-run invalidation'
 type: feat
 priority: P1
 effort: M
 created: 2026-07-30
 updated: 2026-07-30
-spec: SPEC-011
-branch: 
-pr: 
+spec: specs/011-stale-run-invalidation
+branch:
+pr:
 archived_at: 2026-07-30
 archive_reason: released
 release_version: 0.21.1
@@ -33,5 +33,5 @@ Related: ITEM-010, ITEM-001, ITEM-024.
 
 ## Links
 
-- Spec: [SPEC-011](../../docs/specs/SPEC-011/spec.md)
+- Spec: [011-stale-run-invalidation](../../specs/011-stale-run-invalidation/spec.md)
 - Related items: ITEM-010, ITEM-001, ITEM-024.
