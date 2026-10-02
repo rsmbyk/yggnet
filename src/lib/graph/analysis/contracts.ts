@@ -57,7 +57,7 @@ export type AnalysisArtifact =
 	| { kind: 'table'; id: string; label: string; columns: string[]; rows: AnalysisValue[][] };
 
 export interface AnalysisResult {
-	outcome: 'complete' | 'no-result';
+	outcome: 'complete' | 'no-result' | 'rejected';
 	summary: string;
 	metrics: Array<{ label: string; value: string | number }>;
 	artifacts: AnalysisArtifact[];

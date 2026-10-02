@@ -54,6 +54,8 @@ import {
 	renameTag,
 	type EdgePatch,
 	type AnalysisInput,
+	type AnalysisDefinition,
+	type AnalysisValue,
 	type AnalysisValidation,
 	type GraphDocument,
 	type GenerateOptions,
@@ -111,6 +113,7 @@ export type AnalyzeState = {
 export type AnalysisSessionState = {
 	algorithmId: string;
 	inputs: Record<string, AnalysisInput>;
+	sharedInputs?: Record<string, AnalysisValue>;
 	validation: AnalysisValidation | null;
 	current: CurrentAnalysis | null;
 };
@@ -217,6 +220,33 @@ function initialAnalysisInputs(): Record<string, AnalysisInput> {
 	);
 }
 
+function sharedAnalysisFieldKey(id: string, kind: string): string {
+	return `${kind}:${id}`;
+}
+
+function isSharedAnalysisField(id: string, kind: string): boolean {
+	return (
+		[...analysisDefinitions.values()].filter((definition) =>
+			definition.fields.some((field) => field.id === id && field.kind === kind)
+		).length > 1
+	);
+}
+
+function isValidSharedAnalysisValue(
+	field: AnalysisDefinition['fields'][number],
+	value: AnalysisValue,
+	document: GraphDocument
+): boolean {
+	if (field.kind === 'node') return typeof value === 'string' && Boolean(document.nodes[value]);
+	if (field.kind === 'node-set')
+		return (
+			Array.isArray(value) && value.every((id) => typeof id === 'string' && document.nodes[id])
+		);
+	if (field.kind === 'enum')
+		return typeof value === 'string' && field.options.some((option) => option.value === value);
+	return true;
+}
+
 class AppStore {
 	document = $state.raw<GraphDocument>(createEmptyDocument('Untitled graph'));
 	history = $state.raw<History>(createHistory());
@@ -228,6 +258,7 @@ class AppStore {
 	analysis = $state.raw<AnalysisSessionState>({
 		algorithmId: 'bfs',
 		inputs: initialAnalysisInputs(),
+		sharedInputs: {},
 		validation: null,
 		current: null
 	});
@@ -319,19 +350,53 @@ class AppStore {
 		const definition = analysisDefinitions.get(algorithmId);
 		if (!definition) return;
 		const existing = this.analysis.inputs[algorithmId] ?? {};
-		const normalized = normalizeAnalysisInput(definition, existing);
+		const sharedInputs = { ...(this.analysis.sharedInputs ?? {}) };
+		const currentDefinition = analysisDefinitions.get(this.analysis.algorithmId);
+		const currentInputs = this.analysis.inputs[this.analysis.algorithmId] ?? {};
+		const candidateInputs = { ...existing };
+		for (const field of definition.fields) {
+			if (!isSharedAnalysisField(field.id, field.kind)) continue;
+			const key = sharedAnalysisFieldKey(field.id, field.kind);
+			let value: AnalysisValue | undefined = sharedInputs[key];
+			if (
+				value === undefined &&
+				currentDefinition?.fields.some(
+					(candidate) => candidate.id === field.id && candidate.kind === field.kind
+				)
+			) {
+				value = currentInputs[field.id];
+			}
+			if (value === undefined) continue;
+			if (!isValidSharedAnalysisValue(field, value, this.document)) {
+				if (field.kind === 'node' || field.kind === 'node-set') delete sharedInputs[key];
+				delete candidateInputs[field.id];
+				continue;
+			}
+			candidateInputs[field.id] = value;
+			sharedInputs[key] = value;
+		}
+		const normalized = normalizeAnalysisInput(definition, candidateInputs);
 		this.analysis = {
 			...this.analysis,
 			algorithmId,
+			sharedInputs,
 			inputs: {
 				...this.analysis.inputs,
-				[algorithmId]: { ...existing, ...normalized }
+				[algorithmId]: { ...candidateInputs, ...normalized }
 			},
 			validation: null
 		};
 	}
 
 	setAnalysisInput(fieldId: string, value: AnalysisInput[string]): void {
+		const definition = analysisDefinitions.get(this.analysis.algorithmId);
+		const field = definition?.fields.find((candidate) => candidate.id === fieldId);
+		const sharedInputs = { ...(this.analysis.sharedInputs ?? {}) };
+		if (field && isSharedAnalysisField(field.id, field.kind)) {
+			const key = sharedAnalysisFieldKey(field.id, field.kind);
+			if (value === undefined) delete sharedInputs[key];
+			else sharedInputs[key] = value;
+		}
 		const inputs = {
 			...this.analysis.inputs,
 			[this.analysis.algorithmId]: {
@@ -339,7 +404,7 @@ class AppStore {
 				[fieldId]: value
 			}
 		};
-		this.analysis = { ...this.analysis, inputs, validation: null };
+		this.analysis = { ...this.analysis, inputs, sharedInputs, validation: null };
 	}
 
 	runAnalysis(): boolean {
@@ -348,6 +413,27 @@ class AppStore {
 		const input = normalizeAnalysisInput(definition, this.analysis.inputs[definition.id] ?? {});
 		const validation = validateAnalysisInput(definition, this.document, input);
 		if (!validation.valid) {
+			if (validation.formError && Object.keys(validation.fieldErrors).length === 0) {
+				this.analysisRevision += 1;
+				const current = createCurrentAnalysis(
+					definition.id,
+					input,
+					{
+						result: {
+							outcome: 'rejected',
+							summary: validation.formError,
+							metrics: [],
+							artifacts: []
+						},
+						events: []
+					},
+					this.analysisRevision
+				);
+				this.analysis = { ...this.analysis, validation: null, current };
+				this.ui = { ...this.ui, openTool: null };
+				this.requestFrameGraph();
+				return true;
+			}
 			this.analysis = { ...this.analysis, validation };
 			return false;
 		}

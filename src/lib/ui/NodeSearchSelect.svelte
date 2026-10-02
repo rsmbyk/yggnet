@@ -37,7 +37,14 @@
 		const field = fieldEl;
 		if (!field) return;
 		const rect = field.getBoundingClientRect();
-		dropdownStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px;`;
+		const preferredHeight = Math.min(256, window.innerHeight * 0.5);
+		const below = window.innerHeight - rect.bottom - 8;
+		const above = rect.top - 8;
+		const openBelow = below >= Math.min(preferredHeight, 128) || below >= above;
+		const availableHeight = Math.max(80, Math.min(preferredHeight, openBelow ? below : above));
+		dropdownStyle = openBelow
+			? `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px;max-height:${availableHeight}px;`
+			: `bottom:${window.innerHeight - rect.top + 4}px;left:${rect.left}px;width:${rect.width}px;max-height:${availableHeight}px;`;
 	}
 
 	function openDropdown() {

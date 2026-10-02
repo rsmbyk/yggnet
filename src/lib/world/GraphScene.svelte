@@ -34,6 +34,8 @@
 		analysisResultEdgeEndpoints,
 		analysisResultEdgeRole,
 		analysisResultLandmarks,
+		analysisRankingScale,
+		analysisRankingColor,
 		analysisResultNodeMarker,
 		analysisResultNodeRole,
 		analysisResultSequence,
@@ -110,6 +112,7 @@
 	let arrowMesh: THREE.InstancedMesh | undefined;
 	let shaftMeshTransparent: THREE.InstancedMesh | undefined;
 	let arrowMeshTransparent: THREE.InstancedMesh | undefined;
+	const arrowMeshes = new SvelteSet<THREE.InstancedMesh>();
 	let shaftCap = $state(8);
 	let arrowCap = $state(8);
 	let shaftCapTransparent = $state(8);
@@ -500,6 +503,29 @@
 		}
 	}
 
+	/** Tooltip cards must remain above every analysis glyph as well as base graph geometry. */
+	function makeOverlayPassThrough(ref: THREE.Object3D) {
+		const mesh = ref as THREE.Mesh & { sync?: (cb?: () => void) => void };
+		mesh.renderOrder = 1_000;
+		const apply = () => {
+			const m = mesh.material;
+			if (!m) return;
+			for (const mat of (Array.isArray(m) ? m : [m]) as THREE.Material[]) {
+				mat.depthTest = false;
+				mat.depthWrite = false;
+			}
+		};
+		apply();
+		if (typeof mesh.sync === 'function') {
+			const prev = mesh.sync.bind(mesh);
+			mesh.sync = (cb) =>
+				prev(() => {
+					apply();
+					cb?.();
+				});
+		}
+	}
+
 	function nodeColor(id: string): string {
 		if (selectedIds.has(id) || app.ui.connectFromId === id) return NODE_SELECTED_COLOR;
 		if (hoveredNodeId === id) return NODE_HOVER_COLOR;
@@ -578,9 +604,11 @@
 
 	function attachArrowMesh(mesh: THREE.InstancedMesh) {
 		skipInstanceRaycast(mesh);
+		arrowMeshes.add(mesh);
 		arrowMesh = mesh;
 		syncInstancedEdges();
 		return () => {
+			arrowMeshes.delete(mesh);
 			if (arrowMesh === mesh) arrowMesh = undefined;
 		};
 	}
@@ -703,6 +731,9 @@
 			arrowMeshTransparent.instanceMatrix.needsUpdate = true;
 			if (arrowMeshTransparent.instanceColor) arrowMeshTransparent.instanceColor.needsUpdate = true;
 		}
+		renderer.domElement.dataset.directionConeInstances = String(
+			[...arrowMeshes].reduce((total, mesh) => total + mesh.count, 0)
+		);
 	}
 
 	/**
@@ -1529,6 +1560,14 @@
 		if (hoveredNodeId === id) hoveredNodeId = null;
 	}
 
+	function rankingHover(nodeId: string | null): { rank: number; value: number } | null {
+		if (!nodeId || activeAnalysis?.panel !== 'result') return null;
+		const ranking = activeAnalysis.result.artifacts.find((artifact) => artifact.kind === 'ranking');
+		if (!ranking || ranking.kind !== 'ranking') return null;
+		const index = ranking.entries.findIndex((entry) => entry.id === nodeId);
+		return index < 0 ? null : { rank: index + 1, value: ranking.entries[index].value };
+	}
+
 	$effect(() => {
 		const canvas = renderer.domElement;
 		const preventAux = (ev: MouseEvent) => {
@@ -2100,6 +2139,41 @@
 	{/if}
 {/each}
 
+{#if activeAnalysis && hoveredNodeId && rankingHover(hoveredNodeId)}
+	{@const hovered = app.document.nodes[hoveredNodeId]}
+	{@const rank = rankingHover(hoveredNodeId)!}
+	{#if hovered}
+		{@const pos = displayPosition(hovered)}
+		{@const tooltipText = `${hovered.label} · Rank ${rank.rank} · ${rank.value.toFixed(4)}`}
+		{@const tooltipWidth = tooltipText.length * 0.245 + 0.55}
+		<Billboard position={[pos.x, pos.y, pos.z]}>
+			<T.Mesh position={[0, 0, 0.12]} oncreate={makeOverlayPassThrough}>
+				<T.PlaneGeometry args={[tooltipWidth, 1]} />
+				<T.MeshBasicMaterial
+					color="#101827"
+					transparent
+					opacity={0.9}
+					depthTest={false}
+					depthWrite={false}
+				/>
+			</T.Mesh>
+			<Text
+				text={tooltipText}
+				fontSize={0.48}
+				position={[0, 0, 0.14]}
+				depthTest={false}
+				depthWrite={false}
+				anchorX="center"
+				anchorY="middle"
+				color="#f8fafc"
+				outlineWidth={0.02}
+				outlineColor="#1c242e"
+				oncreate={makeOverlayPassThrough}
+			/>
+		</Billboard>
+	{/if}
+{/if}
+
 <!-- Analysis-only, non-interactive glyph layer. Base node spheres remain unchanged. -->
 {#if activeAnalysis}
 	{#each Object.entries(analysisNodeRoles) as [nodeId, roles] (nodeId)}
@@ -2113,12 +2187,20 @@
 				? analysisResultNodeMarker(analysisTimelineFrame, nodeId)
 				: null}
 			{@const glyphScale = analysisGlyphScale(app.camera.distance)}
+			{@const rankingScale =
+				activeAnalysis?.panel === 'result'
+					? analysisRankingScale(activeAnalysis.result.artifacts, nodeId)
+					: 1}
 			{@const color = analysisRoleColor(role)}
+			{@const rankingColor =
+				activeAnalysis?.panel === 'result'
+					? analysisRankingColor(activeAnalysis.result.artifacts, nodeId)
+					: null}
 			{#if landmark && analysisResultNodeIds.has(nodeId)}
 				<T.Mesh
 					position={[pos.x, pos.y, pos.z]}
 					rotation={[Math.PI / 2, 0, 0]}
-					scale={glyphScale}
+					scale={glyphScale * rankingScale}
 					oncreate={attachAnalysisGlyph}
 				>
 					<T.TorusGeometry args={[NODE_RADIUS * 3.05, 0.09, 10, 48]} />
@@ -2129,7 +2211,7 @@
 				<T.Mesh
 					position={[pos.x, pos.y, pos.z]}
 					rotation={[Math.PI / 2, 0, 0]}
-					scale={glyphScale}
+					scale={glyphScale * rankingScale}
 					oncreate={attachAnalysisGlyph}
 				>
 					<T.TorusGeometry args={[NODE_RADIUS * 1.65, 0.09, 10, 36]} />
@@ -2218,11 +2300,21 @@
 					<T.IcosahedronGeometry args={[NODE_RADIUS * 1.3, 1]} />
 					<T.MeshBasicMaterial {color} wireframe transparent opacity={0.95} depthWrite={false} />
 				</T.Mesh>
-			{:else}
+			{:else if role === 'frontier'}
 				<T.Mesh
 					position={[pos.x, pos.y, pos.z]}
 					rotation={[Math.PI / 2, 0, 0]}
 					scale={glyphScale}
+					oncreate={attachAnalysisGlyph}
+				>
+					<T.TorusGeometry args={[NODE_RADIUS * 1.35, 0.045, 8, 32]} />
+					<T.MeshBasicMaterial {color} wireframe transparent opacity={0.95} depthWrite={false} />
+				</T.Mesh>
+			{:else}
+				<T.Mesh
+					position={[pos.x, pos.y, pos.z]}
+					rotation={[Math.PI / 2, 0, 0]}
+					scale={glyphScale * rankingScale}
 					oncreate={attachAnalysisGlyph}
 				>
 					<T.TorusGeometry
@@ -2233,7 +2325,12 @@
 							role === 'inspecting' ? 12 : 32
 						]}
 					/>
-					<T.MeshBasicMaterial {color} transparent opacity={0.92} depthWrite={false} />
+					<T.MeshBasicMaterial
+						color={rankingColor ?? color}
+						transparent
+						opacity={0.92}
+						depthWrite={false}
+					/>
 				</T.Mesh>
 			{/if}
 		{/if}
@@ -2319,14 +2416,6 @@
 		/>
 	</T.InstancedMesh>
 {/key}
-<T.InstancedMesh
-	args={[undefined, undefined, arrowCap]}
-	frustumCulled={false}
-	oncreate={attachArrowMesh}
->
-	<T.ConeGeometry args={[ARROW_RADIUS, ARROW_HEIGHT, 32, 1, false]} />
-	<T.MeshStandardMaterial roughness={0.45} metalness={0.15} side={THREE.DoubleSide} />
-</T.InstancedMesh>
 {#key arrowCap}
 	<T.InstancedMesh
 		args={[undefined, undefined, arrowCap]}

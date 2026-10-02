@@ -54,10 +54,16 @@ describe('analysis panel policy', () => {
 		});
 	});
 
-	it('provides a prominent status heading and the algorithm summary only for no-result', () => {
+	it('distinguishes eligible no-result from rejected analyses', () => {
 		expect(analysisResultStatus('no-result', 'Target was not reached.')).toEqual({
 			heading: 'No result',
-			summary: 'Target was not reached.'
+			summary: 'Target was not reached.',
+			kind: 'no-result'
+		});
+		expect(analysisResultStatus('rejected', 'This graph has directed edges.')).toEqual({
+			heading: 'Rejected',
+			summary: 'This graph has directed edges.',
+			kind: 'rejected'
 		});
 		expect(analysisResultStatus('complete', 'Found a path.')).toBeNull();
 	});

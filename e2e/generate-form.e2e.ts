@@ -171,3 +171,68 @@ test('Generate stretches a lone field across the row', async ({ page }) => {
 		.poll(async () => fields.evaluate((el) => el.scrollWidth <= el.clientWidth + 1))
 		.toBe(true);
 });
+
+test('Bipartite and Helix related fields share responsive paired rows', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'generate');
+	await page.getByTestId('generate-kind').selectOption('bipartite');
+	const bipartitePair = page.getByTestId('generate-pair-left-right');
+	await expect(bipartitePair).toBeVisible();
+	const leftBox = await page.getByRole('spinbutton', { name: 'Left' }).boundingBox();
+	const rightBox = await page.getByRole('spinbutton', { name: 'Right' }).boundingBox();
+	const densityBox = await page.getByTestId('generate-density').boundingBox();
+	const fieldsBox = await page.getByTestId('generate-fields').boundingBox();
+	expect(leftBox).toBeTruthy();
+	expect(rightBox).toBeTruthy();
+	expect(densityBox).toBeTruthy();
+	expect(fieldsBox).toBeTruthy();
+	expect(Math.abs(leftBox!.y - rightBox!.y)).toBeLessThan(4);
+	expect(Math.abs(densityBox!.y - leftBox!.y)).toBeGreaterThan(10);
+	expect(densityBox!.width).toBeGreaterThan(fieldsBox!.width * 0.9);
+
+	await page.getByTestId('generate-kind').selectOption('helix');
+	const turnsBox = await page.getByRole('spinbutton', { name: 'Turns' }).boundingBox();
+	const chordBox = await page.getByRole('spinbutton', { name: 'Chord' }).boundingBox();
+	expect(turnsBox).toBeTruthy();
+	expect(chordBox).toBeTruthy();
+	expect(Math.abs(turnsBox!.y - chordBox!.y)).toBeLessThan(4);
+
+	await page.setViewportSize({ width: 320, height: 720 });
+	await expect
+		.poll(async () => {
+			const turns = await page.getByRole('spinbutton', { name: 'Turns' }).boundingBox();
+			const chord = await page.getByRole('spinbutton', { name: 'Chord' }).boundingBox();
+			return Boolean(turns && chord && chord.y > turns.y);
+		})
+		.toBe(true);
+});
+
+test('replacing a directed graph removes every stale direction-cone instance', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('yggnet-world')).toBeVisible({ timeout: 15_000 });
+	await openTool(page, 'generate');
+	await page.getByTestId('generate-kind').selectOption('grid');
+	await page.getByTestId('generate-rows').fill('1');
+	await page.getByTestId('generate-columns').fill('3');
+	await page.getByLabel('Directed', { exact: true }).check();
+	await page.getByTestId('generate-submit').click();
+	const canvas = page.getByTestId('yggnet-world').locator('canvas');
+	await expect.poll(() => canvas.getAttribute('data-direction-cone-instances')).toBe('2');
+
+	await openTool(page, 'generate');
+	await page.getByTestId('generate-kind').selectOption('grid');
+	await page.getByTestId('generate-rows').fill('2');
+	await page.getByTestId('generate-columns').fill('2');
+	await page.getByLabel('Directed', { exact: true }).check();
+	await page.getByTestId('generate-submit').click();
+	await expect.poll(() => canvas.getAttribute('data-direction-cone-instances')).toBe('4');
+
+	await openTool(page, 'generate');
+	await page.getByTestId('generate-kind').selectOption('grid');
+	await page.getByTestId('generate-rows').fill('1');
+	await page.getByTestId('generate-columns').fill('3');
+	await page.getByLabel('Directed', { exact: true }).uncheck();
+	await page.getByTestId('generate-submit').click();
+	await expect.poll(() => canvas.getAttribute('data-direction-cone-instances')).toBe('0');
+});

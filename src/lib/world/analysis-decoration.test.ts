@@ -5,6 +5,7 @@ import {
 	analysisRevealProgress,
 	analysisRevealStepCount,
 	analysisLandmarkScale,
+	analysisRankingColor,
 	analysisResultEdgeEndpoints,
 	analysisResultEdgeRole,
 	analysisResultNodeMarker,
@@ -18,7 +19,7 @@ import {
 	revealDuration,
 	revealProgress
 } from './analysis-decoration';
-import type { AnalysisRevealTimeline } from '$lib/graph';
+import type { AnalysisArtifact, AnalysisRevealTimeline } from '$lib/graph';
 
 describe('analysis decoration policy', () => {
 	it('uses deterministic role priority', () => {
@@ -26,10 +27,35 @@ describe('analysis decoration policy', () => {
 		expect(primaryAnalysisRole(['current', 'result', 'inspecting'])).toBe('result');
 	});
 
+	it('keeps numbered color classes distinct from components', () => {
+		expect(analysisRoleColor('color-0')).toBe('#60a5fa');
+		expect(analysisRoleColor('color-1')).toBe('#a78bfa');
+		expect(analysisRoleColor('component-0')).toBe('#60a5fa');
+	});
+
 	it('keeps glyph scale stable at every camera distance', () => {
 		expect(analysisGlyphScale(1)).toBe(1);
 		expect(analysisGlyphScale(1000)).toBe(1);
 		expect(analysisGlyphScale(20)).toBe(1);
+	});
+
+	it('maps low, middle, and high ranking scores to red, yellow, and green', () => {
+		const artifacts: AnalysisArtifact[] = [
+			{
+				kind: 'ranking',
+				id: 'ranking',
+				label: 'Ranking',
+				entries: [
+					{ id: 'low', value: 0.1 },
+					{ id: 'middle', value: 0.5 },
+					{ id: 'high', value: 1 }
+				]
+			}
+		];
+
+		expect(analysisRankingColor(artifacts, 'low')).toBe('#98401b');
+		expect(analysisRankingColor(artifacts, 'middle')).toBe('#facc15');
+		expect(analysisRankingColor(artifacts, 'high')).toBe('#4ade80');
 	});
 
 	it('keeps traversal orange and uses green only for the returned path', () => {
@@ -71,9 +97,29 @@ describe('analysis decoration policy', () => {
 		);
 		expect(analysisRoleColor('active')).toBe('#f0a65a');
 		expect(analysisRoleColor('settled')).toBe('#f0a65a');
+		expect(analysisRoleColor('frontier')).toBe('#a78bfa');
+		expect(analysisRoleColor('inspecting')).toBe('#fbbf24');
+		expect(analysisRoleColor('revisited')).toBe('#f0a65a');
 		expect(analysisResultEdgeRole(replaying, 'e0')).toBe('settled');
 		expect(analysisRoleColor('result')).toBe('#4ade80');
 		expect([...replaying.edgeIds].every((id) => ['e0'].includes(id))).toBe(true);
+	});
+
+	it('keeps an emphasized node visible when result reveal has no traversal footprint', () => {
+		const frame = analysisRevealFrame(
+			{
+				phases: [
+					{
+						id: 'result-set',
+						steps: [{ actions: [{ kind: 'emphasize-node', nodeId: 'A' }] }]
+					}
+				]
+			},
+			1
+		);
+
+		expect([...frame.nodeIds]).toEqual(['A']);
+		expect(analysisResultNodeRole(frame, 'A')).toBe('result');
 	});
 
 	it('makes endpoint landmarks larger than ordinary analysis rings', () => {

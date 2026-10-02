@@ -62,11 +62,11 @@ export function analysisRevealFrame(
 				frame.emphasizedArtifactIds.clear();
 			} else if (action.kind === 'reveal-node') {
 				frame.nodeIds.add(action.nodeId);
-				frame.nodeRoles.set(action.nodeId, action.role ?? 'result');
+				frame.nodeRoles.set(action.nodeId, action.role ?? 'settled');
 				if (stepIndex === activeIndex) frame.activeNodeIds.add(action.nodeId);
 			} else if (action.kind === 'reveal-edge') {
 				frame.edgeIds.add(action.edgeId);
-				frame.edgeRoles.set(action.edgeId, action.role ?? 'result');
+				frame.edgeRoles.set(action.edgeId, action.role ?? 'settled');
 				if (stepIndex === activeIndex) frame.activeEdgeIds.set(action.edgeId, localProgress);
 			} else if (action.kind === 'revisit-node') {
 				frame.nodeIds.add(action.nodeId);
@@ -77,6 +77,7 @@ export function analysisRevealFrame(
 					if (stepIndex === activeIndex) frame.activeEdgeIds.set(action.viaEdgeId, localProgress);
 				}
 			} else if (action.kind === 'emphasize-node') {
+				frame.nodeIds.add(action.nodeId);
 				frame.emphasizedNodeIds.add(action.nodeId);
 				if (stepIndex === activeIndex) frame.activeNodeIds.add(action.nodeId);
 			} else if (action.kind === 'emphasize-edge') {
@@ -117,8 +118,19 @@ export function analysisLandmarkScale(
 }
 
 export function analysisRoleColor(role: AnalysisRole | null): string {
+	if (role?.startsWith('color-')) {
+		const colors = ['#60a5fa', '#a78bfa', '#34d399', '#fbbf24', '#fb7185', '#22d3ee'];
+		return colors[Number(role.slice('color-'.length)) % colors.length];
+	}
+	if (role?.startsWith('component-')) {
+		const colors = ['#60a5fa', '#a78bfa', '#34d399', '#fbbf24', '#fb7185', '#22d3ee'];
+		return colors[Number(role.slice('component-'.length)) % colors.length];
+	}
+	if (role === 'critical') return '#f43f5e';
 	if (role === 'result') return '#4ade80';
-	if (role === 'active' || role === 'inspecting' || role === 'revisited') return '#f0a65a';
+	if (role === 'frontier') return '#a78bfa';
+	if (role === 'inspecting') return '#fbbf24';
+	if (role === 'active' || role === 'revisited') return '#f0a65a';
 	if (role === 'start-side' || role === 'source' || role === 'current') return '#67e8f9';
 	if (role === 'target-side') return '#f472b6';
 	if (role === 'settled') return '#f0a65a';
@@ -135,7 +147,11 @@ export function analysisResultEdgeEndpoints(edge: { from: string; to: string }):
 export function analysisResultNodeRole(frame: AnalysisRevealFrame, nodeId: string): AnalysisRole {
 	if (frame.revisitedNodeIds.has(nodeId)) return 'revisited';
 	if (frame.emphasizedNodeIds.has(nodeId)) return 'result';
-	return frame.activeNodeIds.has(nodeId) ? 'active' : 'settled';
+	if (frame.activeNodeIds.has(nodeId)) return 'active';
+	const role = frame.nodeRoles.get(nodeId);
+	return role === 'critical' || role?.startsWith('component-') || role?.startsWith('color-')
+		? role
+		: 'settled';
 }
 
 export function analysisResultNodeMarker(
@@ -149,7 +165,8 @@ export function analysisResultNodeMarker(
 }
 
 export function analysisResultEdgeRole(frame: AnalysisRevealFrame, edgeId: string): AnalysisRole {
-	return frame.activeEdgeIds.has(edgeId) ? 'active' : 'settled';
+	if (frame.activeEdgeIds.has(edgeId)) return 'active';
+	return frame.edgeRoles.get(edgeId) === 'critical' ? 'critical' : 'settled';
 }
 
 export function analysisResultSequence(artifacts: AnalysisArtifact[]): AnalysisResultEntity[] {
@@ -179,8 +196,36 @@ export function analysisResultSequence(artifacts: AnalysisArtifact[]): AnalysisR
 		if ('edgeIds' in artifact) artifact.edgeIds.forEach((id) => add('edge', id));
 		if (artifact.kind === 'landmarks')
 			artifact.entries.forEach((entry) => add('node', entry.nodeId));
+		if (artifact.kind === 'ranking') artifact.entries.forEach((entry) => add('node', entry.id));
 	}
 	return entities;
+}
+
+export function analysisRankingScale(artifacts: AnalysisArtifact[], nodeId: string): number {
+	const ranking = artifacts.find(
+		(artifact): artifact is Extract<AnalysisArtifact, { kind: 'ranking' }> =>
+			artifact.kind === 'ranking'
+	);
+	const value = ranking?.entries.find((entry) => entry.id === nodeId)?.value;
+	return value === undefined ? 1 : 1 + Math.max(0, Math.min(1, value)) * 0.9;
+}
+
+export function analysisRankingColor(artifacts: AnalysisArtifact[], nodeId: string): string | null {
+	const ranking = artifacts.find(
+		(artifact): artifact is Extract<AnalysisArtifact, { kind: 'ranking' }> =>
+			artifact.kind === 'ranking'
+	);
+	const value = ranking?.entries.find((entry) => entry.id === nodeId)?.value;
+	if (value === undefined) return null;
+	const t = Math.max(0, Math.min(1, value));
+	const start = t <= 0.5 ? ([127, 29, 29] as const) : ([250, 204, 21] as const);
+	const target = t <= 0.5 ? ([250, 204, 21] as const) : ([74, 222, 128] as const);
+	const amount = t <= 0.5 ? t * 2 : (t - 0.5) * 2;
+	const channel = (start: number, end: number) =>
+		Math.round(start + (end - start) * amount)
+			.toString(16)
+			.padStart(2, '0');
+	return `#${channel(start[0], target[0])}${channel(start[1], target[1])}${channel(start[2], target[2])}`;
 }
 
 export function analysisResultLandmarks(
