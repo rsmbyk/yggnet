@@ -187,6 +187,25 @@ describe('depth-first definitions', () => {
 		['C', 'E']
 	]);
 
+	it('labels reveal phases according to Traverse or Search mode', () => {
+		const dfs = analysisDefinitions.get('dfs')!;
+		const dls = analysisDefinitions.get('depth-limited-dfs')!;
+
+		expect(dfs.execute(doc, { mode: 'traverse', start: 'A' }).result.reveal?.phases[0].id).toBe(
+			'traverse'
+		);
+		expect(
+			dfs.execute(doc, { mode: 'search', start: 'A', target: 'E' }).result.reveal?.phases[0].id
+		).toBe('search');
+		expect(
+			dls.execute(doc, { mode: 'traverse', start: 'A', maxDepth: 2 }).result.reveal?.phases[0].id
+		).toBe('traverse');
+		expect(
+			dls.execute(doc, { mode: 'search', start: 'A', target: 'E', maxDepth: 2 }).result.reveal
+				?.phases[0].id
+		).toBe('search');
+	});
+
 	it('DFS traverses deterministically and Search returns the first DFS path', () => {
 		const dfs = analysisDefinitions.get('dfs')!;
 		expect(dfs).toBeDefined();

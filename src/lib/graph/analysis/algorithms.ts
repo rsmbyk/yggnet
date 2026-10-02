@@ -302,7 +302,9 @@ function depthFirstResult(
 				...(path ? [{ label: 'Length', value: path.edgeIds.length }] : [])
 			],
 			artifacts,
-			reveal: { phases: [{ id: 'search', steps: oneObjectRevealSteps(revealSteps) }] }
+			reveal: {
+				phases: [{ id: search ? 'search' : 'traverse', steps: oneObjectRevealSteps(revealSteps) }]
+			}
 		},
 		events
 	};
